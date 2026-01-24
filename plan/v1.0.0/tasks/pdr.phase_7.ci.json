@@ -1,0 +1,24 @@
+{
+  "phase_id": "phase_7",
+  "name": "CI with GitHub Actions",
+  "depends_on": ["phase_6"],
+  "user_stories": [
+    {
+      "us_id": "US-7.1",
+      "title": "Pipeline CI automático",
+      "status": "pending",
+      "tasks": [
+        {
+          "task_id": "T-7.1.1",
+          "agent": "claude:ci",
+          "input": "Crear .github/workflows/ci.yml",
+          "output": "Workflow definido",
+          "acceptance_criteria": [
+            "Workflow corre en PR",
+            "Incluye composer install y php spark test"
+          ]
+        }
+      ]
+    }
+  ]
+}

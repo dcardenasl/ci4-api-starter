@@ -1,0 +1,31 @@
+{
+  "phase_id": "phase_2",
+  "name": "JWT Authentication & Roles",
+  "depends_on": ["phase_1"],
+  "user_stories": [
+    {
+      "us_id": "US-2.1",
+      "title": "Login con JWT y roles",
+      "status": "pending",
+      "tasks": [
+        {
+          "task_id": "T-2.1.1",
+          "agent": "claude:security",
+          "input": "Crear JwtService y JwtAuthFilter",
+          "output": "Filtro JWT activo",
+          "acceptance_criteria": [
+            "Requests sin token fallan",
+            "Requests con token pasan"
+          ]
+        },
+        {
+          "task_id": "T-2.1.2",
+          "agent": "claude:backend",
+          "input": "Implementar AuthController::login",
+          "output": "Login devuelve JWT",
+          "acceptance_criteria": ["Token incluye uid y role"]
+        }
+      ]
+    }
+  ]
+}

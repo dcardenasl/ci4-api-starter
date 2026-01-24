@@ -1,0 +1,34 @@
+{
+  "phase_id": "phase_9",
+  "name": "Reusable Starter Template",
+  "depends_on": ["phase_8"],
+  "user_stories": [
+    {
+      "us_id": "US-9.1",
+      "title": "Publicar starter reusable",
+      "status": "pending",
+      "tasks": [
+        {
+          "task_id": "T-9.1.1",
+          "agent": "claude:release",
+          "input": "Limpiar datos demo y crear README",
+          "output": "Proyecto documentado",
+          "acceptance_criteria": [
+            "README incluye setup completo",
+            "No hay datos demo"
+          ]
+        },
+        {
+          "task_id": "T-9.1.2",
+          "agent": "claude:release",
+          "input": "Crear script init para nuevos proyectos",
+          "output": "Script init funcional",
+          "acceptance_criteria": [
+            "Nuevo proyecto se levanta en <10 min",
+            "Script ejecuta sin errores"
+          ]
+        }
+      ]
+    }
+  ]
+}

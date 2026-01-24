@@ -1,0 +1,34 @@
+{
+  "phase_id": "phase_3",
+  "name": "Standard API Response",
+  "depends_on": ["phase_2"],
+  "user_stories": [
+    {
+      "us_id": "US-3.1",
+      "title": "Unificar formato estándar de respuestas",
+      "status": "pending",
+      "tasks": [
+        {
+          "task_id": "T-3.1.1",
+          "agent": "claude:backend",
+          "input": "Crear app/Helpers/response_helper.php con apiResponse()",
+          "output": "Helper con formato { success, data, error }",
+          "acceptance_criteria": [
+            "apiResponse retorna JSON válido",
+            "Incluye success, data, error"
+          ]
+        },
+        {
+          "task_id": "T-3.1.2",
+          "agent": "claude:backend",
+          "input": "Actualizar todos los Controllers para usar apiResponse()",
+          "output": "Controllers sin setJSON manual",
+          "acceptance_criteria": [
+            "No hay return response()->setJSON() directo",
+            "Todos usan apiResponse()"
+          ]
+        }
+      ]
+    }
+  ]
+}

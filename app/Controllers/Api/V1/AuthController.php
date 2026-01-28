@@ -8,6 +8,7 @@ use CodeIgniter\HTTP\ResponseInterface;
 use App\Services\UserService;
 use App\Services\JwtService;
 use App\Models\UserModel;
+use OpenApi\Attributes as OA;
 
 class AuthController extends Controller
 {
@@ -21,10 +22,64 @@ class AuthController extends Controller
         $this->jwtService = new JwtService();
     }
 
-    /**
-     * User login endpoint
-     * POST /api/v1/auth/login
-     */
+    #[OA\Post(
+        path: '/api/v1/auth/login',
+        summary: 'User login',
+        tags: ['Authentication'],
+    )]
+    #[OA\RequestBody(
+        required: true,
+        content: new OA\JsonContent(
+            required: ['username', 'password'],
+            properties: [
+                new OA\Property(property: 'username', type: 'string', example: 'testuser', description: 'Username or email'),
+                new OA\Property(property: 'password', type: 'string', format: 'password', example: 'testpass123'),
+            ]
+        )
+    )]
+    #[OA\Response(
+        response: 200,
+        description: 'Login successful',
+        content: new OA\JsonContent(
+            properties: [
+                new OA\Property(property: 'success', type: 'boolean', example: true),
+                new OA\Property(property: 'message', type: 'string', example: 'Login successful'),
+                new OA\Property(
+                    property: 'data',
+                    properties: [
+                        new OA\Property(property: 'token', type: 'string', example: 'eyJ0eXAiOiJKV1QiLCJhbGc...'),
+                        new OA\Property(
+                            property: 'user',
+                            properties: [
+                                new OA\Property(property: 'id', type: 'string', example: '1'),
+                                new OA\Property(property: 'username', type: 'string', example: 'testuser'),
+                                new OA\Property(property: 'email', type: 'string', example: 'test@example.com'),
+                                new OA\Property(property: 'role', type: 'string', example: 'user'),
+                            ],
+                            type: 'object'
+                        ),
+                    ],
+                    type: 'object'
+                ),
+            ]
+        )
+    )]
+    #[OA\Response(
+        response: 401,
+        description: 'Invalid credentials',
+        content: new OA\JsonContent(
+            properties: [
+                new OA\Property(property: 'success', type: 'boolean', example: false),
+                new OA\Property(
+                    property: 'errors',
+                    properties: [
+                        new OA\Property(property: 'credentials', type: 'string', example: 'Invalid credentials'),
+                    ],
+                    type: 'object'
+                ),
+            ]
+        )
+    )]
     public function login()
     {
         $data = $this->request->getJSON(true) ?? [];
@@ -51,10 +106,64 @@ class AuthController extends Controller
         ], ResponseInterface::HTTP_OK);
     }
 
-    /**
-     * User registration endpoint
-     * POST /api/v1/auth/register
-     */
+    #[OA\Post(
+        path: '/api/v1/auth/register',
+        summary: 'Register new user',
+        tags: ['Authentication'],
+    )]
+    #[OA\RequestBody(
+        required: true,
+        content: new OA\JsonContent(
+            required: ['username', 'email', 'password'],
+            properties: [
+                new OA\Property(property: 'username', type: 'string', example: 'newuser'),
+                new OA\Property(property: 'email', type: 'string', format: 'email', example: 'newuser@example.com'),
+                new OA\Property(property: 'password', type: 'string', format: 'password', example: 'password123'),
+                new OA\Property(property: 'role', type: 'string', example: 'user', description: 'Optional, defaults to "user"'),
+            ]
+        )
+    )]
+    #[OA\Response(
+        response: 201,
+        description: 'User registered successfully',
+        content: new OA\JsonContent(
+            properties: [
+                new OA\Property(property: 'success', type: 'boolean', example: true),
+                new OA\Property(property: 'message', type: 'string', example: 'User registered successfully'),
+                new OA\Property(
+                    property: 'data',
+                    properties: [
+                        new OA\Property(property: 'token', type: 'string', example: 'eyJ0eXAiOiJKV1QiLCJhbGc...'),
+                        new OA\Property(
+                            property: 'user',
+                            properties: [
+                                new OA\Property(property: 'id', type: 'string', example: '1'),
+                                new OA\Property(property: 'username', type: 'string', example: 'newuser'),
+                                new OA\Property(property: 'email', type: 'string', example: 'newuser@example.com'),
+                                new OA\Property(property: 'role', type: 'string', example: 'user'),
+                            ],
+                            type: 'object'
+                        ),
+                    ],
+                    type: 'object'
+                ),
+            ]
+        )
+    )]
+    #[OA\Response(
+        response: 422,
+        description: 'Validation error',
+        content: new OA\JsonContent(
+            properties: [
+                new OA\Property(property: 'success', type: 'boolean', example: false),
+                new OA\Property(
+                    property: 'errors',
+                    type: 'object',
+                    example: ['email' => 'This email is already registered']
+                ),
+            ]
+        )
+    )]
     public function register()
     {
         $data = $this->request->getJSON(true) ?? [];
@@ -81,10 +190,44 @@ class AuthController extends Controller
         ], ResponseInterface::HTTP_CREATED);
     }
 
-    /**
-     * Get current authenticated user
-     * GET /api/v1/auth/me
-     */
+    #[OA\Get(
+        path: '/api/v1/auth/me',
+        summary: 'Get current authenticated user',
+        security: [['bearerAuth' => []]],
+        tags: ['Authentication'],
+    )]
+    #[OA\Response(
+        response: 200,
+        description: 'Current user details',
+        content: new OA\JsonContent(
+            properties: [
+                new OA\Property(property: 'success', type: 'boolean', example: true),
+                new OA\Property(
+                    property: 'data',
+                    properties: [
+                        new OA\Property(property: 'id', type: 'string', example: '1'),
+                        new OA\Property(property: 'username', type: 'string', example: 'testuser'),
+                        new OA\Property(property: 'email', type: 'string', example: 'test@example.com'),
+                        new OA\Property(property: 'role', type: 'string', example: 'user'),
+                        new OA\Property(property: 'created_at', type: 'object'),
+                        new OA\Property(property: 'updated_at', type: 'object'),
+                        new OA\Property(property: 'deleted_at', type: 'string', nullable: true),
+                    ],
+                    type: 'object'
+                ),
+            ]
+        )
+    )]
+    #[OA\Response(
+        response: 401,
+        description: 'Unauthorized',
+        content: new OA\JsonContent(
+            properties: [
+                new OA\Property(property: 'success', type: 'boolean', example: false),
+                new OA\Property(property: 'message', type: 'string', example: 'User not authenticated'),
+            ]
+        )
+    )]
     public function me()
     {
         $userId = $this->request->userId ?? null;

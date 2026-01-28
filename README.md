@@ -1,26 +1,29 @@
 # CI4 API Starter
 
-A CodeIgniter 4 REST API starter project with layered architecture (Controller → Service → Repository → Entity).
+A production-ready CodeIgniter 4 REST API starter project with JWT authentication, layered architecture, and comprehensive OpenAPI documentation.
 
 ## Features
 
-- Clean layered architecture
-- RESTful API with JSON responses
-- MySQL database with migrations
-- GitHub Actions CI/CD
-- CRUD operations for User resource
-- Environment-based configuration
+- 🔐 **JWT Authentication** - Secure token-based authentication with Bearer tokens
+- 📚 **OpenAPI/Swagger Documentation** - Auto-generated API documentation
+- 🏗️ **Clean Layered Architecture** - Controller → Service → Model → Entity pattern
+- 🎯 **RESTful API** - Standardized JSON responses with proper HTTP status codes
+- 🔒 **Secure by Default** - Password hashing, token validation, input sanitization
+- 🗄️ **MySQL Database** - Migrations, seeders, and soft deletes
+- 🚀 **GitHub Actions CI/CD** - Automated testing on push
+- ♻️ **CRUD Operations** - Complete user management with authentication
+- ⚙️ **Environment-based Configuration** - Easy deployment across environments
 
 ## Requirements
 
-- PHP 8.1 or higher
-- MySQL 8.0 or higher
-- Composer
-- PHP Extensions:
-  - mysqli
-  - mbstring
-  - intl
-  - json
+- **PHP** 8.1 or higher
+- **MySQL** 8.0 or higher
+- **Composer** 2.x
+- **PHP Extensions**:
+  - mysqli (database)
+  - mbstring (string handling)
+  - intl (internationalization)
+  - json (JSON parsing)
 
 ## Installation
 
@@ -40,12 +43,15 @@ composer install
 cp env .env
 ```
 
-Edit `.env` and configure your database settings:
-```
+Edit `.env` and configure your settings:
+```bash
+# Environment
 CI_ENVIRONMENT = development
 
+# Application
 app.baseURL = 'http://localhost:8080'
 
+# Database
 database.default.hostname = 127.0.0.1
 database.default.database = ci4_api
 database.default.username = root
@@ -54,7 +60,12 @@ database.default.DBDriver = MySQLi
 database.default.port = 3306
 database.default.charset = utf8mb4
 database.default.DBCollat = utf8mb4_general_ci
+
+# JWT Authentication (CHANGE IN PRODUCTION!)
+JWT_SECRET_KEY = 'change-this-to-a-random-secret-key-in-production'
 ```
+
+> ⚠️ **Security Warning**: Change `JWT_SECRET_KEY` to a long random string in production!
 
 4. Create the database:
 ```bash
@@ -86,71 +97,182 @@ php spark serve
 
 The API will be available at `http://localhost:8080`
 
+## API Documentation
+
+### OpenAPI/Swagger
+
+View the complete API documentation at:
+- **Swagger JSON**: http://localhost:8080/swagger.json
+- Import this file into [Swagger UI](https://swagger.io/tools/swagger-ui/) or [Postman](https://www.postman.com/) for interactive documentation
+
+To regenerate the documentation after making changes:
+```bash
+php spark swagger:generate
+```
+
 ## API Endpoints
 
-### Users
+### Authentication (Public)
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/v1/users` | Get all users |
-| GET | `/api/v1/users/{id}` | Get user by ID |
-| POST | `/api/v1/users` | Create new user |
-| PUT | `/api/v1/users/{id}` | Update user |
-| DELETE | `/api/v1/users/{id}` | Delete user |
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| POST | `/api/v1/auth/register` | Register new user | No |
+| POST | `/api/v1/auth/login` | Login and get JWT token | No |
+| GET | `/api/v1/auth/me` | Get current user info | Yes |
+
+### Users (Protected)
+
+All user endpoints require JWT authentication via `Authorization: Bearer {token}` header.
+
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| GET | `/api/v1/users` | Get all users | Yes |
+| GET | `/api/v1/users/{id}` | Get user by ID | Yes |
+| POST | `/api/v1/users` | Create new user | Yes |
+| PUT | `/api/v1/users/{id}` | Update user | Yes |
+| DELETE | `/api/v1/users/{id}` | Delete user (soft) | Yes |
 
 ### Example Requests
 
+#### Authentication
+
+**Register a new user:**
+```bash
+curl -X POST http://localhost:8080/api/v1/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "johndoe",
+    "email": "john@example.com",
+    "password": "securepass123"
+  }'
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "User registered successfully",
+  "data": {
+    "token": "eyJ0eXAiOiJKV1QiLCJhbGc...",
+    "user": {
+      "id": "1",
+      "username": "johndoe",
+      "email": "john@example.com",
+      "role": "user"
+    }
+  }
+}
+```
+
+**Login:**
+```bash
+curl -X POST http://localhost:8080/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "johndoe",
+    "password": "securepass123"
+  }'
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Login successful",
+  "data": {
+    "token": "eyJ0eXAiOiJKV1QiLCJhbGc...",
+    "user": {
+      "id": "1",
+      "username": "johndoe",
+      "email": "john@example.com",
+      "role": "user"
+    }
+  }
+}
+```
+
+**Get current user (authenticated):**
+```bash
+TOKEN="your-jwt-token-here"
+curl -X GET http://localhost:8080/api/v1/auth/me \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+#### User Management (Protected)
+
 **Get all users:**
 ```bash
-curl http://localhost:8080/api/v1/users
+TOKEN="your-jwt-token-here"
+curl -X GET http://localhost:8080/api/v1/users \
+  -H "Authorization: Bearer $TOKEN"
 ```
 
 **Get user by ID:**
 ```bash
-curl http://localhost:8080/api/v1/users/1
+TOKEN="your-jwt-token-here"
+curl -X GET http://localhost:8080/api/v1/users/1 \
+  -H "Authorization: Bearer $TOKEN"
 ```
 
 **Create a new user:**
 ```bash
+TOKEN="your-jwt-token-here"
 curl -X POST http://localhost:8080/api/v1/users \
+  -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"username":"john_doe","email":"john@example.com"}'
+  -d '{"username":"jane_doe","email":"jane@example.com"}'
 ```
 
 **Update a user:**
 ```bash
+TOKEN="your-jwt-token-here"
 curl -X PUT http://localhost:8080/api/v1/users/1 \
+  -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"username":"john_updated","email":"john.updated@example.com"}'
 ```
 
-**Delete a user:**
+**Delete a user (soft delete):**
 ```bash
-curl -X DELETE http://localhost:8080/api/v1/users/1
+TOKEN="your-jwt-token-here"
+curl -X DELETE http://localhost:8080/api/v1/users/1 \
+  -H "Authorization: Bearer $TOKEN"
 ```
 
 ## Project Structure
 
 ```
 app/
+├── Commands/
+│   └── GenerateSwagger.php           # Swagger doc generator
+├── Config/
+│   ├── Database.php                  # Database configuration
+│   ├── Filters.php                   # Filter registration (JwtAuth)
+│   ├── OpenApi.php                   # OpenAPI base configuration
+│   └── Routes.php                    # API routes
 ├── Controllers/
+│   ├── ApiController.php             # Base API controller
 │   └── Api/
 │       └── V1/
-│           └── UserController.php    # API endpoints
-├── Services/
-│   └── UserService.php               # Business logic
-├── Repositories/
-│   └── UserRepository.php            # Data access layer
+│           ├── AuthController.php    # Authentication endpoints
+│           └── UserController.php    # User CRUD endpoints
 ├── Entities/
-│   └── UserEntity.php                # Data model
-├── Database/
-│   ├── Migrations/
-│   │   └── *_CreateUsersTable.php
-│   └── Seeds/
-│       └── UserSeeder.php
-└── Config/
-    ├── Database.php                  # Database configuration
-    └── Routes.php                    # API routes
+│   └── UserEntity.php                # User data model
+├── Filters/
+│   └── JwtAuthFilter.php             # JWT authentication filter
+├── Models/
+│   └── UserModel.php                 # User database model
+├── Services/
+│   ├── JwtService.php                # JWT token operations
+│   └── UserService.php               # User business logic
+└── Database/
+    ├── Migrations/
+    │   ├── *_CreateUsersTable.php
+    │   └── *_AddPasswordToUsers.php
+    └── Seeds/
+        └── UserSeeder.php
+public/
+└── swagger.json                      # Generated OpenAPI documentation
 ```
 
 ## ApiController Base
@@ -340,6 +462,35 @@ $routes->resource('api/v1/products', [
 ]);
 ```
 
+## JWT Authentication
+
+### How It Works
+
+1. **Register/Login**: User provides credentials, receives JWT token
+2. **Token Storage**: Client stores token (localStorage, cookie, etc.)
+3. **API Requests**: Client includes token in Authorization header
+4. **Validation**: JwtAuthFilter validates token on protected routes
+5. **Access**: Valid token grants access to protected endpoints
+
+### Token Details
+
+- **Algorithm**: HS256 (HMAC with SHA-256)
+- **Expiration**: 1 hour (configurable)
+- **Payload**: `uid` (user ID), `role`, `iat` (issued at), `exp` (expiration)
+- **Security**: Bcrypt password hashing, passwords never exposed in responses
+
+### Protected Routes
+
+All routes under the `jwtauth` filter require authentication:
+```php
+// In app/Config/Routes.php
+$routes->group('', ['filter' => 'jwtauth'], function($routes) {
+    $routes->get('auth/me', 'AuthController::me');
+    $routes->get('users', 'UserController::index');
+    // ... other protected routes
+});
+```
+
 ## Architecture
 
 This project follows a layered architecture pattern with ApiController as the base:
@@ -371,31 +522,32 @@ This project follows a layered architecture pattern with ApiController as the ba
    - Type casting and date handling
    - Provides `toArray()` for JSON serialization
 
-## Database Commands
+## Commands
 
-Check migration status:
+### Database Commands
+
 ```bash
-php spark migrate:status
+php spark migrate              # Run all pending migrations
+php spark migrate:status       # Check migration status
+php spark migrate:rollback     # Rollback last batch
+php spark db:table users       # View users table structure
+php spark db:seed UserSeeder   # Seed sample data
 ```
 
-Run migrations:
+### API Documentation
+
 ```bash
-php spark migrate
+php spark swagger:generate     # Generate OpenAPI documentation
 ```
 
-Rollback migrations:
-```bash
-php spark migrate:rollback
-```
+This command scans your controllers for OpenAPI attributes and generates `public/swagger.json`.
 
-View table structure:
-```bash
-php spark db:table users
-```
+### Development
 
-Seed database:
 ```bash
-php spark db:seed UserSeeder
+php spark serve                # Start development server (localhost:8080)
+php spark routes               # List all registered routes
+php spark list                 # Show all available commands
 ```
 
 ## Testing
@@ -435,6 +587,110 @@ Follow the layered architecture:
 5. Add routes in `app/Config/Routes.php` (use `$routes->resource()`)
 
 With ApiController, a new resource can be implemented in ~30 minutes vs 2-3 hours with manual implementation.
+
+## Security Features
+
+- ✅ **JWT Authentication** - Stateless token-based authentication
+- ✅ **Password Hashing** - Bcrypt with automatic salt generation
+- ✅ **Password Hiding** - Never exposed in API responses
+- ✅ **Token Expiration** - 1-hour lifetime (configurable)
+- ✅ **Bearer Token** - Standard Authorization header format
+- ✅ **Input Validation** - Model-level validation rules
+- ✅ **Soft Deletes** - Recoverable user deletion
+- ✅ **SQL Injection Protection** - Query builder parameterization
+- ✅ **CSRF Protection** - Available for form submissions
+- ✅ **XSS Protection** - Output escaping in responses
+
+### Security Best Practices
+
+1. **Change JWT Secret**: Update `JWT_SECRET_KEY` in production to a strong random value
+2. **Use HTTPS**: Always use HTTPS in production
+3. **Rate Limiting**: Consider adding rate limiting for auth endpoints
+4. **Token Refresh**: Implement refresh tokens for long-lived sessions
+5. **Environment Variables**: Never commit `.env` file to version control
+6. **Database Credentials**: Use strong passwords and restrict access
+7. **Error Messages**: Don't expose sensitive information in error responses
+
+## OpenAPI Documentation
+
+### Viewing Documentation
+
+1. **JSON Format**: http://localhost:8080/swagger.json
+2. **Swagger UI**: Import the JSON into [Swagger UI](https://editor.swagger.io/)
+3. **Postman**: Import as OpenAPI 3.0 spec
+
+### Regenerating Docs
+
+After modifying controllers or adding new endpoints:
+```bash
+php spark swagger:generate
+```
+
+### Adding Documentation to New Endpoints
+
+Use PHP 8 attributes on your controller methods:
+
+```php
+use OpenApi\Attributes as OA;
+
+#[OA\Get(
+    path: '/api/v1/products',
+    summary: 'Get all products',
+    security: [['bearerAuth' => []]],
+    tags: ['Products'],
+)]
+#[OA\Response(
+    response: 200,
+    description: 'List of products',
+    content: new OA\JsonContent(/* ... */)
+)]
+public function index(): ResponseInterface
+{
+    return $this->handleRequest('index');
+}
+```
+
+## Dependencies
+
+### Core Dependencies
+- `codeigniter4/framework` ^4.5 - CodeIgniter framework
+- `firebase/php-jwt` ^7.0 - JWT token handling
+- `zircote/swagger-php` ^6.0 - OpenAPI documentation generation
+
+### Development Dependencies
+- `phpunit/phpunit` - Unit testing
+- `fakerphp/faker` - Test data generation
+- `mikey179/vfsstream` - Virtual filesystem for tests
+
+## Troubleshooting
+
+### "Authorization header missing"
+**Cause**: Request doesn't include Bearer token
+**Solution**: Add header: `Authorization: Bearer {your-token}`
+
+### "Invalid or expired token"
+**Cause**: Token expired (>1 hour old) or invalid
+**Solution**: Login again to get a fresh token
+
+### "Class not found" errors
+**Cause**: Composer autoload not updated
+**Solution**: Run `composer dump-autoload`
+
+### Swagger generation fails
+**Cause**: PHP version or annotation syntax
+**Solution**: Ensure PHP 8.0+ and check OpenAPI attribute syntax
+
+### Database connection failed
+**Cause**: Incorrect database credentials
+**Solution**: Verify `.env` database settings and ensure MySQL is running
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
 ## License
 

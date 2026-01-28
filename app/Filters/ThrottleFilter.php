@@ -51,10 +51,12 @@ class ThrottleFilter implements FilterInterface
             $remaining = $maxRequests - ($requests + 1);
         }
 
-        // Add rate limit headers to response
-        $response->setHeader('X-RateLimit-Limit', (string) $maxRequests);
-        $response->setHeader('X-RateLimit-Remaining', (string) max(0, $remaining));
-        $response->setHeader('X-RateLimit-Reset', (string) (time() + $window));
+        // Store rate limit info in request for after() method
+        $request->rateLimitInfo = [
+            'limit' => $maxRequests,
+            'remaining' => max(0, $remaining),
+            'reset' => time() + $window,
+        ];
 
         return $request;
     }
@@ -69,6 +71,14 @@ class ThrottleFilter implements FilterInterface
      */
     public function after(RequestInterface $request, ResponseInterface $response, $arguments = null)
     {
+        // Set rate limit headers if they were stored in the before() method
+        if (isset($request->rateLimitInfo)) {
+            $info = $request->rateLimitInfo;
+            $response->setHeader('X-RateLimit-Limit', (string) $info['limit']);
+            $response->setHeader('X-RateLimit-Remaining', (string) $info['remaining']);
+            $response->setHeader('X-RateLimit-Reset', (string) $info['reset']);
+        }
+
         return $response;
     }
 

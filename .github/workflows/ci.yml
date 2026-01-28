@@ -80,6 +80,15 @@ jobs:
           ENC_KEY=$(php spark key:generate --show | sed 's/.*: //')
           echo "encryption.key = \"${ENC_KEY}\"" >> .env
 
+      - name: Prepare writable directories
+        run: |
+          mkdir -p writable/cache
+          mkdir -p writable/logs
+          mkdir -p writable/session
+          mkdir -p writable/uploads
+          mkdir -p writable/debugbar
+          chmod -R 777 writable
+
       - name: Verify PHPUnit configuration
         run: |
           echo "Checking for phpunit.xml..."

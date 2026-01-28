@@ -42,8 +42,24 @@ $RECYCLE.BIN/
 # These should never be under version control,
 # as it poses a security risk.
 .env
+.env.*
+!.env.example
+!.env.docker.example
 .vagrant
 Vagrantfile
+
+#-------------------------
+# Security & Secrets
+#-------------------------
+# Never commit sensitive files
+*.key
+*.pem
+*.p12
+*.pfx
+secrets/
+credentials/
+.secrets
+.credentials
 
 #-------------------------
 # Temporary Files
@@ -63,7 +79,16 @@ writable/uploads/*
 writable/debugbar/*
 !writable/debugbar/index.html
 
+writable/database.db
+writable/database.db-*
+
 php_errors.log
+
+#-------------------------
+# Setup Scripts
+#-------------------------
+setup_db.php
+setup_mysql.php
 
 #-------------------------
 # User Guide Temp Files
@@ -77,6 +102,7 @@ user_guide_src/cilexer/pycilexer.egg-info/*
 # Test Files
 #-------------------------
 tests/coverage*
+coverage/
 
 # Don't save phpunit under version control.
 phpunit
@@ -123,4 +149,26 @@ _modules/*
 .vscode/
 
 /results/
-/phpunit*.xml
+.phpunit.result.cache
+.phpunit.cache
+
+# Note: composer.lock should be committed in production projects
+# Uncommented here for flexibility
+composer.lock
+
+#-------------------------
+# Docker
+#-------------------------
+# Docker volumes and local overrides
+docker-compose.override.yml
+.docker/
+docker/data/
+
+#-------------------------
+# Backup Files
+#-------------------------
+*.sql
+*.sql.gz
+*.backup
+*.bak
+backup/

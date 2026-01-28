@@ -63,7 +63,16 @@ writable/uploads/*
 writable/debugbar/*
 !writable/debugbar/index.html
 
+writable/database.db
+writable/database.db-*
+
 php_errors.log
+
+#-------------------------
+# Setup Scripts
+#-------------------------
+setup_db.php
+setup_mysql.php
 
 #-------------------------
 # User Guide Temp Files
@@ -124,3 +133,5 @@ _modules/*
 
 /results/
 /phpunit*.xml
+
+composer.lock

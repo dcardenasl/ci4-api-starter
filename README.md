@@ -1,68 +1,249 @@
-# CodeIgniter 4 Application Starter
+# CI4 API Starter
 
-## What is CodeIgniter?
+A CodeIgniter 4 REST API starter project with layered architecture (Controller → Service → Repository → Entity).
+
+## Features
+
+- Clean layered architecture
+- RESTful API with JSON responses
+- MySQL database with migrations
+- GitHub Actions CI/CD
+- CRUD operations for User resource
+- Environment-based configuration
+
+## Requirements
+
+- PHP 8.1 or higher
+- MySQL 8.0 or higher
+- Composer
+- PHP Extensions:
+  - mysqli
+  - mbstring
+  - intl
+  - json
+
+## Installation
+
+1. Clone the repository:
+```bash
+git clone <repository-url>
+cd ci4-api-starter
+```
+
+2. Install dependencies:
+```bash
+composer install
+```
+
+3. Configure environment:
+```bash
+cp env .env
+```
+
+Edit `.env` and configure your database settings:
+```
+CI_ENVIRONMENT = development
+
+app.baseURL = 'http://localhost:8080'
+
+database.default.hostname = 127.0.0.1
+database.default.database = ci4_api
+database.default.username = root
+database.default.password = root
+database.default.DBDriver = MySQLi
+database.default.port = 3306
+database.default.charset = utf8mb4
+database.default.DBCollat = utf8mb4_general_ci
+```
+
+4. Create the database:
+```bash
+php setup_mysql.php
+```
+
+Or manually:
+```sql
+CREATE DATABASE ci4_api;
+CREATE DATABASE ci4_test;
+```
+
+5. Run migrations:
+```bash
+php spark migrate
+```
+
+6. (Optional) Seed the database with sample data:
+```bash
+php spark db:seed UserSeeder
+```
+
+## Usage
+
+Start the development server:
+```bash
+php spark serve
+```
+
+The API will be available at `http://localhost:8080`
+
+## API Endpoints
+
+### Users
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/v1/users` | Get all users |
+| GET | `/api/v1/users/{id}` | Get user by ID |
+| POST | `/api/v1/users` | Create new user |
+| PUT | `/api/v1/users/{id}` | Update user |
+| DELETE | `/api/v1/users/{id}` | Delete user |
+
+### Example Requests
+
+**Get all users:**
+```bash
+curl http://localhost:8080/api/v1/users
+```
+
+**Get user by ID:**
+```bash
+curl http://localhost:8080/api/v1/users/1
+```
+
+**Create a new user:**
+```bash
+curl -X POST http://localhost:8080/api/v1/users \
+  -H "Content-Type: application/json" \
+  -d '{"username":"john_doe","email":"john@example.com"}'
+```
+
+**Update a user:**
+```bash
+curl -X PUT http://localhost:8080/api/v1/users/1 \
+  -H "Content-Type: application/json" \
+  -d '{"username":"john_updated","email":"john.updated@example.com"}'
+```
+
+**Delete a user:**
+```bash
+curl -X DELETE http://localhost:8080/api/v1/users/1
+```
+
+## Project Structure
+
+```
+app/
+├── Controllers/
+│   └── Api/
+│       └── V1/
+│           └── UserController.php    # API endpoints
+├── Services/
+│   └── UserService.php               # Business logic
+├── Repositories/
+│   └── UserRepository.php            # Data access layer
+├── Entities/
+│   └── UserEntity.php                # Data model
+├── Database/
+│   ├── Migrations/
+│   │   └── *_CreateUsersTable.php
+│   └── Seeds/
+│       └── UserSeeder.php
+└── Config/
+    ├── Database.php                  # Database configuration
+    └── Routes.php                    # API routes
+```
+
+## Architecture
+
+This project follows a layered architecture pattern:
+
+1. **Controller Layer** (`app/Controllers/Api/V1/`)
+   - Handles HTTP requests and responses
+   - Validates input
+   - Delegates to Service layer
+
+2. **Service Layer** (`app/Services/`)
+   - Contains business logic
+   - Orchestrates operations
+   - Delegates data access to Repository layer
+
+3. **Repository Layer** (`app/Repositories/`)
+   - Handles database operations
+   - Query builder usage
+   - Returns Entity objects
+
+4. **Entity Layer** (`app/Entities/`)
+   - Data models
+   - Type casting and date handling
+
+## Database Commands
+
+Check migration status:
+```bash
+php spark migrate:status
+```
+
+Run migrations:
+```bash
+php spark migrate
+```
+
+Rollback migrations:
+```bash
+php spark migrate:rollback
+```
+
+View table structure:
+```bash
+php spark db:table users
+```
+
+Seed database:
+```bash
+php spark db:seed UserSeeder
+```
+
+## Testing
+
+Run tests (when configured):
+```bash
+vendor/bin/phpunit
+```
+
+The project includes GitHub Actions CI that automatically:
+- Tests on PHP 8.1, 8.2, and 8.3
+- Sets up MySQL service
+- Runs migrations
+- Executes tests
+
+## Development
+
+### Creating New Migrations
+
+```bash
+php spark make:migration CreateTableName
+```
+
+### Creating New Seeders
+
+```bash
+php spark make:seeder TableNameSeeder
+```
+
+### Creating New Models
+
+Follow the layered architecture:
+1. Create Entity in `app/Entities/`
+2. Create Repository in `app/Repositories/`
+3. Create Service in `app/Services/`
+4. Create Controller in `app/Controllers/Api/V1/`
+5. Add routes in `app/Config/Routes.php`
+
+## License
+
+This project is open-sourced software licensed under the MIT license.
+
+## About CodeIgniter
 
 CodeIgniter is a PHP full-stack web framework that is light, fast, flexible and secure.
 More information can be found at the [official site](https://codeigniter.com).
-
-This repository holds a composer-installable app starter.
-It has been built from the
-[development repository](https://github.com/codeigniter4/CodeIgniter4).
-
-More information about the plans for version 4 can be found in [CodeIgniter 4](https://forum.codeigniter.com/forumdisplay.php?fid=28) on the forums.
-
-You can read the [user guide](https://codeigniter.com/user_guide/)
-corresponding to the latest version of the framework.
-
-## Installation & updates
-
-`composer create-project codeigniter4/appstarter` then `composer update` whenever
-there is a new release of the framework.
-
-When updating, check the release notes to see if there are any changes you might need to apply
-to your `app` folder. The affected files can be copied or merged from
-`vendor/codeigniter4/framework/app`.
-
-## Setup
-
-Copy `env` to `.env` and tailor for your app, specifically the baseURL
-and any database settings.
-
-## Important Change with index.php
-
-`index.php` is no longer in the root of the project! It has been moved inside the *public* folder,
-for better security and separation of components.
-
-This means that you should configure your web server to "point" to your project's *public* folder, and
-not to the project root. A better practice would be to configure a virtual host to point there. A poor practice would be to point your web server to the project root and expect to enter *public/...*, as the rest of your logic and the
-framework are exposed.
-
-**Please** read the user guide for a better explanation of how CI4 works!
-
-## Repository Management
-
-We use GitHub issues, in our main repository, to track **BUGS** and to track approved **DEVELOPMENT** work packages.
-We use our [forum](http://forum.codeigniter.com) to provide SUPPORT and to discuss
-FEATURE REQUESTS.
-
-This repository is a "distribution" one, built by our release preparation script.
-Problems with it can be raised on our forum, or as issues in the main repository.
-
-## Server Requirements
-
-PHP version 8.1 or higher is required, with the following extensions installed:
-
-- [intl](http://php.net/manual/en/intl.requirements.php)
-- [mbstring](http://php.net/manual/en/mbstring.installation.php)
-
-> [!WARNING]
-> - The end of life date for PHP 7.4 was November 28, 2022.
-> - The end of life date for PHP 8.0 was November 26, 2023.
-> - If you are still using PHP 7.4 or 8.0, you should upgrade immediately.
-> - The end of life date for PHP 8.1 will be December 31, 2025.
-
-Additionally, make sure that the following extensions are enabled in your PHP:
-
-- json (enabled by default - don't turn it off)
-- [mysqlnd](http://php.net/manual/en/mysqlnd.install.php) if you plan to use MySQL
-- [libcurl](http://php.net/manual/en/curl.requirements.php) if you plan to use the HTTP\CURLRequest library

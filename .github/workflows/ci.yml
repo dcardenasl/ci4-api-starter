@@ -1,0 +1,92 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, cc ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    name: Test PHP ${{ matrix.php-version }}
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        php-version: ['8.1', '8.2', '8.3']
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: ci4_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-version }}
+          extensions: mysqli, mbstring, intl, json
+          coverage: none
+
+      - name: Validate composer.json
+        run: composer validate --strict
+
+      - name: Cache Composer packages
+        id: composer-cache
+        uses: actions/cache@v3
+        with:
+          path: vendor
+          key: ${{ runner.os }}-php-${{ matrix.php-version }}-${{ hashFiles('**/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-php-${{ matrix.php-version }}-
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-progress
+
+      - name: Copy .env file
+        run: cp .env .env.backup && php -r "file_put_contents('.env', file_get_contents('.env.backup'));"
+
+      - name: Set testing environment
+        run: |
+          echo "CI_ENVIRONMENT = testing" >> .env
+          echo "database.tests.hostname = 127.0.0.1" >> .env
+          echo "database.tests.database = ci4_test" >> .env
+          echo "database.tests.username = root" >> .env
+          echo "database.tests.password = root" >> .env
+          echo "database.tests.DBDriver = MySQLi" >> .env
+          echo "database.tests.DBPrefix = db_" >> .env
+          echo "database.tests.port = 3306" >> .env
+
+      - name: Run database migrations
+        run: php spark migrate --all
+        env:
+          CI_ENVIRONMENT: testing
+
+      - name: Run tests
+        run: |
+          if [ -f "vendor/bin/phpunit" ]; then
+            vendor/bin/phpunit
+          else
+            echo "PHPUnit not configured yet, skipping tests"
+          fi
+
+      - name: Check code style (optional)
+        continue-on-error: true
+        run: |
+          if [ -f "vendor/bin/php-cs-fixer" ]; then
+            vendor/bin/php-cs-fixer fix --dry-run --diff
+          else
+            echo "PHP CS Fixer not configured, skipping"
+          fi

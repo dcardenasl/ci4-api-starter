@@ -42,8 +42,24 @@ $RECYCLE.BIN/
 # These should never be under version control,
 # as it poses a security risk.
 .env
+.env.*
+!.env.example
+!.env.docker.example
 .vagrant
 Vagrantfile
+
+#-------------------------
+# Security & Secrets
+#-------------------------
+# Never commit sensitive files
+*.key
+*.pem
+*.p12
+*.pfx
+secrets/
+credentials/
+.secrets
+.credentials
 
 #-------------------------
 # Temporary Files
@@ -134,4 +150,23 @@ _modules/*
 /results/
 /phpunit*.xml
 
+# Note: composer.lock should be committed in production projects
+# Uncommented here for flexibility
 composer.lock
+
+#-------------------------
+# Docker
+#-------------------------
+# Docker volumes and local overrides
+docker-compose.override.yml
+.docker/
+docker/data/
+
+#-------------------------
+# Backup Files
+#-------------------------
+*.sql
+*.sql.gz
+*.backup
+*.bak
+backup/

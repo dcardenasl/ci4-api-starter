@@ -40,32 +40,45 @@ composer install
 
 3. Configure environment:
 ```bash
-cp env .env
+# Copy the example file
+cp .env.example .env
 ```
+
+**⚠️ IMPORTANT SECURITY NOTICE:**
+- The `.env` file is ignored by git and should NEVER be committed
+- Generate secure keys before running the application
+- See [SECURITY.md](SECURITY.md) for detailed instructions
 
 Edit `.env` and configure your settings:
 ```bash
 # Environment
 CI_ENVIRONMENT = development
-
-# Application
 app.baseURL = 'http://localhost:8080'
 
-# Database
+# Database (use your local MySQL credentials)
 database.default.hostname = 127.0.0.1
 database.default.database = ci4_api
 database.default.username = root
-database.default.password = root
+database.default.password = YOUR_DATABASE_PASSWORD_HERE
 database.default.DBDriver = MySQLi
-database.default.port = 3306
-database.default.charset = utf8mb4
-database.default.DBCollat = utf8mb4_general_ci
 
-# JWT Authentication (CHANGE IN PRODUCTION!)
-JWT_SECRET_KEY = 'change-this-to-a-random-secret-key-in-production'
+# JWT Authentication (GENERATE SECURE KEY!)
+JWT_SECRET_KEY = ''  # Generate with: openssl rand -base64 64
+
+# Encryption Key (GENERATE SECURE KEY!)
+encryption.key = ''  # Generate with: php spark key:generate
 ```
 
-> ⚠️ **Security Warning**: Change `JWT_SECRET_KEY` to a long random string in production!
+**Generate secure keys:**
+```bash
+# Generate JWT secret
+openssl rand -base64 64
+
+# Generate encryption key
+php spark key:generate
+```
+
+> ⚠️ **Critical**: Never commit `.env` to git! It contains sensitive credentials.
 
 4. Create the database:
 ```bash
@@ -684,13 +697,57 @@ public function index(): ResponseInterface
 **Cause**: Incorrect database credentials
 **Solution**: Verify `.env` database settings and ensure MySQL is running
 
+## Configuration Files
+
+### Environment Files
+
+| File | Purpose | Git Tracked |
+|------|---------|-------------|
+| `.env.example` | Template for local development | ✅ Yes |
+| `.env` | Actual local configuration | ❌ No (ignored) |
+| `.env.docker.example` | Template for Docker | ✅ Yes |
+| `.env.docker` | Actual Docker configuration | ❌ No (ignored) |
+
+**Setup Process:**
+```bash
+# For local development
+cp .env.example .env
+# Edit .env with your credentials
+
+# For Docker
+cp .env.docker.example .env.docker
+# Edit .env.docker with secure passwords
+```
+
+### Security
+
+**Before first commit:**
+1. Verify `.env` and `.env.docker` are in `.gitignore`
+2. Check no credentials in `.env.example` or `.env.docker.example`
+3. Generate secure keys for `JWT_SECRET_KEY` and `encryption.key`
+4. Read [SECURITY.md](SECURITY.md) for complete security guidelines
+
+**Never commit:**
+- `.env` or `.env.docker` (contain real credentials)
+- Private keys (`.key`, `.pem` files)
+- Database backups (`.sql` files)
+- Any file with sensitive information
+
 ## Contributing
 
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+3. **Important**: Never commit sensitive credentials
+4. Commit your changes (`git commit -m 'Add amazing feature'`)
+5. Push to the branch (`git push origin feature/amazing-feature`)
+6. Open a Pull Request
+
+**Pre-commit checklist:**
+- [ ] No credentials in committed files
+- [ ] `.env` files are ignored by git
+- [ ] Example files use placeholders only
+- [ ] All tests pass
+- [ ] Code follows project standards
 
 ## License
 

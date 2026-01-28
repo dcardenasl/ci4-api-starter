@@ -3,14 +3,14 @@
 namespace App\Repositories;
 
 use App\Entities\UserEntity;
-use CodeIgniter\Database\ConnectionInterface;
+use CodeIgniter\Database\BaseConnection;
 
 class UserRepository
 {
-    protected $db;
-    protected $table = 'users';
+    protected BaseConnection $db;
+    protected string $table = 'users';
 
-    public function __construct(ConnectionInterface $db)
+    public function __construct(BaseConnection $db)
     {
         $this->db = $db;
     }

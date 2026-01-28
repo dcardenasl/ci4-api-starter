@@ -1,11 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services;
 
 use App\Models\UserModel;
 use App\Entities\UserEntity;
+use App\Exceptions\NotFoundException;
+use App\Exceptions\ValidationException;
+use App\Exceptions\BadRequestException;
+use App\Interfaces\UserServiceInterface;
 
-class UserService
+class UserService implements UserServiceInterface
 {
     protected UserModel $userModel;
 
@@ -33,13 +39,13 @@ class UserService
     public function show(array $data): array
     {
         if (!isset($data['id'])) {
-            return ['errors' => ['id' => 'El ID del usuario es obligatorio']];
+            return ['errors' => ['id' => lang('Users.idRequired')]];
         }
 
         $user = $this->userModel->find($data['id']);
 
         if (!$user) {
-            throw new \InvalidArgumentException('Usuario no encontrado');
+            throw new NotFoundException(lang('Users.notFound'));
         }
 
         return [
@@ -85,19 +91,19 @@ class UserService
     public function update(array $data): array
     {
         if (!isset($data['id'])) {
-            return ['errors' => ['id' => 'El ID del usuario es obligatorio']];
+            return ['errors' => ['id' => lang('Users.idRequired')]];
         }
 
         $id = (int) $data['id'];
 
         // Verificar si el usuario existe
         if (!$this->userModel->find($id)) {
-            throw new \InvalidArgumentException('Usuario no encontrado');
+            throw new NotFoundException(lang('Users.notFound'));
         }
 
         // Regla de negocio: al menos un campo requerido
         if (empty($data['email']) && empty($data['username'])) {
-            return ['errors' => ['fields' => 'Se requiere al menos un campo (email o username)']];
+            return ['errors' => ['fields' => lang('Users.fieldRequired')]];
         }
 
         // Preparar datos de actualización
@@ -127,24 +133,24 @@ class UserService
     public function destroy(array $data): array
     {
         if (!isset($data['id'])) {
-            return ['errors' => ['id' => 'El ID del usuario es obligatorio']];
+            return ['errors' => ['id' => lang('Users.idRequired')]];
         }
 
         $id = (int) $data['id'];
 
         // Verificar si el usuario existe
         if (!$this->userModel->find($id)) {
-            throw new \InvalidArgumentException('Usuario no encontrado');
+            throw new NotFoundException(lang('Users.notFound'));
         }
 
         // Realiza soft delete (gracias a useSoftDeletes = true)
         if (!$this->userModel->delete($id)) {
-            throw new \RuntimeException('Error al eliminar el usuario');
+            throw new \RuntimeException(lang('Users.deleteError'));
         }
 
         return [
             'status' => 'success',
-            'message' => 'Usuario eliminado correctamente',
+            'message' => lang('Users.deletedSuccess'),
         ];
     }
 
@@ -171,7 +177,7 @@ class UserService
     public function login(array $data): array
     {
         if (empty($data['username']) || empty($data['password'])) {
-            return ['errors' => ['credentials' => 'Username and password are required']];
+            return ['errors' => ['credentials' => lang('Users.auth.credentialsRequired')]];
         }
 
         $user = $this->userModel
@@ -188,7 +194,7 @@ class UserService
         $passwordValid = password_verify($data['password'], $storedHash);
 
         if (!$user || !$passwordValid) {
-            return ['errors' => ['credentials' => 'Invalid credentials']];
+            return ['errors' => ['credentials' => lang('Users.auth.invalidCredentials')]];
         }
 
         return [
@@ -208,7 +214,7 @@ class UserService
     public function register(array $data): array
     {
         if (empty($data['password'])) {
-            return ['errors' => ['password' => 'Password is required']];
+            return ['errors' => ['password' => lang('Users.passwordRequired')]];
         }
 
         // Validate password strength using model rules

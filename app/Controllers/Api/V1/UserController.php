@@ -1,15 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Controllers\Api\V1;
 
 use App\Controllers\ApiController;
-use App\Services\UserService;
+use App\Interfaces\UserServiceInterface;
 use CodeIgniter\HTTP\ResponseInterface;
 use OpenApi\Attributes as OA;
 
 class UserController extends ApiController
 {
-    protected UserService $userService;
+    protected UserServiceInterface $userService;
 
     public function __construct()
     {

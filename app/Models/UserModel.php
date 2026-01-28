@@ -32,26 +32,26 @@ class UserModel extends Model
         'email' => [
             'rules'  => 'required|valid_email|max_length[255]|is_unique[users.email,id,{id}]',
             'errors' => [
-                'required'    => 'El email es obligatorio',
-                'valid_email' => 'Debe proporcionar un email válido',
-                'is_unique'   => 'Este email ya está registrado',
+                'required'    => '{field} is required',
+                'valid_email' => 'Please provide a valid email',
+                'is_unique'   => 'This email is already registered',
             ],
         ],
         'username' => [
             'rules'  => 'required|alpha_numeric|min_length[3]|max_length[100]|is_unique[users.username,id,{id}]',
             'errors' => [
-                'required'      => 'El nombre de usuario es obligatorio',
-                'alpha_numeric' => 'El nombre de usuario solo puede contener letras y números',
-                'min_length'    => 'El nombre de usuario debe tener al menos 3 caracteres',
-                'is_unique'     => 'Este nombre de usuario ya está en uso',
+                'required'      => '{field} is required',
+                'alpha_numeric' => 'Username can only contain letters and numbers',
+                'min_length'    => 'Username must be at least {param} characters',
+                'is_unique'     => 'This username is already taken',
             ],
         ],
         'password' => [
             'rules'  => 'required|min_length[8]|regex_match[/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/]',
             'errors' => [
-                'required'    => 'La contraseña es obligatoria',
-                'min_length'  => 'La contraseña debe tener al menos 8 caracteres',
-                'regex_match' => 'La contraseña debe contener al menos una mayúscula, una minúscula y un número',
+                'required'    => '{field} is required',
+                'min_length'  => 'Password must be at least {param} characters',
+                'regex_match' => 'Password must contain at least one uppercase letter, one lowercase letter, and one number',
             ],
         ],
     ];

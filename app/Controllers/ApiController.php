@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Controllers;
 
 use CodeIgniter\API\ResponseTrait;
@@ -168,13 +170,22 @@ abstract class ApiController extends Controller
      */
     protected function handleException(Exception $e): ResponseInterface
     {
+        // Handle custom API exceptions
+        if ($e instanceof \App\Exceptions\ApiException) {
+            return $this->respond($e->toArray(), $e->getStatusCode());
+        }
+
+        // Handle standard exceptions
         $status = match (true) {
             $e instanceof InvalidArgumentException => ResponseInterface::HTTP_BAD_REQUEST,
             $e instanceof RuntimeException => ResponseInterface::HTTP_INTERNAL_SERVER_ERROR,
             default => ResponseInterface::HTTP_BAD_REQUEST,
         };
 
-        return $this->respond(['error' => $e->getMessage()], $status);
+        return $this->respond([
+            'status' => 'error',
+            'message' => $e->getMessage(),
+        ], $status);
     }
 
     /**

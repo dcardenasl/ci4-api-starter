@@ -1,10 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Controllers\Api\V1;
 
 use App\Controllers\ApiController;
 use CodeIgniter\HTTP\ResponseInterface;
-use App\Services\UserService;
+use App\Interfaces\UserServiceInterface;
 use OpenApi\Attributes as OA;
 
 /**
@@ -15,7 +17,7 @@ use OpenApi\Attributes as OA;
  */
 class AuthController extends ApiController
 {
-    protected UserService $userService;
+    protected UserServiceInterface $userService;
 
     public function __construct()
     {
@@ -214,7 +216,7 @@ class AuthController extends ApiController
         if (!$userId) {
             return $this->respond([
                 'status' => 'error',
-                'message' => 'User not authenticated',
+                'message' => lang('Users.auth.notAuthenticated'),
             ], ResponseInterface::HTTP_UNAUTHORIZED);
         }
 

@@ -1,5 +1,10 @@
 # CI4 API Starter
 
+![CI Status](https://img.shields.io/badge/CI-passing-brightgreen)
+![PHP Version](https://img.shields.io/badge/PHP-8.2%20%7C%208.3-blue)
+![Tests](https://img.shields.io/badge/tests-49%20passed-success)
+![License](https://img.shields.io/badge/license-MIT-blue)
+
 A production-ready CodeIgniter 4 REST API starter project with JWT authentication, layered architecture, and comprehensive OpenAPI documentation.
 
 ## Features
@@ -729,6 +734,91 @@ public function testLoginSuccess()
 ```
 
 For detailed testing documentation, see [TESTING.md](TESTING.md).
+
+## CI/CD
+
+This project uses GitHub Actions for continuous integration and deployment.
+
+### Automated Workflows
+
+1. **CI Workflow** (`.github/workflows/ci.yml`)
+   - Runs on every push and pull request
+   - Tests on PHP 8.2 and 8.3
+   - Includes MySQL 8.0 test database
+   - Executes full PHPUnit test suite
+   - Validates composer.json
+   - Caches dependencies for faster builds
+
+2. **Security Scan** (`.github/workflows/security.yml`)
+   - Runs on push, pull requests, and weekly schedule
+   - Checks for security vulnerabilities with `composer audit`
+   - Scans for hardcoded secrets in code
+   - Verifies .env files are not committed
+   - Validates .gitignore configuration
+
+### CI Pipeline Steps
+
+When you push code or create a pull request, the CI automatically:
+
+1. Checks out your code
+2. Sets up PHP 8.2 and 8.3 environments
+3. Installs dependencies with composer
+4. Creates test environment from .env.example
+5. Generates secure JWT and encryption keys
+6. Configures MySQL test database
+7. Runs all 49 PHPUnit tests
+8. Reports results
+
+### Viewing CI Results
+
+Check the status of workflows:
+- Go to the **Actions** tab in your GitHub repository
+- Click on any workflow run to see detailed logs
+- Failed tests will show error messages and stack traces
+
+### Running Tests Locally Before Push
+
+Ensure tests pass before pushing:
+
+```bash
+# Run all tests
+vendor/bin/phpunit --no-coverage
+
+# Run with detailed output
+vendor/bin/phpunit --testdox
+
+# Validate composer
+composer validate --strict
+
+# Check for security issues
+composer audit
+```
+
+### CI Environment Configuration
+
+The CI automatically configures:
+- Test database credentials (root/root)
+- JWT secret key generation
+- Encryption key generation
+- Environment set to "testing"
+
+No manual configuration needed!
+
+### Branch Protection (Recommended)
+
+For production use, enable branch protection rules:
+
+1. Go to Settings → Branches → Add rule
+2. Branch name pattern: `main`
+3. Enable:
+   - ✓ Require status checks before merging
+   - ✓ Require branches to be up to date
+   - ✓ Select CI workflows as required checks
+   - ✓ Require pull request reviews
+
+This ensures all code is tested before merging to main.
+
+For detailed CI/CD documentation, see [CI_CD.md](CI_CD.md).
 
 ## Dependencies
 

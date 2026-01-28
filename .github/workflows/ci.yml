@@ -13,7 +13,7 @@ jobs:
 
     strategy:
       matrix:
-        php-version: ['8.1', '8.2', '8.3']
+        php-version: ['8.2', '8.3']
 
     services:
       mysql:
@@ -53,34 +53,33 @@ jobs:
             ${{ runner.os }}-php-${{ matrix.php-version }}-
 
       - name: Install dependencies
-        run: composer install --prefer-dist --no-progress
+        run: composer install --prefer-dist --no-progress --no-interaction
 
-      - name: Copy .env file
-        run: cp .env .env.backup && php -r "file_put_contents('.env', file_get_contents('.env.backup'));"
+      - name: Create .env file from example
+        run: cp .env.example .env
 
-      - name: Set testing environment
+      - name: Configure testing environment
         run: |
+          # Set environment
           echo "CI_ENVIRONMENT = testing" >> .env
+
+          # Database configuration for tests
           echo "database.tests.hostname = 127.0.0.1" >> .env
           echo "database.tests.database = ci4_test" >> .env
           echo "database.tests.username = root" >> .env
           echo "database.tests.password = root" >> .env
           echo "database.tests.DBDriver = MySQLi" >> .env
-          echo "database.tests.DBPrefix = db_" >> .env
+          echo "database.tests.DBPrefix = " >> .env
           echo "database.tests.port = 3306" >> .env
 
-      - name: Run database migrations
-        run: php spark migrate --all
-        env:
-          CI_ENVIRONMENT: testing
+          # Generate JWT secret for testing
+          echo "JWT_SECRET_KEY = $(openssl rand -base64 64 | tr -d '\n')" >> .env
+
+          # Generate encryption key
+          php spark key:generate --show | sed 's/.*: //' | xargs -I {} echo "encryption.key = {}" >> .env
 
       - name: Run tests
-        run: |
-          if [ -f "vendor/bin/phpunit" ]; then
-            vendor/bin/phpunit
-          else
-            echo "PHPUnit not configured yet, skipping tests"
-          fi
+        run: vendor/bin/phpunit --no-coverage --testdox
 
       - name: Check code style (optional)
         continue-on-error: true

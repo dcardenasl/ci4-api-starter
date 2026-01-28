@@ -180,6 +180,59 @@ composer validate --strict
 - Only ignore cache files (`.phpunit.result.cache`)
 - Test CI locally with `act` before pushing
 
+### 6. Invalid .env Values (Spaces/Special Characters)
+
+**Symptoms:**
+- Error: "InvalidArgumentException"
+- Message about environment configuration
+- Tests fail to run in CI
+
+**Common Causes:**
+- Environment variables with spaces not quoted
+- Empty values without quotes
+- Special characters in generated keys (base64, encryption keys)
+
+**Solutions:**
+1. **Quote all values with spaces or special characters:**
+   ```bash
+   # Wrong
+   JWT_SECRET_KEY = abc123+/=xyz
+
+   # Correct
+   JWT_SECRET_KEY = "abc123+/=xyz"
+   ```
+
+2. **Quote empty values:**
+   ```bash
+   # Wrong
+   database.tests.DBPrefix =
+
+   # Correct
+   database.tests.DBPrefix = ""
+   ```
+
+3. **Update CI workflow to properly quote generated values:**
+   ```yaml
+   - name: Configure testing environment
+     run: |
+       # Generate and quote JWT key
+       JWT_KEY=$(openssl rand -base64 64 | tr -d '\n')
+       echo "JWT_SECRET_KEY = \"${JWT_KEY}\"" >> .env
+
+       # Generate and quote encryption key
+       ENC_KEY=$(php spark key:generate --show | sed 's/.*: //')
+       echo "encryption.key = \"${ENC_KEY}\"" >> .env
+
+       # Empty value with quotes
+       echo 'database.tests.DBPrefix = ""' >> .env
+   ```
+
+**Prevention:**
+- Always use double quotes for string values in .env
+- Test .env generation locally before pushing
+- Use single quotes in echo to prevent shell expansion
+- Store generated values in variables before echoing
+
 ## Extending CI/CD
 
 ### Adding Code Coverage

@@ -61,22 +61,24 @@ jobs:
       - name: Configure testing environment
         run: |
           # Set environment
-          echo "CI_ENVIRONMENT = testing" >> .env
+          echo 'CI_ENVIRONMENT = testing' >> .env
 
           # Database configuration for tests
-          echo "database.tests.hostname = 127.0.0.1" >> .env
-          echo "database.tests.database = ci4_test" >> .env
-          echo "database.tests.username = root" >> .env
-          echo "database.tests.password = root" >> .env
-          echo "database.tests.DBDriver = MySQLi" >> .env
-          echo "database.tests.DBPrefix = " >> .env
-          echo "database.tests.port = 3306" >> .env
+          echo 'database.tests.hostname = 127.0.0.1' >> .env
+          echo 'database.tests.database = ci4_test' >> .env
+          echo 'database.tests.username = root' >> .env
+          echo 'database.tests.password = root' >> .env
+          echo 'database.tests.DBDriver = MySQLi' >> .env
+          echo 'database.tests.DBPrefix = ""' >> .env
+          echo 'database.tests.port = 3306' >> .env
 
-          # Generate JWT secret for testing
-          echo "JWT_SECRET_KEY = $(openssl rand -base64 64 | tr -d '\n')" >> .env
+          # Generate JWT secret for testing (properly quoted)
+          JWT_KEY=$(openssl rand -base64 64 | tr -d '\n')
+          echo "JWT_SECRET_KEY = \"${JWT_KEY}\"" >> .env
 
-          # Generate encryption key
-          php spark key:generate --show | sed 's/.*: //' | xargs -I {} echo "encryption.key = {}" >> .env
+          # Generate encryption key (properly quoted)
+          ENC_KEY=$(php spark key:generate --show | sed 's/.*: //')
+          echo "encryption.key = \"${ENC_KEY}\"" >> .env
 
       - name: Verify PHPUnit configuration
         run: |

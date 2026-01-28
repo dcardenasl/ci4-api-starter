@@ -166,6 +166,7 @@ class UserService
 
     /**
      * Authenticate user with credentials
+     * Protected against timing attacks by always verifying password hash
      */
     public function login(array $data): array
     {
@@ -178,11 +179,15 @@ class UserService
             ->orWhere('email', $data['username'])
             ->first();
 
-        if (!$user) {
-            return ['errors' => ['credentials' => 'Invalid credentials']];
-        }
+        // Use a fake hash for non-existent users to prevent timing attacks
+        // This ensures password_verify() is always called, keeping response time constant
+        $storedHash = $user
+            ? $user->password
+            : '$2y$10$fakeHashToPreventTimingAttacksByEnsuringConstantTimeResponse1234567890';
 
-        if (!password_verify($data['password'], $user->password)) {
+        $passwordValid = password_verify($data['password'], $storedHash);
+
+        if (!$user || !$passwordValid) {
             return ['errors' => ['credentials' => 'Invalid credentials']];
         }
 
@@ -206,6 +211,11 @@ class UserService
             return ['errors' => ['password' => 'Password is required']];
         }
 
+        // Validate password strength using model rules
+        if (!$this->userModel->validate($data)) {
+            return ['errors' => $this->userModel->errors()];
+        }
+
         $businessErrors = $this->validateBusinessRules($data);
         if (!empty($businessErrors)) {
             return ['errors' => $businessErrors];
@@ -215,8 +225,8 @@ class UserService
             'email'    => $data['email'] ?? null,
             'username' => $data['username'] ?? null,
             'password' => password_hash($data['password'], PASSWORD_BCRYPT),
-            'role'     => $data['role'] ?? 'user',
-        ]);
+            'role'     => 'user', // Always 'user' for self-registration (security fix)
+        ], false); // Skip validation since we already validated above
 
         if (!$userId) {
             return ['errors' => $this->userModel->errors()];
@@ -231,6 +241,66 @@ class UserService
                 'username' => $user->username,
                 'email' => $user->email,
                 'role' => $user->role,
+            ],
+        ];
+    }
+
+    /**
+     * Authenticate user and return JWT token
+     *
+     * This method combines login authentication with token generation.
+     * Used by AuthController for login endpoint.
+     *
+     * @param array $data Login credentials
+     * @return array Result with token and user data, or errors
+     */
+    public function loginWithToken(array $data): array
+    {
+        $result = $this->login($data);
+
+        if (isset($result['errors'])) {
+            return $result;
+        }
+
+        $user = $result['data'];
+        $jwtService = \Config\Services::jwtService();
+        $token = $jwtService->encode($user['id'], $user['role']);
+
+        return [
+            'status' => 'success',
+            'data' => [
+                'token' => $token,
+                'user' => $user,
+            ],
+        ];
+    }
+
+    /**
+     * Register new user and return JWT token
+     *
+     * This method combines user registration with token generation.
+     * Used by AuthController for register endpoint.
+     *
+     * @param array $data Registration data
+     * @return array Result with token and user data, or errors
+     */
+    public function registerWithToken(array $data): array
+    {
+        $result = $this->register($data);
+
+        if (isset($result['errors'])) {
+            return $result;
+        }
+
+        $user = $result['data'];
+        $jwtService = \Config\Services::jwtService();
+        $token = $jwtService->encode($user['id'], $user['role']);
+
+        return [
+            'status' => 'success',
+            'data' => [
+                'token' => $token,
+                'user' => $user,
             ],
         ];
     }

@@ -18,11 +18,15 @@ $routes->group('api/v1', ['namespace' => 'App\Controllers\Api\V1', 'filter' => '
         // Auth routes
         $routes->get('auth/me', 'AuthController::me');
 
-        // User routes
+        // User routes - read-only for all authenticated users
         $routes->get('users', 'UserController::index');
         $routes->get('users/(:num)', 'UserController::show/$1');
-        $routes->post('users', 'UserController::create');
-        $routes->put('users/(:num)', 'UserController::update/$1');
-        $routes->delete('users/(:num)', 'UserController::delete/$1');
+
+        // User routes - admin only (create, update, delete)
+        $routes->group('', ['filter' => 'roleauth:admin'], function($routes) {
+            $routes->post('users', 'UserController::create');
+            $routes->put('users/(:num)', 'UserController::update/$1');
+            $routes->delete('users/(:num)', 'UserController::delete/$1');
+        });
     });
 });

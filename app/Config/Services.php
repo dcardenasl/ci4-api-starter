@@ -50,6 +50,23 @@ class Services extends BaseService
         return new \App\Services\UserService($userModel);
     }
 
+    /**
+     * JWT Service
+     *
+     * Provides JWT token encoding and decoding functionality
+     *
+     * @param bool $getShared
+     * @return \App\Services\JwtService
+     */
+    public static function jwtService(bool $getShared = true)
+    {
+        if ($getShared) {
+            return static::getSharedInstance('jwtService');
+        }
+
+        return new \App\Services\JwtService();
+    }
+
     // Servicios futuros seguirán el mismo patrón:
     // public static function productService(bool $getShared = true) { ... }
 }

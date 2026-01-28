@@ -84,7 +84,30 @@ abstract class ApiController extends Controller
             $item ?? []
         );
 
-        return $requestData;
+        // Sanitize input to prevent XSS attacks
+        return $this->sanitizeInput($requestData);
+    }
+
+    /**
+     * Recursively sanitize input data
+     *
+     * Strips HTML tags and trims whitespace from string values.
+     * Protects against Stored XSS attacks.
+     *
+     * @param array $data Input data to sanitize
+     * @return array Sanitized data
+     */
+    protected function sanitizeInput(array $data): array
+    {
+        return array_map(function ($value) {
+            if (is_string($value)) {
+                return strip_tags(trim($value));
+            }
+            if (is_array($value)) {
+                return $this->sanitizeInput($value);
+            }
+            return $value;
+        }, $data);
     }
 
     /**

@@ -15,9 +15,20 @@ use CodeIgniter\Filters\SecureHeaders;
 use App\Filters\JwtAuthFilter;
 use App\Filters\CorsFilter;
 use App\Filters\ThrottleFilter;
+use App\Filters\RoleAuthorizationFilter;
 
 class Filters extends BaseFilters
 {
+    public function __construct()
+    {
+        parent::__construct();
+
+        // Force HTTPS only in production environment
+        if (ENVIRONMENT === 'production') {
+            array_unshift($this->required['before'], 'forcehttps');
+        }
+    }
+
     /**
      * Configures aliases for Filter classes to
      * make reading things nicer and simpler.
@@ -39,6 +50,7 @@ class Filters extends BaseFilters
         'performance'   => PerformanceMetrics::class,
         'jwtauth'       => JwtAuthFilter::class,
         'throttle'      => ThrottleFilter::class,
+        'roleauth'      => RoleAuthorizationFilter::class,
     ];
 
     /**
@@ -56,7 +68,7 @@ class Filters extends BaseFilters
      */
     public array $required = [
         'before' => [
-            'forcehttps', // Force Global Secure Requests
+            // 'forcehttps', // Force Global Secure Requests - Enabled conditionally in constructor
             'pagecache',  // Web Page Caching
         ],
         'after' => [

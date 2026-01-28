@@ -46,6 +46,14 @@ class UserModel extends Model
                 'is_unique'     => 'Este nombre de usuario ya está en uso',
             ],
         ],
+        'password' => [
+            'rules'  => 'required|min_length[8]|regex_match[/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/]',
+            'errors' => [
+                'required'    => 'La contraseña es obligatoria',
+                'min_length'  => 'La contraseña debe tener al menos 8 caracteres',
+                'regex_match' => 'La contraseña debe contener al menos una mayúscula, una minúscula y un número',
+            ],
+        ],
     ];
 
     protected $skipValidation       = false;

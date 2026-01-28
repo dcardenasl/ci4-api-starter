@@ -52,13 +52,9 @@
                             "application/json": {
                                 "schema": {
                                     "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "message": {
+                                        "status": {
                                             "type": "string",
-                                            "example": "Login successful"
+                                            "example": "success"
                                         },
                                         "data": {
                                             "properties": {
@@ -69,8 +65,8 @@
                                                 "user": {
                                                     "properties": {
                                                         "id": {
-                                                            "type": "string",
-                                                            "example": "1"
+                                                            "type": "integer",
+                                                            "example": 1
                                                         },
                                                         "username": {
                                                             "type": "string",
@@ -102,9 +98,9 @@
                             "application/json": {
                                 "schema": {
                                     "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": false
+                                        "status": {
+                                            "type": "string",
+                                            "example": "error"
                                         },
                                         "errors": {
                                             "properties": {
@@ -152,14 +148,10 @@
                                         "example": "newuser@example.com"
                                     },
                                     "password": {
+                                        "description": "Minimum 8 characters, must contain uppercase, lowercase, and number",
                                         "type": "string",
                                         "format": "password",
-                                        "example": "password123"
-                                    },
-                                    "role": {
-                                        "description": "Optional, defaults to \"user\"",
-                                        "type": "string",
-                                        "example": "user"
+                                        "example": "Password123"
                                     }
                                 },
                                 "type": "object"
@@ -174,13 +166,9 @@
                             "application/json": {
                                 "schema": {
                                     "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "message": {
+                                        "status": {
                                             "type": "string",
-                                            "example": "User registered successfully"
+                                            "example": "success"
                                         },
                                         "data": {
                                             "properties": {
@@ -191,8 +179,8 @@
                                                 "user": {
                                                     "properties": {
                                                         "id": {
-                                                            "type": "string",
-                                                            "example": "1"
+                                                            "type": "integer",
+                                                            "example": 1
                                                         },
                                                         "username": {
                                                             "type": "string",
@@ -224,9 +212,9 @@
                             "application/json": {
                                 "schema": {
                                     "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": false
+                                        "status": {
+                                            "type": "string",
+                                            "example": "error"
                                         },
                                         "errors": {
                                             "type": "object",
@@ -257,15 +245,15 @@
                             "application/json": {
                                 "schema": {
                                     "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
                                         },
                                         "data": {
                                             "properties": {
                                                 "id": {
-                                                    "type": "string",
-                                                    "example": "1"
+                                                    "type": "integer",
+                                                    "example": 1
                                                 },
                                                 "username": {
                                                     "type": "string",
@@ -280,13 +268,16 @@
                                                     "example": "user"
                                                 },
                                                 "created_at": {
-                                                    "type": "object"
+                                                    "type": "string",
+                                                    "example": "2026-01-28T12:00:00Z"
                                                 },
                                                 "updated_at": {
-                                                    "type": "object"
+                                                    "type": "string",
+                                                    "example": "2026-01-28T12:00:00Z"
                                                 },
                                                 "deleted_at": {
                                                     "type": "string",
+                                                    "example": null,
                                                     "nullable": true
                                                 }
                                             },
@@ -304,9 +295,9 @@
                             "application/json": {
                                 "schema": {
                                     "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": false
+                                        "status": {
+                                            "type": "string",
+                                            "example": "error"
                                         },
                                         "message": {
                                             "type": "string",

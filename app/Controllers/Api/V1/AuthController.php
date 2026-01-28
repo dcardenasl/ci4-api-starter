@@ -2,24 +2,48 @@
 
 namespace App\Controllers\Api\V1;
 
-use CodeIgniter\Controller;
-use CodeIgniter\API\ResponseTrait;
+use App\Controllers\ApiController;
 use CodeIgniter\HTTP\ResponseInterface;
 use App\Services\UserService;
-use App\Services\JwtService;
-use App\Models\UserModel;
 use OpenApi\Attributes as OA;
 
-class AuthController extends Controller
+/**
+ * Authentication Controller
+ *
+ * Handles user authentication operations (login, register, current user).
+ * Now extends ApiController for consistency with the rest of the API.
+ */
+class AuthController extends ApiController
 {
-    use ResponseTrait;
     protected UserService $userService;
-    protected JwtService $jwtService;
 
     public function __construct()
     {
-        $this->userService = new UserService(new UserModel());
-        $this->jwtService = new JwtService();
+        $this->userService = \Config\Services::userService();
+    }
+
+    /**
+     * Get the service instance for this controller
+     *
+     * @return object Service instance
+     */
+    protected function getService(): object
+    {
+        return $this->userService;
+    }
+
+    /**
+     * Get the success HTTP status code for a given method
+     *
+     * @param string $method Method name
+     * @return int HTTP status code
+     */
+    protected function getSuccessStatus(string $method): int
+    {
+        return match($method) {
+            'registerWithToken' => ResponseInterface::HTTP_CREATED,
+            default => ResponseInterface::HTTP_OK,
+        };
     }
 
     #[OA\Post(
@@ -42,8 +66,7 @@ class AuthController extends Controller
         description: 'Login successful',
         content: new OA\JsonContent(
             properties: [
-                new OA\Property(property: 'success', type: 'boolean', example: true),
-                new OA\Property(property: 'message', type: 'string', example: 'Login successful'),
+                new OA\Property(property: 'status', type: 'string', example: 'success'),
                 new OA\Property(
                     property: 'data',
                     properties: [
@@ -51,7 +74,7 @@ class AuthController extends Controller
                         new OA\Property(
                             property: 'user',
                             properties: [
-                                new OA\Property(property: 'id', type: 'string', example: '1'),
+                                new OA\Property(property: 'id', type: 'integer', example: 1),
                                 new OA\Property(property: 'username', type: 'string', example: 'testuser'),
                                 new OA\Property(property: 'email', type: 'string', example: 'test@example.com'),
                                 new OA\Property(property: 'role', type: 'string', example: 'user'),
@@ -69,7 +92,7 @@ class AuthController extends Controller
         description: 'Invalid credentials',
         content: new OA\JsonContent(
             properties: [
-                new OA\Property(property: 'success', type: 'boolean', example: false),
+                new OA\Property(property: 'status', type: 'string', example: 'error'),
                 new OA\Property(
                     property: 'errors',
                     properties: [
@@ -80,30 +103,9 @@ class AuthController extends Controller
             ]
         )
     )]
-    public function login()
+    public function login(): ResponseInterface
     {
-        $data = $this->request->getJSON(true) ?? [];
-
-        $result = $this->userService->login($data);
-
-        if (isset($result['errors'])) {
-            return $this->respond([
-                'success' => false,
-                'errors' => $result['errors'],
-            ], ResponseInterface::HTTP_UNAUTHORIZED);
-        }
-
-        $user = $result['data'];
-        $token = $this->jwtService->encode($user['id'], $user['role']);
-
-        return $this->respond([
-            'success' => true,
-            'message' => 'Login successful',
-            'data' => [
-                'token' => $token,
-                'user' => $user,
-            ],
-        ], ResponseInterface::HTTP_OK);
+        return $this->handleRequest('loginWithToken');
     }
 
     #[OA\Post(
@@ -118,8 +120,7 @@ class AuthController extends Controller
             properties: [
                 new OA\Property(property: 'username', type: 'string', example: 'newuser'),
                 new OA\Property(property: 'email', type: 'string', format: 'email', example: 'newuser@example.com'),
-                new OA\Property(property: 'password', type: 'string', format: 'password', example: 'password123'),
-                new OA\Property(property: 'role', type: 'string', example: 'user', description: 'Optional, defaults to "user"'),
+                new OA\Property(property: 'password', type: 'string', format: 'password', example: 'Password123', description: 'Minimum 8 characters, must contain uppercase, lowercase, and number'),
             ]
         )
     )]
@@ -128,8 +129,7 @@ class AuthController extends Controller
         description: 'User registered successfully',
         content: new OA\JsonContent(
             properties: [
-                new OA\Property(property: 'success', type: 'boolean', example: true),
-                new OA\Property(property: 'message', type: 'string', example: 'User registered successfully'),
+                new OA\Property(property: 'status', type: 'string', example: 'success'),
                 new OA\Property(
                     property: 'data',
                     properties: [
@@ -137,12 +137,12 @@ class AuthController extends Controller
                         new OA\Property(
                             property: 'user',
                             properties: [
-                                new OA\Property(property: 'id', type: 'string', example: '1'),
+                                new OA\Property(property: 'id', type: 'integer', example: 1),
                                 new OA\Property(property: 'username', type: 'string', example: 'newuser'),
                                 new OA\Property(property: 'email', type: 'string', example: 'newuser@example.com'),
                                 new OA\Property(property: 'role', type: 'string', example: 'user'),
                             ],
-                            type: 'object'
+            type: 'object'
                         ),
                     ],
                     type: 'object'
@@ -155,7 +155,7 @@ class AuthController extends Controller
         description: 'Validation error',
         content: new OA\JsonContent(
             properties: [
-                new OA\Property(property: 'success', type: 'boolean', example: false),
+                new OA\Property(property: 'status', type: 'string', example: 'error'),
                 new OA\Property(
                     property: 'errors',
                     type: 'object',
@@ -164,30 +164,9 @@ class AuthController extends Controller
             ]
         )
     )]
-    public function register()
+    public function register(): ResponseInterface
     {
-        $data = $this->request->getJSON(true) ?? [];
-
-        $result = $this->userService->register($data);
-
-        if (isset($result['errors'])) {
-            return $this->respond([
-                'success' => false,
-                'errors' => $result['errors'],
-            ], ResponseInterface::HTTP_UNPROCESSABLE_ENTITY);
-        }
-
-        $user = $result['data'];
-        $token = $this->jwtService->encode($user['id'], $user['role']);
-
-        return $this->respond([
-            'success' => true,
-            'message' => 'User registered successfully',
-            'data' => [
-                'token' => $token,
-                'user' => $user,
-            ],
-        ], ResponseInterface::HTTP_CREATED);
+        return $this->handleRequest('registerWithToken');
     }
 
     #[OA\Get(
@@ -201,17 +180,17 @@ class AuthController extends Controller
         description: 'Current user details',
         content: new OA\JsonContent(
             properties: [
-                new OA\Property(property: 'success', type: 'boolean', example: true),
+                new OA\Property(property: 'status', type: 'string', example: 'success'),
                 new OA\Property(
                     property: 'data',
                     properties: [
-                        new OA\Property(property: 'id', type: 'string', example: '1'),
+                        new OA\Property(property: 'id', type: 'integer', example: 1),
                         new OA\Property(property: 'username', type: 'string', example: 'testuser'),
                         new OA\Property(property: 'email', type: 'string', example: 'test@example.com'),
                         new OA\Property(property: 'role', type: 'string', example: 'user'),
-                        new OA\Property(property: 'created_at', type: 'object'),
-                        new OA\Property(property: 'updated_at', type: 'object'),
-                        new OA\Property(property: 'deleted_at', type: 'string', nullable: true),
+                        new OA\Property(property: 'created_at', type: 'string', example: '2026-01-28T12:00:00Z'),
+                        new OA\Property(property: 'updated_at', type: 'string', example: '2026-01-28T12:00:00Z'),
+                        new OA\Property(property: 'deleted_at', type: 'string', nullable: true, example: null),
                     ],
                     type: 'object'
                 ),
@@ -223,34 +202,22 @@ class AuthController extends Controller
         description: 'Unauthorized',
         content: new OA\JsonContent(
             properties: [
-                new OA\Property(property: 'success', type: 'boolean', example: false),
+                new OA\Property(property: 'status', type: 'string', example: 'error'),
                 new OA\Property(property: 'message', type: 'string', example: 'User not authenticated'),
             ]
         )
     )]
-    public function me()
+    public function me(): ResponseInterface
     {
         $userId = $this->request->userId ?? null;
 
         if (!$userId) {
             return $this->respond([
-                'success' => false,
+                'status' => 'error',
                 'message' => 'User not authenticated',
             ], ResponseInterface::HTTP_UNAUTHORIZED);
         }
 
-        $result = $this->userService->show(['id' => $userId]);
-
-        if (isset($result['errors'])) {
-            return $this->respond([
-                'success' => false,
-                'errors' => $result['errors'],
-            ], ResponseInterface::HTTP_NOT_FOUND);
-        }
-
-        return $this->respond([
-            'success' => true,
-            'data' => $result['data'],
-        ], ResponseInterface::HTTP_OK);
+        return $this->handleRequest('show', ['id' => $userId]);
     }
 }

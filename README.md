@@ -1,68 +1,213 @@
-# CodeIgniter 4 Application Starter
+# CI4 API Base Starter
 
-## What is CodeIgniter?
+Proyecto base para crear APIs REST con CodeIgniter 4, implementando arquitectura por capas, autenticación JWT, y buenas prácticas.
 
-CodeIgniter is a PHP full-stack web framework that is light, fast, flexible and secure.
-More information can be found at the [official site](https://codeigniter.com).
+## 🚀 Características
 
-This repository holds a composer-installable app starter.
-It has been built from the
-[development repository](https://github.com/codeigniter4/CodeIgniter4).
+- ✅ **Arquitectura por Capas**: Controller → Service → Repository
+- ✅ **API REST**: Endpoints siguiendo estándares RESTful
+- ✅ **Respuesta Estándar**: Formato JSON consistente `{ success, data, error }`
+- ✅ **Capa de Servicios**: Lógica de negocio separada
+- ✅ **Repositorios**: Abstracción del acceso a datos
+- ✅ **Ready para JWT**: Dependencias instaladas
+- ✅ **Swagger/OpenAPI**: Listo para documentación
+- ✅ **PHPUnit**: Testing framework configurado
+- ✅ **Docker Ready**: Configuración para contenerización
 
-More information about the plans for version 4 can be found in [CodeIgniter 4](https://forum.codeigniter.com/forumdisplay.php?fid=28) on the forums.
+## 📋 Requisitos
 
-You can read the [user guide](https://codeigniter.com/user_guide/)
-corresponding to the latest version of the framework.
+- PHP 8.1 o superior
+- Composer
+- MySQL (opcional, para producción)
+- Git
 
-## Installation & updates
+## 🛠️ Instalación
 
-`composer create-project codeigniter4/appstarter` then `composer update` whenever
-there is a new release of the framework.
+### 1. Clonar el proyecto
+```bash
+git clone <repository-url>
+cd ci4-api-starter
+```
 
-When updating, check the release notes to see if there are any changes you might need to apply
-to your `app` folder. The affected files can be copied or merged from
-`vendor/codeigniter4/framework/app`.
+### 2. Instalar dependencias
+```bash
+composer install
+```
 
-## Setup
+### 3. Configurar entorno
+```bash
+cp env .env
+# Editar .env con tu configuración
+```
 
-Copy `env` to `.env` and tailor for your app, specifically the baseURL
-and any database settings.
+### 4. Configurar base de datos (opcional)
+```bash
+# Editar .env
+database.default.hostname = localhost
+database.default.database = your_database
+database.default.username = your_username
+database.default.password = your_password
+database.default.DBDriver = MySQLi
 
-## Important Change with index.php
+# Ejecutar migraciones
+php spark migrate
+```
 
-`index.php` is no longer in the root of the project! It has been moved inside the *public* folder,
-for better security and separation of components.
+### 5. Iniciar servidor de desarrollo
+```bash
+php spark serve --host 0.0.0.0 --port 8080
+```
 
-This means that you should configure your web server to "point" to your project's *public* folder, and
-not to the project root. A better practice would be to configure a virtual host to point there. A poor practice would be to point your web server to the project root and expect to enter *public/...*, as the rest of your logic and the
-framework are exposed.
+## 📁 Estructura del Proyecto
 
-**Please** read the user guide for a better explanation of how CI4 works!
+```
+app/
+├── Controllers/          # Controladores API
+│   ├── BaseController.php
+│   ├── Home.php
+│   └── UserController.php
+├── Services/            # Lógica de negocio
+│   └── UserService.php
+├── Repositories/         # Acceso a datos
+│   └── UserRepository.php
+├── Entities/            # Entidades de datos
+├── Config/             # Configuración
+├── Database/
+│   └── Migrations/     # Migraciones de BD
+├── Filters/            # Filtros (JWT, CORS, etc.)
+└── Helpers/           # Helpers personalizados
+```
 
-## Repository Management
+## 🔗 Endpoints Disponibles
 
-We use GitHub issues, in our main repository, to track **BUGS** and to track approved **DEVELOPMENT** work packages.
-We use our [forum](http://forum.codeigniter.com) to provide SUPPORT and to discuss
-FEATURE REQUESTS.
+### Users API
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| GET | `/api/v1/users` | Listar todos los usuarios |
+| GET | `/api/v1/users/{id}` | Obtener usuario específico |
+| POST | `/api/v1/users` | Crear nuevo usuario |
+| PUT | `/api/v1/users/{id}` | Actualizar usuario |
+| DELETE | `/api/v1/users/{id}` | Eliminar usuario |
 
-This repository is a "distribution" one, built by our release preparation script.
-Problems with it can be raised on our forum, or as issues in the main repository.
+### Formato de Respuesta
 
-## Server Requirements
+**Éxito:**
+```json
+{
+    "success": true,
+    "data": { ... },
+    "error": null
+}
+```
 
-PHP version 8.1 or higher is required, with the following extensions installed:
+**Error:**
+```json
+{
+    "success": false,
+    "data": null,
+    "error": "Mensaje de error"
+}
+```
 
-- [intl](http://php.net/manual/en/intl.requirements.php)
-- [mbstring](http://php.net/manual/en/mbstring.installation.php)
+## 🧪 Testing
 
-> [!WARNING]
-> - The end of life date for PHP 7.4 was November 28, 2022.
-> - The end of life date for PHP 8.0 was November 26, 2023.
-> - If you are still using PHP 7.4 or 8.0, you should upgrade immediately.
-> - The end of life date for PHP 8.1 will be December 31, 2025.
+```bash
+# Ejecutar todos los tests
+php spark test
 
-Additionally, make sure that the following extensions are enabled in your PHP:
+# Ejecutar tests específicos
+php spark test --filter UserServiceTest
+```
 
-- json (enabled by default - don't turn it off)
-- [mysqlnd](http://php.net/manual/en/mysqlnd.install.php) if you plan to use MySQL
-- [libcurl](http://php.net/manual/en/curl.requirements.php) if you plan to use the HTTP\CURLRequest library
+## 📚 Comandos Útiles
+
+```bash
+# Crear controlador
+php spark make:controller Api/MyController
+
+# Crear modelo
+php spark make:model MyModel
+
+# Crear migración
+php spark make:migration create_my_table
+
+# Ejecutar migraciones
+php spark migrate
+
+# Generar clave de encriptación
+php spark key:generate
+
+# Limpiar caché
+php spark cache:clear
+```
+
+## 🔐 JWT (Preparado)
+
+El proyecto incluye las dependencias para JWT:
+
+```bash
+# Instalado automáticamente
+firebase/php-jwt
+```
+
+ próximamente en la **Fase 2** del workflow se implementará:
+- `JwtService` para generar/validar tokens
+- `JwtAuthFilter` para proteger rutas
+- `AuthController` para login
+
+## 📖 Swagger (Preparado)
+
+Dependencia para documentación API:
+
+```bash
+# Instalado automáticamente  
+zircote/swagger-php
+```
+
+ próximamente en la **Fase 4** se configurará la generación automática de `swagger.json`.
+
+## 🐳 Docker (Preparado)
+
+Las fases posteriores agregarán:
+- `Dockerfile` para la aplicación
+- `docker-compose.yml` con app + MySQL
+- Configuración de volúmenes
+
+## 🔄 Workflow de Desarrollo
+
+Este proyecto sigue un workflow estructurado por fases:
+
+1. ✅ **Fase 0** - Inicialización del Proyecto
+2. ✅ **Fase 1** - Arquitectura por Capas
+3. ⏳ **Fase 2** - Autenticación JWT + Roles
+4. ⏳ **Fase 3** - Helpers + Respuesta Estándar
+5. ⏳ **Fase 4** - Swagger / OpenAPI
+6. ⏳ **Fase 5** - Docker + MySQL
+7. ⏳ **Fase 6** - Testing
+8. ⏳ **Fase 7** - CI con GitHub Actions
+9. ⏳ **Fase 8** - Seguridad, CORS, Rate Limiting
+10. ⏳ **Fase 9** - Plantilla Reutilizable
+
+Consultar el archivo `plan/v1.0.0/pdr.workflow.md` para detalles completos.
+
+## 🤝 Contribuir
+
+1. Fork del proyecto
+2. Crear feature branch: `git checkout -b feature/new-feature`
+3. Commits descriptivos
+4. Push al branch: `git push origin feature/new-feature`
+5. Pull Request
+
+## 📄 Licencia
+
+Este proyecto es software libre. Puedes usarlo bajo los términos de la licencia MIT.
+
+## 🆘 Soporte
+
+- 📖 [CodeIgniter 4 User Guide](https://codeigniter.com/user_guide/)
+- 📋 [Issues y Feature Requests](https://github.com/tu-repo/issues)
+- 💬 [Discusiones](https://github.com/tu-repo/discussions)
+
+---
+
+**Nota**: Este es un starter kit. Cada fase del workflow agrega componentes específicos para crear una API completa, segura y mantenible.

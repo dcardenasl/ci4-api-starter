@@ -163,4 +163,75 @@ class UserService
 
         return $errors;
     }
+
+    /**
+     * Authenticate user with credentials
+     */
+    public function login(array $data): array
+    {
+        if (empty($data['username']) || empty($data['password'])) {
+            return ['errors' => ['credentials' => 'Username and password are required']];
+        }
+
+        $user = $this->userModel
+            ->where('username', $data['username'])
+            ->orWhere('email', $data['username'])
+            ->first();
+
+        if (!$user) {
+            return ['errors' => ['credentials' => 'Invalid credentials']];
+        }
+
+        if (!password_verify($data['password'], $user->password)) {
+            return ['errors' => ['credentials' => 'Invalid credentials']];
+        }
+
+        return [
+            'status' => 'success',
+            'data' => [
+                'id' => $user->id,
+                'username' => $user->username,
+                'email' => $user->email,
+                'role' => $user->role,
+            ],
+        ];
+    }
+
+    /**
+     * Register a new user with password
+     */
+    public function register(array $data): array
+    {
+        if (empty($data['password'])) {
+            return ['errors' => ['password' => 'Password is required']];
+        }
+
+        $businessErrors = $this->validateBusinessRules($data);
+        if (!empty($businessErrors)) {
+            return ['errors' => $businessErrors];
+        }
+
+        $userId = $this->userModel->insert([
+            'email'    => $data['email'] ?? null,
+            'username' => $data['username'] ?? null,
+            'password' => password_hash($data['password'], PASSWORD_BCRYPT),
+            'role'     => $data['role'] ?? 'user',
+        ]);
+
+        if (!$userId) {
+            return ['errors' => $this->userModel->errors()];
+        }
+
+        $user = $this->userModel->find($userId);
+
+        return [
+            'status' => 'success',
+            'data' => [
+                'id' => $user->id,
+                'username' => $user->username,
+                'email' => $user->email,
+                'role' => $user->role,
+            ],
+        ];
+    }
 }

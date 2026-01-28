@@ -8,25 +8,22 @@ class UserSeeder extends Seeder
 {
     public function run()
     {
+        // Example seeder for users table
+        // Uncomment and modify the code below to seed initial users
+
+        /*
         $data = [
             [
-                'username'   => 'john_doe',
-                'email'      => 'john@example.com',
+                'username'   => 'admin',
+                'email'      => 'admin@yourdomain.com',
+                'password'   => password_hash('change-this-password', PASSWORD_BCRYPT),
+                'role'       => 'admin',
                 'created_at' => date('Y-m-d H:i:s'),
-            ],
-            [
-                'username'   => 'jane_smith',
-                'email'      => 'jane@example.com',
-                'created_at' => date('Y-m-d H:i:s'),
-            ],
-            [
-                'username'   => 'bob_wilson',
-                'email'      => 'bob@example.com',
-                'created_at' => date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s'),
             ],
         ];
 
-        // Using Query Builder
         $this->db->table('users')->insertBatch($data);
+        */
     }
 }

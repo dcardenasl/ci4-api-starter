@@ -223,7 +223,7 @@ curl -X GET http://localhost:8080/api/v1/users \
 php spark migrate              # Run migrations
 php spark migrate:rollback     # Rollback last batch
 php spark migrate:status       # Check migration status
-php spark db:seed UserSeeder   # Seed sample data
+php spark db:seed UserSeeder   # Seed initial data (customize UserSeeder first)
 ```
 
 ### Development

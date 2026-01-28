@@ -21,6 +21,123 @@ A production-ready CodeIgniter 4 REST API starter project with JWT authenticatio
 - ⚙️ **Environment-based Configuration** - Easy deployment across environments
 - 🐳 **Docker Support** - Production-ready containerization
 
+## Quick Start
+
+Get your API running in minutes:
+
+### Automated Setup (Recommended)
+
+Use the initialization script to set up everything automatically:
+
+```bash
+# 1. Clone the repository
+git clone <repository-url>
+cd ci4-api-starter
+
+# 2. Run the init script
+./init.sh
+```
+
+The script will:
+- ✓ Check requirements (PHP, MySQL, Composer, OpenSSL)
+- ✓ Install dependencies
+- ✓ Configure environment (.env)
+- ✓ Generate secure keys (JWT & encryption)
+- ✓ Create databases
+- ✓ Run migrations
+- ✓ Create initial admin user (optional)
+- ✓ Generate API documentation
+- ✓ Start development server
+
+Your API will be running at `http://localhost:8080` in under 10 minutes!
+
+### Manual Setup
+
+If you prefer manual setup or need more control:
+
+```bash
+# 1. Clone and setup
+git clone <repository-url>
+cd ci4-api-starter
+composer install
+cp .env.example .env
+
+# 2. Generate secure keys
+openssl rand -base64 64  # Copy to JWT_SECRET_KEY in .env
+php spark key:generate   # Copy to encryption.key in .env
+
+# 3. Configure database in .env
+# Edit database credentials to match your local MySQL
+
+# 4. Setup database
+php setup_mysql.php      # Or create databases manually
+php spark migrate
+
+# 5. Start the server
+php spark serve
+
+# 6. Test the API
+curl -X POST http://localhost:8080/api/v1/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"username":"admin","email":"admin@example.com","password":"secure123"}'
+```
+
+### Init Script Options
+
+```bash
+./init.sh                 # Full setup (interactive)
+./init.sh --skip-deps     # Skip composer install
+./init.sh --skip-db       # Skip database creation
+```
+
+## Using as a Starter Template
+
+This project is designed to be forked and customized for your own API projects.
+
+### Setup Your New Project
+
+1. **Fork or clone this repository:**
+   ```bash
+   git clone <repository-url> my-new-api
+   cd my-new-api
+   rm -rf .git  # Remove git history to start fresh
+   git init     # Initialize new repository
+   ```
+
+2. **Customize project identity:**
+   - Update `composer.json` with your project name and details
+   - Update `README.md` with your project information
+   - Update `app/Config/OpenApi.php` with your API details
+
+3. **Generate new security keys:**
+   ```bash
+   openssl rand -base64 64  # New JWT secret
+   php spark key:generate    # New encryption key
+   ```
+
+4. **Customize the User resource (optional):**
+   - Add fields to `app/Entities/UserEntity.php`
+   - Create migration: `php spark make:migration AddFieldsToUsers`
+   - Update `app/Models/UserModel.php` validation rules
+   - Update `app/Services/UserService.php` business logic
+
+5. **Add your own resources:**
+   - Follow the architecture pattern (see "Creating New Resources" below)
+   - Each resource gets: Entity, Model, Service, Controller
+   - Use `ApiController` base for reduced boilerplate
+
+### Customization Checklist
+
+- [ ] Update `composer.json` (name, description, authors)
+- [ ] Update `README.md` with your project details
+- [ ] Configure `.env` with secure keys and credentials
+- [ ] Update `app/Config/OpenApi.php` API metadata
+- [ ] Customize or remove example User resource
+- [ ] Add your domain models and resources
+- [ ] Update tests for your use case
+- [ ] Configure CI/CD for your repository
+- [ ] Review and update security settings
+
 ## Requirements
 
 - **PHP** 8.1 or higher
@@ -103,10 +220,14 @@ CREATE DATABASE ci4_test;
 php spark migrate
 ```
 
-6. (Optional) Seed the database with sample data:
+6. (Optional) Seed initial users:
 ```bash
+# First, customize app/Database/Seeds/UserSeeder.php with your initial users
+# Then run:
 php spark db:seed UserSeeder
 ```
+
+> Note: The UserSeeder is provided as a template. Uncomment and customize the example code to seed your initial admin users.
 
 ## Usage
 

@@ -10,9 +10,11 @@ A production-ready CodeIgniter 4 REST API starter project with JWT authenticatio
 - 🎯 **RESTful API** - Standardized JSON responses with proper HTTP status codes
 - 🔒 **Secure by Default** - Password hashing, token validation, input sanitization
 - 🗄️ **MySQL Database** - Migrations, seeders, and soft deletes
+- ✅ **Comprehensive Testing** - 49 PHPUnit tests covering all layers
 - 🚀 **GitHub Actions CI/CD** - Automated testing on push
 - ♻️ **CRUD Operations** - Complete user management with authentication
 - ⚙️ **Environment-based Configuration** - Easy deployment across environments
+- 🐳 **Docker Support** - Production-ready containerization
 
 ## Requirements
 
@@ -662,6 +664,71 @@ public function index(): ResponseInterface
     return $this->handleRequest('index');
 }
 ```
+
+## Testing
+
+This project includes comprehensive PHPUnit tests covering all layers of the application.
+
+### Test Suite Summary
+
+- **49 tests** with **166 assertions** - All Passing ✓
+- **AuthControllerTest** (12 tests) - API endpoint testing
+- **UserServiceTest** (20 tests) - Business logic testing
+- **UserModelTest** (17 tests) - Database layer testing
+
+### Running Tests
+
+```bash
+# Run all tests
+vendor/bin/phpunit
+
+# Run without coverage report
+vendor/bin/phpunit --no-coverage
+
+# Run specific test suite
+vendor/bin/phpunit tests/Controllers/AuthControllerTest.php
+
+# Run specific test method
+vendor/bin/phpunit --filter testLoginSuccess
+```
+
+### Test Configuration
+
+Tests use a separate database (`ci4_test`) configured in `phpunit.xml`. The test database is automatically:
+- Created before tests run
+- Migrated with latest schema
+- Seeded with test data
+- Reset between test classes
+
+### Writing Tests
+
+The project includes helpful test traits:
+
+- `AuthenticationTrait` - JWT token generation helpers
+- `DatabaseTestTrait` - Database assertion helpers
+- `FeatureTestTrait` - HTTP request testing
+- `DatabaseTestTrait` - Database migrations and seeding
+
+Example test:
+
+```php
+public function testLoginSuccess()
+{
+    $response = $this->withBodyFormat('json')
+        ->post('/api/v1/auth/login', [
+            'username' => 'testuser',
+            'password' => 'testpass123',
+        ]);
+
+    $response->assertStatus(200);
+    $response->assertJSONFragment(['success' => true]);
+
+    $json = json_decode($response->getJSON());
+    $this->assertObjectHasProperty('token', $json->data);
+}
+```
+
+For detailed testing documentation, see [TESTING.md](TESTING.md).
 
 ## Dependencies
 

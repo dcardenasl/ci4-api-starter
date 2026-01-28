@@ -30,45 +30,26 @@ class Services extends BaseService
      * }
      */
 
-    /*
-     * =========================================================================
-     * Dependency Injection Pattern for API Services
-     * =========================================================================
+    /**
+     * User Service
      *
-     * As the application grows and you add more resources (Products, Orders, etc.),
-     * you can centralize service creation here to:
+     * Proporciona UserService con todas sus dependencias inyectadas
      *
-     * 1. Avoid manual DI in controllers
-     * 2. Enable service reusability across the application
-     * 3. Simplify testing with shared instances
-     * 4. Maintain consistent initialization logic
-     *
-     * Example pattern for UserService (for future implementation):
-     *
-     * public static function userService($getShared = true)
-     * {
-     *     if ($getShared) {
-     *         return static::getSharedInstance('userService');
-     *     }
-     *
-     *     $db = \Config\Database::connect();
-     *     $repository = new \App\Repositories\UserRepository($db);
-     *     return new \App\Services\UserService($repository);
-     * }
-     *
-     * Usage in controllers would then become:
-     *
-     * protected $userService;
-     *
-     * public function __construct()
-     * {
-     *     $this->userService = \Config\Services::userService();
-     * }
-     *
-     * Benefits:
-     * - Single source of truth for service dependencies
-     * - Easy to swap implementations for testing
-     * - Shared instances reduce memory overhead
-     * - Consistent initialization across the app
+     * @param bool $getShared
+     * @return \App\Services\UserService
      */
+    public static function userService(bool $getShared = true)
+    {
+        if ($getShared) {
+            return static::getSharedInstance('userService');
+        }
+
+        // Crear UserModel (CI4 proporciona la conexión DB automáticamente)
+        $userModel = new \App\Models\UserModel();
+
+        return new \App\Services\UserService($userModel);
+    }
+
+    // Servicios futuros seguirán el mismo patrón:
+    // public static function productService(bool $getShared = true) { ... }
 }

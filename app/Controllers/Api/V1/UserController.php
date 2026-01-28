@@ -4,7 +4,6 @@ namespace App\Controllers\Api\V1;
 
 use App\Controllers\ApiController;
 use App\Services\UserService;
-use App\Repositories\UserRepository;
 use CodeIgniter\HTTP\ResponseInterface;
 
 class UserController extends ApiController
@@ -13,10 +12,8 @@ class UserController extends ApiController
 
     public function __construct()
     {
-        // Manual dependency injection for now
-        $db = \Config\Database::connect();
-        $userRepository = new UserRepository($db);
-        $this->userService = new UserService($userRepository);
+        // Usar Config\Services para inyección de dependencias
+        $this->userService = \Config\Services::userService();
     }
 
     /**
@@ -38,8 +35,8 @@ class UserController extends ApiController
     protected function getSuccessStatus(string $method): int
     {
         return match ($method) {
-            'store' => 201,    // Created
-            default => 200,    // OK
+            'store' => ResponseInterface::HTTP_CREATED,
+            default => ResponseInterface::HTTP_OK,
         };
     }
 

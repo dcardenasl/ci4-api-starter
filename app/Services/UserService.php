@@ -2,57 +2,44 @@
 
 namespace App\Services;
 
-use App\Repositories\UserRepository;
+use App\Models\UserModel;
 use App\Entities\UserEntity;
 
 class UserService
 {
-    protected $userRepository;
+    protected UserModel $userModel;
 
-    public function __construct(UserRepository $userRepository)
+    public function __construct(UserModel $userModel)
     {
-        $this->userRepository = $userRepository;
+        $this->userModel = $userModel;
     }
 
     /**
-     * Get all users
-     *
-     * @param array $data Request data (unused for index)
-     * @return array Response with status and data
+     * Obtener todos los usuarios
      */
     public function index(array $data): array
     {
-        $users = $this->userRepository->findAll();
-
-        // Convert entities to arrays for JSON serialization
-        $usersArray = array_map(function ($user) {
-            return $user instanceof UserEntity ? $user->toArray() : $user;
-        }, $users);
+        $users = $this->userModel->findAll();
 
         return [
             'status' => 'success',
-            'data' => $usersArray,
+            'data' => array_map(fn($user) => $user->toArray(), $users),
         ];
     }
 
     /**
-     * Get a single user by ID
-     *
-     * @param array $data Request data containing 'id'
-     * @return array Response with status and data
-     * @throws \InvalidArgumentException If user not found
+     * Obtener un usuario por ID
      */
     public function show(array $data): array
     {
         if (!isset($data['id'])) {
-            return ['errors' => ['id' => 'User ID is required']];
+            return ['errors' => ['id' => 'El ID del usuario es obligatorio']];
         }
 
-        $id = (int) $data['id'];
-        $user = $this->userRepository->findById($id);
+        $user = $this->userModel->find($data['id']);
 
         if (!$user) {
-            throw new \InvalidArgumentException('User not found');
+            throw new \InvalidArgumentException('Usuario no encontrado');
         }
 
         return [
@@ -62,40 +49,29 @@ class UserService
     }
 
     /**
-     * Create a new user
-     *
-     * @param array $data Request data containing user fields
-     * @return array Response with status and data or validation errors
+     * Crear un nuevo usuario
      */
     public function store(array $data): array
     {
-        // Validate required fields
-        $errors = [];
-
-        if (empty($data['email'])) {
-            $errors['email'] = 'Email is required';
+        // Validaciones de reglas de negocio (más allá de integridad de datos)
+        // Ejemplo: verificar dominio de email permitido, consultar API externa, etc.
+        $businessErrors = $this->validateBusinessRules($data);
+        if (!empty($businessErrors)) {
+            return ['errors' => $businessErrors];
         }
 
-        if (empty($data['username'])) {
-            $errors['username'] = 'Username is required';
+        // Model maneja validación y timestamps automáticamente
+        $userId = $this->userModel->insert([
+            'email'    => $data['email'] ?? null,
+            'username' => $data['username'] ?? null,
+        ]);
+
+        if (!$userId) {
+            // Obtener errores de validación del Model
+            return ['errors' => $this->userModel->errors()];
         }
 
-        if (!empty($errors)) {
-            return ['errors' => $errors];
-        }
-
-        // Prepare user data
-        $userData = [
-            'email' => $data['email'],
-            'username' => $data['username'],
-            'created_at' => date('Y-m-d H:i:s'),
-        ];
-
-        $user = $this->userRepository->create($userData);
-
-        if (!$user) {
-            throw new \RuntimeException('Failed to create user');
-        }
+        $user = $this->userModel->find($userId);
 
         return [
             'status' => 'success',
@@ -104,50 +80,40 @@ class UserService
     }
 
     /**
-     * Update an existing user
-     *
-     * @param array $data Request data containing 'id' and user fields
-     * @return array Response with status and data or validation errors
-     * @throws \InvalidArgumentException If user not found
+     * Actualizar un usuario existente
      */
     public function update(array $data): array
     {
-        // Validate ID
         if (!isset($data['id'])) {
-            return ['errors' => ['id' => 'User ID is required']];
+            return ['errors' => ['id' => 'El ID del usuario es obligatorio']];
         }
 
         $id = (int) $data['id'];
 
-        // Check if user exists
-        $existingUser = $this->userRepository->findById($id);
-        if (!$existingUser) {
-            throw new \InvalidArgumentException('User not found');
+        // Verificar si el usuario existe
+        if (!$this->userModel->find($id)) {
+            throw new \InvalidArgumentException('Usuario no encontrado');
         }
 
-        // Validate at least one field to update
+        // Regla de negocio: al menos un campo requerido
         if (empty($data['email']) && empty($data['username'])) {
-            return ['errors' => ['fields' => 'At least one field (email or username) is required']];
+            return ['errors' => ['fields' => 'Se requiere al menos un campo (email o username)']];
         }
 
-        // Prepare update data
-        $userData = [
-            'updated_at' => date('Y-m-d H:i:s'),
-        ];
+        // Preparar datos de actualización
+        $updateData = array_filter([
+            'email'    => $data['email'] ?? null,
+            'username' => $data['username'] ?? null,
+        ], fn($value) => $value !== null);
 
-        if (!empty($data['email'])) {
-            $userData['email'] = $data['email'];
+        // Model maneja validación y updated_at automáticamente
+        $success = $this->userModel->update($id, $updateData);
+
+        if (!$success) {
+            return ['errors' => $this->userModel->errors()];
         }
 
-        if (!empty($data['username'])) {
-            $userData['username'] = $data['username'];
-        }
-
-        $user = $this->userRepository->update($id, $userData);
-
-        if (!$user) {
-            throw new \RuntimeException('Failed to update user');
-        }
+        $user = $this->userModel->find($id);
 
         return [
             'status' => 'success',
@@ -156,35 +122,45 @@ class UserService
     }
 
     /**
-     * Delete a user
-     *
-     * @param array $data Request data containing 'id'
-     * @return array Response with status and message
-     * @throws \InvalidArgumentException If user not found
+     * Eliminar un usuario (soft delete)
      */
     public function destroy(array $data): array
     {
         if (!isset($data['id'])) {
-            return ['errors' => ['id' => 'User ID is required']];
+            return ['errors' => ['id' => 'El ID del usuario es obligatorio']];
         }
 
         $id = (int) $data['id'];
 
-        // Check if user exists
-        $existingUser = $this->userRepository->findById($id);
-        if (!$existingUser) {
-            throw new \InvalidArgumentException('User not found');
+        // Verificar si el usuario existe
+        if (!$this->userModel->find($id)) {
+            throw new \InvalidArgumentException('Usuario no encontrado');
         }
 
-        $deleted = $this->userRepository->delete($id);
-
-        if (!$deleted) {
-            throw new \RuntimeException('Failed to delete user');
+        // Realiza soft delete (gracias a useSoftDeletes = true)
+        if (!$this->userModel->delete($id)) {
+            throw new \RuntimeException('Error al eliminar el usuario');
         }
 
         return [
             'status' => 'success',
-            'message' => 'User deleted successfully',
+            'message' => 'Usuario eliminado correctamente',
         ];
+    }
+
+    /**
+     * Validaciones de reglas de negocio específicas
+     * Separadas de las reglas de integridad del Model
+     */
+    protected function validateBusinessRules(array $data): array
+    {
+        $errors = [];
+
+        // Ejemplo: validar dominio de email permitido
+        // if (isset($data['email']) && !$this->isAllowedEmailDomain($data['email'])) {
+        //     $errors['email'] = 'Dominio de email no permitido';
+        // }
+
+        return $errors;
     }
 }

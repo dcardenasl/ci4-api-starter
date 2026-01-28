@@ -7,8 +7,8 @@ use CodeIgniter\Router\RouteCollection;
  */
 $routes->get('/', 'Home::index');
 
-// API v1 Routes
-$routes->group('api/v1', ['namespace' => 'App\Controllers\Api\V1'], function($routes) {
+// API v1 Routes with rate limiting
+$routes->group('api/v1', ['namespace' => 'App\Controllers\Api\V1', 'filter' => 'throttle'], function($routes) {
     // Public authentication routes
     $routes->post('auth/login', 'AuthController::login');
     $routes->post('auth/register', 'AuthController::register');

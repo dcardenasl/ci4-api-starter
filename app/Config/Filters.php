@@ -13,6 +13,8 @@ use CodeIgniter\Filters\PageCache;
 use CodeIgniter\Filters\PerformanceMetrics;
 use CodeIgniter\Filters\SecureHeaders;
 use App\Filters\JwtAuthFilter;
+use App\Filters\CorsFilter;
+use App\Filters\ThrottleFilter;
 
 class Filters extends BaseFilters
 {
@@ -31,11 +33,12 @@ class Filters extends BaseFilters
         'honeypot'      => Honeypot::class,
         'invalidchars'  => InvalidChars::class,
         'secureheaders' => SecureHeaders::class,
-        'cors'          => Cors::class,
+        'cors'          => CorsFilter::class,
         'forcehttps'    => ForceHTTPS::class,
         'pagecache'     => PageCache::class,
         'performance'   => PerformanceMetrics::class,
         'jwtauth'       => JwtAuthFilter::class,
+        'throttle'      => ThrottleFilter::class,
     ];
 
     /**
@@ -74,13 +77,15 @@ class Filters extends BaseFilters
      */
     public array $globals = [
         'before' => [
+            'cors', // Handle CORS preflight (OPTIONS) requests
             // 'honeypot',
             // 'csrf',
             // 'invalidchars',
         ],
         'after' => [
+            'cors', // Add CORS headers to all responses
             // 'honeypot',
-            // 'secureheaders',
+            'secureheaders', // Add security headers to all responses
         ],
     ];
 

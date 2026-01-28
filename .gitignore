@@ -149,7 +149,8 @@ _modules/*
 .vscode/
 
 /results/
-/phpunit*.xml
+.phpunit.result.cache
+.phpunit.cache
 
 # Note: composer.lock should be committed in production projects
 # Uncommented here for flexibility

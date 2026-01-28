@@ -126,6 +126,60 @@ composer validate --strict
 - Check workflow step "Configure testing environment"
 - Ensure key generation commands work in CI environment
 
+### 5. PHPUnit Shows Options Instead of Running Tests
+
+**Symptoms:**
+- CI job shows PHPUnit help/options text
+- Exit code 1 with no actual test output
+- Error: "process completed with exit code 1"
+
+**Common Causes:**
+- `phpunit.xml` file not committed to repository
+- `phpunit.xml` excluded in `.gitignore`
+- Missing or incorrect PHPUnit configuration
+
+**Solutions:**
+1. **Check if phpunit.xml is ignored:**
+   ```bash
+   git status phpunit.xml
+   ```
+
+2. **Fix .gitignore if needed:**
+   Remove `/phpunit*.xml` and replace with:
+   ```
+   .phpunit.result.cache
+   .phpunit.cache
+   ```
+
+3. **Commit phpunit.xml:**
+   ```bash
+   git add phpunit.xml
+   git commit -m "Add phpunit.xml configuration"
+   git push
+   ```
+
+4. **Update CI workflow to verify configuration:**
+   ```yaml
+   - name: Verify PHPUnit configuration
+     run: |
+       if [ ! -f "phpunit.xml" ]; then
+         echo "❌ phpunit.xml not found!"
+         exit 1
+       fi
+       echo "✓ phpunit.xml found"
+   ```
+
+5. **Use explicit configuration path:**
+   ```yaml
+   - name: Run tests
+     run: vendor/bin/phpunit --configuration phpunit.xml --no-coverage
+   ```
+
+**Prevention:**
+- Always commit `phpunit.xml` to version control
+- Only ignore cache files (`.phpunit.result.cache`)
+- Test CI locally with `act` before pushing
+
 ## Extending CI/CD
 
 ### Adding Code Coverage

@@ -78,8 +78,17 @@ jobs:
           # Generate encryption key
           php spark key:generate --show | sed 's/.*: //' | xargs -I {} echo "encryption.key = {}" >> .env
 
+      - name: Verify PHPUnit configuration
+        run: |
+          echo "Checking for phpunit.xml..."
+          if [ ! -f "phpunit.xml" ]; then
+            echo "❌ phpunit.xml not found!"
+            exit 1
+          fi
+          echo "✓ phpunit.xml found"
+
       - name: Run tests
-        run: vendor/bin/phpunit --no-coverage --testdox
+        run: vendor/bin/phpunit --configuration phpunit.xml --no-coverage --testdox
 
       - name: Check code style (optional)
         continue-on-error: true

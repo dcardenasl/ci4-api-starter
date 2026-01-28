@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/10.5/phpunit.xsd"
+         bootstrap="vendor/codeigniter4/framework/system/Test/bootstrap.php"
+         backupGlobals="false"
+         beStrictAboutOutputDuringTests="true"
+         colors="true"
+         cacheDirectory=".phpunit.cache"
+         failOnWarning="true"
+         failOnRisky="true">
+
+    <testsuites>
+        <testsuite name="App Test Suite">
+            <directory>./tests</directory>
+        </testsuite>
+    </testsuites>
+
+    <coverage includeUncoveredFiles="true"
+              pathCoverage="false"
+              ignoreDeprecatedCodeUnits="true"
+              disableCodeCoverageIgnore="true">
+        <report>
+            <html outputDirectory="tests/coverage/html"/>
+            <text outputFile="php://stdout" showOnlySummary="true"/>
+        </report>
+    </coverage>
+
+    <source>
+        <include>
+            <directory suffix=".php">./app/Controllers</directory>
+            <directory suffix=".php">./app/Services</directory>
+            <directory suffix=".php">./app/Models</directory>
+            <directory suffix=".php">./app/Entities</directory>
+            <directory suffix=".php">./app/Filters</directory>
+        </include>
+        <exclude>
+            <directory>./app/Views</directory>
+            <file>./app/Config/Routes.php</file>
+        </exclude>
+    </source>
+
+    <php>
+        <env name="CI_ENVIRONMENT" value="testing"/>
+        <server name="app.baseURL" value="http://localhost:8080/"/>
+
+        <!-- Database Configuration -->
+        <env name="database.tests.hostname" value="127.0.0.1"/>
+        <env name="database.tests.database" value="ci4_test"/>
+        <env name="database.tests.username" value="root"/>
+        <env name="database.tests.password" value="root"/>
+        <env name="database.tests.DBDriver" value="MySQLi"/>
+        <env name="database.tests.DBPrefix" value=""/>
+        <env name="database.tests.charset" value="utf8mb4"/>
+        <env name="database.tests.DBCollat" value="utf8mb4_general_ci"/>
+
+        <!-- JWT Configuration for Testing -->
+        <env name="JWT_SECRET_KEY" value="test-secret-key-for-phpunit-testing-only"/>
+        <env name="encryption.key" value="hex:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"/>
+    </php>
+
+    <extensions>
+    </extensions>
+</phpunit>

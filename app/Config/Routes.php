@@ -41,6 +41,12 @@ $routes->group('api/v1', ['namespace' => 'App\Controllers\Api\V1', 'filter' => '
         $routes->get('users', 'UserController::index');
         $routes->get('users/(:num)', 'UserController::show/$1');
 
+        // File routes - all authenticated users
+        $routes->get('files', 'FileController::index');
+        $routes->post('files/upload', 'FileController::upload');
+        $routes->get('files/(:num)', 'FileController::show/$1');
+        $routes->delete('files/(:num)', 'FileController::delete/$1');
+
         // User routes - admin only (create, update, delete)
         $routes->group('', ['filter' => 'roleauth:admin'], function ($routes) {
             $routes->post('users', 'UserController::create');

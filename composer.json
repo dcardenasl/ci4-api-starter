@@ -5,8 +5,11 @@
     "license": "MIT",
     "require": {
         "php": "^8.1",
+        "aws/aws-sdk-php": "^3.369",
         "codeigniter4/framework": "^4.5",
         "firebase/php-jwt": "^7.0",
+        "league/flysystem": "^3.31",
+        "league/flysystem-aws-s3-v3": "^3.31",
         "monolog/monolog": "^3.5",
         "sentry/sentry": "^4.6",
         "symfony/mailer": "^6.4",

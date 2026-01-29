@@ -4,6 +4,7 @@ namespace Config;
 
 use App\Filters\CorsFilter;
 use App\Filters\JwtAuthFilter;
+use App\Filters\RequestLoggingFilter;
 use App\Filters\RoleAuthorizationFilter;
 use App\Filters\ThrottleFilter;
 use CodeIgniter\Config\Filters as BaseFilters;
@@ -51,6 +52,7 @@ class Filters extends BaseFilters
         'jwtauth'       => JwtAuthFilter::class,
         'throttle'      => ThrottleFilter::class,
         'roleauth'      => RoleAuthorizationFilter::class,
+        'requestLogging' => RequestLoggingFilter::class,
     ];
 
     /**
@@ -98,6 +100,7 @@ class Filters extends BaseFilters
             'cors', // Add CORS headers to all responses
             // 'honeypot',
             'secureheaders', // Add security headers to all responses
+            'requestLogging', // Log all requests/responses
         ],
     ];
 

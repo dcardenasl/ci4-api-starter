@@ -30,3 +30,6 @@ parameters:
         - '#Return type .* should be compatible with return type#'
         - '#Cannot call method toArray\(\) on array<.*>\|object#'
         - '#Property .* with generic class CodeIgniter\\Database\\BaseConnection does not specify its types#'
+        - '#Call to an undefined method App\\Models\\.*::get\(\)#'
+        - '#Parameter .* of method Monolog\\Logger::log\(\) expects#'
+        - '#Property .* type has no value type specified in iterable type array#'

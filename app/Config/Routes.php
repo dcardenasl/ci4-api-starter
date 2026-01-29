@@ -7,6 +7,14 @@ use CodeIgniter\Router\RouteCollection;
  */
 $routes->get('/', 'Home::index');
 
+// Health check endpoints (public, no rate limiting for Kubernetes/monitoring)
+$routes->group('', ['namespace' => 'App\Controllers\Api\V1'], function ($routes) {
+    $routes->get('health', 'HealthController::index');
+    $routes->get('ping', 'HealthController::ping');
+    $routes->get('ready', 'HealthController::ready');
+    $routes->get('live', 'HealthController::live');
+});
+
 // API v1 Routes with rate limiting
 $routes->group('api/v1', ['namespace' => 'App\Controllers\Api\V1', 'filter' => 'throttle'], function ($routes) {
     // Public authentication routes
@@ -38,6 +46,13 @@ $routes->group('api/v1', ['namespace' => 'App\Controllers\Api\V1', 'filter' => '
             $routes->post('users', 'UserController::create');
             $routes->put('users/(:num)', 'UserController::update/$1');
             $routes->delete('users/(:num)', 'UserController::delete/$1');
+
+            // Metrics endpoints (admin only)
+            $routes->get('metrics', 'MetricsController::index');
+            $routes->get('metrics/requests', 'MetricsController::requests');
+            $routes->get('metrics/slow-requests', 'MetricsController::slowRequests');
+            $routes->get('metrics/custom/(:segment)', 'MetricsController::custom/$1');
+            $routes->post('metrics/record', 'MetricsController::record');
         });
     });
 });

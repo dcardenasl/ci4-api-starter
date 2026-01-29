@@ -11,6 +11,8 @@ This test suite provides comprehensive coverage for the CI4 API Starter applicat
 ```
 tests/
 ├── unit/
+│   ├── Libraries/
+│   │   └── ApiResponseTest.php (23 tests)
 │   └── Services/
 │       ├── UserServiceTest.php (21 tests)
 │       └── JwtServiceTest.php (30 tests)
@@ -51,6 +53,45 @@ vendor/bin/phpunit --coverage-html tests/coverage/html
 ---
 
 ## Unit Tests
+
+### ApiResponseTest (23 tests)
+
+**Purpose**: Tests centralized API response formatting library.
+
+**Coverage**:
+
+#### Success Responses (4 tests)
+- ✅ Returns success with data
+- ✅ Returns success with message
+- ✅ Returns success with metadata
+- ✅ Returns success without data
+
+#### Error Responses (3 tests)
+- ✅ Returns error with array of errors
+- ✅ Returns error with single error string (wrapped as array)
+- ✅ Returns error with custom code
+
+#### Pagination (3 tests)
+- ✅ Returns paginated data with correct metadata
+- ✅ Calculates first page correctly (from=1)
+- ✅ Calculates last page correctly (to=total)
+
+#### Specialized Responses (13 tests)
+- ✅ Created response (HTTP 201)
+- ✅ Created with custom message
+- ✅ Deleted response (HTTP 200/204)
+- ✅ Deleted with custom message
+- ✅ Validation error (HTTP 422)
+- ✅ Validation error with custom message
+- ✅ Not found (HTTP 404)
+- ✅ Unauthorized (HTTP 401)
+- ✅ Unauthorized with custom message
+- ✅ Forbidden (HTTP 403)
+- ✅ Forbidden with custom message
+- ✅ Server error (HTTP 500)
+- ✅ Server error with custom message
+
+**Integration**: ApiResponse is now used throughout UserService for consistent response formatting.
 
 ### UserServiceTest (21 tests)
 
@@ -152,6 +193,13 @@ vendor/bin/phpunit --coverage-html tests/coverage/html
 ### Current Coverage
 
 ```
+Library Layer Coverage:
+└── ApiResponse: 100% (23 tests)
+    ├── Success responses: 100%
+    ├── Error responses: 100%
+    ├── Specialized responses: 100%
+    └── Pagination: 100%
+
 Service Layer Coverage:
 ├── UserService: ~85% (21 tests)
 │   ├── CRUD Operations: 100%
@@ -163,7 +211,7 @@ Service Layer Coverage:
     ├── Validation: 100%
     └── Security: 100%
 
-Total: 51 tests, 113 assertions
+Total: 74 tests, 163 assertions
 ```
 
 ### Viewing Coverage Report
@@ -388,14 +436,15 @@ pecl install pcov
 
 ### Current Status
 
-- ✅ **51 tests**
-- ✅ **113 assertions**
+- ✅ **74 tests**
+- ✅ **163 assertions**
 - ✅ **0 failures**
 - ✅ **0 errors**
 - ✅ **100% pass rate**
 
 ### Coverage Goals
 
+- Library Layer: **>80%** ✅ (Currently 100%)
 - Service Layer: **>80%** ✅ (Currently ~90%)
 - Controllers: **>70%** (Integration tests)
 - Models: **>70%** (Integration tests)
@@ -455,10 +504,11 @@ pecl install pcov
 
 The test suite provides **production-grade quality assurance** with:
 
-✅ Comprehensive unit tests (51 tests)
+✅ Comprehensive unit tests (74 tests, 163 assertions)
 ✅ Security-focused testing
 ✅ Fast execution (~1 second)
 ✅ Clear, maintainable test code
+✅ Consistent API response formatting (ApiResponse library)
 ✅ Easy to extend for new features
 ✅ Documented best practices
 

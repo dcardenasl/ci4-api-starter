@@ -10,6 +10,7 @@ use App\Exceptions\NotFoundException;
 use App\Exceptions\ValidationException;
 use App\Exceptions\BadRequestException;
 use App\Interfaces\UserServiceInterface;
+use App\Libraries\ApiResponse;
 
 class UserService implements UserServiceInterface
 {
@@ -27,10 +28,9 @@ class UserService implements UserServiceInterface
     {
         $users = $this->userModel->findAll();
 
-        return [
-            'status' => 'success',
-            'data' => array_map(fn($user) => $user->toArray(), $users),
-        ];
+        return ApiResponse::success(
+            array_map(fn($user) => $user->toArray(), $users)
+        );
     }
 
     /**
@@ -39,7 +39,10 @@ class UserService implements UserServiceInterface
     public function show(array $data): array
     {
         if (!isset($data['id'])) {
-            return ['errors' => ['id' => lang('Users.idRequired')]];
+            return ApiResponse::error(
+                ['id' => lang('Users.idRequired')],
+                'Invalid request'
+            );
         }
 
         $user = $this->userModel->find($data['id']);
@@ -48,10 +51,7 @@ class UserService implements UserServiceInterface
             throw new NotFoundException(lang('Users.notFound'));
         }
 
-        return [
-            'status' => 'success',
-            'data' => $user->toArray(),
-        ];
+        return ApiResponse::success($user->toArray());
     }
 
     /**
@@ -63,7 +63,7 @@ class UserService implements UserServiceInterface
         // Ejemplo: verificar dominio de email permitido, consultar API externa, etc.
         $businessErrors = $this->validateBusinessRules($data);
         if (!empty($businessErrors)) {
-            return ['errors' => $businessErrors];
+            return ApiResponse::validationError($businessErrors);
         }
 
         // Model maneja validación y timestamps automáticamente
@@ -74,15 +74,12 @@ class UserService implements UserServiceInterface
 
         if (!$userId) {
             // Obtener errores de validación del Model
-            return ['errors' => $this->userModel->errors()];
+            return ApiResponse::validationError($this->userModel->errors());
         }
 
         $user = $this->userModel->find($userId);
 
-        return [
-            'status' => 'success',
-            'data' => $user->toArray(),
-        ];
+        return ApiResponse::created($user->toArray());
     }
 
     /**
@@ -91,7 +88,10 @@ class UserService implements UserServiceInterface
     public function update(array $data): array
     {
         if (!isset($data['id'])) {
-            return ['errors' => ['id' => lang('Users.idRequired')]];
+            return ApiResponse::error(
+                ['id' => lang('Users.idRequired')],
+                'Invalid request'
+            );
         }
 
         $id = (int) $data['id'];
@@ -103,7 +103,10 @@ class UserService implements UserServiceInterface
 
         // Regla de negocio: al menos un campo requerido
         if (empty($data['email']) && empty($data['username'])) {
-            return ['errors' => ['fields' => lang('Users.fieldRequired')]];
+            return ApiResponse::error(
+                ['fields' => lang('Users.fieldRequired')],
+                'Invalid request'
+            );
         }
 
         // Preparar datos de actualización
@@ -116,15 +119,12 @@ class UserService implements UserServiceInterface
         $success = $this->userModel->update($id, $updateData);
 
         if (!$success) {
-            return ['errors' => $this->userModel->errors()];
+            return ApiResponse::validationError($this->userModel->errors());
         }
 
         $user = $this->userModel->find($id);
 
-        return [
-            'status' => 'success',
-            'data' => $user->toArray(),
-        ];
+        return ApiResponse::success($user->toArray());
     }
 
     /**
@@ -133,7 +133,10 @@ class UserService implements UserServiceInterface
     public function destroy(array $data): array
     {
         if (!isset($data['id'])) {
-            return ['errors' => ['id' => lang('Users.idRequired')]];
+            return ApiResponse::error(
+                ['id' => lang('Users.idRequired')],
+                'Invalid request'
+            );
         }
 
         $id = (int) $data['id'];
@@ -148,10 +151,7 @@ class UserService implements UserServiceInterface
             throw new \RuntimeException(lang('Users.deleteError'));
         }
 
-        return [
-            'status' => 'success',
-            'message' => lang('Users.deletedSuccess'),
-        ];
+        return ApiResponse::deleted(lang('Users.deletedSuccess'));
     }
 
     /**
@@ -177,7 +177,10 @@ class UserService implements UserServiceInterface
     public function login(array $data): array
     {
         if (empty($data['username']) || empty($data['password'])) {
-            return ['errors' => ['credentials' => lang('Users.auth.credentialsRequired')]];
+            return ApiResponse::error(
+                ['credentials' => lang('Users.auth.credentialsRequired')],
+                'Invalid credentials'
+            );
         }
 
         $user = $this->userModel
@@ -194,18 +197,18 @@ class UserService implements UserServiceInterface
         $passwordValid = password_verify($data['password'], $storedHash);
 
         if (!$user || !$passwordValid) {
-            return ['errors' => ['credentials' => lang('Users.auth.invalidCredentials')]];
+            return ApiResponse::error(
+                ['credentials' => lang('Users.auth.invalidCredentials')],
+                'Invalid credentials'
+            );
         }
 
-        return [
-            'status' => 'success',
-            'data' => [
-                'id' => $user->id,
-                'username' => $user->username,
-                'email' => $user->email,
-                'role' => $user->role,
-            ],
-        ];
+        return ApiResponse::success([
+            'id' => $user->id,
+            'username' => $user->username,
+            'email' => $user->email,
+            'role' => $user->role,
+        ]);
     }
 
     /**
@@ -214,17 +217,20 @@ class UserService implements UserServiceInterface
     public function register(array $data): array
     {
         if (empty($data['password'])) {
-            return ['errors' => ['password' => lang('Users.passwordRequired')]];
+            return ApiResponse::error(
+                ['password' => lang('Users.passwordRequired')],
+                'Invalid request'
+            );
         }
 
         // Validate password strength using model rules
         if (!$this->userModel->validate($data)) {
-            return ['errors' => $this->userModel->errors()];
+            return ApiResponse::validationError($this->userModel->errors());
         }
 
         $businessErrors = $this->validateBusinessRules($data);
         if (!empty($businessErrors)) {
-            return ['errors' => $businessErrors];
+            return ApiResponse::validationError($businessErrors);
         }
 
         $userId = $this->userModel->insert([
@@ -235,20 +241,17 @@ class UserService implements UserServiceInterface
         ], false); // Skip validation since we already validated above
 
         if (!$userId) {
-            return ['errors' => $this->userModel->errors()];
+            return ApiResponse::validationError($this->userModel->errors());
         }
 
         $user = $this->userModel->find($userId);
 
-        return [
-            'status' => 'success',
-            'data' => [
-                'id' => $user->id,
-                'username' => $user->username,
-                'email' => $user->email,
-                'role' => $user->role,
-            ],
-        ];
+        return ApiResponse::created([
+            'id' => $user->id,
+            'username' => $user->username,
+            'email' => $user->email,
+            'role' => $user->role,
+        ]);
     }
 
     /**
@@ -272,13 +275,10 @@ class UserService implements UserServiceInterface
         $jwtService = \Config\Services::jwtService();
         $token = $jwtService->encode($user['id'], $user['role']);
 
-        return [
-            'status' => 'success',
-            'data' => [
-                'token' => $token,
-                'user' => $user,
-            ],
-        ];
+        return ApiResponse::success([
+            'token' => $token,
+            'user' => $user,
+        ]);
     }
 
     /**
@@ -302,12 +302,9 @@ class UserService implements UserServiceInterface
         $jwtService = \Config\Services::jwtService();
         $token = $jwtService->encode($user['id'], $user['role']);
 
-        return [
-            'status' => 'success',
-            'data' => [
-                'token' => $token,
-                'user' => $user,
-            ],
-        ];
+        return ApiResponse::success([
+            'token' => $token,
+            'user' => $user,
+        ]);
     }
 }

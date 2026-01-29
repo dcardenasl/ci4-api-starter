@@ -281,13 +281,13 @@ class UserService implements UserServiceInterface
     }
 
     /**
-     * Authenticate user and return JWT token
+     * Authenticate user and return JWT token with refresh token
      *
      * This method combines login authentication with token generation.
      * Used by AuthController for login endpoint.
      *
      * @param array $data Login credentials
-     * @return array Result with token and user data, or errors
+     * @return array Result with access token, refresh token, and user data
      */
     public function loginWithToken(array $data): array
     {
@@ -298,23 +298,31 @@ class UserService implements UserServiceInterface
         }
 
         $user = $result['data'];
+
+        // Generate access token
         $jwtService = \Config\Services::jwtService();
-        $token = $jwtService->encode((int) $user['id'], $user['role']);
+        $accessToken = $jwtService->encode((int) $user['id'], $user['role']);
+
+        // Generate refresh token
+        $refreshTokenService = new RefreshTokenService(new \App\Models\RefreshTokenModel());
+        $refreshToken = $refreshTokenService->issueRefreshToken((int) $user['id']);
 
         return ApiResponse::success([
-            'token' => $token,
+            'access_token' => $accessToken,
+            'refresh_token' => $refreshToken,
+            'expires_in' => (int) env('JWT_ACCESS_TOKEN_TTL', 3600),
             'user' => $user,
         ]);
     }
 
     /**
-     * Register new user and return JWT token
+     * Register new user and return JWT tokens
      *
      * This method combines user registration with token generation.
      * Used by AuthController for register endpoint.
      *
      * @param array $data Registration data
-     * @return array Result with token and user data, or errors
+     * @return array Result with access token, refresh token, and user data
      */
     public function registerWithToken(array $data): array
     {
@@ -325,15 +333,23 @@ class UserService implements UserServiceInterface
         }
 
         $user = $result['data'];
+
+        // Generate access token
         $jwtService = \Config\Services::jwtService();
-        $token = $jwtService->encode((int) $user['id'], $user['role']);
+        $accessToken = $jwtService->encode((int) $user['id'], $user['role']);
+
+        // Generate refresh token
+        $refreshTokenService = new RefreshTokenService(new \App\Models\RefreshTokenModel());
+        $refreshToken = $refreshTokenService->issueRefreshToken((int) $user['id']);
 
         // Send verification email
         $verificationService = new VerificationService();
         $verificationService->sendVerificationEmail((int) $user['id']);
 
         return ApiResponse::success([
-            'token' => $token,
+            'access_token' => $accessToken,
+            'refresh_token' => $refreshToken,
+            'expires_in' => (int) env('JWT_ACCESS_TOKEN_TTL', 3600),
             'user' => $user,
             'message' => 'Registration successful. Please check your email to verify your account.',
         ]);

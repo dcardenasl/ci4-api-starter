@@ -17,10 +17,11 @@ class JwtService
     public function __construct()
     {
         $this->secretKey = getenv('JWT_SECRET_KEY') ?: 'your-secret-key-change-in-production';
+        $this->expirationTime = (int) env('JWT_ACCESS_TOKEN_TTL', 3600);
     }
 
     /**
-     * Generate a JWT token
+     * Generate a JWT token with JTI (unique identifier)
      *
      * @param int $userId
      * @param string $role
@@ -31,9 +32,13 @@ class JwtService
         $issuedAt = time();
         $expirationTime = $issuedAt + $this->expirationTime;
 
+        // Generate unique JTI (token identifier) for revocation support
+        $jti = bin2hex(random_bytes(16));
+
         $payload = [
             'iat' => $issuedAt,
             'exp' => $expirationTime,
+            'jti' => $jti,
             'uid' => $userId,
             'role' => $role,
         ];

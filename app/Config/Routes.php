@@ -20,6 +20,7 @@ $routes->group('api/v1', ['namespace' => 'App\Controllers\Api\V1', 'filter' => '
     // Public authentication routes
     $routes->post('auth/login', 'AuthController::login');
     $routes->post('auth/register', 'AuthController::register');
+    $routes->post('auth/refresh', 'TokenController::refresh');
 
     // Email verification routes (public)
     $routes->post('auth/verify-email', 'VerificationController::verify');
@@ -36,6 +37,10 @@ $routes->group('api/v1', ['namespace' => 'App\Controllers\Api\V1', 'filter' => '
 
         // Email verification (protected)
         $routes->post('auth/resend-verification', 'VerificationController::resend');
+
+        // Token revocation routes (protected)
+        $routes->post('auth/revoke', 'TokenController::revoke');
+        $routes->post('auth/revoke-all', 'TokenController::revokeAll');
 
         // User routes - read-only for all authenticated users
         $routes->get('users', 'UserController::index');
@@ -59,6 +64,11 @@ $routes->group('api/v1', ['namespace' => 'App\Controllers\Api\V1', 'filter' => '
             $routes->get('metrics/slow-requests', 'MetricsController::slowRequests');
             $routes->get('metrics/custom/(:segment)', 'MetricsController::custom/$1');
             $routes->post('metrics/record', 'MetricsController::record');
+
+            // Audit endpoints (admin only)
+            $routes->get('audit', 'AuditController::index');
+            $routes->get('audit/(:num)', 'AuditController::show/$1');
+            $routes->get('audit/entity/(:segment)/(:num)', 'AuditController::byEntity/$1/$2');
         });
     });
 });

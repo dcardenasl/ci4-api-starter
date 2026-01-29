@@ -35,6 +35,22 @@ class JwtAuthFilter implements FilterInterface
             return $this->unauthorized('Invalid or expired token');
         }
 
+        // Check if token is revoked (if revocation check is enabled)
+        if (env('JWT_REVOCATION_CHECK', 'true') === 'true') {
+            $jti = $decoded->jti ?? null;
+
+            if ($jti) {
+                $tokenRevocationService = new \App\Services\TokenRevocationService(
+                    new \App\Models\TokenBlacklistModel(),
+                    new \App\Models\RefreshTokenModel()
+                );
+
+                if ($tokenRevocationService->isRevoked($jti)) {
+                    return $this->unauthorized('Token has been revoked');
+                }
+            }
+        }
+
         // Inject user data into request
         $request->userId = $decoded->uid;
         $request->userRole = $decoded->role;

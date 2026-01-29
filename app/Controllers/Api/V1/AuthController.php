@@ -53,39 +53,14 @@ class AuthController extends ApiController
         summary: 'User login',
         tags: ['Authentication'],
     )]
-    #[OA\RequestBody(
-        required: true,
-        content: new OA\JsonContent(
-            required: ['username', 'password'],
-            properties: [
-                new OA\Property(property: 'username', type: 'string', example: 'testuser', description: 'Username or email'),
-                new OA\Property(property: 'password', type: 'string', format: 'password', example: 'testpass123'),
-            ]
-        )
-    )]
+    #[OA\RequestBody(ref: '#/components/requestBodies/LoginRequest')]
     #[OA\Response(
         response: 200,
         description: 'Login successful',
         content: new OA\JsonContent(
             properties: [
                 new OA\Property(property: 'status', type: 'string', example: 'success'),
-                new OA\Property(
-                    property: 'data',
-                    properties: [
-                        new OA\Property(property: 'token', type: 'string', example: 'eyJ0eXAiOiJKV1QiLCJhbGc...'),
-                        new OA\Property(
-                            property: 'user',
-                            properties: [
-                                new OA\Property(property: 'id', type: 'integer', example: 1),
-                                new OA\Property(property: 'username', type: 'string', example: 'testuser'),
-                                new OA\Property(property: 'email', type: 'string', example: 'test@example.com'),
-                                new OA\Property(property: 'role', type: 'string', example: 'user'),
-                            ],
-                            type: 'object'
-                        ),
-                    ],
-                    type: 'object'
-                ),
+                new OA\Property(property: 'data', ref: '#/components/schemas/AuthToken'),
             ]
         )
     )]
@@ -115,57 +90,18 @@ class AuthController extends ApiController
         summary: 'Register new user',
         tags: ['Authentication'],
     )]
-    #[OA\RequestBody(
-        required: true,
-        content: new OA\JsonContent(
-            required: ['username', 'email', 'password'],
-            properties: [
-                new OA\Property(property: 'username', type: 'string', example: 'newuser'),
-                new OA\Property(property: 'email', type: 'string', format: 'email', example: 'newuser@example.com'),
-                new OA\Property(property: 'password', type: 'string', format: 'password', example: 'Password123', description: 'Minimum 8 characters, must contain uppercase, lowercase, and number'),
-            ]
-        )
-    )]
+    #[OA\RequestBody(ref: '#/components/requestBodies/RegisterRequest')]
     #[OA\Response(
         response: 201,
         description: 'User registered successfully',
         content: new OA\JsonContent(
             properties: [
                 new OA\Property(property: 'status', type: 'string', example: 'success'),
-                new OA\Property(
-                    property: 'data',
-                    properties: [
-                        new OA\Property(property: 'token', type: 'string', example: 'eyJ0eXAiOiJKV1QiLCJhbGc...'),
-                        new OA\Property(
-                            property: 'user',
-                            properties: [
-                                new OA\Property(property: 'id', type: 'integer', example: 1),
-                                new OA\Property(property: 'username', type: 'string', example: 'newuser'),
-                                new OA\Property(property: 'email', type: 'string', example: 'newuser@example.com'),
-                                new OA\Property(property: 'role', type: 'string', example: 'user'),
-                            ],
-            type: 'object'
-                        ),
-                    ],
-                    type: 'object'
-                ),
+                new OA\Property(property: 'data', ref: '#/components/schemas/AuthToken'),
             ]
         )
     )]
-    #[OA\Response(
-        response: 422,
-        description: 'Validation error',
-        content: new OA\JsonContent(
-            properties: [
-                new OA\Property(property: 'status', type: 'string', example: 'error'),
-                new OA\Property(
-                    property: 'errors',
-                    type: 'object',
-                    example: ['email' => 'This email is already registered']
-                ),
-            ]
-        )
-    )]
+    #[OA\Response(response: 422, ref: '#/components/responses/ValidationErrorResponse')]
     public function register(): ResponseInterface
     {
         return $this->handleRequest('registerWithToken');
@@ -183,19 +119,7 @@ class AuthController extends ApiController
         content: new OA\JsonContent(
             properties: [
                 new OA\Property(property: 'status', type: 'string', example: 'success'),
-                new OA\Property(
-                    property: 'data',
-                    properties: [
-                        new OA\Property(property: 'id', type: 'integer', example: 1),
-                        new OA\Property(property: 'username', type: 'string', example: 'testuser'),
-                        new OA\Property(property: 'email', type: 'string', example: 'test@example.com'),
-                        new OA\Property(property: 'role', type: 'string', example: 'user'),
-                        new OA\Property(property: 'created_at', type: 'string', example: '2026-01-28T12:00:00Z'),
-                        new OA\Property(property: 'updated_at', type: 'string', example: '2026-01-28T12:00:00Z'),
-                        new OA\Property(property: 'deleted_at', type: 'string', nullable: true, example: null),
-                    ],
-                    type: 'object'
-                ),
+                new OA\Property(property: 'data', ref: '#/components/schemas/User'),
             ]
         )
     )]

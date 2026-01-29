@@ -20,30 +20,7 @@
                 "summary": "User login",
                 "operationId": "12bd69849349679dff198119b6480033",
                 "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "required": [
-                                    "username",
-                                    "password"
-                                ],
-                                "properties": {
-                                    "username": {
-                                        "description": "Username or email",
-                                        "type": "string",
-                                        "example": "testuser"
-                                    },
-                                    "password": {
-                                        "type": "string",
-                                        "format": "password",
-                                        "example": "testpass123"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
+                    "$ref": "#/components/requestBodies/LoginRequest"
                 },
                 "responses": {
                     "200": {
@@ -57,34 +34,7 @@
                                             "example": "success"
                                         },
                                         "data": {
-                                            "properties": {
-                                                "token": {
-                                                    "type": "string",
-                                                    "example": "eyJ0eXAiOiJKV1QiLCJhbGc..."
-                                                },
-                                                "user": {
-                                                    "properties": {
-                                                        "id": {
-                                                            "type": "integer",
-                                                            "example": 1
-                                                        },
-                                                        "username": {
-                                                            "type": "string",
-                                                            "example": "testuser"
-                                                        },
-                                                        "email": {
-                                                            "type": "string",
-                                                            "example": "test@example.com"
-                                                        },
-                                                        "role": {
-                                                            "type": "string",
-                                                            "example": "user"
-                                                        }
-                                                    },
-                                                    "type": "object"
-                                                }
-                                            },
-                                            "type": "object"
+                                            "$ref": "#/components/schemas/AuthToken"
                                         }
                                     },
                                     "type": "object"
@@ -128,36 +78,7 @@
                 "summary": "Register new user",
                 "operationId": "3e37920a2395c9f5337fc84b110e6246",
                 "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "required": [
-                                    "username",
-                                    "email",
-                                    "password"
-                                ],
-                                "properties": {
-                                    "username": {
-                                        "type": "string",
-                                        "example": "newuser"
-                                    },
-                                    "email": {
-                                        "type": "string",
-                                        "format": "email",
-                                        "example": "newuser@example.com"
-                                    },
-                                    "password": {
-                                        "description": "Minimum 8 characters, must contain uppercase, lowercase, and number",
-                                        "type": "string",
-                                        "format": "password",
-                                        "example": "Password123"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
+                    "$ref": "#/components/requestBodies/RegisterRequest"
                 },
                 "responses": {
                     "201": {
@@ -171,34 +92,7 @@
                                             "example": "success"
                                         },
                                         "data": {
-                                            "properties": {
-                                                "token": {
-                                                    "type": "string",
-                                                    "example": "eyJ0eXAiOiJKV1QiLCJhbGc..."
-                                                },
-                                                "user": {
-                                                    "properties": {
-                                                        "id": {
-                                                            "type": "integer",
-                                                            "example": 1
-                                                        },
-                                                        "username": {
-                                                            "type": "string",
-                                                            "example": "newuser"
-                                                        },
-                                                        "email": {
-                                                            "type": "string",
-                                                            "example": "newuser@example.com"
-                                                        },
-                                                        "role": {
-                                                            "type": "string",
-                                                            "example": "user"
-                                                        }
-                                                    },
-                                                    "type": "object"
-                                                }
-                                            },
-                                            "type": "object"
+                                            "$ref": "#/components/schemas/AuthToken"
                                         }
                                     },
                                     "type": "object"
@@ -207,26 +101,7 @@
                         }
                     },
                     "422": {
-                        "description": "Validation error",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "status": {
-                                            "type": "string",
-                                            "example": "error"
-                                        },
-                                        "errors": {
-                                            "type": "object",
-                                            "example": {
-                                                "email": "This email is already registered"
-                                            }
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "$ref": "#/components/responses/ValidationErrorResponse"
                     }
                 }
             }
@@ -250,38 +125,7 @@
                                             "example": "success"
                                         },
                                         "data": {
-                                            "properties": {
-                                                "id": {
-                                                    "type": "integer",
-                                                    "example": 1
-                                                },
-                                                "username": {
-                                                    "type": "string",
-                                                    "example": "testuser"
-                                                },
-                                                "email": {
-                                                    "type": "string",
-                                                    "example": "test@example.com"
-                                                },
-                                                "role": {
-                                                    "type": "string",
-                                                    "example": "user"
-                                                },
-                                                "created_at": {
-                                                    "type": "string",
-                                                    "example": "2026-01-28T12:00:00Z"
-                                                },
-                                                "updated_at": {
-                                                    "type": "string",
-                                                    "example": "2026-01-28T12:00:00Z"
-                                                },
-                                                "deleted_at": {
-                                                    "type": "string",
-                                                    "example": null,
-                                                    "nullable": true
-                                                }
-                                            },
-                                            "type": "object"
+                                            "$ref": "#/components/schemas/User"
                                         }
                                     },
                                     "type": "object"
@@ -338,35 +182,7 @@
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "properties": {
-                                                    "id": {
-                                                        "type": "string",
-                                                        "example": "1"
-                                                    },
-                                                    "username": {
-                                                        "type": "string",
-                                                        "example": "testuser"
-                                                    },
-                                                    "email": {
-                                                        "type": "string",
-                                                        "example": "test@example.com"
-                                                    },
-                                                    "role": {
-                                                        "type": "string",
-                                                        "example": "user"
-                                                    },
-                                                    "created_at": {
-                                                        "type": "object"
-                                                    },
-                                                    "updated_at": {
-                                                        "type": "object"
-                                                    },
-                                                    "deleted_at": {
-                                                        "type": "string",
-                                                        "nullable": true
-                                                    }
-                                                },
-                                                "type": "object"
+                                                "$ref": "#/components/schemas/User"
                                             }
                                         }
                                     },
@@ -376,24 +192,7 @@
                         }
                     },
                     "401": {
-                        "description": "Unauthorized",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": false
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Authorization header missing"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "$ref": "#/components/responses/UnauthorizedResponse"
                     }
                 },
                 "security": [
@@ -409,29 +208,7 @@
                 "summary": "Create new user",
                 "operationId": "6516656b80724975409e688e6f8cbe49",
                 "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "required": [
-                                    "username",
-                                    "email"
-                                ],
-                                "properties": {
-                                    "username": {
-                                        "type": "string",
-                                        "example": "newuser"
-                                    },
-                                    "email": {
-                                        "type": "string",
-                                        "format": "email",
-                                        "example": "newuser@example.com"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
+                    "$ref": "#/components/requestBodies/CreateUserRequest"
                 },
                 "responses": {
                     "201": {
@@ -445,35 +222,7 @@
                                             "example": "success"
                                         },
                                         "data": {
-                                            "properties": {
-                                                "id": {
-                                                    "type": "string",
-                                                    "example": "1"
-                                                },
-                                                "username": {
-                                                    "type": "string",
-                                                    "example": "newuser"
-                                                },
-                                                "email": {
-                                                    "type": "string",
-                                                    "example": "newuser@example.com"
-                                                },
-                                                "role": {
-                                                    "type": "string",
-                                                    "example": "user"
-                                                },
-                                                "created_at": {
-                                                    "type": "object"
-                                                },
-                                                "updated_at": {
-                                                    "type": "object"
-                                                },
-                                                "deleted_at": {
-                                                    "type": "string",
-                                                    "nullable": true
-                                                }
-                                            },
-                                            "type": "object"
+                                            "$ref": "#/components/schemas/User"
                                         }
                                     },
                                     "type": "object"
@@ -482,22 +231,10 @@
                         }
                     },
                     "400": {
-                        "description": "Validation error",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "errors": {
-                                            "type": "object",
-                                            "example": {
-                                                "email": "This email is already registered"
-                                            }
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "$ref": "#/components/responses/ValidationErrorResponse"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
                     }
                 },
                 "security": [
@@ -537,35 +274,7 @@
                                             "example": "success"
                                         },
                                         "data": {
-                                            "properties": {
-                                                "id": {
-                                                    "type": "string",
-                                                    "example": "1"
-                                                },
-                                                "username": {
-                                                    "type": "string",
-                                                    "example": "testuser"
-                                                },
-                                                "email": {
-                                                    "type": "string",
-                                                    "example": "test@example.com"
-                                                },
-                                                "role": {
-                                                    "type": "string",
-                                                    "example": "user"
-                                                },
-                                                "created_at": {
-                                                    "type": "object"
-                                                },
-                                                "updated_at": {
-                                                    "type": "object"
-                                                },
-                                                "deleted_at": {
-                                                    "type": "string",
-                                                    "nullable": true
-                                                }
-                                            },
-                                            "type": "object"
+                                            "$ref": "#/components/schemas/User"
                                         }
                                     },
                                     "type": "object"
@@ -588,6 +297,9 @@
                                 }
                             }
                         }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
                     }
                 },
                 "security": [
@@ -614,25 +326,7 @@
                     }
                 ],
                 "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "properties": {
-                                    "username": {
-                                        "type": "string",
-                                        "example": "updateduser"
-                                    },
-                                    "email": {
-                                        "type": "string",
-                                        "format": "email",
-                                        "example": "updated@example.com"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
+                    "$ref": "#/components/requestBodies/UpdateUserRequest"
                 },
                 "responses": {
                     "200": {
@@ -646,35 +340,7 @@
                                             "example": "success"
                                         },
                                         "data": {
-                                            "properties": {
-                                                "id": {
-                                                    "type": "string",
-                                                    "example": "1"
-                                                },
-                                                "username": {
-                                                    "type": "string",
-                                                    "example": "updateduser"
-                                                },
-                                                "email": {
-                                                    "type": "string",
-                                                    "example": "updated@example.com"
-                                                },
-                                                "role": {
-                                                    "type": "string",
-                                                    "example": "user"
-                                                },
-                                                "created_at": {
-                                                    "type": "object"
-                                                },
-                                                "updated_at": {
-                                                    "type": "object"
-                                                },
-                                                "deleted_at": {
-                                                    "type": "string",
-                                                    "nullable": true
-                                                }
-                                            },
-                                            "type": "object"
+                                            "$ref": "#/components/schemas/User"
                                         }
                                     },
                                     "type": "object"
@@ -683,22 +349,10 @@
                         }
                     },
                     "400": {
-                        "description": "Validation error or user not found",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "errors": {
-                                            "type": "object",
-                                            "example": {
-                                                "fields": "At least one field (email or username) is required"
-                                            }
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "$ref": "#/components/responses/ValidationErrorResponse"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
                     }
                 },
                 "security": [
@@ -760,6 +414,9 @@
                                 }
                             }
                         }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
                     }
                 },
                 "security": [
@@ -771,6 +428,247 @@
         }
     },
     "components": {
+        "schemas": {
+            "AuthToken": {
+                "title": "Authentication Token",
+                "description": "JWT token with associated user data",
+                "required": [
+                    "token",
+                    "user"
+                ],
+                "properties": {
+                    "token": {
+                        "description": "JWT access token",
+                        "type": "string",
+                        "example": "eyJ0eXAiOiJKV1QiLCJhbGc..."
+                    },
+                    "user": {
+                        "$ref": "#/components/schemas/User"
+                    }
+                },
+                "type": "object"
+            },
+            "User": {
+                "title": "User",
+                "description": "User object with all properties",
+                "required": [
+                    "id",
+                    "username",
+                    "email",
+                    "role",
+                    "created_at",
+                    "updated_at"
+                ],
+                "properties": {
+                    "id": {
+                        "description": "Unique user identifier",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "username": {
+                        "description": "Username for login",
+                        "type": "string",
+                        "example": "testuser"
+                    },
+                    "email": {
+                        "description": "User email address",
+                        "type": "string",
+                        "format": "email",
+                        "example": "test@example.com"
+                    },
+                    "role": {
+                        "description": "User role (user, admin, etc.)",
+                        "type": "string",
+                        "example": "user"
+                    },
+                    "created_at": {
+                        "description": "User creation timestamp",
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-01-28T12:00:00Z"
+                    },
+                    "updated_at": {
+                        "description": "Last update timestamp",
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-01-28T12:00:00Z"
+                    },
+                    "deleted_at": {
+                        "description": "Soft delete timestamp",
+                        "type": "string",
+                        "format": "date-time",
+                        "example": null,
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            }
+        },
+        "responses": {
+            "UnauthorizedResponse": {
+                "description": "Unauthorized - Invalid or missing authentication token",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "properties": {
+                                "success": {
+                                    "description": "Operation success status",
+                                    "type": "boolean",
+                                    "example": false
+                                },
+                                "message": {
+                                    "description": "Error message",
+                                    "type": "string",
+                                    "example": "Authorization header missing"
+                                }
+                            },
+                            "type": "object"
+                        }
+                    }
+                }
+            },
+            "ValidationErrorResponse": {
+                "description": "Validation Error - Request data failed validation",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "properties": {
+                                "status": {
+                                    "description": "Error status",
+                                    "type": "string",
+                                    "example": "error"
+                                },
+                                "errors": {
+                                    "description": "Field-specific error messages",
+                                    "type": "object",
+                                    "example": {
+                                        "email": "This email is already registered"
+                                    }
+                                }
+                            },
+                            "type": "object"
+                        }
+                    }
+                }
+            }
+        },
+        "requestBodies": {
+            "CreateUserRequest": {
+                "description": "Data for creating a new user",
+                "required": true,
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "required": [
+                                "username",
+                                "email"
+                            ],
+                            "properties": {
+                                "username": {
+                                    "description": "Unique username",
+                                    "type": "string",
+                                    "example": "newuser"
+                                },
+                                "email": {
+                                    "description": "User email address",
+                                    "type": "string",
+                                    "format": "email",
+                                    "example": "newuser@example.com"
+                                }
+                            },
+                            "type": "object"
+                        }
+                    }
+                }
+            },
+            "LoginRequest": {
+                "description": "User login credentials",
+                "required": true,
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "required": [
+                                "username",
+                                "password"
+                            ],
+                            "properties": {
+                                "username": {
+                                    "description": "Username or email",
+                                    "type": "string",
+                                    "example": "testuser"
+                                },
+                                "password": {
+                                    "description": "User password",
+                                    "type": "string",
+                                    "format": "password",
+                                    "example": "testpass123"
+                                }
+                            },
+                            "type": "object"
+                        }
+                    }
+                }
+            },
+            "RegisterRequest": {
+                "description": "New user registration data",
+                "required": true,
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "required": [
+                                "username",
+                                "email",
+                                "password"
+                            ],
+                            "properties": {
+                                "username": {
+                                    "description": "Unique username for the account",
+                                    "type": "string",
+                                    "example": "newuser"
+                                },
+                                "email": {
+                                    "description": "User email address",
+                                    "type": "string",
+                                    "format": "email",
+                                    "example": "newuser@example.com"
+                                },
+                                "password": {
+                                    "description": "Password - Minimum 8 characters, must contain uppercase, lowercase, and number",
+                                    "type": "string",
+                                    "format": "password",
+                                    "example": "Password123"
+                                }
+                            },
+                            "type": "object"
+                        }
+                    }
+                }
+            },
+            "UpdateUserRequest": {
+                "description": "Data for updating a user",
+                "required": true,
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "properties": {
+                                "username": {
+                                    "description": "Updated username",
+                                    "type": "string",
+                                    "example": "updateduser"
+                                },
+                                "email": {
+                                    "description": "Updated email address",
+                                    "type": "string",
+                                    "format": "email",
+                                    "example": "updated@example.com"
+                                }
+                            },
+                            "type": "object"
+                        }
+                    }
+                }
+            }
+        },
         "securitySchemes": {
             "bearerAuth": {
                 "type": "http",

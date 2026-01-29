@@ -115,15 +115,48 @@ CREATE TABLE users (
 - Security scheme: JWT Bearer
 - Tags: Authentication, Users
 
-### Documentation Locations
+### Documentation Organization
 
-All controllers use PHP 8 attributes:
+Documentation is modular and reusable, organized in `app/Documentation/`:
+
+**Schemas** (`app/Documentation/Schemas/`)
+- Reusable data models used across endpoints
+- `UserSchema.php` - Complete User object definition (used in 7+ places)
+- `AuthTokenSchema.php` - JWT token with user data (login/register responses)
+
+**Request Bodies** (`app/Documentation/RequestBodies/`)
+- Reusable request schemas for endpoints
+- `LoginRequest.php` - Login credentials (username + password)
+- `RegisterRequest.php` - Registration data (username + email + password)
+- `CreateUserRequest.php` - Create user data (username + email)
+- `UpdateUserRequest.php` - Update user data (optional fields)
+
+**Responses** (`app/Documentation/Responses/`)
+- Standard error responses used across endpoints
+- `UnauthorizedResponse.php` - 401 response for all protected endpoints
+- `ValidationErrorResponse.php` - 400/422 response for validation failures
+
+### Using Documentation Components
+
+Controllers reference schemas using `ref` attributes:
+
 ```php
-#[OA\Post(
-    path: '/api/v1/auth/login',
-    summary: 'User login',
-    tags: ['Authentication'],
+// Reference a schema
+#[OA\Response(
+    response: 200,
+    description: 'User details',
+    content: new OA\JsonContent(
+        properties: [
+            new OA\Property(property: 'data', ref: '#/components/schemas/User'),
+        ]
+    )
 )]
+
+// Reference a request body
+#[OA\RequestBody(ref: '#/components/requestBodies/LoginRequest')]
+
+// Reference a response
+#[OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse')]
 ```
 
 ### Generation Command
@@ -136,8 +169,10 @@ php spark swagger:generate
 **Output**: `public/swagger.json`
 - Accessible at: http://localhost:8080/swagger.json
 - 8 endpoints fully documented
-- Request/response schemas
-- Authentication requirements
+- 2 reusable schemas
+- 2 standard responses
+- 4 request body definitions
+- All components properly referenced
 
 ## Environment Configuration
 
@@ -182,8 +217,44 @@ encryption.key = '32-hex-char-string-here'
 4. **Create service** in `app/Services/` (implement RESTful methods)
 5. **Create controller** in `app/Controllers/Api/V1/` (extend ApiController)
 6. **Add routes** in `app/Config/Routes.php`
-7. **Document with OpenAPI** attributes
-8. **Generate docs**: `php spark swagger:generate`
+7. **Create documentation schemas** in `app/Documentation/`:
+   - Create schema in `Schemas/` for your data model
+   - Create request bodies in `RequestBodies/` for create/update operations
+   - Reuse standard responses from `Responses/` (UnauthorizedResponse, ValidationErrorResponse)
+8. **Document controller** with OpenAPI attributes using `ref` to component schemas
+9. **Generate docs**: `php spark swagger:generate`
+
+### Creating Reusable Schemas
+
+When adding new schemas to `app/Documentation/`, follow this pattern:
+
+```php
+<?php
+namespace App\Documentation\Schemas;
+use OpenApi\Attributes as OA;
+
+#[OA\Schema(
+    schema: 'SchemaName',
+    title: 'Display Title',
+    description: 'Schema description',
+    required: ['field1', 'field2'],
+    properties: [
+        new OA\Property(
+            property: 'field1',
+            type: 'string',
+            description: 'Field description',
+            example: 'example value'
+        ),
+    ],
+    type: 'object'
+)]
+class SchemaNameSchema {}
+```
+
+Then reference it in controllers:
+```php
+new OA\Property(property: 'data', ref: '#/components/schemas/SchemaName')
+```
 
 ### Testing Authentication
 
@@ -337,11 +408,17 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 
 ## Key Files Reference
 
+### Core Architecture
 - `app/Controllers/ApiController.php` - Base controller
 - `app/Services/JwtService.php` - JWT operations
 - `app/Filters/JwtAuthFilter.php` - Auth filter
-- `app/Commands/GenerateSwagger.php` - Doc generator
-- `app/Config/OpenApi.php` - OpenAPI config
 - `app/Config/Routes.php` - Route definitions
 - `app/Config/Filters.php` - Filter configuration
+
+### OpenAPI Documentation
+- `app/Commands/GenerateSwagger.php` - Doc generator
+- `app/Config/OpenApi.php` - OpenAPI base config
+- `app/Documentation/Schemas/` - Reusable data models
+- `app/Documentation/RequestBodies/` - Reusable request schemas
+- `app/Documentation/Responses/` - Standard error responses
 - `public/swagger.json` - Generated API documentation

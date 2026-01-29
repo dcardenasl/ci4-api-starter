@@ -26,13 +26,27 @@ class GenerateSwagger extends BaseCommand
                 ->generate([
                     $appPath . 'Config/OpenApi.php',
                     $appPath . 'Controllers/',
+                    $appPath . 'Documentation/',
                 ]);
 
             // Write to file
             file_put_contents($outputPath, $openapi->toJson());
 
+            // Calculate statistics
+            $endpointCount = count($openapi->paths ?? []);
+            $schemaCount = count($openapi->components->schemas ?? []);
+            $responseCount = count($openapi->components->responses ?? []);
+            $requestBodyCount = count($openapi->components->requestBodies ?? []);
+
             CLI::write('OpenAPI documentation generated successfully!', 'green');
             CLI::write('Location: ' . $outputPath, 'green');
+            CLI::write('', '');
+            CLI::write('Statistics:', 'cyan');
+            CLI::write('  Endpoints: ' . $endpointCount, 'white');
+            CLI::write('  Schemas: ' . $schemaCount, 'white');
+            CLI::write('  Reusable Responses: ' . $responseCount, 'white');
+            CLI::write('  Request Bodies: ' . $requestBodyCount, 'white');
+            CLI::write('', '');
             CLI::write('You can view it at: http://localhost:8080/swagger.json', 'cyan');
         } catch (\Exception $e) {
             CLI::error('Failed to generate OpenAPI documentation');

@@ -58,32 +58,12 @@ class UserController extends ApiController
                 new OA\Property(
                     property: 'data',
                     type: 'array',
-                    items: new OA\Items(
-                        properties: [
-                            new OA\Property(property: 'id', type: 'string', example: '1'),
-                            new OA\Property(property: 'username', type: 'string', example: 'testuser'),
-                            new OA\Property(property: 'email', type: 'string', example: 'test@example.com'),
-                            new OA\Property(property: 'role', type: 'string', example: 'user'),
-                            new OA\Property(property: 'created_at', type: 'object'),
-                            new OA\Property(property: 'updated_at', type: 'object'),
-                            new OA\Property(property: 'deleted_at', type: 'string', nullable: true),
-                        ],
-                        type: 'object'
-                    )
+                    items: new OA\Items(ref: '#/components/schemas/User')
                 ),
             ]
         )
     )]
-    #[OA\Response(
-        response: 401,
-        description: 'Unauthorized',
-        content: new OA\JsonContent(
-            properties: [
-                new OA\Property(property: 'success', type: 'boolean', example: false),
-                new OA\Property(property: 'message', type: 'string', example: 'Authorization header missing'),
-            ]
-        )
-    )]
+    #[OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse')]
     public function index(): ResponseInterface
     {
         return $this->handleRequest('index');
@@ -108,19 +88,7 @@ class UserController extends ApiController
         content: new OA\JsonContent(
             properties: [
                 new OA\Property(property: 'status', type: 'string', example: 'success'),
-                new OA\Property(
-                    property: 'data',
-                    properties: [
-                        new OA\Property(property: 'id', type: 'string', example: '1'),
-                        new OA\Property(property: 'username', type: 'string', example: 'testuser'),
-                        new OA\Property(property: 'email', type: 'string', example: 'test@example.com'),
-                        new OA\Property(property: 'role', type: 'string', example: 'user'),
-                        new OA\Property(property: 'created_at', type: 'object'),
-                        new OA\Property(property: 'updated_at', type: 'object'),
-                        new OA\Property(property: 'deleted_at', type: 'string', nullable: true),
-                    ],
-                    type: 'object'
-                ),
+                new OA\Property(property: 'data', ref: '#/components/schemas/User'),
             ]
         )
     )]
@@ -133,6 +101,7 @@ class UserController extends ApiController
             ]
         )
     )]
+    #[OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse')]
     public function show($id = null): ResponseInterface
     {
         return $this->handleRequest('show', ['id' => $id]);
@@ -144,51 +113,19 @@ class UserController extends ApiController
         security: [['bearerAuth' => []]],
         tags: ['Users'],
     )]
-    #[OA\RequestBody(
-        required: true,
-        content: new OA\JsonContent(
-            required: ['username', 'email'],
-            properties: [
-                new OA\Property(property: 'username', type: 'string', example: 'newuser'),
-                new OA\Property(property: 'email', type: 'string', format: 'email', example: 'newuser@example.com'),
-            ]
-        )
-    )]
+    #[OA\RequestBody(ref: '#/components/requestBodies/CreateUserRequest')]
     #[OA\Response(
         response: 201,
         description: 'User created successfully',
         content: new OA\JsonContent(
             properties: [
                 new OA\Property(property: 'status', type: 'string', example: 'success'),
-                new OA\Property(
-                    property: 'data',
-                    properties: [
-                        new OA\Property(property: 'id', type: 'string', example: '1'),
-                        new OA\Property(property: 'username', type: 'string', example: 'newuser'),
-                        new OA\Property(property: 'email', type: 'string', example: 'newuser@example.com'),
-                        new OA\Property(property: 'role', type: 'string', example: 'user'),
-                        new OA\Property(property: 'created_at', type: 'object'),
-                        new OA\Property(property: 'updated_at', type: 'object'),
-                        new OA\Property(property: 'deleted_at', type: 'string', nullable: true),
-                    ],
-                    type: 'object'
-                ),
+                new OA\Property(property: 'data', ref: '#/components/schemas/User'),
             ]
         )
     )]
-    #[OA\Response(
-        response: 400,
-        description: 'Validation error',
-        content: new OA\JsonContent(
-            properties: [
-                new OA\Property(
-                    property: 'errors',
-                    type: 'object',
-                    example: ['email' => 'This email is already registered']
-                ),
-            ]
-        )
-    )]
+    #[OA\Response(response: 400, ref: '#/components/responses/ValidationErrorResponse')]
+    #[OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse')]
     public function create(): ResponseInterface
     {
         return $this->handleRequest('store');
@@ -207,50 +144,19 @@ class UserController extends ApiController
         schema: new OA\Schema(type: 'integer'),
         example: 1
     )]
-    #[OA\RequestBody(
-        required: true,
-        content: new OA\JsonContent(
-            properties: [
-                new OA\Property(property: 'username', type: 'string', example: 'updateduser'),
-                new OA\Property(property: 'email', type: 'string', format: 'email', example: 'updated@example.com'),
-            ]
-        )
-    )]
+    #[OA\RequestBody(ref: '#/components/requestBodies/UpdateUserRequest')]
     #[OA\Response(
         response: 200,
         description: 'User updated successfully',
         content: new OA\JsonContent(
             properties: [
                 new OA\Property(property: 'status', type: 'string', example: 'success'),
-                new OA\Property(
-                    property: 'data',
-                    properties: [
-                        new OA\Property(property: 'id', type: 'string', example: '1'),
-                        new OA\Property(property: 'username', type: 'string', example: 'updateduser'),
-                        new OA\Property(property: 'email', type: 'string', example: 'updated@example.com'),
-                        new OA\Property(property: 'role', type: 'string', example: 'user'),
-                        new OA\Property(property: 'created_at', type: 'object'),
-                        new OA\Property(property: 'updated_at', type: 'object'),
-                        new OA\Property(property: 'deleted_at', type: 'string', nullable: true),
-                    ],
-                    type: 'object'
-                ),
+                new OA\Property(property: 'data', ref: '#/components/schemas/User'),
             ]
         )
     )]
-    #[OA\Response(
-        response: 400,
-        description: 'Validation error or user not found',
-        content: new OA\JsonContent(
-            properties: [
-                new OA\Property(
-                    property: 'errors',
-                    type: 'object',
-                    example: ['fields' => 'At least one field (email or username) is required']
-                ),
-            ]
-        )
-    )]
+    #[OA\Response(response: 400, ref: '#/components/responses/ValidationErrorResponse')]
+    #[OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse')]
     public function update($id = null): ResponseInterface
     {
         return $this->handleRequest('update', ['id' => $id]);
@@ -288,6 +194,7 @@ class UserController extends ApiController
             ]
         )
     )]
+    #[OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse')]
     public function delete($id = null): ResponseInterface
     {
         return $this->handleRequest('destroy', ['id' => $id]);

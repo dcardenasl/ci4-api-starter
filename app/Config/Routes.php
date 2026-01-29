@@ -13,10 +13,21 @@ $routes->group('api/v1', ['namespace' => 'App\Controllers\Api\V1', 'filter' => '
     $routes->post('auth/login', 'AuthController::login');
     $routes->post('auth/register', 'AuthController::register');
 
+    // Email verification routes (public)
+    $routes->post('auth/verify-email', 'VerificationController::verify');
+
+    // Password reset routes (public)
+    $routes->post('auth/forgot-password', 'PasswordResetController::sendResetLink');
+    $routes->get('auth/validate-reset-token', 'PasswordResetController::validateToken');
+    $routes->post('auth/reset-password', 'PasswordResetController::resetPassword');
+
     // Protected routes (require JWT authentication)
     $routes->group('', ['filter' => 'jwtauth'], function ($routes) {
         // Auth routes
         $routes->get('auth/me', 'AuthController::me');
+
+        // Email verification (protected)
+        $routes->post('auth/resend-verification', 'VerificationController::resend');
 
         // User routes - read-only for all authenticated users
         $routes->get('users', 'UserController::index');

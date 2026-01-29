@@ -67,6 +67,74 @@ class Services extends BaseService
         return new \App\Services\JwtService();
     }
 
+    /**
+     * Email Service
+     *
+     * Provides email functionality using Symfony Mailer
+     *
+     * @param bool $getShared
+     * @return \App\Services\EmailService
+     */
+    public static function emailService(bool $getShared = true)
+    {
+        if ($getShared) {
+            return static::getSharedInstance('emailService');
+        }
+
+        return new \App\Services\EmailService();
+    }
+
+    /**
+     * Queue Manager
+     *
+     * Provides queue management functionality
+     *
+     * @param bool $getShared
+     * @return \App\Libraries\Queue\QueueManager
+     */
+    public static function queueManager(bool $getShared = true)
+    {
+        if ($getShared) {
+            return static::getSharedInstance('queueManager');
+        }
+
+        return new \App\Libraries\Queue\QueueManager();
+    }
+
+    /**
+     * Verification Service
+     *
+     * Provides email verification functionality
+     *
+     * @param bool $getShared
+     * @return \App\Services\VerificationService
+     */
+    public static function verificationService(bool $getShared = true)
+    {
+        if ($getShared) {
+            return static::getSharedInstance('verificationService');
+        }
+
+        return new \App\Services\VerificationService();
+    }
+
+    /**
+     * Password Reset Service
+     *
+     * Provides password reset functionality
+     *
+     * @param bool $getShared
+     * @return \App\Services\PasswordResetService
+     */
+    public static function passwordResetService(bool $getShared = true)
+    {
+        if ($getShared) {
+            return static::getSharedInstance('passwordResetService');
+        }
+
+        return new \App\Services\PasswordResetService();
+    }
+
     // Servicios futuros seguirán el mismo patrón:
     // public static function productService(bool $getShared = true) { ... }
 }

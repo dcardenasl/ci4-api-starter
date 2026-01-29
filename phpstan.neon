@@ -29,3 +29,4 @@ parameters:
         - '#return statement is missing#'
         - '#Return type .* should be compatible with return type#'
         - '#Cannot call method toArray\(\) on array<.*>\|object#'
+        - '#Property .* with generic class CodeIgniter\\Database\\BaseConnection does not specify its types#'

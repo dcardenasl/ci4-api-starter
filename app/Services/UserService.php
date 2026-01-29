@@ -299,9 +299,14 @@ class UserService implements UserServiceInterface
         $jwtService = \Config\Services::jwtService();
         $token = $jwtService->encode((int) $user['id'], $user['role']);
 
+        // Send verification email
+        $verificationService = new VerificationService();
+        $verificationService->sendVerificationEmail((int) $user['id']);
+
         return ApiResponse::success([
             'token' => $token,
             'user' => $user,
+            'message' => 'Registration successful. Please check your email to verify your account.',
         ]);
     }
 }

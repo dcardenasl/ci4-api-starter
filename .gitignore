@@ -172,3 +172,5 @@ docker/data/
 *.backup
 *.bak
 backup/
+
+CLAUDE.md

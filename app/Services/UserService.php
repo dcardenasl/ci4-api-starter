@@ -7,6 +7,7 @@ namespace App\Services;
 use App\Exceptions\NotFoundException;
 use App\Interfaces\UserServiceInterface;
 use App\Libraries\ApiResponse;
+use App\Libraries\Query\QueryBuilder;
 use App\Models\UserModel;
 
 class UserService implements UserServiceInterface
@@ -19,14 +20,42 @@ class UserService implements UserServiceInterface
     }
 
     /**
-     * Obtener todos los usuarios
+     * Obtener todos los usuarios con paginación, filtros, búsqueda y ordenamiento
      */
     public function index(array $data): array
     {
-        $users = $this->userModel->findAll();
+        $builder = new QueryBuilder($this->userModel);
 
-        return ApiResponse::success(
-            array_map(fn ($user) => $user->toArray(), $users)
+        // Apply filters if provided
+        if (!empty($data['filter']) && is_array($data['filter'])) {
+            $builder->filter($data['filter']);
+        }
+
+        // Apply search if provided
+        if (!empty($data['search'])) {
+            $builder->search($data['search']);
+        }
+
+        // Apply sorting if provided
+        if (!empty($data['sort'])) {
+            $builder->sort($data['sort']);
+        }
+
+        // Get pagination parameters
+        $page = isset($data['page']) ? max((int) $data['page'], 1) : 1;
+        $limit = isset($data['limit']) ? (int) $data['limit'] : (int) env('PAGINATION_DEFAULT_LIMIT', 20);
+
+        // Paginate results
+        $result = $builder->paginate($page, $limit);
+
+        // Convert entities to arrays
+        $result['data'] = array_map(fn ($user) => $user->toArray(), $result['data']);
+
+        return ApiResponse::paginated(
+            $result['data'],
+            $result['total'],
+            $result['page'],
+            $result['perPage']
         );
     }
 

@@ -3,10 +3,14 @@
 namespace App\Models;
 
 use App\Entities\UserEntity;
+use App\Traits\Filterable;
+use App\Traits\Searchable;
 use CodeIgniter\Model;
 
 class UserModel extends Model
 {
+    use Filterable;
+    use Searchable;
     // Configuración de tabla
     protected $table            = 'users';
     protected $primaryKey       = 'id';
@@ -58,6 +62,11 @@ class UserModel extends Model
 
     protected $skipValidation       = false;
     protected $cleanValidationRules = true;
+
+    // Search and filter configuration
+    protected array $searchableFields = ['username', 'email'];
+    protected array $filterableFields = ['role', 'email', 'created_at', 'id', 'username'];
+    protected array $sortableFields = ['id', 'username', 'email', 'created_at', 'role'];
 
     // Callbacks para procesamiento adicional
     protected $allowCallbacks = true;

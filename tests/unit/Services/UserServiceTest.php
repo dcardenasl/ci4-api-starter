@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Services;
 
-use CodeIgniter\Test\CIUnitTestCase;
-use App\Services\UserService;
-use App\Models\UserModel;
 use App\Entities\UserEntity;
 use App\Exceptions\NotFoundException;
+use App\Models\UserModel;
+use App\Services\UserService;
+use CodeIgniter\Test\CIUnitTestCase;
 use PHPUnit\Framework\MockObject\MockObject;
 
 /**

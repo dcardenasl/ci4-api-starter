@@ -2,10 +2,10 @@
 
 namespace Tests\Models;
 
+use App\Entities\UserEntity;
+use App\Models\UserModel;
 use CodeIgniter\Test\CIUnitTestCase;
 use CodeIgniter\Test\DatabaseTestTrait;
-use App\Models\UserModel;
-use App\Entities\UserEntity;
 
 class UserModelTest extends CIUnitTestCase
 {

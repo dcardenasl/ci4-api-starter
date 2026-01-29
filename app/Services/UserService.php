@@ -4,13 +4,10 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Models\UserModel;
-use App\Entities\UserEntity;
 use App\Exceptions\NotFoundException;
-use App\Exceptions\ValidationException;
-use App\Exceptions\BadRequestException;
 use App\Interfaces\UserServiceInterface;
 use App\Libraries\ApiResponse;
+use App\Models\UserModel;
 
 class UserService implements UserServiceInterface
 {
@@ -29,7 +26,7 @@ class UserService implements UserServiceInterface
         $users = $this->userModel->findAll();
 
         return ApiResponse::success(
-            array_map(fn($user) => $user->toArray(), $users)
+            array_map(fn ($user) => $user->toArray(), $users)
         );
     }
 
@@ -113,7 +110,7 @@ class UserService implements UserServiceInterface
         $updateData = array_filter([
             'email'    => $data['email'] ?? null,
             'username' => $data['username'] ?? null,
-        ], fn($value) => $value !== null);
+        ], fn ($value) => $value !== null);
 
         // Model maneja validación y updated_at automáticamente
         $success = $this->userModel->update($id, $updateData);

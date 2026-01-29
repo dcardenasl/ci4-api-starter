@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Services;
 
-use CodeIgniter\Test\CIUnitTestCase;
 use App\Services\JwtService;
+use CodeIgniter\Test\CIUnitTestCase;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 

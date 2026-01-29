@@ -2,11 +2,11 @@
 
 namespace Tests\Services;
 
+use App\Exceptions\NotFoundException;
+use App\Models\UserModel;
+use App\Services\UserService;
 use CodeIgniter\Test\CIUnitTestCase;
 use CodeIgniter\Test\DatabaseTestTrait;
-use App\Services\UserService;
-use App\Models\UserModel;
-use App\Exceptions\NotFoundException;
 
 class UserServiceTest extends CIUnitTestCase
 {

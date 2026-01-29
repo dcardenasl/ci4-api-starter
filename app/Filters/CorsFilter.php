@@ -116,12 +116,12 @@ class CorsFilter implements FilterInterface
         }
 
         // Check for wildcard
-        if (in_array('*', $allowedOrigins)) {
+        if (in_array('*', $allowedOrigins, true)) {
             return true;
         }
 
         // Check exact match
-        if (in_array($origin, $allowedOrigins)) {
+        if (in_array($origin, $allowedOrigins, true)) {
             return true;
         }
 

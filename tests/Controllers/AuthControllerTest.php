@@ -3,8 +3,8 @@
 namespace Tests\Controllers;
 
 use CodeIgniter\Test\CIUnitTestCase;
-use CodeIgniter\Test\FeatureTestTrait;
 use CodeIgniter\Test\DatabaseTestTrait;
+use CodeIgniter\Test\FeatureTestTrait;
 use Tests\Support\Traits\AuthenticationTrait;
 
 class AuthControllerTest extends CIUnitTestCase
@@ -203,7 +203,7 @@ class AuthControllerTest extends CIUnitTestCase
         $parts = explode('.', $token);
         $this->assertCount(3, $parts, 'JWT should have 3 parts');
 
-        $payload = json_decode(base64_decode($parts[1]));
+        $payload = json_decode(base64_decode($parts[1], true));
 
         $this->assertObjectHasProperty('uid', $payload);
         $this->assertObjectHasProperty('role', $payload);

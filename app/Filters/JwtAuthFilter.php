@@ -7,7 +7,6 @@ namespace App\Filters;
 use CodeIgniter\Filters\FilterInterface;
 use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
-use App\Services\JwtService;
 use Config\Services;
 
 class JwtAuthFilter implements FilterInterface

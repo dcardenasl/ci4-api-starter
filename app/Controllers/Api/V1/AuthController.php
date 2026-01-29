@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Controllers\Api\V1;
 
 use App\Controllers\ApiController;
-use CodeIgniter\HTTP\ResponseInterface;
 use App\Interfaces\UserServiceInterface;
+use CodeIgniter\HTTP\ResponseInterface;
 use OpenApi\Attributes as OA;
 
 /**

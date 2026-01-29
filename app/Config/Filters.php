@@ -2,6 +2,10 @@
 
 namespace Config;
 
+use App\Filters\CorsFilter;
+use App\Filters\JwtAuthFilter;
+use App\Filters\RoleAuthorizationFilter;
+use App\Filters\ThrottleFilter;
 use CodeIgniter\Config\Filters as BaseFilters;
 use CodeIgniter\Filters\Cors;
 use CodeIgniter\Filters\CSRF;
@@ -12,10 +16,6 @@ use CodeIgniter\Filters\InvalidChars;
 use CodeIgniter\Filters\PageCache;
 use CodeIgniter\Filters\PerformanceMetrics;
 use CodeIgniter\Filters\SecureHeaders;
-use App\Filters\JwtAuthFilter;
-use App\Filters\CorsFilter;
-use App\Filters\ThrottleFilter;
-use App\Filters\RoleAuthorizationFilter;
 
 class Filters extends BaseFilters
 {

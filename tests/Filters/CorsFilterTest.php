@@ -3,8 +3,8 @@
 namespace Tests\Filters;
 
 use CodeIgniter\Test\CIUnitTestCase;
-use CodeIgniter\Test\FeatureTestTrait;
 use CodeIgniter\Test\DatabaseTestTrait;
+use CodeIgniter\Test\FeatureTestTrait;
 use Config\Services;
 
 /**
@@ -121,12 +121,17 @@ class CorsFilterTest extends CIUnitTestCase
         // or if present, it should not be the malicious origin
         if ($response->hasHeader('Access-Control-Allow-Origin')) {
             $allowedOrigin = $response->header('Access-Control-Allow-Origin')->getValue();
-            $this->assertNotEquals('http://malicious-site.com', $allowedOrigin,
-                'Unauthorized origin should not be allowed');
+            $this->assertNotEquals(
+                'http://malicious-site.com',
+                $allowedOrigin,
+                'Unauthorized origin should not be allowed'
+            );
         } else {
             // Assert that the header is not present (preferred behavior)
-            $this->assertFalse($response->hasHeader('Access-Control-Allow-Origin'),
-                'No CORS header should be set for unauthorized origins');
+            $this->assertFalse(
+                $response->hasHeader('Access-Control-Allow-Origin'),
+                'No CORS header should be set for unauthorized origins'
+            );
         }
     }
 

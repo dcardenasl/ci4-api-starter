@@ -351,7 +351,7 @@ class UserServiceTest extends CIUnitTestCase
                     && $data['password'] !== $password
                     && password_verify($password, $data['password'])
                     && $data['role'] === 'user'; // Security: always 'user'
-            }), false)
+            }))
             ->willReturn(1);
 
         $this->mockModel->expects($this->once())
@@ -380,7 +380,7 @@ class UserServiceTest extends CIUnitTestCase
             ->with($this->callback(function ($data) {
                 // Verify role is ALWAYS 'user', ignoring input
                 return $data['role'] === 'user';
-            }), false)
+            }))
             ->willReturn(1);
 
         $this->mockModel->method('find')->willReturn(

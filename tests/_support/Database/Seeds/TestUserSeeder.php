@@ -12,7 +12,7 @@ class TestUserSeeder extends Seeder
             [
                 'username' => 'testuser',
                 'email'    => 'test@example.com',
-                'password' => password_hash('testpass123', PASSWORD_BCRYPT),
+                'password' => password_hash('Testpass123', PASSWORD_BCRYPT),
                 'role'     => 'user',
                 'created_at' => date('Y-m-d H:i:s'),
                 'updated_at' => date('Y-m-d H:i:s'),
@@ -20,7 +20,7 @@ class TestUserSeeder extends Seeder
             [
                 'username' => 'adminuser',
                 'email'    => 'admin@example.com',
-                'password' => password_hash('adminpass123', PASSWORD_BCRYPT),
+                'password' => password_hash('Adminpass123', PASSWORD_BCRYPT),
                 'role'     => 'admin',
                 'created_at' => date('Y-m-d H:i:s'),
                 'updated_at' => date('Y-m-d H:i:s'),

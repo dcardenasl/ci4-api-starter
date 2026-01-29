@@ -61,7 +61,7 @@ class UserModelTest extends CIUnitTestCase
         $data = [
             'username' => 'modeltest',
             'email'    => 'modeltest@example.com',
-            'password' => password_hash('testpass', PASSWORD_BCRYPT),
+            'password' => password_hash('Testpass1', PASSWORD_BCRYPT),
             'role'     => 'user',
         ];
 
@@ -93,7 +93,7 @@ class UserModelTest extends CIUnitTestCase
         $data = [
             'username' => 'testuser', // Already exists
             'email'    => 'newemail@example.com',
-            'password' => password_hash('pass', PASSWORD_BCRYPT),
+            'password' => password_hash('Pass1234', PASSWORD_BCRYPT),
             'role'     => 'user',
         ];
 
@@ -109,7 +109,7 @@ class UserModelTest extends CIUnitTestCase
         $data = [
             'username' => 'newusername',
             'email'    => 'test@example.com', // Already exists
-            'password' => password_hash('pass', PASSWORD_BCRYPT),
+            'password' => password_hash('Pass1234', PASSWORD_BCRYPT),
             'role'     => 'user',
         ];
 
@@ -184,7 +184,7 @@ class UserModelTest extends CIUnitTestCase
         $data = [
             'username' => 'timestamptest',
             'email'    => 'timestamp@example.com',
-            'password' => password_hash('pass', PASSWORD_BCRYPT),
+            'password' => password_hash('Pass1234', PASSWORD_BCRYPT),
             'role'     => 'user',
         ];
 
@@ -253,7 +253,7 @@ class UserModelTest extends CIUnitTestCase
         $data = [
             'username'   => 'hacktest',
             'email'      => 'hack@example.com',
-            'password'   => password_hash('pass', PASSWORD_BCRYPT),
+            'password'   => password_hash('Pass1234', PASSWORD_BCRYPT),
             'role'       => 'user',
             'created_at' => '2020-01-01', // Should be ignored (not in allowedFields)
         ];

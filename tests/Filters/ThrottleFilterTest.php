@@ -44,7 +44,7 @@ class ThrottleFilterTest extends CIUnitTestCase
         $response = $this->withBodyFormat('json')
             ->post('/api/v1/auth/login', [
                 'username' => 'testuser',
-                'password' => 'testpass123',
+                'password' => 'Testpass123',
             ]);
 
         $this->assertTrue($response->hasHeader('X-RateLimit-Limit'));
@@ -60,7 +60,7 @@ class ThrottleFilterTest extends CIUnitTestCase
         $response1 = $this->withBodyFormat('json')
             ->post('/api/v1/auth/login', [
                 'username' => 'testuser',
-                'password' => 'testpass123',
+                'password' => 'Testpass123',
             ]);
 
         $remaining1 = (int) $response1->header('X-RateLimit-Remaining')->getValue();
@@ -69,7 +69,7 @@ class ThrottleFilterTest extends CIUnitTestCase
         $response2 = $this->withBodyFormat('json')
             ->post('/api/v1/auth/login', [
                 'username' => 'testuser',
-                'password' => 'testpass123',
+                'password' => 'Testpass123',
             ]);
 
         $remaining2 = (int) $response2->header('X-RateLimit-Remaining')->getValue();
@@ -87,7 +87,7 @@ class ThrottleFilterTest extends CIUnitTestCase
             $response = $this->withBodyFormat('json')
                 ->post('/api/v1/auth/login', [
                     'username' => 'testuser',
-                    'password' => 'wrongpassword',
+                    'password' => 'Wrongpass1',
                 ]);
 
             // Should not be rate limited yet
@@ -98,7 +98,7 @@ class ThrottleFilterTest extends CIUnitTestCase
         $response = $this->withBodyFormat('json')
             ->post('/api/v1/auth/login', [
                 'username' => 'testuser',
-                'password' => 'wrongpassword',
+                'password' => 'Wrongpass1',
             ]);
 
         $response->assertStatus(429);
@@ -113,7 +113,7 @@ class ThrottleFilterTest extends CIUnitTestCase
             $this->withBodyFormat('json')
                 ->post('/api/v1/auth/login', [
                     'username' => 'testuser',
-                    'password' => 'wrongpassword',
+                    'password' => 'Wrongpass1',
                 ]);
         }
 
@@ -121,7 +121,7 @@ class ThrottleFilterTest extends CIUnitTestCase
         $response = $this->withBodyFormat('json')
             ->post('/api/v1/auth/login', [
                 'username' => 'testuser',
-                'password' => 'wrongpassword',
+                'password' => 'Wrongpass1',
             ]);
 
         $response->assertStatus(429);
@@ -144,7 +144,7 @@ class ThrottleFilterTest extends CIUnitTestCase
             $this->withBodyFormat('json')
                 ->post('/api/v1/auth/login', [
                     'username' => 'testuser',
-                    'password' => 'wrongpassword',
+                    'password' => 'Wrongpass1',
                 ]);
         }
 
@@ -152,7 +152,7 @@ class ThrottleFilterTest extends CIUnitTestCase
         $response = $this->withBodyFormat('json')
             ->post('/api/v1/auth/login', [
                 'username' => 'testuser',
-                'password' => 'wrongpassword',
+                'password' => 'Wrongpass1',
             ]);
 
         $this->assertTrue($response->hasHeader('Retry-After'));
@@ -171,7 +171,7 @@ class ThrottleFilterTest extends CIUnitTestCase
             $this->withBodyFormat('json')
                 ->post('/api/v1/auth/login', [
                     'username' => 'testuser',
-                    'password' => 'wrongpassword',
+                    'password' => 'Wrongpass1',
                 ]);
         }
 
@@ -179,7 +179,7 @@ class ThrottleFilterTest extends CIUnitTestCase
         $response = $this->withBodyFormat('json')
             ->post('/api/v1/auth/login', [
                 'username' => 'testuser',
-                'password' => 'wrongpassword',
+                'password' => 'Wrongpass1',
             ]);
 
         $this->assertEquals('0', $response->header('X-RateLimit-Remaining')->getValue());

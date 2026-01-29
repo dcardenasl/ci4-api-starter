@@ -46,7 +46,7 @@ class CorsFilterTest extends CIUnitTestCase
         ])->withBodyFormat('json')
             ->post('/api/v1/auth/login', [
                 'username' => 'testuser',
-                'password' => 'testpass123',
+                'password' => 'Testpass123',
             ]);
 
         $this->assertTrue($response->hasHeader('Access-Control-Allow-Origin'));
@@ -62,7 +62,7 @@ class CorsFilterTest extends CIUnitTestCase
         ])->withBodyFormat('json')
             ->post('/api/v1/auth/login', [
                 'username' => 'testuser',
-                'password' => 'testpass123',
+                'password' => 'Testpass123',
             ]);
 
         $this->assertTrue($response->hasHeader('Access-Control-Allow-Methods'));
@@ -80,7 +80,7 @@ class CorsFilterTest extends CIUnitTestCase
         ])->withBodyFormat('json')
             ->post('/api/v1/auth/login', [
                 'username' => 'testuser',
-                'password' => 'testpass123',
+                'password' => 'Testpass123',
             ]);
 
         $this->assertTrue($response->hasHeader('Access-Control-Allow-Headers'));
@@ -98,7 +98,7 @@ class CorsFilterTest extends CIUnitTestCase
         ])->withBodyFormat('json')
             ->post('/api/v1/auth/login', [
                 'username' => 'testuser',
-                'password' => 'testpass123',
+                'password' => 'Testpass123',
             ]);
 
         $this->assertTrue($response->hasHeader('Access-Control-Max-Age'));
@@ -114,7 +114,7 @@ class CorsFilterTest extends CIUnitTestCase
         ])->withBodyFormat('json')
             ->post('/api/v1/auth/login', [
                 'username' => 'testuser',
-                'password' => 'testpass123',
+                'password' => 'Testpass123',
             ]);
 
         // Should not have Access-Control-Allow-Origin header for unauthorized origin
@@ -135,7 +135,7 @@ class CorsFilterTest extends CIUnitTestCase
         $response = $this->withBodyFormat('json')
             ->post('/api/v1/auth/login', [
                 'username' => 'testuser',
-                'password' => 'testpass123',
+                'password' => 'Testpass123',
             ]);
 
         $response->assertStatus(200);
@@ -149,7 +149,7 @@ class CorsFilterTest extends CIUnitTestCase
         $loginResponse = $this->withBodyFormat('json')
             ->post('/api/v1/auth/login', [
                 'username' => 'testuser',
-                'password' => 'testpass123',
+                'password' => 'Testpass123',
             ]);
 
         $json = json_decode($loginResponse->getJSON());
@@ -175,7 +175,7 @@ class CorsFilterTest extends CIUnitTestCase
         ])->withBodyFormat('json')
             ->post('/api/v1/auth/login', [
                 'username' => 'testuser',
-                'password' => 'testpass123',
+                'password' => 'Testpass123',
             ]);
 
         $this->assertTrue($response->hasHeader('Access-Control-Allow-Credentials'));

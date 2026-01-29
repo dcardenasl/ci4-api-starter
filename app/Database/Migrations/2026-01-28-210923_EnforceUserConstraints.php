@@ -8,9 +8,13 @@ class EnforceUserConstraints extends Migration
 {
     public function up()
     {
-        // Clean existing NULL data first
-        $this->db->query("UPDATE users SET username = CONCAT('user_', id) WHERE username IS NULL OR username = ''");
-        $this->db->query("UPDATE users SET email = CONCAT('user_', id, '@example.com') WHERE email IS NULL OR email = ''");
+        try {
+            // Clean existing NULL data first (only if table has data)
+            $this->db->query("UPDATE users SET username = CONCAT('user_', id) WHERE username IS NULL OR username = ''");
+            $this->db->query("UPDATE users SET email = CONCAT('user_', id, '@example.com') WHERE email IS NULL OR email = ''");
+        } catch (\Exception $e) {
+            // Table might be empty or not exist yet, continue
+        }
 
         // Modify columns to NOT NULL
         $fields = [

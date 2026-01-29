@@ -238,7 +238,7 @@ class UserService implements UserServiceInterface
             'username' => $data['username'] ?? null,
             'password' => password_hash($data['password'], PASSWORD_BCRYPT),
             'role'     => 'user', // Always 'user' for self-registration (security fix)
-        ], false); // Skip validation since we already validated above
+        ]); // Returns the inserted ID
 
         if (!$userId) {
             return ApiResponse::validationError($this->userModel->errors());
@@ -273,7 +273,7 @@ class UserService implements UserServiceInterface
 
         $user = $result['data'];
         $jwtService = \Config\Services::jwtService();
-        $token = $jwtService->encode($user['id'], $user['role']);
+        $token = $jwtService->encode((int) $user['id'], $user['role']);
 
         return ApiResponse::success([
             'token' => $token,
@@ -300,7 +300,7 @@ class UserService implements UserServiceInterface
 
         $user = $result['data'];
         $jwtService = \Config\Services::jwtService();
-        $token = $jwtService->encode($user['id'], $user['role']);
+        $token = $jwtService->encode((int) $user['id'], $user['role']);
 
         return ApiResponse::success([
             'token' => $token,

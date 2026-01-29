@@ -41,7 +41,7 @@ trait AuthenticationTrait
      * @param string $password
      * @return string|null
      */
-    protected function loginUser(string $username = 'testuser', string $password = 'testpass123'): ?string
+    protected function loginUser(string $username = 'testuser', string $password = 'Testpass123'): ?string
     {
         $response = $this->withBodyFormat('json')
             ->post('/api/v1/auth/login', [

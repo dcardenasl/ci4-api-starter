@@ -2,6 +2,7 @@
 
 namespace App\Traits;
 
+use App\Libraries\Query\FilterOperatorApplier;
 use App\Libraries\Query\FilterParser;
 
 /**
@@ -28,51 +29,10 @@ trait Filterable
         // Parse filters
         $parsedFilters = FilterParser::parse($filters);
 
-        // Apply each filter
+        // Apply each filter using centralized operator applier
         foreach ($parsedFilters as $field => $condition) {
             [$operator, $value] = $condition;
-
-            switch ($operator) {
-                case '=':
-                    $this->where($field, $value);
-                    break;
-                case '!=':
-                    $this->where($field . ' !=', $value);
-                    break;
-                case '>':
-                    $this->where($field . ' >', $value);
-                    break;
-                case '<':
-                    $this->where($field . ' <', $value);
-                    break;
-                case '>=':
-                    $this->where($field . ' >=', $value);
-                    break;
-                case '<=':
-                    $this->where($field . ' <=', $value);
-                    break;
-                case 'LIKE':
-                    $this->like($field, $value);
-                    break;
-                case 'IN':
-                    $this->whereIn($field, $value);
-                    break;
-                case 'NOT IN':
-                    $this->whereNotIn($field, $value);
-                    break;
-                case 'BETWEEN':
-                    if (is_array($value) && count($value) === 2) {
-                        $this->where($field . ' >=', $value[0]);
-                        $this->where($field . ' <=', $value[1]);
-                    }
-                    break;
-                case 'IS NULL':
-                    $this->where($field, null);
-                    break;
-                case 'IS NOT NULL':
-                    $this->where($field . ' !=', null);
-                    break;
-            }
+            FilterOperatorApplier::apply($this, $field, $operator, $value);
         }
 
         return $this;

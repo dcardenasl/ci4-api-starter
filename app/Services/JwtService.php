@@ -4,11 +4,12 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Interfaces\JwtServiceInterface;
 use Exception;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 
-class JwtService
+class JwtService implements JwtServiceInterface
 {
     private string $secretKey;
     private string $algorithm = 'HS256';
@@ -16,7 +17,7 @@ class JwtService
 
     public function __construct()
     {
-        $this->secretKey = getenv('JWT_SECRET_KEY') ?: 'your-secret-key-change-in-production';
+        $this->secretKey = env('JWT_SECRET_KEY', 'your-secret-key-change-in-production');
         $this->expirationTime = (int) env('JWT_ACCESS_TOKEN_TTL', 3600);
     }
 

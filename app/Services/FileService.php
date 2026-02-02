@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Interfaces\FileServiceInterface;
 use App\Libraries\ApiResponse;
 use App\Libraries\Storage\StorageManager;
 use App\Models\FileModel;
@@ -13,7 +14,7 @@ use App\Models\FileModel;
  *
  * Handles file upload, download, and deletion with storage abstraction
  */
-class FileService
+class FileService implements FileServiceInterface
 {
     protected FileModel $fileModel;
     protected StorageManager $storage;

@@ -2,6 +2,8 @@
 
 namespace App\Traits;
 
+use App\Libraries\Query\SearchQueryApplier;
+
 /**
  * Searchable Trait
  *
@@ -22,33 +24,12 @@ trait Searchable
             return $this;
         }
 
-        // Check minimum search length
-        $minLength = (int) env('SEARCH_MIN_LENGTH', 3);
-        if (strlen($query) < $minLength) {
-            return $this;
-        }
-
-        // Check if search is enabled
-        if (env('SEARCH_ENABLED', 'true') !== 'true') {
-            return $this;
-        }
-
-        // Try FULLTEXT search first (MySQL only)
-        if ($this->useFulltextSearch()) {
-            $fields = implode(', ', $this->searchableFields);
-            $this->where("MATCH($fields) AGAINST(? IN BOOLEAN MODE)", [$query]);
-        } else {
-            // Fallback to LIKE search
-            $this->groupStart();
-            foreach ($this->searchableFields as $index => $field) {
-                if ($index === 0) {
-                    $this->like($field, $query);
-                } else {
-                    $this->orLike($field, $query);
-                }
-            }
-            $this->groupEnd();
-        }
+        SearchQueryApplier::apply(
+            $this,
+            $query,
+            $this->searchableFields,
+            $this->useFulltextSearch()
+        );
 
         return $this;
     }

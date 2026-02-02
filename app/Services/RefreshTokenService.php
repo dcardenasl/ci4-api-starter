@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Interfaces\RefreshTokenServiceInterface;
 use App\Libraries\ApiResponse;
 use App\Models\RefreshTokenModel;
 
@@ -12,7 +13,7 @@ use App\Models\RefreshTokenModel;
  *
  * Manages refresh token lifecycle (issue, refresh, revoke)
  */
-class RefreshTokenService
+class RefreshTokenService implements RefreshTokenServiceInterface
 {
     protected RefreshTokenModel $refreshTokenModel;
 

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Interfaces\AuditServiceInterface;
 use App\Libraries\ApiResponse;
 use App\Libraries\Query\QueryBuilder;
 use App\Models\AuditLogModel;
@@ -13,7 +14,7 @@ use App\Models\AuditLogModel;
  *
  * Logs and retrieves audit trail records
  */
-class AuditService
+class AuditService implements AuditServiceInterface
 {
     protected AuditLogModel $auditLogModel;
 

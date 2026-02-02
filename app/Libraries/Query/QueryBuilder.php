@@ -34,48 +34,7 @@ class QueryBuilder
 
         foreach ($this->filters as $field => $condition) {
             [$operator, $value] = $condition;
-
-            switch ($operator) {
-                case '=':
-                    $this->model->where($field, $value);
-                    break;
-                case '!=':
-                    $this->model->where($field . ' !=', $value);
-                    break;
-                case '>':
-                    $this->model->where($field . ' >', $value);
-                    break;
-                case '<':
-                    $this->model->where($field . ' <', $value);
-                    break;
-                case '>=':
-                    $this->model->where($field . ' >=', $value);
-                    break;
-                case '<=':
-                    $this->model->where($field . ' <=', $value);
-                    break;
-                case 'LIKE':
-                    $this->model->like($field, $value);
-                    break;
-                case 'IN':
-                    $this->model->whereIn($field, $value);
-                    break;
-                case 'NOT IN':
-                    $this->model->whereNotIn($field, $value);
-                    break;
-                case 'BETWEEN':
-                    if (is_array($value) && count($value) === 2) {
-                        $this->model->where($field . ' >=', $value[0]);
-                        $this->model->where($field . ' <=', $value[1]);
-                    }
-                    break;
-                case 'IS NULL':
-                    $this->model->where($field, null);
-                    break;
-                case 'IS NOT NULL':
-                    $this->model->where($field . ' !=', null);
-                    break;
-            }
+            FilterOperatorApplier::apply($this->model, $field, $operator, $value);
         }
 
         return $this;
@@ -127,29 +86,10 @@ class QueryBuilder
             return $this;
         }
 
-        // Check minimum search length
-        $minLength = (int) env('SEARCH_MIN_LENGTH', 3);
-        if (strlen($query) < $minLength) {
-            return $this;
-        }
+        // Use FULLTEXT search if enabled
+        $useFulltext = env('SEARCH_ENABLED', 'true') === 'true';
 
-        // Use FULLTEXT search if enabled and index exists
-        if (env('SEARCH_ENABLED', 'true') === 'true' && count($searchableFields) > 0) {
-            // Try FULLTEXT search first
-            $fields = implode(', ', $searchableFields);
-            $this->model->where("MATCH($fields) AGAINST(? IN BOOLEAN MODE)", [$query]);
-        } else {
-            // Fallback to LIKE search
-            $this->model->groupStart();
-            foreach ($searchableFields as $index => $field) {
-                if ($index === 0) {
-                    $this->model->like($field, $query);
-                } else {
-                    $this->model->orLike($field, $query);
-                }
-            }
-            $this->model->groupEnd();
-        }
+        SearchQueryApplier::apply($this->model, $query, $searchableFields, $useFulltext);
 
         return $this;
     }

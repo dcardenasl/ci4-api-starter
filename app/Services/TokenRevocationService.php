@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Interfaces\TokenRevocationServiceInterface;
 use App\Libraries\ApiResponse;
 use App\Models\RefreshTokenModel;
 use App\Models\TokenBlacklistModel;
@@ -13,7 +14,7 @@ use App\Models\TokenBlacklistModel;
  *
  * Handles revocation of access tokens (JWT) and refresh tokens
  */
-class TokenRevocationService
+class TokenRevocationService implements TokenRevocationServiceInterface
 {
     protected TokenBlacklistModel $blacklistModel;
     protected RefreshTokenModel $refreshTokenModel;

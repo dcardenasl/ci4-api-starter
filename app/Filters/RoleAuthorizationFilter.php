@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filters;
 
+use App\Libraries\ApiResponse;
 use CodeIgniter\Filters\FilterInterface;
 use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
@@ -39,19 +40,13 @@ class RoleAuthorizationFilter implements FilterInterface
 
         if (!$userRole) {
             return Services::response()
-                ->setJSON([
-                    'success' => false,
-                    'message' => 'Authentication required',
-                ])
+                ->setJSON(ApiResponse::unauthorized('Authentication required'))
                 ->setStatusCode(ResponseInterface::HTTP_UNAUTHORIZED);
         }
 
         if (!$this->hasPermission($userRole, $requiredRole)) {
             return Services::response()
-                ->setJSON([
-                    'success' => false,
-                    'message' => 'Insufficient permissions',
-                ])
+                ->setJSON(ApiResponse::forbidden('Insufficient permissions'))
                 ->setStatusCode(ResponseInterface::HTTP_FORBIDDEN);
         }
     }

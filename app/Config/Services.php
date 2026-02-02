@@ -135,6 +135,98 @@ class Services extends BaseService
         return new \App\Services\PasswordResetService();
     }
 
-    // Servicios futuros seguirán el mismo patrón:
-    // public static function productService(bool $getShared = true) { ... }
+    /**
+     * Token Revocation Service
+     *
+     * Provides token revocation and blacklist functionality
+     *
+     * @param bool $getShared
+     * @return \App\Services\TokenRevocationService
+     */
+    public static function tokenRevocationService(bool $getShared = true)
+    {
+        if ($getShared) {
+            return static::getSharedInstance('tokenRevocationService');
+        }
+
+        return new \App\Services\TokenRevocationService(
+            new \App\Models\TokenBlacklistModel(),
+            new \App\Models\RefreshTokenModel()
+        );
+    }
+
+    /**
+     * Refresh Token Service
+     *
+     * Manages refresh token lifecycle
+     *
+     * @param bool $getShared
+     * @return \App\Services\RefreshTokenService
+     */
+    public static function refreshTokenService(bool $getShared = true)
+    {
+        if ($getShared) {
+            return static::getSharedInstance('refreshTokenService');
+        }
+
+        return new \App\Services\RefreshTokenService(
+            new \App\Models\RefreshTokenModel()
+        );
+    }
+
+    /**
+     * File Service
+     *
+     * Provides file upload, download, and deletion with storage abstraction
+     *
+     * @param bool $getShared
+     * @return \App\Services\FileService
+     */
+    public static function fileService(bool $getShared = true)
+    {
+        if ($getShared) {
+            return static::getSharedInstance('fileService');
+        }
+
+        return new \App\Services\FileService(
+            new \App\Models\FileModel(),
+            new \App\Libraries\Storage\StorageManager()
+        );
+    }
+
+    /**
+     * Audit Service
+     *
+     * Provides audit logging functionality
+     *
+     * @param bool $getShared
+     * @return \App\Services\AuditService
+     */
+    public static function auditService(bool $getShared = true)
+    {
+        if ($getShared) {
+            return static::getSharedInstance('auditService');
+        }
+
+        return new \App\Services\AuditService(
+            new \App\Models\AuditLogModel()
+        );
+    }
+
+    /**
+     * Storage Manager
+     *
+     * Provides unified file storage interface
+     *
+     * @param bool $getShared
+     * @return \App\Libraries\Storage\StorageManager
+     */
+    public static function storageManager(bool $getShared = true)
+    {
+        if ($getShared) {
+            return static::getSharedInstance('storageManager');
+        }
+
+        return new \App\Libraries\Storage\StorageManager();
+    }
 }

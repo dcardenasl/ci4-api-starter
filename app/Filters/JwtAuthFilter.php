@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filters;
 
+use App\Libraries\ApiResponse;
 use CodeIgniter\Filters\FilterInterface;
 use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
@@ -40,10 +41,7 @@ class JwtAuthFilter implements FilterInterface
             $jti = $decoded->jti ?? null;
 
             if ($jti) {
-                $tokenRevocationService = new \App\Services\TokenRevocationService(
-                    new \App\Models\TokenBlacklistModel(),
-                    new \App\Models\RefreshTokenModel()
-                );
+                $tokenRevocationService = Services::tokenRevocationService();
 
                 if ($tokenRevocationService->isRevoked($jti)) {
                     return $this->unauthorized('Token has been revoked');
@@ -65,10 +63,7 @@ class JwtAuthFilter implements FilterInterface
     private function unauthorized(string $message): ResponseInterface
     {
         return Services::response()
-            ->setJSON([
-                'success' => false,
-                'message' => $message,
-            ])
+            ->setJSON(ApiResponse::unauthorized($message))
             ->setStatusCode(401);
     }
 

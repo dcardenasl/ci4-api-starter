@@ -2,8 +2,10 @@
 
 ![PHP Version](https://img.shields.io/badge/PHP-8.1%20%7C%208.2%20%7C%208.3-blue)
 ![CodeIgniter](https://img.shields.io/badge/CodeIgniter-4.6-orange)
-![Tests](https://img.shields.io/badge/tests-49%20passed-success)
+![Tests](https://img.shields.io/badge/tests-188%20passed-success)
 ![License](https://img.shields.io/badge/license-MIT-blue)
+
+English | [Español](README.es.md)
 
 A production-ready REST API starter template for CodeIgniter 4 with JWT authentication, modular OpenAPI documentation, and clean layered architecture.
 
@@ -11,13 +13,22 @@ A production-ready REST API starter template for CodeIgniter 4 with JWT authenti
 
 ## ✨ Features
 
-- 🔐 **JWT Authentication** - Secure token-based auth with refresh capability
+### Core Features
+- 🔐 **JWT Authentication** - Secure token-based auth with refresh tokens & revocation
+- 📧 **Email System** - Email verification, password reset, queue infrastructure
+- 📁 **File Management** - Upload/manage files with cloud storage support
+- 🔍 **Advanced Querying** - Pagination, filtering, searching, sorting
+- 📊 **Monitoring** - Health checks, metrics, request logging, audit trail
+- 🌍 **Internationalization** - Locale detection from Accept-Language header
+
+### Architecture & Developer Experience
 - 📚 **Modular OpenAPI Documentation** - Schema-based docs, 60% less boilerplate
 - 🏗️ **Clean Architecture** - Controller → Service → Repository → Entity pattern
 - 🎯 **ApiController Base** - Automatic request handling, 62% less code
-- ✅ **49 Passing Tests** - Complete test coverage with PHPUnit
+- 🔌 **Service Interfaces** - Interface-based design for better testability
+- ✅ **188 Tests** - Comprehensive test coverage with PHPUnit
 - 🚀 **CI/CD Ready** - GitHub Actions configured for PHP 8.1, 8.2, 8.3
-- 🔒 **Secure by Default** - Bcrypt hashing, input validation, CSRF protection
+- 🔒 **Secure by Default** - Bcrypt hashing, timing-attack protection, input validation
 - 🐳 **Docker Support** - Production-ready containerization included
 
 ## 🚀 Quick Start (1 minute)
@@ -73,18 +84,62 @@ php spark serve
 
 ### Authentication (Public)
 ```bash
-POST /api/v1/auth/register  # Register new user
-POST /api/v1/auth/login     # Login (returns JWT)
-GET  /api/v1/auth/me        # Get current user (protected)
+POST /api/v1/auth/register           # Register new user
+POST /api/v1/auth/login              # Login (returns JWT + refresh token)
+POST /api/v1/auth/refresh            # Refresh access token
+POST /api/v1/auth/verify-email       # Verify email address
+POST /api/v1/auth/forgot-password    # Request password reset
+GET  /api/v1/auth/validate-reset-token  # Validate reset token
+POST /api/v1/auth/reset-password     # Reset password
+```
+
+### Authentication (Protected)
+```bash
+GET  /api/v1/auth/me                 # Get current user
+POST /api/v1/auth/resend-verification # Resend verification email
+POST /api/v1/auth/revoke             # Revoke current token
+POST /api/v1/auth/revoke-all         # Revoke all user tokens
 ```
 
 ### Users (Protected - Requires JWT)
 ```bash
-GET    /api/v1/users        # List all users
-GET    /api/v1/users/{id}   # Get user by ID
-POST   /api/v1/users        # Create user
-PUT    /api/v1/users/{id}   # Update user
-DELETE /api/v1/users/{id}   # Delete user (soft)
+GET    /api/v1/users              # List users (supports pagination, filtering, search)
+GET    /api/v1/users/{id}         # Get user by ID
+POST   /api/v1/users              # Create user (admin only)
+PUT    /api/v1/users/{id}         # Update user (admin only)
+DELETE /api/v1/users/{id}         # Delete user (admin only, soft delete)
+```
+
+### Files (Protected - Requires JWT)
+```bash
+GET    /api/v1/files              # List uploaded files
+POST   /api/v1/files/upload       # Upload file
+GET    /api/v1/files/{id}         # Get file details
+DELETE /api/v1/files/{id}         # Delete file
+```
+
+### Health Checks (Public, No Rate Limiting)
+```bash
+GET /health                        # Complete system health check
+GET /ping                          # Simple uptime check
+GET /ready                         # Readiness probe (Kubernetes)
+GET /live                          # Liveness probe (Kubernetes)
+```
+
+### Metrics (Admin Only)
+```bash
+GET  /api/v1/metrics               # System metrics overview
+GET  /api/v1/metrics/requests      # Request metrics
+GET  /api/v1/metrics/slow-requests # Slow request log
+GET  /api/v1/metrics/custom/{name} # Custom metric
+POST /api/v1/metrics/record        # Record custom metric
+```
+
+### Audit Trail (Admin Only)
+```bash
+GET /api/v1/audit                  # List all audit logs
+GET /api/v1/audit/{id}             # Get specific audit entry
+GET /api/v1/audit/entity/{type}/{id} # Get audits for specific entity
 ```
 
 ### Example Usage
@@ -96,11 +151,39 @@ curl -X POST http://localhost:8080/api/v1/auth/register \
   -d '{"username":"john","email":"john@example.com","password":"Pass123!"}'
 ```
 
-**Use protected endpoint:**
+**Login with refresh token:**
+```bash
+curl -X POST http://localhost:8080/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"john","password":"Pass123!"}'
+# Returns: {"status":"success","data":{"token":"...","refreshToken":"..."}}
+```
+
+**Refresh access token:**
+```bash
+curl -X POST http://localhost:8080/api/v1/auth/refresh \
+  -H "Content-Type: application/json" \
+  -d '{"refreshToken":"your-refresh-token"}'
+```
+
+**Use protected endpoint with filtering:**
 ```bash
 TOKEN="your-jwt-token-here"
-curl -X GET http://localhost:8080/api/v1/users \
+curl -X GET "http://localhost:8080/api/v1/users?filter[role][eq]=admin&search=john&page=1&perPage=10" \
   -H "Authorization: Bearer $TOKEN"
+```
+
+**Upload file:**
+```bash
+curl -X POST http://localhost:8080/api/v1/files/upload \
+  -H "Authorization: Bearer $TOKEN" \
+  -F "file=@/path/to/file.pdf"
+```
+
+**Check system health:**
+```bash
+curl http://localhost:8080/health
+# Returns: {"status":"healthy","checks":{"database":"ok","cache":"ok","storage":"ok"}}
 ```
 
 **View API Documentation:**
@@ -120,26 +203,102 @@ app/
 │   ├── ApiController.php           # Base controller (auto request/response)
 │   └── Api/V1/
 │       ├── AuthController.php      # Authentication (login, register, me)
-│       └── UserController.php      # User CRUD
-├── Documentation/                  # 🆕 Modular OpenAPI schemas
-│   ├── Schemas/
-│   │   ├── UserSchema.php          # Reusable User model (used 7x)
-│   │   └── AuthTokenSchema.php     # JWT response structure
-│   ├── Responses/
-│   │   ├── UnauthorizedResponse.php
-│   │   └── ValidationErrorResponse.php
-│   └── RequestBodies/
-│       ├── LoginRequest.php
-│       ├── RegisterRequest.php
-│       ├── CreateUserRequest.php
-│       └── UpdateUserRequest.php
+│       ├── UserController.php      # User CRUD
+│       ├── TokenController.php     # Token refresh & revocation
+│       ├── VerificationController.php  # Email verification
+│       ├── PasswordResetController.php # Password reset
+│       ├── FileController.php      # File management
+│       ├── HealthController.php    # Health checks
+│       ├── MetricsController.php   # Monitoring metrics
+│       └── AuditController.php     # Audit trail
+├── Documentation/                  # Modular OpenAPI schemas
+│   ├── Schemas/                    # Reusable data models
+│   ├── Responses/                  # Standard error responses
+│   └── RequestBodies/              # Request payloads
 ├── Services/
 │   ├── JwtService.php              # JWT operations
-│   └── UserService.php             # User business logic
+│   ├── UserService.php             # User business logic
+│   ├── RefreshTokenService.php     # Token refresh
+│   ├── TokenRevocationService.php  # Token revocation
+│   ├── EmailService.php            # Email sending
+│   ├── VerificationService.php     # Email verification
+│   ├── PasswordResetService.php    # Password reset
+│   ├── FileService.php             # File operations
+│   └── AuditService.php            # Audit logging
+├── Interfaces/                     # Service interfaces
+│   ├── UserServiceInterface.php
+│   ├── JwtServiceInterface.php
+│   ├── RefreshTokenServiceInterface.php
+│   ├── TokenRevocationServiceInterface.php
+│   ├── FileServiceInterface.php
+│   └── AuditServiceInterface.php
+├── Filters/
+│   ├── CorsFilter.php              # CORS handling
+│   ├── ThrottleFilter.php          # Rate limiting
+│   ├── JwtAuthFilter.php           # JWT validation
+│   ├── RoleAuthorizationFilter.php # Role-based access
+│   ├── LocaleFilter.php            # i18n locale detection
+│   └── RequestLoggingFilter.php    # Request logging
+├── Traits/
+│   ├── Auditable.php               # Auto audit logging
+│   ├── Filterable.php              # Advanced filtering
+│   └── Searchable.php              # Full-text search
 ├── Models/
-│   └── UserModel.php               # Database operations
+│   ├── UserModel.php               # Database operations
+│   ├── RefreshTokenModel.php
+│   ├── RevokedTokenModel.php
+│   ├── FileModel.php
+│   └── AuditLogModel.php
 └── Entities/
-    └── UserEntity.php              # Data model
+    ├── UserEntity.php              # Data models
+    ├── RefreshTokenEntity.php
+    ├── FileEntity.php
+    └── AuditLogEntity.php
+```
+
+## 🔍 Advanced Query Features
+
+The API supports powerful querying capabilities on list endpoints:
+
+### Pagination
+```bash
+GET /api/v1/users?page=1&perPage=20
+```
+
+### Filtering
+Use field operators to filter results:
+```bash
+# Equal
+GET /api/v1/users?filter[role][eq]=admin
+
+# Like (partial match)
+GET /api/v1/users?filter[email][like]=%@gmail.com
+
+# Greater than
+GET /api/v1/users?filter[created_at][gt]=2025-01-01
+
+# Multiple filters (AND logic)
+GET /api/v1/users?filter[role][eq]=admin&filter[email][like]=%@company.com
+```
+
+**Supported operators:** `eq`, `neq`, `gt`, `gte`, `lt`, `lte`, `like`, `in`
+
+### Searching
+Full-text search across configured fields:
+```bash
+GET /api/v1/users?search=john
+# Searches across username, email, first_name, last_name
+```
+
+### Sorting
+```bash
+GET /api/v1/users?sort=created_at&direction=desc
+GET /api/v1/users?sort=email&direction=asc
+```
+
+### Combining Features
+```bash
+GET /api/v1/users?search=john&filter[role][eq]=user&sort=created_at&direction=desc&page=1&perPage=10
 ```
 
 ## 🎯 Adding New Resources
@@ -210,34 +369,47 @@ class ProductController extends ApiController
 ## 🔒 Security Features
 
 - ✅ JWT authentication with Bearer tokens
+- ✅ Refresh tokens with secure rotation
+- ✅ Token revocation (individual & all user tokens)
 - ✅ Bcrypt password hashing
+- ✅ Timing-attack protection on login
 - ✅ Passwords never exposed in responses
 - ✅ Token expiration (1 hour, configurable)
+- ✅ Email verification required
+- ✅ Secure password reset flow
 - ✅ Input validation at model layer
 - ✅ SQL injection protection (query builder)
+- ✅ Rate limiting on all API endpoints
+- ✅ Request logging for security monitoring
+- ✅ Audit trail for sensitive operations
 - ✅ CSRF protection available
 - ✅ Soft deletes for data recovery
 
 **Important:** Before production:
 1. Change `JWT_SECRET_KEY` to a strong random value
-2. Use HTTPS only
-3. Review [SECURITY.md](SECURITY.md) for complete checklist
+2. Configure email service (SMTP settings)
+3. Set up cloud storage (S3-compatible)
+4. Use HTTPS only
+5. Review [SECURITY.md](SECURITY.md) for complete checklist
 
 ## 🧪 Testing
 
 Run the complete test suite:
 
 ```bash
-vendor/bin/phpunit           # All 49 tests
+vendor/bin/phpunit           # All 188 tests
 vendor/bin/phpunit --testdox # Human-readable output
 ```
 
 **Test Coverage:**
-- ✅ 49 tests, 166 assertions
+- ✅ 188 tests with comprehensive assertions
 - ✅ Controllers (API endpoints)
 - ✅ Services (business logic)
 - ✅ Models (database operations)
-- ✅ JWT authentication flow
+- ✅ JWT authentication & token management
+- ✅ Email verification & password reset
+- ✅ File upload & management
+- ✅ Audit trail & metrics
 
 CI automatically runs tests on PHP 8.1, 8.2, and 8.3.
 
@@ -275,14 +447,28 @@ composer audit                    # Security check
 ## 📦 What's Included
 
 ### Core Dependencies
-- `codeigniter4/framework` ^4.5
-- `firebase/php-jwt` ^7.0 - JWT handling
-- `zircote/swagger-php` ^6.0 - OpenAPI generation
+- `codeigniter4/framework` ^4.5 - Main framework
+- `firebase/php-jwt` ^7.0 - JWT authentication
+- `zircote/swagger-php` ^6.0 - OpenAPI documentation
 
 ### Dev Dependencies
-- `phpunit/phpunit` - Testing
-- `fakerphp/faker` - Test data
+- `phpunit/phpunit` - Testing framework
+- `fakerphp/faker` - Test data generation
+- `php-cs-fixer` - Code style enforcement
+- `phpstan` - Static analysis
 - Docker configuration
+
+### Built-in Features
+- JWT auth with refresh tokens & revocation
+- Email verification & password reset
+- File upload with cloud storage support
+- Advanced pagination, filtering, searching
+- Health checks for Kubernetes/monitoring
+- Metrics & performance tracking
+- Audit trail logging
+- Request logging & rate limiting
+- Internationalization (i18n)
+- Complete OpenAPI documentation
 
 ## 🔄 Keeping Updated
 

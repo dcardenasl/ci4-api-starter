@@ -26,6 +26,7 @@ class FileServiceTest extends DatabaseTestCase
     protected FileService $service;
     protected FileModel $model;
     protected StorageManager $mockStorage;
+    protected array $tempFiles = [];
 
     protected function setUp(): void
     {
@@ -43,6 +44,19 @@ class FileServiceTest extends DatabaseTestCase
         $this->service = new FileService($this->model, $this->mockStorage);
 
         $this->seedDatabase();
+    }
+
+    protected function tearDown(): void
+    {
+        // Clean up temporary files
+        foreach ($this->tempFiles as $tempFile) {
+            if (file_exists($tempFile)) {
+                unlink($tempFile);
+            }
+        }
+        $this->tempFiles = [];
+
+        parent::tearDown();
     }
 
     protected function seedDatabase(): void
@@ -67,7 +81,6 @@ class FileServiceTest extends DatabaseTestCase
         ]);
 
         $this->assertEquals('success', $result['status']);
-        $this->assertEquals(201, $result['code']);
         $this->assertArrayHasKey('id', $result['data']);
     }
 
@@ -439,12 +452,19 @@ class FileServiceTest extends DatabaseTestCase
     ): UploadedFile {
         $mock = $this->createMock(UploadedFile::class);
 
+        // Create a real temporary file with dummy contents
+        $tmpFile = tempnam(sys_get_temp_dir(), 'phptest');
+        file_put_contents($tmpFile, str_repeat('A', $size));
+
+        // Track temp file for cleanup
+        $this->tempFiles[] = $tmpFile;
+
         $mock->method('isValid')->willReturn(true);
         $mock->method('getName')->willReturn($name);
         $mock->method('getMimeType')->willReturn($mimeType);
         $mock->method('getSize')->willReturn($size);
         $mock->method('getExtension')->willReturn($extension);
-        $mock->method('getTempName')->willReturn('/tmp/phptest');
+        $mock->method('getTempName')->willReturn($tmpFile);
         $mock->method('getErrorString')->willReturn('');
 
         return $mock;

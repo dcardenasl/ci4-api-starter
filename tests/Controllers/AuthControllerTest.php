@@ -34,15 +34,15 @@ class AuthControllerTest extends DatabaseTestCase
             ->post('/api/v1/auth/register', [
                 'username' => 'newuser',
                 'email'    => 'newuser@example.com',
-                'password' => 'Newpass123',
+                'password' => 'Newpass123!',
             ]);
 
         $response->assertStatus(201);
         $response->assertJSONFragment(['status' => 'success']); // API uses 'status' field
-        // ApiResponse::created() returns generic message "Resource created successfully"
 
         $json = json_decode($response->getJSON());
-        $this->assertObjectHasProperty('token', $json->data);
+        $this->assertObjectHasProperty('access_token', $json->data);
+        $this->assertObjectHasProperty('refresh_token', $json->data);
         $this->assertObjectHasProperty('user', $json->data);
         $this->assertEquals('newuser', $json->data->user->username);
         $this->assertEquals('newuser@example.com', $json->data->user->email);

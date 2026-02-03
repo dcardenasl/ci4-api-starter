@@ -22,7 +22,15 @@ class UserModel extends Model
 
     // Protección contra mass assignment
     protected $protectFields    = true;
-    protected $allowedFields    = ['username', 'email', 'password', 'role'];
+    protected $allowedFields    = [
+        'username',
+        'email',
+        'password',
+        'role',
+        'email_verification_token',
+        'verification_token_expires',
+        'email_verified_at',
+    ];
 
     // Gestión automática de timestamps
     protected $useTimestamps      = true;

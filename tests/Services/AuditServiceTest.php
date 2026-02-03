@@ -6,18 +6,15 @@ namespace Tests\Services;
 
 use App\Models\AuditLogModel;
 use App\Services\AuditService;
-use CodeIgniter\Test\CIUnitTestCase;
-use CodeIgniter\Test\DatabaseTestTrait;
+use Tests\Support\DatabaseTestCase;
 
 /**
  * AuditService Integration Tests
  *
  * Tests the complete audit logging flow with real database operations.
  */
-class AuditServiceTest extends CIUnitTestCase
+class AuditServiceTest extends DatabaseTestCase
 {
-    use DatabaseTestTrait;
-
     protected $migrate     = true;
     protected $migrateOnce = false;
     protected $refresh     = true;

@@ -8,8 +8,7 @@ use App\Libraries\Storage\StorageManager;
 use App\Models\FileModel;
 use App\Services\FileService;
 use CodeIgniter\HTTP\Files\UploadedFile;
-use CodeIgniter\Test\CIUnitTestCase;
-use CodeIgniter\Test\DatabaseTestTrait;
+use Tests\Support\DatabaseTestCase;
 
 /**
  * FileService Integration Tests
@@ -17,10 +16,8 @@ use CodeIgniter\Test\DatabaseTestTrait;
  * Tests the complete file management flow with real database operations.
  * Includes upload, download, delete, and validation with mocked storage.
  */
-class FileServiceTest extends CIUnitTestCase
+class FileServiceTest extends DatabaseTestCase
 {
-    use DatabaseTestTrait;
-
     protected $migrate     = true;
     protected $migrateOnce = false;
     protected $refresh     = true;

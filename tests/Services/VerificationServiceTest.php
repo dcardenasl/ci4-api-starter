@@ -6,8 +6,7 @@ namespace Tests\Services;
 
 use App\Models\UserModel;
 use App\Services\VerificationService;
-use CodeIgniter\Test\CIUnitTestCase;
-use CodeIgniter\Test\DatabaseTestTrait;
+use Tests\Support\DatabaseTestCase;
 
 /**
  * VerificationService Integration Tests
@@ -15,10 +14,8 @@ use CodeIgniter\Test\DatabaseTestTrait;
  * Tests the complete email verification flow with real database operations.
  * Includes token generation, validation, expiration, and resending.
  */
-class VerificationServiceTest extends CIUnitTestCase
+class VerificationServiceTest extends DatabaseTestCase
 {
-    use DatabaseTestTrait;
-
     protected $migrate     = true;
     protected $migrateOnce = false;
     protected $refresh     = true;

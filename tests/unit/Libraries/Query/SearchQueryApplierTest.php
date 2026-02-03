@@ -5,18 +5,15 @@ declare(strict_types=1);
 namespace Tests\Unit\Libraries\Query;
 
 use App\Libraries\Query\SearchQueryApplier;
-use CodeIgniter\Test\CIUnitTestCase;
-use CodeIgniter\Test\DatabaseTestTrait;
+use Tests\Support\DatabaseTestCase;
 
 /**
  * SearchQueryApplier Unit Tests
  *
  * Tests for centralized search query application.
  */
-class SearchQueryApplierTest extends CIUnitTestCase
+class SearchQueryApplierTest extends DatabaseTestCase
 {
-    use DatabaseTestTrait;
-
     protected $migrate = true;
     protected $migrateOnce = false;
     protected $refresh = true;

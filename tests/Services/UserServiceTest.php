@@ -5,13 +5,10 @@ namespace Tests\Services;
 use App\Exceptions\NotFoundException;
 use App\Models\UserModel;
 use App\Services\UserService;
-use CodeIgniter\Test\CIUnitTestCase;
-use CodeIgniter\Test\DatabaseTestTrait;
+use Tests\Support\DatabaseTestCase;
 
-class UserServiceTest extends CIUnitTestCase
+class UserServiceTest extends DatabaseTestCase
 {
-    use DatabaseTestTrait;
-
     protected $migrate     = true;
     protected $migrateOnce = false;
     protected $refresh     = true;

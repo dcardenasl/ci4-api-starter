@@ -8,8 +8,7 @@ use App\Models\RefreshTokenModel;
 use App\Models\UserModel;
 use App\Services\JwtService;
 use App\Services\RefreshTokenService;
-use CodeIgniter\Test\CIUnitTestCase;
-use CodeIgniter\Test\DatabaseTestTrait;
+use Tests\Support\DatabaseTestCase;
 
 /**
  * RefreshTokenService Integration Tests
@@ -17,10 +16,8 @@ use CodeIgniter\Test\DatabaseTestTrait;
  * Tests the complete refresh token flow with real database operations.
  * Includes token rotation, race condition prevention, and security tests.
  */
-class RefreshTokenServiceTest extends CIUnitTestCase
+class RefreshTokenServiceTest extends DatabaseTestCase
 {
-    use DatabaseTestTrait;
-
     protected $migrate     = true;
     protected $migrateOnce = false;
     protected $refresh     = true;

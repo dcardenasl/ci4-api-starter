@@ -5,8 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Libraries\Query;
 
 use App\Libraries\Query\FilterOperatorApplier;
-use CodeIgniter\Test\CIUnitTestCase;
-use CodeIgniter\Test\DatabaseTestTrait;
+use Tests\Support\DatabaseTestCase;
 
 /**
  * FilterOperatorApplier Unit Tests
@@ -14,10 +13,8 @@ use CodeIgniter\Test\DatabaseTestTrait;
  * Tests for centralized filter operator application.
  * Uses database test traits to test with actual query builder.
  */
-class FilterOperatorApplierTest extends CIUnitTestCase
+class FilterOperatorApplierTest extends DatabaseTestCase
 {
-    use DatabaseTestTrait;
-
     protected $migrate = true;
     protected $migrateOnce = false;
     protected $refresh = true;

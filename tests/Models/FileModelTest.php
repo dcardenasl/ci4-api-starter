@@ -5,8 +5,7 @@ declare(strict_types=1);
 namespace Tests\Models;
 
 use App\Models\FileModel;
-use CodeIgniter\Test\CIUnitTestCase;
-use CodeIgniter\Test\DatabaseTestTrait;
+use Tests\Support\DatabaseTestCase;
 
 /**
  * FileModel Integration Tests
@@ -14,10 +13,8 @@ use CodeIgniter\Test\DatabaseTestTrait;
  * Tests database operations for file metadata including
  * creation, retrieval, ownership checks, and deletion.
  */
-class FileModelTest extends CIUnitTestCase
+class FileModelTest extends DatabaseTestCase
 {
-    use DatabaseTestTrait;
-
     protected $migrate     = true;
     protected $migrateOnce = false;
     protected $refresh     = true;

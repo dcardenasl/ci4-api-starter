@@ -4,13 +4,10 @@ namespace Tests\Models;
 
 use App\Entities\UserEntity;
 use App\Models\UserModel;
-use CodeIgniter\Test\CIUnitTestCase;
-use CodeIgniter\Test\DatabaseTestTrait;
+use Tests\Support\DatabaseTestCase;
 
-class UserModelTest extends CIUnitTestCase
+class UserModelTest extends DatabaseTestCase
 {
-    use DatabaseTestTrait;
-
     protected $migrate     = true;
     protected $migrateOnce = false;
     protected $refresh     = true;

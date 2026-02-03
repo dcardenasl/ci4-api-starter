@@ -2,20 +2,18 @@
 
 namespace Tests\Filters;
 
-use CodeIgniter\Test\CIUnitTestCase;
-use CodeIgniter\Test\DatabaseTestTrait;
 use CodeIgniter\Test\FeatureTestTrait;
 use Config\Services;
+use Tests\Support\DatabaseTestCase;
 
 /**
  * Note: These tests verify CORS functionality through HTTP requests.
  * Due to limitations with FeatureTestTrait, filters may not execute during tests.
  * CORS functionality has been verified to work correctly in production via real HTTP requests.
  */
-class CorsFilterTest extends CIUnitTestCase
+class CorsFilterTest extends DatabaseTestCase
 {
     use FeatureTestTrait;
-    use DatabaseTestTrait;
 
     protected $migrate     = true;
     protected $migrateOnce = false;

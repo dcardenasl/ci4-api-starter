@@ -2,15 +2,13 @@
 
 namespace Tests\Controllers;
 
-use CodeIgniter\Test\CIUnitTestCase;
-use CodeIgniter\Test\DatabaseTestTrait;
 use CodeIgniter\Test\FeatureTestTrait;
+use Tests\Support\DatabaseTestCase;
 use Tests\Support\Traits\AuthenticationTrait;
 
-class AuthControllerTest extends CIUnitTestCase
+class AuthControllerTest extends DatabaseTestCase
 {
     use FeatureTestTrait;
-    use DatabaseTestTrait;
     use AuthenticationTrait;
 
     protected $migrate     = true;

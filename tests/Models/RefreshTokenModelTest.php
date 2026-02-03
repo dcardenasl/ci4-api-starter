@@ -5,8 +5,7 @@ declare(strict_types=1);
 namespace Tests\Models;
 
 use App\Models\RefreshTokenModel;
-use CodeIgniter\Test\CIUnitTestCase;
-use CodeIgniter\Test\DatabaseTestTrait;
+use Tests\Support\DatabaseTestCase;
 
 /**
  * RefreshTokenModel Integration Tests
@@ -14,10 +13,8 @@ use CodeIgniter\Test\DatabaseTestTrait;
  * Tests database operations for refresh tokens including
  * creation, validation, revocation, and expiration.
  */
-class RefreshTokenModelTest extends CIUnitTestCase
+class RefreshTokenModelTest extends DatabaseTestCase
 {
-    use DatabaseTestTrait;
-
     protected $migrate     = true;
     protected $migrateOnce = false;
     protected $refresh     = true;

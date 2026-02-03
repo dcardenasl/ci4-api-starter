@@ -5,8 +5,7 @@ declare(strict_types=1);
 namespace Tests\Models;
 
 use App\Models\AuditLogModel;
-use CodeIgniter\Test\CIUnitTestCase;
-use CodeIgniter\Test\DatabaseTestTrait;
+use Tests\Support\DatabaseTestCase;
 
 /**
  * AuditLogModel Integration Tests
@@ -14,10 +13,8 @@ use CodeIgniter\Test\DatabaseTestTrait;
  * Tests database operations for audit logs including
  * creation, retrieval, filtering, and searchability.
  */
-class AuditLogModelTest extends CIUnitTestCase
+class AuditLogModelTest extends DatabaseTestCase
 {
-    use DatabaseTestTrait;
-
     protected $migrate     = true;
     protected $migrateOnce = false;
     protected $refresh     = true;

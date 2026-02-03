@@ -7,8 +7,7 @@ namespace Tests\Services;
 use App\Models\RefreshTokenModel;
 use App\Models\TokenBlacklistModel;
 use App\Services\TokenRevocationService;
-use CodeIgniter\Test\CIUnitTestCase;
-use CodeIgniter\Test\DatabaseTestTrait;
+use Tests\Support\DatabaseTestCase;
 
 /**
  * TokenRevocationService Integration Tests
@@ -16,10 +15,8 @@ use CodeIgniter\Test\DatabaseTestTrait;
  * Tests the complete token revocation flow with real database operations.
  * Includes blacklist management, caching, and cleanup operations.
  */
-class TokenRevocationServiceTest extends CIUnitTestCase
+class TokenRevocationServiceTest extends DatabaseTestCase
 {
-    use DatabaseTestTrait;
-
     protected $migrate     = true;
     protected $migrateOnce = false;
     protected $refresh     = true;

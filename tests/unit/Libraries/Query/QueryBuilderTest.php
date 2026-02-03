@@ -6,8 +6,7 @@ namespace Tests\Unit\Libraries\Query;
 
 use App\Libraries\Query\QueryBuilder;
 use App\Models\UserModel;
-use CodeIgniter\Test\CIUnitTestCase;
-use CodeIgniter\Test\DatabaseTestTrait;
+use Tests\Support\DatabaseTestCase;
 
 /**
  * QueryBuilder Unit Tests
@@ -15,10 +14,8 @@ use CodeIgniter\Test\DatabaseTestTrait;
  * Tests for the QueryBuilder class that provides fluent interface
  * for building complex database queries.
  */
-class QueryBuilderTest extends CIUnitTestCase
+class QueryBuilderTest extends DatabaseTestCase
 {
-    use DatabaseTestTrait;
-
     protected $migrate = true;
     protected $migrateOnce = false;
     protected $refresh = true;

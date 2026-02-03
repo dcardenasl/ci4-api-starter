@@ -5,8 +5,7 @@ declare(strict_types=1);
 namespace Tests\Models;
 
 use App\Models\PasswordResetModel;
-use CodeIgniter\Test\CIUnitTestCase;
-use CodeIgniter\Test\DatabaseTestTrait;
+use Tests\Support\DatabaseTestCase;
 
 /**
  * PasswordResetModel Integration Tests
@@ -14,10 +13,8 @@ use CodeIgniter\Test\DatabaseTestTrait;
  * Tests database operations for password reset tokens including
  * creation, validation, expiration, and timing attack prevention.
  */
-class PasswordResetModelTest extends CIUnitTestCase
+class PasswordResetModelTest extends DatabaseTestCase
 {
-    use DatabaseTestTrait;
-
     protected $migrate     = true;
     protected $migrateOnce = false;
     protected $refresh     = true;
@@ -292,8 +289,10 @@ class PasswordResetModelTest extends CIUnitTestCase
 
     public function testCleanExpiredHandlesEmptyTable(): void
     {
-        // Clear all
+        // Clear all (disable foreign key checks to avoid constraint errors)
+        $this->db->query('SET FOREIGN_KEY_CHECKS = 0');
         $this->db->table('password_resets')->truncate();
+        $this->db->query('SET FOREIGN_KEY_CHECKS = 1');
 
         // Should not error
         $this->model->cleanExpired(60);

@@ -27,8 +27,10 @@ class TestUserSeeder extends Seeder
             ],
         ];
 
-        // Clear existing test data
+        // Clear existing test data (disable foreign key checks to avoid constraint errors)
+        $this->db->query('SET FOREIGN_KEY_CHECKS = 0');
         $this->db->table('users')->truncate();
+        $this->db->query('SET FOREIGN_KEY_CHECKS = 1');
 
         // Insert test data
         $this->db->table('users')->insertBatch($data);

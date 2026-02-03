@@ -7,8 +7,7 @@ namespace Tests\Unit\Traits;
 use App\Models\AuditLogModel;
 use App\Models\UserModel;
 use App\Traits\Auditable;
-use CodeIgniter\Test\CIUnitTestCase;
-use CodeIgniter\Test\DatabaseTestTrait;
+use Tests\Support\DatabaseTestCase;
 
 /**
  * SECURITY TESTS for Auditable Trait
@@ -16,10 +15,8 @@ use CodeIgniter\Test\DatabaseTestTrait;
  * Critical tests to verify that sensitive fields (passwords, tokens)
  * are NOT exposed in audit trail logs.
  */
-class AuditableTest extends CIUnitTestCase
+class AuditableTest extends DatabaseTestCase
 {
-    use DatabaseTestTrait;
-
     protected $migrate = true;
     protected $refresh = true;
 

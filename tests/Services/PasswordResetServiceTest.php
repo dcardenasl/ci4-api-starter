@@ -7,8 +7,7 @@ namespace Tests\Services;
 use App\Models\PasswordResetModel;
 use App\Models\UserModel;
 use App\Services\PasswordResetService;
-use CodeIgniter\Test\CIUnitTestCase;
-use CodeIgniter\Test\DatabaseTestTrait;
+use Tests\Support\DatabaseTestCase;
 
 /**
  * PasswordResetService Integration Tests
@@ -16,10 +15,8 @@ use CodeIgniter\Test\DatabaseTestTrait;
  * Tests the complete password reset flow with real database operations.
  * Includes token generation, validation, expiration, and security features.
  */
-class PasswordResetServiceTest extends CIUnitTestCase
+class PasswordResetServiceTest extends DatabaseTestCase
 {
-    use DatabaseTestTrait;
-
     protected $migrate     = true;
     protected $migrateOnce = false;
     protected $refresh     = true;

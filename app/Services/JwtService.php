@@ -18,8 +18,9 @@ class JwtService implements JwtServiceInterface
 
     public function __construct()
     {
-        $this->secretKey = env('JWT_SECRET_KEY', 'your-secret-key-change-in-production');
-        $this->expirationTime = (int) env('JWT_ACCESS_TOKEN_TTL', 3600);
+        // Check getenv first for unit tests that use putenv(), then fall back to env() for .env files
+        $this->secretKey = getenv('JWT_SECRET_KEY') ?: env('JWT_SECRET_KEY', 'your-secret-key-change-in-production');
+        $this->expirationTime = (int) (getenv('JWT_ACCESS_TOKEN_TTL') ?: env('JWT_ACCESS_TOKEN_TTL', 3600));
         $this->issuer = env('app.baseURL', 'http://localhost:8080');
     }
 

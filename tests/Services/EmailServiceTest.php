@@ -266,17 +266,32 @@ class EmailServiceTest extends CIUnitTestCase
 
     public function testSendTemplateMethodAcceptsValidParameters(): void
     {
+        // Clean any existing output buffers and start fresh
+        while (ob_get_level() > 0) {
+            ob_end_clean();
+        }
+        ob_start();
+
         $result = $this->service->sendTemplate(
             'verification',
             'test@example.com',
             ['username' => 'TestUser', 'token' => 'abc123']
         );
 
+        // Clean up output buffer
+        ob_end_clean();
+
         $this->assertIsBool($result);
     }
 
     public function testSendTemplateMethodHandlesSubjectInData(): void
     {
+        // Clean any existing output buffers and start fresh
+        while (ob_get_level() > 0) {
+            ob_end_clean();
+        }
+        ob_start();
+
         $data = [
             'subject' => 'Custom Subject',
             'username' => 'John',
@@ -284,6 +299,9 @@ class EmailServiceTest extends CIUnitTestCase
         ];
 
         $result = $this->service->sendTemplate('verification', 'test@example.com', $data);
+
+        // Clean up output buffer
+        ob_end_clean();
 
         $this->assertIsBool($result);
     }

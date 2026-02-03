@@ -98,6 +98,20 @@ jobs:
           fi
           echo "✓ phpunit.xml found"
 
+      - name: Wait for MySQL to be ready
+        run: |
+          for i in {1..30}; do
+            if mysqladmin ping -h 127.0.0.1 -u root -proot --silent; then
+              echo "✓ MySQL is ready"
+              break
+            fi
+            echo "Waiting for MySQL... ($i/30)"
+            sleep 2
+          done
+
+      - name: Run database migrations
+        run: php spark migrate --all
+
       - name: Run tests
         run: vendor/bin/phpunit --configuration phpunit.xml --no-coverage --testdox
 

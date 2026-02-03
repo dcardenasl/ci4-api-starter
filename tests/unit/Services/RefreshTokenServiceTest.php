@@ -81,21 +81,26 @@ class RefreshTokenServiceTest extends CIUnitTestCase
     public function testIssueRefreshTokenSetsCorrectExpiration(): void
     {
         $userId = 1;
+        $assertionPassed = false;
 
         // Set custom TTL for testing
         putenv('JWT_REFRESH_TOKEN_TTL=86400'); // 1 day
 
         $this->mockModel->expects($this->once())
             ->method('insert')
-            ->with($this->callback(function ($data) {
+            ->with($this->callback(function ($data) use (&$assertionPassed) {
                 $expiresAt = strtotime($data['expires_at']);
                 $expectedExpiry = time() + 86400;
                 // Allow 2 second tolerance for test execution time
-                return abs($expiresAt - $expectedExpiry) < 2;
+                $assertionPassed = abs($expiresAt - $expectedExpiry) < 2;
+                return $assertionPassed;
             }))
             ->willReturn(true);
 
         $this->service->issueRefreshToken($userId);
+
+        // Explicit assertion for PHPUnit
+        $this->assertTrue($assertionPassed, 'Token expiration time should be set correctly');
 
         putenv('JWT_REFRESH_TOKEN_TTL'); // Clear
     }

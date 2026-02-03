@@ -27,8 +27,22 @@ class PasswordResetService
      */
     public function sendResetLink(string $email): array
     {
-        // Validate email
-        if (empty($email) || ! filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        // Trim whitespace from email
+        $email = trim($email);
+
+        // Validate email (support international domain names)
+        // Try converting IDN to ASCII for validation
+        $emailToValidate = $email;
+        if (strpos($email, '@') !== false) {
+            [$localPart, $domain] = explode('@', $email, 2);
+            // Convert international domain to punycode for validation
+            $asciiDomain = idn_to_ascii($domain, IDNA_DEFAULT, INTL_IDNA_VARIANT_UTS46);
+            if ($asciiDomain !== false) {
+                $emailToValidate = $localPart . '@' . $asciiDomain;
+            }
+        }
+
+        if (empty($email) || ! filter_var($emailToValidate, FILTER_VALIDATE_EMAIL)) {
             return ApiResponse::validationError(['email' => lang('PasswordReset.emailRequired')]);
         }
 

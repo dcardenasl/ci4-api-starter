@@ -358,6 +358,15 @@ class QueryBuilderTest extends DatabaseTestCase
     public function testSortWithDescendingOrder(): void
     {
         $model = $this->getModel();
+
+        // Seed at least one user for testing sort
+        $model->insert([
+            'username' => 'testuser',
+            'email' => 'test@example.com',
+            'password' => password_hash('Test123!', PASSWORD_BCRYPT),
+            'role' => 'user',
+        ]);
+
         $builder = new QueryBuilder($model);
 
         // Test descending sort on valid field

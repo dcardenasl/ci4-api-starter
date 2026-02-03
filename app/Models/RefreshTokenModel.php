@@ -63,9 +63,12 @@ class RefreshTokenModel extends Model
      */
     public function revokeToken(string $token): bool
     {
-        return $this->where('token', $token)
+        $this->where('token', $token)
+            ->where('revoked_at', null)
             ->set(['revoked_at' => date('Y-m-d H:i:s')])
             ->update();
+
+        return $this->db->affectedRows() > 0;
     }
 
     /**
@@ -76,10 +79,12 @@ class RefreshTokenModel extends Model
      */
     public function revokeAllUserTokens(int $userId): bool
     {
-        return $this->where('user_id', $userId)
+        $this->where('user_id', $userId)
             ->where('revoked_at', null)
             ->set(['revoked_at' => date('Y-m-d H:i:s')])
             ->update();
+
+        return $this->db->affectedRows() > 0;
     }
 
     /**

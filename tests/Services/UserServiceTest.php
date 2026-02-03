@@ -212,7 +212,7 @@ class UserServiceTest extends DatabaseTestCase
         $result = $this->userService->register([
             'username' => 'registertest',
             'email'    => 'registertest@example.com',
-            'password' => 'Password123',
+            'password' => 'Password123!',
         ]);
 
         $this->assertArrayHasKey('status', $result);
@@ -224,8 +224,8 @@ class UserServiceTest extends DatabaseTestCase
         // Verify password is hashed (user data is returned as array, not object)
         $model = new UserModel();
         $user = $model->where('username', 'registertest')->first();
-        $this->assertNotEquals('Password123', $user->password);
-        $this->assertTrue(password_verify('Password123', $user->password));
+        $this->assertNotEquals('Password123!', $user->password);
+        $this->assertTrue(password_verify('Password123!', $user->password));
     }
 
     public function testRegisterIgnoresRoleInjection()
@@ -233,7 +233,7 @@ class UserServiceTest extends DatabaseTestCase
         $result = $this->userService->register([
             'username' => 'securitytest',
             'email'    => 'securitytest@example.com',
-            'password' => 'Adminpass123',
+            'password' => 'Adminpass123!',
             'role'     => 'admin', // Attempting to inject admin role
         ]);
 

@@ -310,7 +310,7 @@ class UserService implements UserServiceInterface
         return ApiResponse::success([
             'access_token' => $accessToken,
             'refresh_token' => $refreshToken,
-            'expires_in' => (int) env('JWT_ACCESS_TOKEN_TTL', 3600),
+            'expires_in' => (int) (getenv('JWT_ACCESS_TOKEN_TTL') ?: env('JWT_ACCESS_TOKEN_TTL', 3600)),
             'user' => $user,
         ]);
     }
@@ -349,7 +349,7 @@ class UserService implements UserServiceInterface
         return ApiResponse::success([
             'access_token' => $accessToken,
             'refresh_token' => $refreshToken,
-            'expires_in' => (int) env('JWT_ACCESS_TOKEN_TTL', 3600),
+            'expires_in' => (int) (getenv('JWT_ACCESS_TOKEN_TTL') ?: env('JWT_ACCESS_TOKEN_TTL', 3600)),
             'user' => $user,
             'message' => 'Registration successful. Please check your email to verify your account.',
         ]);

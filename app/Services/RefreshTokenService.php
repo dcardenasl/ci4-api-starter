@@ -34,7 +34,8 @@ class RefreshTokenService implements RefreshTokenServiceInterface
         $token = bin2hex(random_bytes(32));
 
         // Calculate expiry
-        $ttl = (int) env('JWT_REFRESH_TOKEN_TTL', 604800); // 7 days default
+        // Check getenv first for unit tests that use putenv(), then fall back to env() for .env files
+        $ttl = (int) (getenv('JWT_REFRESH_TOKEN_TTL') ?: env('JWT_REFRESH_TOKEN_TTL', 604800)); // 7 days default
         $expiresAt = date('Y-m-d H:i:s', time() + $ttl);
 
         // Store in database
@@ -75,10 +76,18 @@ class RefreshTokenService implements RefreshTokenServiceInterface
         try {
             // Validate refresh token with row-level lock (FOR UPDATE)
             // This prevents concurrent requests from retrieving the same token
-            $tokenRecord = $db->query(
-                'SELECT * FROM refresh_tokens WHERE token = ? AND expires_at > ? AND revoked_at IS NULL FOR UPDATE',
-                [$refreshToken, date('Y-m-d H:i:s')]
-            )->getFirstRow('object');
+            $builder = $db->table('refresh_tokens');
+            $sql = $builder
+                ->where('token', $refreshToken)
+                ->where('expires_at >', date('Y-m-d H:i:s'))
+                ->where('revoked_at', null)
+                ->getCompiledSelect();
+
+            // Append FOR UPDATE to the compiled query
+            $sql .= ' FOR UPDATE';
+
+            $result = $db->query($sql);
+            $tokenRecord = $result ? $result->getFirstRow('object') : null;
 
             if (!$tokenRecord) {
                 $db->transRollback();
@@ -120,7 +129,7 @@ class RefreshTokenService implements RefreshTokenServiceInterface
             return ApiResponse::success([
                 'access_token' => $accessToken,
                 'refresh_token' => $newRefreshToken,
-                'expires_in' => (int) env('JWT_ACCESS_TOKEN_TTL', 3600),
+                'expires_in' => (int) (getenv('JWT_ACCESS_TOKEN_TTL') ?: env('JWT_ACCESS_TOKEN_TTL', 3600)),
             ]);
         } catch (\Exception $e) {
             // Rollback on any exception

@@ -59,16 +59,24 @@ class RefreshTokenModel extends Model
      * Revoke a refresh token
      *
      * @param string $token
-     * @return bool
+     * @return bool Returns true if token exists, false if token doesn't exist
      */
     public function revokeToken(string $token): bool
     {
+        // Check if token exists first
+        $tokenExists = $this->where('token', $token)->countAllResults(false) > 0;
+
+        if (!$tokenExists) {
+            return false;
+        }
+
+        // Update only non-revoked tokens, but return true since token exists
         $this->where('token', $token)
             ->where('revoked_at', null)
             ->set(['revoked_at' => date('Y-m-d H:i:s')])
             ->update();
 
-        return $this->db->affectedRows() > 0;
+        return true;
     }
 
     /**

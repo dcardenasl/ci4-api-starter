@@ -27,9 +27,6 @@ class PasswordResetService
      */
     public function sendResetLink(string $email): array
     {
-        // Trim whitespace from email
-        $email = trim($email);
-
         // Validate email (support international domain names)
         // Try converting IDN to ASCII for validation
         $emailToValidate = $email;

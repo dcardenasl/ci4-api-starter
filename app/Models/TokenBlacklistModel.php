@@ -41,12 +41,15 @@ class TokenBlacklistModel extends Model
     /**
      * Check if a token JTI is blacklisted
      *
+     * Case-sensitive comparison to ensure token security.
+     *
      * @param string $jti Token JTI
      * @return bool
      */
     public function isBlacklisted(string $jti): bool
     {
-        $record = $this->where('token_jti', $jti)
+        // Use BINARY comparison for case-sensitive token matching
+        $record = $this->where("BINARY token_jti = BINARY '{$this->db->escapeString($jti)}'", null, false)
             ->where('expires_at >', date('Y-m-d H:i:s'))
             ->first();
 

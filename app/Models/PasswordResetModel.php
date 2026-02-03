@@ -7,17 +7,25 @@ use CodeIgniter\Model;
 class PasswordResetModel extends Model
 {
     protected $table = 'password_resets';
+    protected $primaryKey = 'id';
+    protected $useAutoIncrement = true;
     protected $allowedFields = ['email', 'token', 'created_at'];
     protected $useTimestamps = false;
 
     /**
      * Clean up expired reset tokens
      *
-     * @param int $expiryMinutes
+     * @param int $expiryMinutes Number of minutes before expiry (0 = delete all)
      * @return void
      */
     public function cleanExpired(int $expiryMinutes = 60): void
     {
+        if ($expiryMinutes === 0) {
+            // Delete all tokens when expiry is 0
+            $this->builder()->truncate();
+            return;
+        }
+
         $expiredTime = date('Y-m-d H:i:s', strtotime("-{$expiryMinutes} minutes"));
 
         $this->where('created_at <', $expiredTime)->delete();

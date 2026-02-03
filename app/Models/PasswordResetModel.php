@@ -26,6 +26,8 @@ class PasswordResetModel extends Model
     /**
      * Check if token is valid and not expired
      *
+     * Uses hash_equals for constant-time comparison to prevent timing attacks.
+     *
      * @param string $email
      * @param string $token
      * @param int $expiryMinutes
@@ -35,11 +37,19 @@ class PasswordResetModel extends Model
     {
         $expiredTime = date('Y-m-d H:i:s', strtotime("-{$expiryMinutes} minutes"));
 
-        $reset = $this->where('email', $email)
-            ->where('token', $token)
+        // Retrieve all non-expired tokens for this email and compare using hash_equals
+        // to prevent timing-based token enumeration
+        $resets = $this->where('email', $email)
             ->where('created_at >', $expiredTime)
-            ->first();
+            ->findAll();
 
-        return $reset !== null;
+        foreach ($resets as $reset) {
+            $storedToken = is_object($reset) ? $reset->token : ($reset['token'] ?? '');
+            if (hash_equals($storedToken, $token)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

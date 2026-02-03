@@ -124,6 +124,18 @@ class PasswordResetService
             ]);
         }
 
+        if (strlen($newPassword) > 128) {
+            return ApiResponse::validationError([
+                'password' => lang('PasswordReset.passwordMaxLength'),
+            ]);
+        }
+
+        if (!preg_match('/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).+$/', $newPassword)) {
+            return ApiResponse::validationError([
+                'password' => lang('PasswordReset.passwordComplexity'),
+            ]);
+        }
+
         // Clean expired tokens
         $this->passwordResetModel->cleanExpired(60);
 

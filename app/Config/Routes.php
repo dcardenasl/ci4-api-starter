@@ -17,18 +17,20 @@ $routes->group('', ['namespace' => 'App\Controllers\Api\V1'], function ($routes)
 
 // API v1 Routes with rate limiting
 $routes->group('api/v1', ['namespace' => 'App\Controllers\Api\V1', 'filter' => 'throttle'], function ($routes) {
-    // Public authentication routes
-    $routes->post('auth/login', 'AuthController::login');
-    $routes->post('auth/register', 'AuthController::register');
-    $routes->post('auth/refresh', 'TokenController::refresh');
+    // Public authentication routes (with stricter auth-specific rate limiting)
+    $routes->group('', ['filter' => 'authThrottle'], function ($routes) {
+        $routes->post('auth/login', 'AuthController::login');
+        $routes->post('auth/register', 'AuthController::register');
+        $routes->post('auth/refresh', 'TokenController::refresh');
 
-    // Email verification routes (public)
+        // Password reset routes (public)
+        $routes->post('auth/forgot-password', 'PasswordResetController::sendResetLink');
+        $routes->post('auth/reset-password', 'PasswordResetController::resetPassword');
+    });
+
+    // Email verification routes (public, standard rate limiting)
     $routes->post('auth/verify-email', 'VerificationController::verify');
-
-    // Password reset routes (public)
-    $routes->post('auth/forgot-password', 'PasswordResetController::sendResetLink');
     $routes->get('auth/validate-reset-token', 'PasswordResetController::validateToken');
-    $routes->post('auth/reset-password', 'PasswordResetController::resetPassword');
 
     // Protected routes (require JWT authentication)
     $routes->group('', ['filter' => 'jwtauth'], function ($routes) {

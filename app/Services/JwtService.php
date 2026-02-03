@@ -14,11 +14,13 @@ class JwtService implements JwtServiceInterface
     private string $secretKey;
     private string $algorithm = 'HS256';
     private int $expirationTime = 3600; // 1 hour in seconds
+    private string $issuer;
 
     public function __construct()
     {
         $this->secretKey = env('JWT_SECRET_KEY', 'your-secret-key-change-in-production');
         $this->expirationTime = (int) env('JWT_ACCESS_TOKEN_TTL', 3600);
+        $this->issuer = env('app.baseURL', 'http://localhost:8080');
     }
 
     /**
@@ -37,7 +39,9 @@ class JwtService implements JwtServiceInterface
         $jti = bin2hex(random_bytes(16));
 
         $payload = [
+            'iss' => $this->issuer,
             'iat' => $issuedAt,
+            'nbf' => $issuedAt,
             'exp' => $expirationTime,
             'jti' => $jti,
             'uid' => $userId,
@@ -56,7 +60,15 @@ class JwtService implements JwtServiceInterface
     public function decode(string $token): ?object
     {
         try {
-            return JWT::decode($token, new Key($this->secretKey, $this->algorithm));
+            $decoded = JWT::decode($token, new Key($this->secretKey, $this->algorithm));
+
+            // Validate issuer claim
+            if (!isset($decoded->iss) || $decoded->iss !== $this->issuer) {
+                log_message('warning', 'JWT issuer mismatch: expected ' . $this->issuer);
+                return null;
+            }
+
+            return $decoded;
         } catch (Exception $e) {
             log_message('error', 'JWT decode error: ' . $e->getMessage());
             return null;

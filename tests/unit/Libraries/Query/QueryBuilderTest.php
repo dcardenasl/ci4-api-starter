@@ -289,4 +289,110 @@ class QueryBuilderTest extends CIUnitTestCase
 
         $this->assertEquals(0, $count);
     }
+
+    /**
+     * SECURITY TEST: Verify protection against SQL injection via sort parameter
+     */
+    public function testSortRejectsInvalidFields(): void
+    {
+        $model = $this->getModel();
+        $builder = new QueryBuilder($model);
+
+        $startTime = microtime(true);
+
+        // Attempt SQL injection with SLEEP (should be rejected silently)
+        $builder->sort('(SELECT SLEEP(5)),username');
+
+        $result = $builder->paginate(1, 10);
+
+        $endTime = microtime(true);
+        $duration = $endTime - $startTime;
+
+        // Should complete quickly (no SLEEP executed)
+        // Allow up to 1 second for query execution (SLEEP would take 5+ seconds)
+        $this->assertLessThan(1.0, $duration, 'Query took too long - possible SQL injection executed');
+        $this->assertIsArray($result);
+        $this->assertArrayHasKey('data', $result);
+    }
+
+    public function testSortWithWhitelistValidation(): void
+    {
+        $model = $this->getModel();
+        $builder = new QueryBuilder($model);
+
+        // Valid fields should work
+        $builder->sort('username,-created_at');
+        $result = $builder->paginate(1, 10);
+
+        $this->assertIsArray($result);
+        $this->assertArrayHasKey('data', $result);
+    }
+
+    public function testSortSkipsInvalidFieldsSilently(): void
+    {
+        $model = $this->getModel();
+        $builder = new QueryBuilder($model);
+
+        // Mix of valid and invalid fields
+        $builder->sort('username,invalid_field_xyz,created_at');
+        $result = $builder->get();
+
+        // Should work, just omit invalid_field_xyz
+        $this->assertIsArray($result);
+    }
+
+    public function testSortHandlesModelWithoutSortableFields(): void
+    {
+        // Create a mock model without sortableFields property
+        $model = $this->createMock(\CodeIgniter\Model::class);
+        $model->method('orderBy')->willReturnSelf();
+        $model->method('findAll')->willReturn([]);
+
+        $builder = new QueryBuilder($model);
+
+        // Should not throw exception, just skip all sorts
+        $builder->sort('any_field');
+        $result = $builder->get();
+
+        $this->assertInstanceOf(QueryBuilder::class, $builder);
+        $this->assertIsArray($result);
+    }
+
+    public function testSortWithDescendingOrder(): void
+    {
+        $model = $this->getModel();
+        $builder = new QueryBuilder($model);
+
+        // Test descending sort on valid field
+        $builder->sort('-created_at');
+        $result = $builder->get();
+
+        $this->assertIsArray($result);
+        $this->assertNotEmpty($result);
+    }
+
+    public function testSortWithMultipleSQLInjectionAttempts(): void
+    {
+        $model = $this->getModel();
+        $builder = new QueryBuilder($model);
+
+        $injectionAttempts = [
+            '(SELECT * FROM users)',
+            'username; DROP TABLE users--',
+            'username UNION SELECT password FROM users',
+            '1=1; UPDATE users SET role=\'admin\'',
+            'username/**/OR/**/1=1',
+        ];
+
+        foreach ($injectionAttempts as $attempt) {
+            $startTime = microtime(true);
+            $builder->sort($attempt);
+            $result = $builder->get();
+            $duration = microtime(true) - $startTime;
+
+            // Should complete quickly without executing injection
+            $this->assertLessThan(1.0, $duration);
+            $this->assertIsArray($result);
+        }
+    }
 }

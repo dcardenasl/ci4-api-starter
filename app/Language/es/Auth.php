@@ -17,4 +17,5 @@ return [
     // Límite de velocidad
     'rateLimitExceeded'       => 'Límite de solicitudes excedido. Por favor, intente más tarde.',
     'tooManyRequests'         => 'Demasiadas solicitudes. Máximo {0} solicitudes por {1} segundos permitidas.',
+    'tooManyLoginAttempts'    => 'Demasiados intentos de autenticación. Máximo {0} intentos por {1} minutos. Por favor, intente más tarde.',
 ];

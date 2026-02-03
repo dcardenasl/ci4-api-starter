@@ -51,11 +51,12 @@ class UserModel extends Model
             ],
         ],
         'password' => [
-            'rules'  => 'required|min_length[8]|regex_match[/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/]',
+            'rules'  => 'required|min_length[8]|max_length[128]|regex_match[/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).+$/]',
             'errors' => [
                 'required'    => '{field} is required',
                 'min_length'  => 'Password must be at least {param} characters',
-                'regex_match' => 'Password must contain at least one uppercase letter, one lowercase letter, and one number',
+                'max_length'  => 'Password must not exceed {param} characters',
+                'regex_match' => 'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character',
             ],
         ],
     ];

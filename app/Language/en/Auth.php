@@ -17,4 +17,5 @@ return [
     // Rate limiting
     'rateLimitExceeded'       => 'Rate limit exceeded. Please try again later.',
     'tooManyRequests'         => 'Too many requests. Maximum {0} requests per {1} seconds allowed.',
+    'tooManyLoginAttempts'    => 'Too many authentication attempts. Maximum {0} attempts per {1} minutes. Please try again later.',
 ];

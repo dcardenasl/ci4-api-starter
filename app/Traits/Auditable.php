@@ -8,6 +8,19 @@ use App\Services\AuditService;
  * Auditable Trait
  *
  * Automatically logs create, update, and delete actions for models
+ *
+ * SECURITY NOTE: This trait uses Entity::toArray() to ensure sensitive
+ * fields (passwords, tokens) are filtered before logging.
+ *
+ * Make sure your Entity classes override toArray() to exclude sensitive data:
+ *
+ * class UserEntity extends Entity {
+ *     public function toArray(...): array {
+ *         $data = parent::toArray(...);
+ *         unset($data['password']);
+ *         return $data;
+ *     }
+ * }
  */
 trait Auditable
 {
@@ -70,7 +83,10 @@ trait Auditable
             return;
         }
 
-        $oldValues = is_object($old) ? (array) $old : $old;
+        // Use toArray() to respect Entity filtering (prevents password exposure)
+        $oldValues = is_object($old)
+            ? (method_exists($old, 'toArray') ? $old->toArray() : (array) $old)
+            : $old;
         $newValues = array_merge($oldValues, $data['data'] ?? []);
 
         $auditService = $this->getAuditService();
@@ -98,7 +114,10 @@ trait Auditable
         }
 
         $id = is_array($data['id']) ? (int) $data['id'][0] : (int) $data['id'];
-        $deletedData = is_object($data['data']) ? (array) $data['data'] : $data['data'];
+        // Use toArray() to respect Entity filtering (prevents password exposure)
+        $deletedData = is_object($data['data'])
+            ? (method_exists($data['data'], 'toArray') ? $data['data']->toArray() : (array) $data['data'])
+            : $data['data'];
 
         $auditService = $this->getAuditService();
         $userId = $this->getCurrentUserId();

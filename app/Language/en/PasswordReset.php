@@ -16,6 +16,8 @@ return [
     'userNotFound'       => 'User not found',
     'allFieldsRequired'  => 'All fields are required',
     'passwordMinLength'  => 'Password must be at least 8 characters long',
+    'passwordMaxLength'  => 'Password must not exceed 128 characters',
+    'passwordComplexity' => 'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character',
 
     // Response data messages
     'sentMessage'        => 'Password reset link sent',

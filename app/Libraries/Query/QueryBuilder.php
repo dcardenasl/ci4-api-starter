@@ -43,22 +43,26 @@ class QueryBuilder
     /**
      * Apply sorting to the query
      *
+     * SECURITY: Validates sort fields against model's sortableFields whitelist
+     * to prevent SQL injection attacks via sort parameter.
+     *
      * @param string $sort Sort string in format: "-created_at,username" (- prefix for DESC)
      * @return self
      */
     public function sort(string $sort): self
     {
-        $sortFields = explode(',', $sort);
+        // Get sortable fields from model
+        $sortableFields = [];
 
-        foreach ($sortFields as $field) {
-            $field = trim($field);
-            $direction = 'ASC';
+        if (property_exists($this->model, 'sortableFields')) {
+            $sortableFields = $this->model->sortableFields;
+        }
 
-            if (str_starts_with($field, '-')) {
-                $direction = 'DESC';
-                $field = substr($field, 1);
-            }
+        // Parse sort with whitelist validation
+        $parsedSorts = FilterParser::parseSort($sort, $sortableFields);
 
+        // Apply only validated fields
+        foreach ($parsedSorts as [$field, $direction]) {
             $this->model->orderBy($field, $direction);
         }
 

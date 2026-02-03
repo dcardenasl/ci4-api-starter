@@ -75,13 +75,10 @@ class RefreshTokenService implements RefreshTokenServiceInterface
         try {
             // Validate refresh token with row-level lock (FOR UPDATE)
             // This prevents concurrent requests from retrieving the same token
-            $tokenRecord = $db->table('refresh_tokens')
-                ->where('token', $refreshToken)
-                ->where('expires_at >', date('Y-m-d H:i:s'))
-                ->where('revoked_at', null)
-                ->forUpdate()
-                ->get()
-                ->getFirstRow('object');
+            $tokenRecord = $db->query(
+                'SELECT * FROM refresh_tokens WHERE token = ? AND expires_at > ? AND revoked_at IS NULL FOR UPDATE',
+                [$refreshToken, date('Y-m-d H:i:s')]
+            )->getFirstRow('object');
 
             if (!$tokenRecord) {
                 $db->transRollback();

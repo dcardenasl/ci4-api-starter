@@ -51,6 +51,9 @@ class RefreshTokenService implements RefreshTokenServiceInterface
     /**
      * Refresh access token using refresh token
      *
+     * Uses database transactions and row-level locking to prevent race conditions
+     * where concurrent requests could both succeed with the same token.
+     *
      * @param array $data Request data with 'refresh_token'
      * @return array
      */
@@ -64,46 +67,74 @@ class RefreshTokenService implements RefreshTokenServiceInterface
         }
 
         $refreshToken = $data['refresh_token'];
+        $db = \Config\Database::connect();
 
-        // Validate refresh token
-        $tokenRecord = $this->refreshTokenModel->getActiveToken($refreshToken);
+        // Start transaction to protect token rotation
+        $db->transStart();
 
-        if (!$tokenRecord) {
+        try {
+            // Validate refresh token with row-level lock (FOR UPDATE)
+            // This prevents concurrent requests from retrieving the same token
+            $tokenRecord = $db->table('refresh_tokens')
+                ->where('token', $refreshToken)
+                ->where('expires_at >', date('Y-m-d H:i:s'))
+                ->where('revoked_at', null)
+                ->forUpdate()
+                ->get()
+                ->getFirstRow('object');
+
+            if (!$tokenRecord) {
+                $db->transRollback();
+                return ApiResponse::error(
+                    ['refresh_token' => lang('Tokens.invalidRefreshToken')],
+                    lang('Api.unauthorized'),
+                    401
+                );
+            }
+
+            // Revoke old refresh token (token rotation)
+            // Still within transaction, so no other request can access this token
+            $this->refreshTokenModel->revokeToken($refreshToken);
+
+            // Issue new refresh token
+            $newRefreshToken = $this->issueRefreshToken((int) $tokenRecord->user_id);
+
+            // Generate new access token
+            $jwtService = \Config\Services::jwtService();
+
+            // Get user to get role
+            $userModel = new \App\Models\UserModel();
+            $user = $userModel->find($tokenRecord->user_id);
+
+            if (!$user) {
+                $db->transRollback();
+                return ApiResponse::error(
+                    ['user' => lang('Tokens.userNotFound')],
+                    lang('Api.unauthorized'),
+                    401
+                );
+            }
+
+            $accessToken = $jwtService->encode((int) $user->id, $user->role);
+
+            // Commit transaction - all changes are now permanent
+            $db->transComplete();
+
+            return ApiResponse::success([
+                'access_token' => $accessToken,
+                'refresh_token' => $newRefreshToken,
+                'expires_in' => (int) env('JWT_ACCESS_TOKEN_TTL', 3600),
+            ]);
+        } catch (\Exception $e) {
+            // Rollback on any exception
+            $db->transRollback();
+            log_message('error', 'Refresh token error: ' . $e->getMessage());
             return ApiResponse::error(
-                ['refresh_token' => lang('Tokens.invalidRefreshToken')],
+                ['refresh_token' => lang('Tokens.refreshTokenRequired')],
                 lang('Api.unauthorized'),
                 401
             );
         }
-
-        // Revoke old refresh token (token rotation)
-        $this->refreshTokenModel->revokeToken($refreshToken);
-
-        // Issue new refresh token
-        $newRefreshToken = $this->issueRefreshToken((int) $tokenRecord->user_id);
-
-        // Generate new access token
-        $jwtService = \Config\Services::jwtService();
-
-        // Get user to get role
-        $userModel = new \App\Models\UserModel();
-        $user = $userModel->find($tokenRecord->user_id);
-
-        if (!$user) {
-            return ApiResponse::error(
-                ['user' => lang('Tokens.userNotFound')],
-                lang('Api.unauthorized'),
-                401
-            );
-        }
-
-        $accessToken = $jwtService->encode((int) $user->id, $user->role);
-
-        return ApiResponse::success([
-            'access_token' => $accessToken,
-            'refresh_token' => $newRefreshToken,
-            'expires_in' => (int) env('JWT_ACCESS_TOKEN_TTL', 3600),
-        ]);
     }
 
     /**

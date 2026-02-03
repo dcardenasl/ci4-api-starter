@@ -193,7 +193,7 @@ class AuditableTest extends CIUnitTestCase
      */
     private function createAuditableUserModel(): UserModel
     {
-        return new class extends UserModel {
+        return new class () extends UserModel {
             use Auditable;
 
             public function __construct()

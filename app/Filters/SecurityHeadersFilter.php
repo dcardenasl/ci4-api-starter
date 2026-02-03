@@ -39,7 +39,7 @@ class SecurityHeadersFilter implements FilterInterface
         $response->setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=()');
 
         // Prevent caching of sensitive API responses
-        if (str_contains($request->getPath(), 'api/')) {
+        if (str_contains($request->getUri()->getPath(), 'api/')) {
             $response->setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
             $response->setHeader('Pragma', 'no-cache');
         }

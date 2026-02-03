@@ -27,12 +27,12 @@ class VerificationService
         $user = $this->userModel->find($userId);
 
         if (! $user) {
-            return ApiResponse::error(['user' => 'User not found'], 'User not found', 404);
+            return ApiResponse::error(['user' => lang('Verification.userNotFound')], lang('Verification.userNotFound'), 404);
         }
 
         // Check if already verified
         if ($user->email_verified_at !== null) {
-            return ApiResponse::error(['email' => 'Email already verified'], 'Email already verified');
+            return ApiResponse::error(['email' => lang('Verification.alreadyVerified')], lang('Verification.alreadyVerified'));
         }
 
         // Generate verification token
@@ -51,15 +51,15 @@ class VerificationService
 
         // Queue verification email
         $this->emailService->queueTemplate('verification', $user->email, [
-            'subject' => 'Verify Your Email Address',
+            'subject' => lang('Email.verification.subject'),
             'username' => $user->username,
             'verification_link' => $verificationLink,
             'expires_at' => date('F j, Y g:i A', strtotime($expiresAt)),
         ]);
 
         return ApiResponse::success(
-            ['message' => 'Verification email sent'],
-            'Verification email sent. Please check your inbox.'
+            ['message' => lang('Verification.sentMessage')],
+            lang('Verification.emailSent')
         );
     }
 
@@ -72,7 +72,7 @@ class VerificationService
     public function verifyEmail(string $token): array
     {
         if (empty($token)) {
-            return ApiResponse::validationError(['token' => 'Verification token is required']);
+            return ApiResponse::validationError(['token' => lang('Verification.tokenRequired')]);
         }
 
         // Find user by token
@@ -81,17 +81,17 @@ class VerificationService
             ->first();
 
         if (! $user) {
-            return ApiResponse::error(['token' => 'Invalid verification token'], 'Invalid or expired token', 400);
+            return ApiResponse::error(['token' => lang('Verification.invalidToken')], lang('Verification.invalidToken'), 400);
         }
 
         // Check if token expired
         if ($user->verification_token_expires && strtotime($user->verification_token_expires) < time()) {
-            return ApiResponse::error(['token' => 'Verification token has expired'], 'Token has expired', 400);
+            return ApiResponse::error(['token' => lang('Verification.tokenExpired')], lang('Verification.tokenExpired'), 400);
         }
 
         // Check if already verified
         if ($user->email_verified_at !== null) {
-            return ApiResponse::success(['message' => 'Email already verified'], 'Email already verified');
+            return ApiResponse::success(['message' => lang('Verification.alreadyVerifiedMsg')], lang('Verification.alreadyVerified'));
         }
 
         // Mark email as verified
@@ -102,8 +102,8 @@ class VerificationService
         ]);
 
         return ApiResponse::success(
-            ['message' => 'Email verified successfully'],
-            'Your email has been verified successfully'
+            ['message' => lang('Verification.verifiedMessage')],
+            lang('Verification.emailVerified')
         );
     }
 
@@ -118,12 +118,12 @@ class VerificationService
         $user = $this->userModel->find($userId);
 
         if (! $user) {
-            return ApiResponse::error(['user' => 'User not found'], 'User not found', 404);
+            return ApiResponse::error(['user' => lang('Verification.userNotFound')], lang('Verification.userNotFound'), 404);
         }
 
         // Check if already verified
         if ($user->email_verified_at !== null) {
-            return ApiResponse::error(['email' => 'Email already verified'], 'Email already verified');
+            return ApiResponse::error(['email' => lang('Verification.alreadyVerified')], lang('Verification.alreadyVerified'));
         }
 
         // Send new verification email

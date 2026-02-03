@@ -52,7 +52,7 @@ class ApiResponse
      * Build an error response
      *
      * @param array|string $errors Error details (array of errors or single error string)
-     * @param string $message Main error message
+     * @param string|null $message Main error message
      * @param int|null $code Optional error code
      * @return array Formatted error response
      *
@@ -62,9 +62,10 @@ class ApiResponse
      */
     public static function error(
         array|string $errors,
-        string $message = 'Request failed',
+        ?string $message = null,
         ?int $code = null
     ): array {
+        $message = $message ?? lang('Api.requestFailed');
         $response = [
             'status' => 'error',
             'message' => $message,
@@ -123,9 +124,9 @@ class ApiResponse
      */
     public static function created(
         mixed $data,
-        ?string $message = 'Resource created successfully'
+        ?string $message = null
     ): array {
-        return self::success($data, $message);
+        return self::success($data, $message ?? lang('Api.resourceCreated'));
     }
 
     /**
@@ -135,70 +136,70 @@ class ApiResponse
      * @return array Formatted response
      */
     public static function deleted(
-        ?string $message = 'Resource deleted successfully'
+        ?string $message = null
     ): array {
-        return self::success(null, $message);
+        return self::success(null, $message ?? lang('Api.resourceDeleted'));
     }
 
     /**
      * Build a validation error response (HTTP 422)
      *
      * @param array $errors Validation errors
-     * @param string $message Error message
+     * @param string|null $message Error message
      * @return array Formatted response
      */
     public static function validationError(
         array $errors,
-        string $message = 'Validation failed'
+        ?string $message = null
     ): array {
-        return self::error($errors, $message, 422);
+        return self::error($errors, $message ?? lang('Api.validationFailed'), 422);
     }
 
     /**
      * Build a not found response (HTTP 404)
      *
-     * @param string $message Error message
+     * @param string|null $message Error message
      * @return array Formatted response
      */
     public static function notFound(
-        string $message = 'Resource not found'
+        ?string $message = null
     ): array {
-        return self::error([], $message, 404);
+        return self::error([], $message ?? lang('Api.resourceNotFound'), 404);
     }
 
     /**
      * Build an unauthorized response (HTTP 401)
      *
-     * @param string $message Error message
+     * @param string|null $message Error message
      * @return array Formatted response
      */
     public static function unauthorized(
-        string $message = 'Unauthorized'
+        ?string $message = null
     ): array {
-        return self::error([], $message, 401);
+        return self::error([], $message ?? lang('Api.unauthorized'), 401);
     }
 
     /**
      * Build a forbidden response (HTTP 403)
      *
-     * @param string $message Error message
+     * @param string|null $message Error message
      * @return array Formatted response
      */
     public static function forbidden(
-        string $message = 'Forbidden'
+        ?string $message = null
     ): array {
-        return self::error([], $message, 403);
+        return self::error([], $message ?? lang('Api.forbidden'), 403);
     }
 
     /**
      * Build a server error response (HTTP 500)
      *
-     * @param string $message Error message
+     * @param string|null $message Error message
      * @return array Formatted response
      */
     public static function serverError(
-        string $message = 'Internal server error'
+        ?string $message = null
     ): array {
-        return self::error([], $message, 500);
+        return self::error([], $message ?? lang('Api.serverError'), 500);
     }
 }

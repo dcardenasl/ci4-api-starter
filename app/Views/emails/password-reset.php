@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="<?= service('request')->getLocale() ?>">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reset Your Password</title>
+    <title><?= lang('Email.passwordReset.subject') ?></title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -68,42 +68,42 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>Password Reset Request</h1>
+            <h1><?= lang('Email.passwordReset.title') ?></h1>
         </div>
 
         <div class="content">
-            <h2>Hello!</h2>
+            <h2><?= lang('Email.passwordReset.greeting') ?></h2>
 
-            <p>You are receiving this email because we received a password reset request for your account.</p>
+            <p><?= lang('Email.passwordReset.intro') ?></p>
 
             <div style="text-align: center;">
-                <a href="<?= esc($reset_link) ?>" class="button">Reset Password</a>
+                <a href="<?= esc($reset_link) ?>" class="button"><?= lang('Email.passwordReset.buttonText') ?></a>
             </div>
 
-            <p>Or copy and paste this link into your browser:</p>
+            <p><?= lang('Email.passwordReset.linkIntro') ?></p>
             <p style="word-break: break-all; color: #e74c3c;">
                 <?= esc($reset_link) ?>
             </p>
 
             <div class="warning">
                 <p style="margin: 0;">
-                    <strong>⏰ This password reset link expires in <?= esc($expires_in ?? '60 minutes') ?></strong>
+                    <strong><?= lang('Email.passwordReset.expiration', [esc($expires_in ?? '60 minutes')]) ?></strong>
                 </p>
             </div>
 
             <div class="security-notice">
                 <p style="margin: 0;">
-                    <strong>🔒 Security Notice</strong>
+                    <strong><?= lang('Email.passwordReset.securityTitle') ?></strong>
                 </p>
                 <p style="margin: 5px 0 0 0;">
-                    If you did not request a password reset, please ignore this email or contact support if you have concerns about your account security.
+                    <?= lang('Email.passwordReset.securityNotice') ?>
                 </p>
             </div>
         </div>
 
         <div class="footer">
-            <p>This is an automated message, please do not reply.</p>
-            <p>&copy; <?= date('Y') ?> <?= esc(env('EMAIL_FROM_NAME', 'API Application')) ?>. All rights reserved.</p>
+            <p><?= lang('Email.passwordReset.autoMessage') ?></p>
+            <p>&copy; <?= date('Y') ?> <?= esc(env('EMAIL_FROM_NAME', 'API Application')) ?>. <?= lang('Email.passwordReset.copyright') ?></p>
         </div>
     </div>
 </body>

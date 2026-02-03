@@ -29,7 +29,7 @@ class PasswordResetService
     {
         // Validate email
         if (empty($email) || ! filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            return ApiResponse::validationError(['email' => 'Valid email is required']);
+            return ApiResponse::validationError(['email' => lang('PasswordReset.emailRequired')]);
         }
 
         // Find user by email
@@ -57,7 +57,7 @@ class PasswordResetService
 
             // Queue password reset email
             $this->emailService->queueTemplate('password-reset', $email, [
-                'subject' => 'Reset Your Password',
+                'subject' => lang('Email.passwordReset.subject'),
                 'reset_link' => $resetLink,
                 'expires_in' => '60 minutes',
             ]);
@@ -65,8 +65,8 @@ class PasswordResetService
 
         // Always return success message (security best practice)
         return ApiResponse::success(
-            ['message' => 'Password reset link sent'],
-            'If an account exists with that email, a password reset link has been sent.'
+            ['message' => lang('PasswordReset.sentMessage')],
+            lang('PasswordReset.linkSent')
         );
     }
 
@@ -81,7 +81,7 @@ class PasswordResetService
     {
         if (empty($token) || empty($email)) {
             return ApiResponse::validationError([
-                'token' => 'Reset token and email are required',
+                'token' => lang('PasswordReset.tokenRequired'),
             ]);
         }
 
@@ -91,13 +91,13 @@ class PasswordResetService
         // Check if token is valid
         if (! $this->passwordResetModel->isValidToken($email, $token, 60)) {
             return ApiResponse::error(
-                ['token' => 'Invalid or expired reset token'],
-                'Invalid or expired reset token',
+                ['token' => lang('PasswordReset.invalidToken')],
+                lang('PasswordReset.invalidToken'),
                 400
             );
         }
 
-        return ApiResponse::success(['valid' => true], 'Token is valid');
+        return ApiResponse::success(['valid' => true], lang('PasswordReset.tokenValid'));
     }
 
     /**
@@ -113,14 +113,14 @@ class PasswordResetService
         // Validate inputs
         if (empty($token) || empty($email) || empty($newPassword)) {
             return ApiResponse::validationError([
-                'password' => 'All fields are required',
+                'password' => lang('PasswordReset.allFieldsRequired'),
             ]);
         }
 
         // Validate password strength
         if (strlen($newPassword) < 8) {
             return ApiResponse::validationError([
-                'password' => 'Password must be at least 8 characters long',
+                'password' => lang('PasswordReset.passwordMinLength'),
             ]);
         }
 
@@ -130,8 +130,8 @@ class PasswordResetService
         // Validate token
         if (! $this->passwordResetModel->isValidToken($email, $token, 60)) {
             return ApiResponse::error(
-                ['token' => 'Invalid or expired reset token'],
-                'Invalid or expired reset token',
+                ['token' => lang('PasswordReset.invalidToken')],
+                lang('PasswordReset.invalidToken'),
                 400
             );
         }
@@ -141,8 +141,8 @@ class PasswordResetService
 
         if (! $user) {
             return ApiResponse::error(
-                ['email' => 'User not found'],
-                'User not found',
+                ['email' => lang('PasswordReset.userNotFound')],
+                lang('PasswordReset.userNotFound'),
                 404
             );
         }
@@ -162,8 +162,8 @@ class PasswordResetService
             ->delete();
 
         return ApiResponse::success(
-            ['message' => 'Password reset successfully'],
-            'Your password has been reset successfully'
+            ['message' => lang('PasswordReset.resetMessage')],
+            lang('PasswordReset.passwordReset')
         );
     }
 }

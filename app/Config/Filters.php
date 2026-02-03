@@ -4,6 +4,7 @@ namespace Config;
 
 use App\Filters\CorsFilter;
 use App\Filters\JwtAuthFilter;
+use App\Filters\LocaleFilter;
 use App\Filters\RequestLoggingFilter;
 use App\Filters\RoleAuthorizationFilter;
 use App\Filters\ThrottleFilter;
@@ -53,6 +54,7 @@ class Filters extends BaseFilters
         'throttle'      => ThrottleFilter::class,
         'roleauth'      => RoleAuthorizationFilter::class,
         'requestLogging' => RequestLoggingFilter::class,
+        'locale'        => LocaleFilter::class,
     ];
 
     /**
@@ -91,6 +93,7 @@ class Filters extends BaseFilters
      */
     public array $globals = [
         'before' => [
+            'locale', // Set locale from Accept-Language header
             'cors', // Handle CORS preflight (OPTIONS) requests
             // 'honeypot',
             // 'csrf',

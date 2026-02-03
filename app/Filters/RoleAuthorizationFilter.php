@@ -40,13 +40,13 @@ class RoleAuthorizationFilter implements FilterInterface
 
         if (!$userRole) {
             return Services::response()
-                ->setJSON(ApiResponse::unauthorized('Authentication required'))
+                ->setJSON(ApiResponse::unauthorized(lang('Auth.authRequired')))
                 ->setStatusCode(ResponseInterface::HTTP_UNAUTHORIZED);
         }
 
         if (!$this->hasPermission($userRole, $requiredRole)) {
             return Services::response()
-                ->setJSON(ApiResponse::forbidden('Insufficient permissions'))
+                ->setJSON(ApiResponse::forbidden(lang('Auth.insufficientPermissions')))
                 ->setStatusCode(ResponseInterface::HTTP_FORBIDDEN);
         }
     }

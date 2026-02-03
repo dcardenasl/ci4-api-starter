@@ -1,0 +1,20 @@
+<?php
+
+/**
+ * Cadenas de respuesta de API (Español)
+ */
+return [
+    // Mensajes de éxito
+    'resourceCreated' => 'Recurso creado exitosamente',
+    'resourceUpdated' => 'Recurso actualizado exitosamente',
+    'resourceDeleted' => 'Recurso eliminado exitosamente',
+
+    // Mensajes de error
+    'resourceNotFound' => 'Recurso no encontrado',
+    'validationFailed' => 'Error de validación',
+    'requestFailed'    => 'Solicitud fallida',
+    'unauthorized'     => 'No autorizado',
+    'forbidden'        => 'Prohibido',
+    'serverError'      => 'Error interno del servidor',
+    'invalidRequest'   => 'Solicitud inválida',
+];

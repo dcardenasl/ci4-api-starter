@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="<?= service('request')->getLocale() ?>">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Verify Your Email</title>
+    <title><?= lang('Email.verification.title') ?></title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -62,36 +62,36 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>Welcome to <?= esc(env('EMAIL_FROM_NAME', 'API Application')) ?>!</h1>
+            <h1><?= lang('Email.verification.welcome', [esc(env('EMAIL_FROM_NAME', 'API Application'))]) ?></h1>
         </div>
 
         <div class="content">
-            <h2>Hello, <?= esc($username ?? 'User') ?>!</h2>
+            <h2><?= lang('Email.verification.greeting', [esc($username ?? 'User')]) ?></h2>
 
-            <p>Thank you for registering. To complete your registration and activate your account, please verify your email address by clicking the button below:</p>
+            <p><?= lang('Email.verification.intro') ?></p>
 
             <div style="text-align: center;">
-                <a href="<?= esc($verification_link) ?>" class="button">Verify Email Address</a>
+                <a href="<?= esc($verification_link) ?>" class="button"><?= lang('Email.verification.buttonText') ?></a>
             </div>
 
-            <p>Or copy and paste this link into your browser:</p>
+            <p><?= lang('Email.verification.linkIntro') ?></p>
             <p style="word-break: break-all; color: #3498db;">
                 <?= esc($verification_link) ?>
             </p>
 
             <div class="warning">
                 <p style="margin: 0;">
-                    <strong>⏰ This link expires on <?= esc($expires_at ?? 'soon') ?></strong>
+                    <strong><?= lang('Email.verification.expiration', [esc($expires_at ?? 'soon')]) ?></strong>
                 </p>
                 <p style="margin: 5px 0 0 0;">
-                    If you didn't create an account, you can safely ignore this email.
+                    <?= lang('Email.verification.footer') ?>
                 </p>
             </div>
         </div>
 
         <div class="footer">
-            <p>This is an automated message, please do not reply.</p>
-            <p>&copy; <?= date('Y') ?> <?= esc(env('EMAIL_FROM_NAME', 'API Application')) ?>. All rights reserved.</p>
+            <p><?= lang('Email.verification.autoMessage') ?></p>
+            <p>&copy; <?= date('Y') ?> <?= esc(env('EMAIL_FROM_NAME', 'API Application')) ?>. <?= lang('Email.verification.copyright') ?></p>
         </div>
     </div>
 </body>

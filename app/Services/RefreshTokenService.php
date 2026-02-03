@@ -58,8 +58,8 @@ class RefreshTokenService implements RefreshTokenServiceInterface
     {
         if (empty($data['refresh_token'])) {
             return ApiResponse::error(
-                ['refresh_token' => 'Refresh token is required'],
-                'Invalid request'
+                ['refresh_token' => lang('Tokens.refreshTokenRequired')],
+                lang('Tokens.invalidRequest')
             );
         }
 
@@ -70,8 +70,8 @@ class RefreshTokenService implements RefreshTokenServiceInterface
 
         if (!$tokenRecord) {
             return ApiResponse::error(
-                ['refresh_token' => 'Invalid or expired refresh token'],
-                'Unauthorized',
+                ['refresh_token' => lang('Tokens.invalidRefreshToken')],
+                lang('Api.unauthorized'),
                 401
             );
         }
@@ -91,8 +91,8 @@ class RefreshTokenService implements RefreshTokenServiceInterface
 
         if (!$user) {
             return ApiResponse::error(
-                ['user' => 'User not found'],
-                'Unauthorized',
+                ['user' => lang('Tokens.userNotFound')],
+                lang('Api.unauthorized'),
                 401
             );
         }
@@ -116,8 +116,8 @@ class RefreshTokenService implements RefreshTokenServiceInterface
     {
         if (empty($data['refresh_token'])) {
             return ApiResponse::error(
-                ['refresh_token' => 'Refresh token is required'],
-                'Invalid request'
+                ['refresh_token' => lang('Tokens.refreshTokenRequired')],
+                lang('Tokens.invalidRequest')
             );
         }
 
@@ -125,13 +125,13 @@ class RefreshTokenService implements RefreshTokenServiceInterface
 
         if (!$revoked) {
             return ApiResponse::error(
-                ['refresh_token' => 'Token not found'],
-                'Not found',
+                ['refresh_token' => lang('Tokens.tokenNotFound')],
+                lang('Tokens.notFound'),
                 404
             );
         }
 
-        return ApiResponse::success(null, 'Refresh token revoked successfully');
+        return ApiResponse::success(null, lang('Tokens.refreshTokenRevoked'));
     }
 
     /**
@@ -144,6 +144,6 @@ class RefreshTokenService implements RefreshTokenServiceInterface
     {
         $this->refreshTokenModel->revokeAllUserTokens($userId);
 
-        return ApiResponse::success(null, 'All refresh tokens revoked successfully');
+        return ApiResponse::success(null, lang('Tokens.allTokensRevoked'));
     }
 }

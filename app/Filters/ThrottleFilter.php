@@ -123,13 +123,9 @@ class ThrottleFilter implements FilterInterface
         $response->setContentType('application/json');
         $response->setBody(json_encode([
             'success' => false,
-            'message' => 'Rate limit exceeded. Please try again later.',
+            'message' => lang('Auth.rateLimitExceeded'),
             'errors' => [
-                'rate_limit' => sprintf(
-                    'Too many requests. Maximum %d requests per %d seconds allowed.',
-                    $maxRequests,
-                    $window
-                ),
+                'rate_limit' => lang('Auth.tooManyRequests', [$maxRequests, $window]),
             ],
             'retry_after' => $retryAfter,
         ]));

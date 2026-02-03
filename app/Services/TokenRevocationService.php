@@ -40,12 +40,12 @@ class TokenRevocationService implements TokenRevocationServiceInterface
 
         if (!$added) {
             return ApiResponse::error(
-                ['token' => 'Failed to revoke token'],
-                'Revocation failed'
+                ['token' => lang('Tokens.revocationFailed')],
+                lang('Tokens.revocationFailed')
             );
         }
 
-        return ApiResponse::success(null, 'Token revoked successfully');
+        return ApiResponse::success(null, lang('Tokens.tokenRevokedSuccess'));
     }
 
     /**
@@ -90,7 +90,7 @@ class TokenRevocationService implements TokenRevocationServiceInterface
 
         return ApiResponse::success(
             null,
-            'All user tokens revoked successfully'
+            lang('Tokens.allUserTokensRevoked')
         );
     }
 

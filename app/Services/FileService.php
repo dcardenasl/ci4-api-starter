@@ -36,8 +36,8 @@ class FileService implements FileServiceInterface
         // Validate required fields
         if (empty($data['file']) || empty($data['user_id'])) {
             return ApiResponse::error(
-                ['file' => 'File is required'],
-                'Invalid request'
+                ['file' => lang('Files.fileRequired')],
+                lang('Files.invalidRequest')
             );
         }
 
@@ -47,16 +47,16 @@ class FileService implements FileServiceInterface
         // Validate file object
         if (!is_object($file) || !method_exists($file, 'isValid')) {
             return ApiResponse::error(
-                ['file' => 'Invalid file object'],
-                'Invalid request'
+                ['file' => lang('Files.invalidFileObject')],
+                lang('Files.invalidRequest')
             );
         }
 
         // Check if file is valid
         if (!$file->isValid()) {
             return ApiResponse::error(
-                ['file' => 'File upload failed: ' . $file->getErrorString()],
-                'Upload failed'
+                ['file' => lang('Files.uploadFailed', [$file->getErrorString()])],
+                lang('Files.uploadFailed', [$file->getErrorString()])
             );
         }
 
@@ -64,8 +64,8 @@ class FileService implements FileServiceInterface
         $maxSize = (int) env('FILE_MAX_SIZE', 10485760); // 10MB default
         if ($file->getSize() > $maxSize) {
             return ApiResponse::error(
-                ['file' => 'File size exceeds maximum allowed size'],
-                'File too large'
+                ['file' => lang('Files.fileTooLarge')],
+                lang('Files.fileTooLarge')
             );
         }
 
@@ -75,8 +75,8 @@ class FileService implements FileServiceInterface
 
         if (!in_array(strtolower($extension), $allowedTypes, true)) {
             return ApiResponse::error(
-                ['file' => 'File type not allowed'],
-                'Invalid file type'
+                ['file' => lang('Files.invalidFileType')],
+                lang('Files.invalidFileType')
             );
         }
 
@@ -90,8 +90,8 @@ class FileService implements FileServiceInterface
 
         if (!$stored) {
             return ApiResponse::error(
-                ['file' => 'Failed to store file'],
-                'Storage error'
+                ['file' => lang('Files.storageFailed')],
+                lang('Files.storageError')
             );
         }
 
@@ -144,8 +144,8 @@ class FileService implements FileServiceInterface
     {
         if (empty($data['user_id'])) {
             return ApiResponse::error(
-                ['user_id' => 'User ID is required'],
-                'Invalid request'
+                ['user_id' => lang('Files.userIdRequired')],
+                lang('Files.invalidRequest')
             );
         }
 
@@ -177,8 +177,8 @@ class FileService implements FileServiceInterface
     {
         if (empty($data['id']) || empty($data['user_id'])) {
             return ApiResponse::error(
-                ['id' => 'File ID and User ID are required'],
-                'Invalid request'
+                ['id' => lang('Files.idRequired')],
+                lang('Files.invalidRequest')
             );
         }
 
@@ -189,8 +189,8 @@ class FileService implements FileServiceInterface
 
         if (!$file) {
             return ApiResponse::error(
-                ['file' => 'File not found or access denied'],
-                'Not found',
+                ['file' => lang('Files.fileNotFound')],
+                lang('Files.notFound'),
                 404
             );
         }
@@ -216,8 +216,8 @@ class FileService implements FileServiceInterface
     {
         if (empty($data['id']) || empty($data['user_id'])) {
             return ApiResponse::error(
-                ['id' => 'File ID and User ID are required'],
-                'Invalid request'
+                ['id' => lang('Files.idRequired')],
+                lang('Files.invalidRequest')
             );
         }
 
@@ -228,8 +228,8 @@ class FileService implements FileServiceInterface
 
         if (!$file) {
             return ApiResponse::error(
-                ['file' => 'File not found or access denied'],
-                'Not found',
+                ['file' => lang('Files.fileNotFound')],
+                lang('Files.notFound'),
                 404
             );
         }
@@ -244,7 +244,7 @@ class FileService implements FileServiceInterface
         // Delete from database
         $this->fileModel->delete($file->id);
 
-        return ApiResponse::deleted('File deleted successfully');
+        return ApiResponse::deleted(lang('Files.deleteSuccess'));
     }
 
     /**

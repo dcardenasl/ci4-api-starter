@@ -20,11 +20,11 @@ class JwtAuthFilter implements FilterInterface
         $authHeader = $request->getHeaderLine('Authorization');
 
         if (empty($authHeader)) {
-            return $this->unauthorized('Authorization header missing');
+            return $this->unauthorized(lang('Auth.headerMissing'));
         }
 
         if (!preg_match('/Bearer\s+(.*)$/i', $authHeader, $matches)) {
-            return $this->unauthorized('Invalid authorization header format');
+            return $this->unauthorized(lang('Auth.invalidFormat'));
         }
 
         $token = $matches[1];
@@ -33,7 +33,7 @@ class JwtAuthFilter implements FilterInterface
         $decoded = $jwtService->decode($token);
 
         if ($decoded === null) {
-            return $this->unauthorized('Invalid or expired token');
+            return $this->unauthorized(lang('Auth.invalidToken'));
         }
 
         // Check if token is revoked (if revocation check is enabled)
@@ -44,7 +44,7 @@ class JwtAuthFilter implements FilterInterface
                 $tokenRevocationService = Services::tokenRevocationService();
 
                 if ($tokenRevocationService->isRevoked($jti)) {
-                    return $this->unauthorized('Token has been revoked');
+                    return $this->unauthorized(lang('Auth.tokenRevoked'));
                 }
             }
         }

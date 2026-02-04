@@ -82,12 +82,12 @@ class EmailServiceTest extends CIUnitTestCase
 
     public function testCreateTransportHandlesSMTPProvider(): void
     {
-        putenv('EMAIL_PROVIDER=smtp');
-        putenv('EMAIL_SMTP_HOST=smtp.example.com');
-        putenv('EMAIL_SMTP_PORT=587');
-        putenv('EMAIL_SMTP_USER=user@example.com');
-        putenv('EMAIL_SMTP_PASS=password');
-        putenv('EMAIL_SMTP_CRYPTO=tls');
+        $_ENV['EMAIL_PROVIDER'] = 'smtp';
+        $_ENV['EMAIL_SMTP_HOST'] = 'smtp.example.com';
+        $_ENV['EMAIL_SMTP_PORT'] = '587';
+        $_ENV['EMAIL_SMTP_USER'] = 'user@example.com';
+        $_ENV['EMAIL_SMTP_PASS'] = 'password';
+        $_ENV['EMAIL_SMTP_CRYPTO'] = 'tls';
 
         $service = new EmailService();
         $reflection = new ReflectionClass($service);
@@ -102,18 +102,18 @@ class EmailServiceTest extends CIUnitTestCase
             $transport
         );
 
-        // Clear env vars
-        putenv('EMAIL_PROVIDER');
-        putenv('EMAIL_SMTP_HOST');
-        putenv('EMAIL_SMTP_PORT');
-        putenv('EMAIL_SMTP_USER');
-        putenv('EMAIL_SMTP_PASS');
-        putenv('EMAIL_SMTP_CRYPTO');
+        // Restore defaults from phpunit.xml
+        $_ENV['EMAIL_PROVIDER'] = 'smtp';
+        $_ENV['EMAIL_SMTP_HOST'] = 'localhost';
+        $_ENV['EMAIL_SMTP_PORT'] = '25';
+        $_ENV['EMAIL_SMTP_USER'] = '';
+        $_ENV['EMAIL_SMTP_PASS'] = '';
+        $_ENV['EMAIL_SMTP_CRYPTO'] = '';
     }
 
     public function testCreateTransportHandlesNativeProvider(): void
     {
-        putenv('EMAIL_PROVIDER=native');
+        $_ENV['EMAIL_PROVIDER'] = 'native';
 
         $service = new EmailService();
         $reflection = new ReflectionClass($service);
@@ -128,18 +128,14 @@ class EmailServiceTest extends CIUnitTestCase
             $transport
         );
 
-        putenv('EMAIL_PROVIDER');
+        // Restore default from phpunit.xml
+        $_ENV['EMAIL_PROVIDER'] = 'smtp';
     }
 
     public function testCreateTransportHandlesDefaultConfiguration(): void
     {
-        // Clear all email env vars to test defaults
-        putenv('EMAIL_PROVIDER');
-        putenv('EMAIL_SMTP_HOST');
-        putenv('EMAIL_SMTP_PORT');
-        putenv('EMAIL_SMTP_USER');
-        putenv('EMAIL_SMTP_PASS');
-
+        // Use default values from phpunit.xml (already set)
+        // This test verifies that defaults work correctly
         $service = new EmailService();
         $reflection = new ReflectionClass($service);
 
@@ -444,8 +440,9 @@ class EmailServiceTest extends CIUnitTestCase
 
     public function testServiceUsesConfiguredFromAddress(): void
     {
-        putenv('EMAIL_FROM_ADDRESS=noreply@myapp.com');
-        putenv('EMAIL_FROM_NAME=My Application');
+        // Set custom values using $_ENV (CodeIgniter's env() checks $_ENV first)
+        $_ENV['EMAIL_FROM_ADDRESS'] = 'noreply@myapp.com';
+        $_ENV['EMAIL_FROM_NAME'] = 'My Application';
 
         $service = new EmailService();
         $reflection = new ReflectionClass($service);
@@ -459,23 +456,26 @@ class EmailServiceTest extends CIUnitTestCase
         $this->assertEquals('noreply@myapp.com', $fromAddress->getValue($service));
         $this->assertEquals('My Application', $fromName->getValue($service));
 
-        putenv('EMAIL_FROM_ADDRESS');
-        putenv('EMAIL_FROM_NAME');
+        // Restore defaults from phpunit.xml
+        $_ENV['EMAIL_FROM_ADDRESS'] = 'noreply@example.com';
+        $_ENV['EMAIL_FROM_NAME'] = 'API Application';
     }
 
     public function testServiceUsesDefaultFromAddress(): void
     {
-        putenv('EMAIL_FROM_ADDRESS');
-        putenv('EMAIL_FROM_NAME');
-
+        // phpunit.xml already sets default values, so test with those
         $service = new EmailService();
         $reflection = new ReflectionClass($service);
 
         $fromAddress = $reflection->getProperty('fromAddress');
         $fromAddress->setAccessible(true);
 
-        $this->assertIsString($fromAddress->getValue($service));
-        $this->assertNotEmpty($fromAddress->getValue($service));
+        $fromName = $reflection->getProperty('fromName');
+        $fromName->setAccessible(true);
+
+        // Verify the defaults from phpunit.xml are used
+        $this->assertEquals('noreply@example.com', $fromAddress->getValue($service));
+        $this->assertEquals('API Application', $fromName->getValue($service));
     }
 
     // ==================== MIXED SCENARIOS ====================

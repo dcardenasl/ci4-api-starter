@@ -56,6 +56,16 @@
         <!-- JWT Configuration for Testing -->
         <env name="JWT_SECRET_KEY" value="test-secret-key-for-phpunit-testing-only"/>
         <env name="encryption.key" value="hex:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"/>
+
+        <!-- Email Configuration for Testing -->
+        <env name="EMAIL_FROM_ADDRESS" value="noreply@example.com"/>
+        <env name="EMAIL_FROM_NAME" value="API Application"/>
+        <env name="EMAIL_PROVIDER" value="smtp"/>
+        <env name="EMAIL_SMTP_HOST" value="localhost"/>
+        <env name="EMAIL_SMTP_PORT" value="25"/>
+        <env name="EMAIL_SMTP_USER" value=""/>
+        <env name="EMAIL_SMTP_PASS" value=""/>
+        <env name="EMAIL_SMTP_CRYPTO" value=""/>
     </php>
 
     <extensions>

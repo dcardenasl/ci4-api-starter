@@ -66,7 +66,10 @@ class SearchQueryApplier
         array $searchableFields
     ): void {
         $fields = implode(', ', $searchableFields);
-        $builder->where("MATCH($fields) AGAINST(? IN BOOLEAN MODE)", [$query]);
+        // Get database connection
+        $db = $builder instanceof Model ? $builder->db : $builder->db();
+        $escapedQuery = $db->escape($query);
+        $builder->where("MATCH($fields) AGAINST($escapedQuery IN BOOLEAN MODE)", null, false);
     }
 
     /**

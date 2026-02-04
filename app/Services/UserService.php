@@ -85,6 +85,11 @@ class UserService implements UserServiceInterface
      */
     public function store(array $data): array
     {
+        // Validate all fields before hashing password
+        if (!$this->userModel->validate($data)) {
+            return ApiResponse::validationError($this->userModel->errors());
+        }
+
         // Validaciones de reglas de negocio (más allá de integridad de datos)
         // Ejemplo: verificar dominio de email permitido, consultar API externa, etc.
         $businessErrors = $this->validateBusinessRules($data);
@@ -92,22 +97,13 @@ class UserService implements UserServiceInterface
             return ApiResponse::validationError($businessErrors);
         }
 
-        // Prepare data for insertion
+        // Prepare data for insertion with hashed password
         $insertData = [
             'email'    => $data['email'] ?? null,
             'username' => $data['username'] ?? null,
+            'password' => isset($data['password']) ? password_hash($data['password'], PASSWORD_BCRYPT) : null,
             'role'     => $data['role'] ?? 'user',
         ];
-
-        // Hash password if provided
-        if (isset($data['password']) && !empty($data['password'])) {
-            // Validate password before hashing
-            if (!$this->userModel->validate(['password' => $data['password']])) {
-                $errors = $this->userModel->errors();
-                return ApiResponse::validationError($errors ?: ['password' => 'Invalid password']);
-            }
-            $insertData['password'] = password_hash($data['password'], PASSWORD_BCRYPT);
-        }
 
         // Model maneja validación y timestamps automáticamente
         $userId = $this->userModel->insert($insertData);

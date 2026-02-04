@@ -121,6 +121,7 @@ class UserServiceTest extends CIUnitTestCase
         $userData = [
             'username' => 'newuser',
             'email' => 'newuser@example.com',
+            'password' => 'Password123!',
         ];
 
         $createdUser = $this->createUserEntity([
@@ -130,10 +131,17 @@ class UserServiceTest extends CIUnitTestCase
         ]);
 
         $this->mockModel->expects($this->once())
+            ->method('validate')
+            ->with($userData)
+            ->willReturn(true);
+
+        $this->mockModel->expects($this->once())
             ->method('insert')
             ->with($this->callback(function ($data) use ($userData) {
                 return $data['username'] === $userData['username']
-                    && $data['email'] === $userData['email'];
+                    && $data['email'] === $userData['email']
+                    && isset($data['password']) // password should be hashed
+                    && isset($data['role']);
             }))
             ->willReturn(1);
 
@@ -156,7 +164,8 @@ class UserServiceTest extends CIUnitTestCase
         ];
 
         $this->mockModel->expects($this->once())
-            ->method('insert')
+            ->method('validate')
+            ->with($userData)
             ->willReturn(false);
 
         $this->mockModel->expects($this->once())

@@ -340,10 +340,17 @@ class QueryBuilderTest extends DatabaseTestCase
 
     public function testSortHandlesModelWithoutSortableFields(): void
     {
-        // Create a mock model without sortableFields property
-        $model = $this->createMock(\CodeIgniter\Model::class);
-        $model->method('orderBy')->willReturnSelf();
-        $model->method('findAll')->willReturn([]);
+        // Create anonymous model without sortableFields property
+        $model = new class () extends \CodeIgniter\Model {
+            protected $table = 'test_table';
+            protected $returnType = 'array';
+            // Explicitly no sortableFields property
+
+            public function findAll(?int $limit = null, int $offset = 0)
+            {
+                return [];
+            }
+        };
 
         $builder = new QueryBuilder($model);
 

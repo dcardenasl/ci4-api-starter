@@ -17,8 +17,15 @@ use Tests\Support\DatabaseTestCase;
  */
 class AuditableTest extends DatabaseTestCase
 {
-    protected $migrate = true;
-    protected $refresh = true;
+    protected $migrate     = true;
+    protected $migrateOnce = false;
+    protected $refresh     = true;
+    protected $namespace   = null;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+    }
 
     /**
      * SECURITY TEST: Verify that password is NOT logged in audit trail on update
@@ -193,9 +200,24 @@ class AuditableTest extends DatabaseTestCase
         return new class () extends UserModel {
             use Auditable;
 
+            protected $DBGroup = 'tests';
+
             public function __construct()
             {
                 parent::__construct();
+                $this->skipValidation = true; // Skip validation for unit tests
+
+                // Ensure callback arrays are initialized
+                if (!is_array($this->afterInsert)) {
+                    $this->afterInsert = [];
+                }
+                if (!is_array($this->afterUpdate)) {
+                    $this->afterUpdate = [];
+                }
+                if (!is_array($this->afterDelete)) {
+                    $this->afterDelete = [];
+                }
+
                 $this->initAuditable();
             }
         };

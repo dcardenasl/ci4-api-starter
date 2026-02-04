@@ -348,16 +348,16 @@ class AuditLogModelTest extends DatabaseTestCase
 
     public function testInsertWithJsonValues(): void
     {
-        $oldValues = json_encode(['name' => 'Old', 'email' => 'old@example.com']);
-        $newValues = json_encode(['name' => 'New', 'email' => 'new@example.com']);
+        $oldValuesArray = ['name' => 'Old', 'email' => 'old@example.com'];
+        $newValuesArray = ['name' => 'New', 'email' => 'new@example.com'];
 
         $data = [
             'user_id' => 1,
             'action' => 'update',
             'entity_type' => 'user',
             'entity_id' => 1,
-            'old_values' => $oldValues,
-            'new_values' => $newValues,
+            'old_values' => json_encode($oldValuesArray),
+            'new_values' => json_encode($newValuesArray),
             'ip_address' => '127.0.0.1',
             'created_at' => date('Y-m-d H:i:s'),
         ];
@@ -367,8 +367,8 @@ class AuditLogModelTest extends DatabaseTestCase
         $this->assertIsInt($result);
 
         $log = $this->model->find($result);
-        $this->assertEquals($oldValues, $log->old_values);
-        $this->assertEquals($newValues, $log->new_values);
+        $this->assertEquals($oldValuesArray, json_decode($log->old_values, true));
+        $this->assertEquals($newValuesArray, json_decode($log->new_values, true));
     }
 
     public function testInsertWithLongUserAgent(): void

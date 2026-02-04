@@ -236,9 +236,12 @@ class AuditService implements AuditServiceInterface
                 'id' => $log->id,
                 'user_id' => $log->user_id,
                 'action' => $log->action,
+                'entity_type' => $log->entity_type,
+                'entity_id' => $log->entity_id,
                 'old_values' => $log->old_values ? json_decode($log->old_values, true) : null,
                 'new_values' => $log->new_values ? json_decode($log->new_values, true) : null,
                 'ip_address' => $log->ip_address,
+                'user_agent' => $log->user_agent,
                 'created_at' => $log->created_at,
             ];
         }, $logs);

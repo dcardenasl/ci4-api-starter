@@ -66,7 +66,7 @@ class AuditLogModel extends Model
     {
         return $this->where('entity_type', $entityType)
             ->where('entity_id', $entityId)
-            ->orderBy('created_at', 'DESC')
+            ->orderBy('id', 'DESC')
             ->findAll();
     }
 

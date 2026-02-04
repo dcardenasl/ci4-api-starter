@@ -252,8 +252,8 @@ class FileModelTest extends DatabaseTestCase
         $files = $this->model->getByUser(1);
 
         $this->assertGreaterThanOrEqual(
-            strtotime($files[1]->uploaded_at),
-            strtotime($files[0]->uploaded_at)
+            $files[1]->uploaded_at->getTimestamp(),
+            $files[0]->uploaded_at->getTimestamp()
         );
     }
 
@@ -280,7 +280,7 @@ class FileModelTest extends DatabaseTestCase
     public function testGetByIdAndUserReturnsFileForOwner(): void
     {
         $allFiles = $this->db->table('files')->where('user_id', 1)->get()->getResult();
-        $fileId = $allFiles[0]->id;
+        $fileId = (int) $allFiles[0]->id;
 
         $file = $this->model->getByIdAndUser($fileId, 1);
 
@@ -292,7 +292,7 @@ class FileModelTest extends DatabaseTestCase
     public function testGetByIdAndUserReturnsNullForWrongUser(): void
     {
         $allFiles = $this->db->table('files')->where('user_id', 1)->get()->getResult();
-        $fileId = $allFiles[0]->id;
+        $fileId = (int) $allFiles[0]->id;
 
         // User 2 trying to access user 1's file
         $file = $this->model->getByIdAndUser($fileId, 2);
@@ -310,7 +310,7 @@ class FileModelTest extends DatabaseTestCase
     public function testGetByIdAndUserEnforcesOwnership(): void
     {
         $user1Files = $this->db->table('files')->where('user_id', 1)->get()->getResult();
-        $user1FileId = $user1Files[0]->id;
+        $user1FileId = (int) $user1Files[0]->id;
 
         // User 2 cannot access user 1's file
         $file = $this->model->getByIdAndUser($user1FileId, 2);
@@ -326,7 +326,7 @@ class FileModelTest extends DatabaseTestCase
     public function testDeleteByIdAndUserDeletesOwnFile(): void
     {
         $files = $this->db->table('files')->where('user_id', 1)->get()->getResult();
-        $fileId = $files[0]->id;
+        $fileId = (int) $files[0]->id;
 
         $result = $this->model->deleteByIdAndUser($fileId, 1);
 
@@ -340,7 +340,7 @@ class FileModelTest extends DatabaseTestCase
     public function testDeleteByIdAndUserReturnsFalseForWrongUser(): void
     {
         $files = $this->db->table('files')->where('user_id', 1)->get()->getResult();
-        $fileId = $files[0]->id;
+        $fileId = (int) $files[0]->id;
 
         // User 2 trying to delete user 1's file
         $result = $this->model->deleteByIdAndUser($fileId, 2);
@@ -449,7 +449,7 @@ class FileModelTest extends DatabaseTestCase
     public function testGetByIdAndUserHandlesZeroUserId(): void
     {
         $files = $this->db->table('files')->where('user_id', 1)->get()->getResult();
-        $fileId = $files[0]->id;
+        $fileId = (int) $files[0]->id;
 
         $file = $this->model->getByIdAndUser($fileId, 0);
 
@@ -542,7 +542,7 @@ class FileModelTest extends DatabaseTestCase
     public function testDeleteEnforcesOwnership(): void
     {
         $user1Files = $this->db->table('files')->where('user_id', 1)->get()->getResult();
-        $user1FileId = $user1Files[0]->id;
+        $user1FileId = (int) $user1Files[0]->id;
 
         // User 2 cannot delete user 1's file
         $result = $this->model->deleteByIdAndUser($user1FileId, 2);

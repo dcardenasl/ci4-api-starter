@@ -74,8 +74,8 @@ class AuditServiceTest extends DatabaseTestCase
             ->get()
             ->getFirstRow();
 
-        $this->assertEquals(json_encode($oldValues), $log->old_values);
-        $this->assertEquals(json_encode($newValues), $log->new_values);
+        $this->assertEquals($oldValues, json_decode($log->old_values, true));
+        $this->assertEquals($newValues, json_decode($log->new_values, true));
     }
 
     public function testLogCapturesIpAddress(): void
@@ -105,7 +105,7 @@ class AuditServiceTest extends DatabaseTestCase
             ->getFirstRow();
 
         $this->assertNotNull($log);
-        $this->assertEquals(json_encode($data), $log->new_values);
+        $this->assertEquals($data, json_decode($log->new_values, true));
         $this->assertNull($log->old_values);
     }
 
@@ -153,7 +153,7 @@ class AuditServiceTest extends DatabaseTestCase
             ->getFirstRow();
 
         $this->assertNotNull($log);
-        $this->assertEquals(json_encode($data), $log->old_values);
+        $this->assertEquals($data, json_decode($log->old_values, true));
         $this->assertNull($log->new_values);
     }
 
@@ -183,7 +183,7 @@ class AuditServiceTest extends DatabaseTestCase
 
         $this->assertEquals('success', $result['status']);
         $this->assertCount(10, $result['data']);
-        $this->assertEquals(1, $result['meta']['page']);
+        $this->assertEquals(1, $result['meta']['pagination']['current_page']);
     }
 
     public function testIndexDecodesJsonValues(): void

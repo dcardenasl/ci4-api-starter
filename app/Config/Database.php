@@ -167,7 +167,7 @@ class Database extends Config
         'password'    => 'root',
         'database'    => 'ci4_test',
         'DBDriver'    => 'MySQLi',
-        'DBPrefix'    => 'db_',  // Needed to ensure we're working correctly with prefixes live. DO NOT REMOVE FOR CI DEVS
+        'DBPrefix'    => '',
         'pConnect'    => false,
         'DBDebug'     => true,
         'charset'     => 'utf8mb4',

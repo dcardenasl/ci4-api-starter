@@ -35,9 +35,9 @@ trait Auditable
      */
     protected function initAuditable(): void
     {
-        $this->afterInsert[] = [$this, 'auditInsert'];
-        $this->afterUpdate[] = [$this, 'auditUpdate'];
-        $this->afterDelete[] = [$this, 'auditDelete'];
+        $this->afterInsert[] = 'auditInsert';
+        $this->afterUpdate[] = 'auditUpdate';
+        $this->afterDelete[] = 'auditDelete';
     }
 
     /**

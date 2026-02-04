@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Services;
 
+use App\Exceptions\AuthenticationException;
+use App\Exceptions\NotFoundException;
 use App\Models\RefreshTokenModel;
 use App\Models\UserModel;
 use App\Services\JwtService;
@@ -186,12 +188,11 @@ class RefreshTokenServiceTest extends DatabaseTestCase
             'created_at' => date('Y-m-d H:i:s', time() - 7200),
         ]);
 
-        $result = $this->service->refreshAccessToken([
+        $this->expectException(AuthenticationException::class);
+
+        $this->service->refreshAccessToken([
             'refresh_token' => $expiredToken,
         ]);
-
-        $this->assertEquals('error', $result['status']);
-        $this->assertEquals(401, $result['code']);
     }
 
     public function testRefreshAccessTokenFailsWithRevokedToken(): void
@@ -206,22 +207,20 @@ class RefreshTokenServiceTest extends DatabaseTestCase
             'created_at' => date('Y-m-d H:i:s', time() - 3600),
         ]);
 
-        $result = $this->service->refreshAccessToken([
+        $this->expectException(AuthenticationException::class);
+
+        $this->service->refreshAccessToken([
             'refresh_token' => $revokedToken,
         ]);
-
-        $this->assertEquals('error', $result['status']);
-        $this->assertEquals(401, $result['code']);
     }
 
     public function testRefreshAccessTokenFailsWithInvalidToken(): void
     {
-        $result = $this->service->refreshAccessToken([
+        $this->expectException(AuthenticationException::class);
+
+        $this->service->refreshAccessToken([
             'refresh_token' => 'invalid_non_existent_token',
         ]);
-
-        $this->assertEquals('error', $result['status']);
-        $this->assertEquals(401, $result['code']);
     }
 
     public function testRefreshAccessTokenFailsWhenUserDeleted(): void
@@ -232,11 +231,11 @@ class RefreshTokenServiceTest extends DatabaseTestCase
         // Delete the user (soft delete)
         $this->userModel->delete(1);
 
-        $result = $this->service->refreshAccessToken([
+        $this->expectException(AuthenticationException::class);
+
+        $this->service->refreshAccessToken([
             'refresh_token' => $refreshToken,
         ]);
-
-        $this->assertEquals('error', $result['status']);
         $this->assertEquals(401, $result['code']);
     }
 
@@ -252,11 +251,11 @@ class RefreshTokenServiceTest extends DatabaseTestCase
         $this->assertEquals('success', $result1['status']);
 
         // Second use - should fail (token rotation)
-        $result2 = $this->service->refreshAccessToken([
+        $this->expectException(AuthenticationException::class);
+
+        $this->service->refreshAccessToken([
             'refresh_token' => $refreshToken,
         ]);
-
-        $this->assertEquals('error', $result2['status']);
         $this->assertEquals(401, $result2['code']);
     }
 
@@ -303,19 +302,17 @@ class RefreshTokenServiceTest extends DatabaseTestCase
         // Revoke it
         $this->service->revoke(['refresh_token' => $token]);
 
-        // Try to use it
-        $result = $this->service->refreshAccessToken(['refresh_token' => $token]);
+        // Try to use it - should throw AuthenticationException
+        $this->expectException(AuthenticationException::class);
 
-        $this->assertEquals('error', $result['status']);
-        $this->assertEquals(401, $result['code']);
+        $this->service->refreshAccessToken(['refresh_token' => $token]);
     }
 
     public function testRevokeTokenFailsForNonExistentToken(): void
     {
-        $result = $this->service->revoke(['refresh_token' => 'non_existent']);
+        $this->expectException(NotFoundException::class);
 
-        $this->assertEquals('error', $result['status']);
-        $this->assertEquals(404, $result['code']);
+        $this->service->revoke(['refresh_token' => 'non_existent']);
     }
 
     public function testRevokeAlreadyRevokedTokenSucceeds(): void
@@ -405,12 +402,12 @@ class RefreshTokenServiceTest extends DatabaseTestCase
 
         $this->assertEquals('success', $result1['status']);
 
-        // Attacker tries to use captured token
-        $result2 = $this->service->refreshAccessToken([
+        // Attacker tries to use captured token - should throw AuthenticationException
+        $this->expectException(AuthenticationException::class);
+
+        $this->service->refreshAccessToken([
             'refresh_token' => $capturedToken,
         ]);
-
-        $this->assertEquals('error', $result2['status']);
         $this->assertEquals(401, $result2['code']);
     }
 
@@ -445,12 +442,12 @@ class RefreshTokenServiceTest extends DatabaseTestCase
             ->where('user_id', 1)
             ->countAllResults();
 
-        // Try to refresh with non-existent token (should fail)
-        $result = $this->service->refreshAccessToken([
+        // Try to refresh with non-existent token (should fail and throw exception)
+        $this->expectException(AuthenticationException::class);
+
+        $this->service->refreshAccessToken([
             'refresh_token' => $token,
         ]);
-
-        $this->assertEquals('error', $result['status']);
 
         // Verify no new tokens were created (count should still be initialCount)
         $finalCount = $this->db->table('refresh_tokens')

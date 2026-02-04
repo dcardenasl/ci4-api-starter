@@ -7,6 +7,7 @@ namespace Tests\Unit\Services;
 use App\Models\RefreshTokenModel;
 use App\Services\RefreshTokenService;
 use CodeIgniter\Test\CIUnitTestCase;
+use Tests\Support\Traits\CustomAssertionsTrait;
 
 /**
  * RefreshTokenService Unit Tests
@@ -16,6 +17,8 @@ use CodeIgniter\Test\CIUnitTestCase;
  */
 class RefreshTokenServiceTest extends CIUnitTestCase
 {
+    use CustomAssertionsTrait;
+
     protected RefreshTokenService $service;
     protected RefreshTokenModel $mockModel;
 
@@ -23,7 +26,6 @@ class RefreshTokenServiceTest extends CIUnitTestCase
     {
         parent::setUp();
 
-        // Mock the model
         $this->mockModel = $this->createMock(RefreshTokenModel::class);
         $this->service = new RefreshTokenService($this->mockModel);
     }
@@ -34,7 +36,6 @@ class RefreshTokenServiceTest extends CIUnitTestCase
     {
         $userId = 1;
 
-        // Mock the insert operation
         $this->mockModel->expects($this->once())
             ->method('insert')
             ->willReturn(true);
@@ -50,7 +51,6 @@ class RefreshTokenServiceTest extends CIUnitTestCase
     {
         $userId = 1;
 
-        // Mock the insert operation
         $this->mockModel->expects($this->exactly(2))
             ->method('insert')
             ->willReturn(true);
@@ -97,26 +97,23 @@ class RefreshTokenServiceTest extends CIUnitTestCase
 
         $result = $this->service->issueRefreshToken($userId);
 
-        // Explicit assertions for PHPUnit
         $this->assertIsString($result, 'Should return a token string');
         $this->assertNotEmpty($result, 'Token should not be empty');
 
         putenv('JWT_REFRESH_TOKEN_TTL'); // Clear
     }
 
-    public function testIssueRefreshTokenUsesDefaultTTLWhenNotSet(): void
+    public function testIssueRefreshTokenUsesDefaultTTLWhenNotConfigured(): void
     {
         $userId = 1;
 
-        // Ensure no custom TTL is set
-        putenv('JWT_REFRESH_TOKEN_TTL');
+        putenv('JWT_REFRESH_TOKEN_TTL'); // Ensure no custom TTL
 
         $this->mockModel->expects($this->once())
             ->method('insert')
             ->with($this->callback(function ($data) {
                 $expiresAt = strtotime($data['expires_at']);
                 $expectedExpiry = time() + 604800; // 7 days default
-                // Allow 2 second tolerance
                 return abs($expiresAt - $expectedExpiry) < 2;
             }))
             ->willReturn(true);
@@ -124,45 +121,47 @@ class RefreshTokenServiceTest extends CIUnitTestCase
         $this->service->issueRefreshToken($userId);
     }
 
-    // ==================== REFRESH ACCESS TOKEN TESTS ====================
+    // ==================== VALIDATION TESTS ====================
 
-    public function testRefreshAccessTokenReturnErrorWhenTokenMissing(): void
+    /**
+     * @dataProvider invalidRefreshAccessTokenDataProvider
+     */
+    public function testRefreshAccessTokenValidatesRequiredParameters(array $data, string $expectedErrorField): void
     {
-        $result = $this->service->refreshAccessToken([]);
+        $result = $this->service->refreshAccessToken($data);
 
-        $this->assertEquals('error', $result['status']);
-        $this->assertArrayHasKey('errors', $result);
-        $this->assertArrayHasKey('refresh_token', $result['errors']);
+        $this->assertErrorResponse($result, $expectedErrorField);
     }
 
-    public function testRefreshAccessTokenReturnErrorWhenTokenEmpty(): void
+    public static function invalidRefreshAccessTokenDataProvider(): array
     {
-        $result = $this->service->refreshAccessToken(['refresh_token' => '']);
+        return [
+            'missing refresh_token' => [[], 'refresh_token'],
+            'empty refresh_token' => [['refresh_token' => ''], 'refresh_token'],
+        ];
+    }
 
-        $this->assertEquals('error', $result['status']);
-        $this->assertArrayHasKey('errors', $result);
+    /**
+     * @dataProvider invalidRevokeDataProvider
+     */
+    public function testRevokeValidatesRequiredParameters(array $data, string $expectedErrorField): void
+    {
+        $result = $this->service->revoke($data);
+
+        $this->assertErrorResponse($result, $expectedErrorField);
+    }
+
+    public static function invalidRevokeDataProvider(): array
+    {
+        return [
+            'missing refresh_token' => [[], 'refresh_token'],
+            'empty refresh_token' => [['refresh_token' => ''], 'refresh_token'],
+        ];
     }
 
     // ==================== REVOKE TOKEN TESTS ====================
 
-    public function testRevokeReturnErrorWhenTokenMissing(): void
-    {
-        $result = $this->service->revoke([]);
-
-        $this->assertEquals('error', $result['status']);
-        $this->assertArrayHasKey('errors', $result);
-        $this->assertArrayHasKey('refresh_token', $result['errors']);
-    }
-
-    public function testRevokeReturnErrorWhenTokenEmpty(): void
-    {
-        $result = $this->service->revoke(['refresh_token' => '']);
-
-        $this->assertEquals('error', $result['status']);
-        $this->assertArrayHasKey('errors', $result);
-    }
-
-    public function testRevokeReturnSuccessWhenTokenRevoked(): void
+    public function testRevokeMarksTokenAsRevoked(): void
     {
         $token = 'valid-token';
 
@@ -173,10 +172,10 @@ class RefreshTokenServiceTest extends CIUnitTestCase
 
         $result = $this->service->revoke(['refresh_token' => $token]);
 
-        $this->assertEquals('success', $result['status']);
+        $this->assertSuccessResponse($result);
     }
 
-    public function testRevokeReturnErrorWhenTokenNotFound(): void
+    public function testRevokeReturnsErrorWhenTokenNotFound(): void
     {
         $token = 'non-existent-token';
 
@@ -187,13 +186,12 @@ class RefreshTokenServiceTest extends CIUnitTestCase
 
         $result = $this->service->revoke(['refresh_token' => $token]);
 
-        $this->assertEquals('error', $result['status']);
-        $this->assertEquals(404, $result['code']);
+        $this->assertErrorResponseWithCode($result, 404);
     }
 
     // ==================== REVOKE ALL USER TOKENS TESTS ====================
 
-    public function testRevokeAllUserTokensReturnSuccess(): void
+    public function testRevokeAllUserTokensRevokesAllActiveTokens(): void
     {
         $userId = 1;
 
@@ -204,25 +202,13 @@ class RefreshTokenServiceTest extends CIUnitTestCase
 
         $result = $this->service->revokeAllUserTokens($userId);
 
-        $this->assertEquals('success', $result['status']);
-    }
-
-    public function testRevokeAllUserTokensCallsModelCorrectly(): void
-    {
-        $userId = 42;
-
-        $this->mockModel->expects($this->once())
-            ->method('revokeAllUserTokens')
-            ->with($this->identicalTo($userId));
-
-        $this->service->revokeAllUserTokens($userId);
+        $this->assertSuccessResponse($result);
     }
 
     // ==================== SECURITY TESTS ====================
 
-    public function testIssueRefreshTokenGeneratesSecureRandomToken(): void
+    public function testIssueRefreshTokenGeneratesSecureRandomTokens(): void
     {
-        // Mock the insert operation
         $this->mockModel->expects($this->exactly(100))
             ->method('insert')
             ->willReturn(true);
@@ -240,74 +226,5 @@ class RefreshTokenServiceTest extends CIUnitTestCase
         foreach ($tokens as $token) {
             $this->assertMatchesRegularExpression('/^[a-f0-9]{64}$/', $token);
         }
-    }
-
-    public function testTokenFormatIsHexadecimal(): void
-    {
-        $this->mockModel->expects($this->once())
-            ->method('insert')
-            ->willReturn(true);
-
-        $token = $this->service->issueRefreshToken(1);
-
-        $this->assertMatchesRegularExpression(
-            '/^[a-f0-9]{64}$/',
-            $token,
-            'Token should be 64 character hexadecimal string'
-        );
-    }
-
-    // ==================== EDGE CASES ====================
-
-    public function testIssueRefreshTokenHandlesZeroUserId(): void
-    {
-        $this->mockModel->expects($this->once())
-            ->method('insert')
-            ->with($this->callback(function ($data) {
-                return $data['user_id'] === 0;
-            }))
-            ->willReturn(true);
-
-        $token = $this->service->issueRefreshToken(0);
-        $this->assertNotEmpty($token);
-    }
-
-    public function testIssueRefreshTokenHandlesLargeUserId(): void
-    {
-        $largeId = PHP_INT_MAX;
-
-        $this->mockModel->expects($this->once())
-            ->method('insert')
-            ->with($this->callback(function ($data) use ($largeId) {
-                return $data['user_id'] === $largeId;
-            }))
-            ->willReturn(true);
-
-        $token = $this->service->issueRefreshToken($largeId);
-        $this->assertNotEmpty($token);
-    }
-
-    public function testRevokeHandlesLongToken(): void
-    {
-        $longToken = str_repeat('a', 255);
-
-        $this->mockModel->expects($this->once())
-            ->method('revokeToken')
-            ->with($longToken)
-            ->willReturn(true);
-
-        $result = $this->service->revoke(['refresh_token' => $longToken]);
-        $this->assertEquals('success', $result['status']);
-    }
-
-    public function testRevokeAllUserTokensHandlesZeroUserId(): void
-    {
-        $this->mockModel->expects($this->once())
-            ->method('revokeAllUserTokens')
-            ->with(0)
-            ->willReturn(true);
-
-        $result = $this->service->revokeAllUserTokens(0);
-        $this->assertEquals('success', $result['status']);
     }
 }

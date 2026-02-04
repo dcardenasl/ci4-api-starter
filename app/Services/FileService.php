@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Exceptions\AuthorizationException;
+use App\Exceptions\NotFoundException;
 use App\Interfaces\FileServiceInterface;
 use App\Libraries\ApiResponse;
 use App\Libraries\Storage\StorageManager;
@@ -182,17 +184,15 @@ class FileService implements FileServiceInterface
             );
         }
 
-        $file = $this->fileModel->getByIdAndUser(
-            (int) $data['id'],
-            (int) $data['user_id']
-        );
-
+        // First check if file exists
+        $file = $this->fileModel->find((int) $data['id']);
         if (!$file) {
-            return ApiResponse::error(
-                ['file' => lang('Files.fileNotFound')],
-                lang('Files.notFound'),
-                404
-            );
+            throw new NotFoundException(lang('Files.fileNotFound'));
+        }
+
+        // Then check authorization
+        if ($file->user_id !== (int) $data['user_id']) {
+            throw new AuthorizationException(lang('Files.unauthorized'));
         }
 
         // For local storage, return file path for download
@@ -221,17 +221,15 @@ class FileService implements FileServiceInterface
             );
         }
 
-        $file = $this->fileModel->getByIdAndUser(
-            (int) $data['id'],
-            (int) $data['user_id']
-        );
-
+        // First check if file exists
+        $file = $this->fileModel->find((int) $data['id']);
         if (!$file) {
-            return ApiResponse::error(
-                ['file' => lang('Files.fileNotFound')],
-                lang('Files.notFound'),
-                404
-            );
+            throw new NotFoundException(lang('Files.fileNotFound'));
+        }
+
+        // Then check authorization
+        if ($file->user_id !== (int) $data['user_id']) {
+            throw new AuthorizationException(lang('Files.unauthorized'));
         }
 
         // Delete from storage

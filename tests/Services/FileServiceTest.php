@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Services;
 
+use App\Exceptions\AuthorizationException;
 use App\Libraries\Storage\StorageManager;
 use App\Models\FileModel;
 use App\Services\FileService;
@@ -296,13 +297,12 @@ class FileServiceTest extends DatabaseTestCase
         $uploadResult = $this->service->upload(['file' => $mockFile, 'user_id' => 1]);
 
         // User 2 tries to download
-        $result = $this->service->download([
+        $this->expectException(AuthorizationException::class);
+
+        $this->service->download([
             'id' => $uploadResult['data']['id'],
             'user_id' => 2,
         ]);
-
-        $this->assertEquals('error', $result['status']);
-        $this->assertEquals(404, $result['code']);
     }
 
     // ==================== DELETE INTEGRATION TESTS ====================
@@ -359,13 +359,12 @@ class FileServiceTest extends DatabaseTestCase
         $uploadResult = $this->service->upload(['file' => $mockFile, 'user_id' => 1]);
 
         // User 2 tries to delete
-        $result = $this->service->delete([
+        $this->expectException(AuthorizationException::class);
+
+        $this->service->delete([
             'id' => $uploadResult['data']['id'],
             'user_id' => 2,
         ]);
-
-        $this->assertEquals('error', $result['status']);
-        $this->assertEquals(404, $result['code']);
 
         // File should still exist
         $file = $this->model->find($uploadResult['data']['id']);
@@ -433,13 +432,12 @@ class FileServiceTest extends DatabaseTestCase
         $result2 = $this->service->upload(['file' => $file2, 'user_id' => 2]);
 
         // User 1 tries to access user 2's file
-        $download = $this->service->download([
+        $this->expectException(AuthorizationException::class);
+
+        $this->service->download([
             'id' => $result2['data']['id'],
             'user_id' => 1,
         ]);
-
-        $this->assertEquals('error', $download['status']);
-        $this->assertEquals(404, $download['code']);
     }
 
     // ==================== HELPER METHOD ====================

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Exceptions\NotFoundException;
 use App\Interfaces\AuditServiceInterface;
 use App\Libraries\ApiResponse;
 use App\Libraries\Query\QueryBuilder;
@@ -190,11 +191,7 @@ class AuditService implements AuditServiceInterface
         $log = $this->auditLogModel->find($data['id']);
 
         if (!$log) {
-            return ApiResponse::error(
-                ['audit_log' => 'Audit log not found'],
-                'Not found',
-                404
-            );
+            throw new NotFoundException('Audit log not found');
         }
 
         return ApiResponse::success([

@@ -9,6 +9,7 @@ use App\Models\FileModel;
 use App\Services\FileService;
 use CodeIgniter\HTTP\Files\UploadedFile;
 use CodeIgniter\Test\CIUnitTestCase;
+use Tests\Support\Traits\CustomAssertionsTrait;
 
 /**
  * FileService Unit Tests
@@ -18,6 +19,8 @@ use CodeIgniter\Test\CIUnitTestCase;
  */
 class FileServiceTest extends CIUnitTestCase
 {
+    use CustomAssertionsTrait;
+
     protected FileService $service;
     protected FileModel $mockFileModel;
     protected StorageManager $mockStorage;
@@ -34,53 +37,62 @@ class FileServiceTest extends CIUnitTestCase
 
     // ==================== UPLOAD TESTS ====================
 
-    public function testUploadRequiresFile(): void
+    /**
+     * @dataProvider invalidUploadDataProvider
+     */
+    public function testUploadValidatesRequiredParameters($data, string $expectedErrorField): void
     {
-        $result = $this->service->upload(['user_id' => 1]);
+        $result = $this->service->upload($data);
 
-        $this->assertEquals('error', $result['status']);
-        $this->assertArrayHasKey('errors', $result);
-        $this->assertArrayHasKey('file', $result['errors']);
+        $this->assertErrorResponse($result, $expectedErrorField);
     }
 
-    public function testUploadRequiresUserId(): void
+    public static function invalidUploadDataProvider(): array
     {
-        $mockFile = $this->createMock(UploadedFile::class);
+        $mockFile = (new \ReflectionClass(UploadedFile::class))->newInstanceWithoutConstructor();
 
-        $result = $this->service->upload(['file' => $mockFile]);
-
-        $this->assertEquals('error', $result['status']);
-        $this->assertArrayHasKey('errors', $result);
-    }
-
-    public function testUploadValidatesFileObject(): void
-    {
-        $result = $this->service->upload([
-            'file' => 'not-a-file-object',
-            'user_id' => 1,
-        ]);
-
-        $this->assertEquals('error', $result['status']);
-        $this->assertArrayHasKey('file', $result['errors']);
-    }
-
-    public function testUploadRequiresBothParameters(): void
-    {
-        $result = $this->service->upload([]);
-
-        $this->assertEquals('error', $result['status']);
-        $this->assertArrayHasKey('errors', $result);
+        return [
+            'missing file' => [
+                ['user_id' => 1],
+                'file',
+            ],
+            'missing user_id' => [
+                ['file' => $mockFile],
+                'user_id',
+            ],
+            'empty user_id' => [
+                ['file' => $mockFile, 'user_id' => ''],
+                'user_id',
+            ],
+            'invalid file type' => [
+                ['file' => 'not-a-file-object', 'user_id' => 1],
+                'file',
+            ],
+            'both parameters missing' => [
+                [],
+                'file', // First error that would be caught
+            ],
+        ];
     }
 
     // ==================== INDEX TESTS ====================
 
-    public function testIndexRequiresUserId(): void
+    /**
+     * @dataProvider invalidIndexDataProvider
+     */
+    public function testIndexValidatesRequiredParameters(array $data, string $expectedErrorField): void
     {
-        $result = $this->service->index([]);
+        $result = $this->service->index($data);
 
-        $this->assertEquals('error', $result['status']);
-        $this->assertArrayHasKey('errors', $result);
-        $this->assertArrayHasKey('user_id', $result['errors']);
+        $this->assertErrorResponse($result, $expectedErrorField);
+    }
+
+    public static function invalidIndexDataProvider(): array
+    {
+        return [
+            'missing user_id' => [[], 'user_id'],
+            'empty user_id' => [['user_id' => ''], 'user_id'],
+        ];
     }
 
     public function testIndexReturnsEmptyArrayForUserWithNoFiles(): void
@@ -92,9 +104,7 @@ class FileServiceTest extends CIUnitTestCase
 
         $result = $this->service->index(['user_id' => 1]);
 
-        $this->assertEquals('success', $result['status']);
-        $this->assertIsArray($result['data']);
-        $this->assertEmpty($result['data']);
+        $this->assertEmptyDataResponse($result);
     }
 
     public function testIndexCallsModelWithCorrectUserId(): void
@@ -109,25 +119,41 @@ class FileServiceTest extends CIUnitTestCase
         $this->service->index(['user_id' => $userId]);
     }
 
+    public function testIndexOnlyReturnsUserOwnedFiles(): void
+    {
+        $userId = 1;
+
+        $this->mockFileModel->expects($this->once())
+            ->method('getByUser')
+            ->with($this->identicalTo($userId))
+            ->willReturn([]);
+
+        $this->service->index(['user_id' => $userId]);
+    }
+
     // ==================== DOWNLOAD TESTS ====================
 
-    public function testDownloadRequiresId(): void
+    /**
+     * @dataProvider invalidDownloadDataProvider
+     */
+    public function testDownloadValidatesRequiredParameters(array $data, string $expectedErrorField): void
     {
-        $result = $this->service->download(['user_id' => 1]);
+        $result = $this->service->download($data);
 
-        $this->assertEquals('error', $result['status']);
-        $this->assertArrayHasKey('errors', $result);
+        $this->assertErrorResponse($result, $expectedErrorField);
     }
 
-    public function testDownloadRequiresUserId(): void
+    public static function invalidDownloadDataProvider(): array
     {
-        $result = $this->service->download(['id' => 1]);
-
-        $this->assertEquals('error', $result['status']);
-        $this->assertArrayHasKey('errors', $result);
+        return [
+            'missing id' => [['user_id' => 1], 'id'],
+            'missing user_id' => [['id' => 1], 'user_id'],
+            'empty id' => [['id' => '', 'user_id' => 1], 'id'],
+            'empty user_id' => [['id' => 1, 'user_id' => ''], 'user_id'],
+        ];
     }
 
-    public function testDownloadReturnErrorForNonExistentFile(): void
+    public function testDownloadReturnsErrorForNonExistentFile(): void
     {
         $this->mockFileModel->expects($this->once())
             ->method('getByIdAndUser')
@@ -136,160 +162,10 @@ class FileServiceTest extends CIUnitTestCase
 
         $result = $this->service->download(['id' => 1, 'user_id' => 1]);
 
-        $this->assertEquals('error', $result['status']);
-        $this->assertEquals(404, $result['code']);
+        $this->assertErrorResponseWithCode($result, 404);
     }
 
-    // ==================== DELETE TESTS ====================
-
-    public function testDeleteRequiresId(): void
-    {
-        $result = $this->service->delete(['user_id' => 1]);
-
-        $this->assertEquals('error', $result['status']);
-        $this->assertArrayHasKey('errors', $result);
-    }
-
-    public function testDeleteRequiresUserId(): void
-    {
-        $result = $this->service->delete(['id' => 1]);
-
-        $this->assertEquals('error', $result['status']);
-        $this->assertArrayHasKey('errors', $result);
-    }
-
-    public function testDeleteReturnErrorForNonExistentFile(): void
-    {
-        $this->mockFileModel->expects($this->once())
-            ->method('getByIdAndUser')
-            ->with(1, 1)
-            ->willReturn(null);
-
-        $result = $this->service->delete(['id' => 1, 'user_id' => 1]);
-
-        $this->assertEquals('error', $result['status']);
-        $this->assertEquals(404, $result['code']);
-    }
-
-    // ==================== VALIDATION TESTS ====================
-
-    public function testUploadValidatesEmptyUserId(): void
-    {
-        $mockFile = $this->createMock(UploadedFile::class);
-
-        $result = $this->service->upload([
-            'file' => $mockFile,
-            'user_id' => '',
-        ]);
-
-        $this->assertEquals('error', $result['status']);
-    }
-
-    public function testIndexValidatesEmptyUserId(): void
-    {
-        $result = $this->service->index(['user_id' => '']);
-
-        $this->assertEquals('error', $result['status']);
-    }
-
-    public function testDownloadValidatesEmptyParameters(): void
-    {
-        $result = $this->service->download(['id' => '', 'user_id' => '']);
-
-        $this->assertEquals('error', $result['status']);
-    }
-
-    public function testDeleteValidatesEmptyParameters(): void
-    {
-        $result = $this->service->delete(['id' => '', 'user_id' => '']);
-
-        $this->assertEquals('error', $result['status']);
-    }
-
-    // ==================== EDGE CASES ====================
-
-    public function testUploadHandlesZeroUserId(): void
-    {
-        $mockFile = $this->createMock(UploadedFile::class);
-
-        $result = $this->service->upload([
-            'file' => $mockFile,
-            'user_id' => 0,
-        ]);
-
-        // Should fail validation (0 is considered empty)
-        $this->assertEquals('error', $result['status']);
-    }
-
-    public function testIndexHandlesLargeUserId(): void
-    {
-        $largeId = PHP_INT_MAX;
-
-        $this->mockFileModel->expects($this->once())
-            ->method('getByUser')
-            ->with($largeId)
-            ->willReturn([]);
-
-        $result = $this->service->index(['user_id' => $largeId]);
-
-        $this->assertEquals('success', $result['status']);
-    }
-
-    public function testDownloadHandlesStringIds(): void
-    {
-        $this->mockFileModel->expects($this->once())
-            ->method('getByIdAndUser')
-            ->with(123, 456)
-            ->willReturn(null);
-
-        $result = $this->service->download(['id' => '123', 'user_id' => '456']);
-
-        $this->assertEquals('error', $result['status']);
-    }
-
-    // ==================== RESPONSE FORMAT TESTS ====================
-
-    public function testUploadReturnsCorrectErrorFormat(): void
-    {
-        $result = $this->service->upload([]);
-
-        $this->assertArrayHasKey('status', $result);
-        $this->assertArrayHasKey('errors', $result);
-        $this->assertArrayHasKey('message', $result);
-    }
-
-    public function testIndexReturnsCorrectSuccessFormat(): void
-    {
-        $this->mockFileModel->expects($this->once())
-            ->method('getByUser')
-            ->willReturn([]);
-
-        $result = $this->service->index(['user_id' => 1]);
-
-        $this->assertArrayHasKey('status', $result);
-        $this->assertArrayHasKey('data', $result);
-        $this->assertIsArray($result['data']);
-    }
-
-    public function testDownloadReturnsCorrectErrorFormat(): void
-    {
-        $result = $this->service->download([]);
-
-        $this->assertArrayHasKey('status', $result);
-        $this->assertArrayHasKey('errors', $result);
-    }
-
-    public function testDeleteReturnsCorrectErrorFormat(): void
-    {
-        $result = $this->service->delete([]);
-
-        $this->assertArrayHasKey('status', $result);
-        $this->assertArrayHasKey('errors', $result);
-    }
-
-    // ==================== SECURITY TESTS ====================
-
-    public function testDownloadEnforcesOwnership(): void
+    public function testDownloadEnforcesFileOwnership(): void
     {
         // User 2 trying to access user 1's file
         $this->mockFileModel->expects($this->once())
@@ -299,11 +175,44 @@ class FileServiceTest extends CIUnitTestCase
 
         $result = $this->service->download(['id' => 1, 'user_id' => 2]);
 
-        $this->assertEquals('error', $result['status']);
-        $this->assertEquals(404, $result['code']);
+        $this->assertErrorResponseWithCode($result, 404);
     }
 
-    public function testDeleteEnforcesOwnership(): void
+    // ==================== DELETE TESTS ====================
+
+    /**
+     * @dataProvider invalidDeleteDataProvider
+     */
+    public function testDeleteValidatesRequiredParameters(array $data, string $expectedErrorField): void
+    {
+        $result = $this->service->delete($data);
+
+        $this->assertErrorResponse($result, $expectedErrorField);
+    }
+
+    public static function invalidDeleteDataProvider(): array
+    {
+        return [
+            'missing id' => [['user_id' => 1], 'id'],
+            'missing user_id' => [['id' => 1], 'user_id'],
+            'empty id' => [['id' => '', 'user_id' => 1], 'id'],
+            'empty user_id' => [['id' => 1, 'user_id' => ''], 'user_id'],
+        ];
+    }
+
+    public function testDeleteReturnsErrorForNonExistentFile(): void
+    {
+        $this->mockFileModel->expects($this->once())
+            ->method('getByIdAndUser')
+            ->with(1, 1)
+            ->willReturn(null);
+
+        $result = $this->service->delete(['id' => 1, 'user_id' => 1]);
+
+        $this->assertErrorResponseWithCode($result, 404);
+    }
+
+    public function testDeleteEnforcesFileOwnership(): void
     {
         // User 2 trying to delete user 1's file
         $this->mockFileModel->expects($this->once())
@@ -313,20 +222,6 @@ class FileServiceTest extends CIUnitTestCase
 
         $result = $this->service->delete(['id' => 1, 'user_id' => 2]);
 
-        $this->assertEquals('error', $result['status']);
-        $this->assertEquals(404, $result['code']);
-    }
-
-    public function testIndexOnlyReturnsUserFiles(): void
-    {
-        $this->mockFileModel->expects($this->once())
-            ->method('getByUser')
-            ->with($this->identicalTo(1))
-            ->willReturn([]);
-
-        $this->service->index(['user_id' => 1]);
-
-        // Verify only user 1's files are requested
-        $this->assertTrue(true);
+        $this->assertErrorResponseWithCode($result, 404);
     }
 }

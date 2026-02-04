@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Services;
 
+use App\Exceptions\NotFoundException;
 use App\Models\AuditLogModel;
 use App\Services\AuditService;
 use CodeIgniter\Test\CIUnitTestCase;
@@ -180,10 +181,9 @@ class AuditServiceTest extends CIUnitTestCase
             ->with(999)
             ->willReturn(null);
 
-        $result = $this->service->show(['id' => 999]);
+        $this->expectException(NotFoundException::class);
 
-        $this->assertEquals('error', $result['status']);
-        $this->assertEquals(404, $result['code']);
+        $this->service->show(['id' => 999]);
     }
 
     // ==================== BY ENTITY TESTS ====================

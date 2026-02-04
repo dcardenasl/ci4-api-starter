@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Exceptions\NotFoundException;
 use App\Libraries\ApiResponse;
 use App\Models\PasswordResetModel;
 use App\Models\UserModel;
@@ -101,11 +102,7 @@ class PasswordResetService
 
         // Check if token is valid
         if (! $this->passwordResetModel->isValidToken($email, $token, 60)) {
-            return ApiResponse::error(
-                ['token' => lang('PasswordReset.invalidToken')],
-                lang('PasswordReset.invalidToken'),
-                400
-            );
+            throw new NotFoundException(lang('PasswordReset.invalidToken'));
         }
 
         return ApiResponse::success(['valid' => true], lang('PasswordReset.tokenValid'));
@@ -152,22 +149,14 @@ class PasswordResetService
 
         // Validate token
         if (! $this->passwordResetModel->isValidToken($email, $token, 60)) {
-            return ApiResponse::error(
-                ['token' => lang('PasswordReset.invalidToken')],
-                lang('PasswordReset.invalidToken'),
-                400
-            );
+            throw new NotFoundException(lang('PasswordReset.invalidToken'));
         }
 
         // Find user
         $user = $this->userModel->where('email', $email)->first();
 
         if (! $user) {
-            return ApiResponse::error(
-                ['email' => lang('PasswordReset.userNotFound')],
-                lang('PasswordReset.userNotFound'),
-                404
-            );
+            throw new NotFoundException(lang('PasswordReset.userNotFound'));
         }
 
         // Hash new password

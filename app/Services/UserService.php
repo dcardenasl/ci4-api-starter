@@ -326,47 +326,37 @@ class UserService implements UserServiceInterface
      */
     public function registerWithToken(array $data): array
     {
-        try {
-            $result = $this->register($data);
+        $result = $this->register($data);
 
-            if (isset($result['errors'])) {
-                return $result;
-            }
-
-            $user = $result['data'];
-
-            // Generate access token
-            $jwtService = \Config\Services::jwtService();
-            $accessToken = $jwtService->encode((int) $user['id'], $user['role']);
-
-            // Generate refresh token
-            $refreshTokenService = new RefreshTokenService(new \App\Models\RefreshTokenModel());
-            $refreshToken = $refreshTokenService->issueRefreshToken((int) $user['id']);
-
-            // Send verification email (don't fail registration if email fails)
-            try {
-                $verificationService = new VerificationService();
-                $verificationService->sendVerificationEmail((int) $user['id']);
-            } catch (\Throwable $e) {
-                // Log error but don't fail registration
-                log_message('error', 'Failed to send verification email: ' . $e->getMessage());
-            }
-
-            return ApiResponse::success([
-                'access_token' => $accessToken,
-                'refresh_token' => $refreshToken,
-                'expires_in' => (int) (getenv('JWT_ACCESS_TOKEN_TTL') ?: env('JWT_ACCESS_TOKEN_TTL', 3600)),
-                'user' => $user,
-                'message' => 'Registration successful. Please check your email to verify your account.',
-            ]);
-        } catch (\Throwable $e) {
-            log_message('error', 'Registration with token failed: ' . $e->getMessage());
-            log_message('error', 'Stack trace: ' . $e->getTraceAsString());
-
-            return ApiResponse::error(
-                ['registration' => 'An error occurred during registration. Please try again.'],
-                'Registration failed: ' . $e->getMessage()
-            );
+        if (isset($result['errors'])) {
+            return $result;
         }
+
+        $user = $result['data'];
+
+        // Generate access token
+        $jwtService = \Config\Services::jwtService();
+        $accessToken = $jwtService->encode((int) $user['id'], $user['role']);
+
+        // Generate refresh token
+        $refreshTokenService = new RefreshTokenService(new \App\Models\RefreshTokenModel());
+        $refreshToken = $refreshTokenService->issueRefreshToken((int) $user['id']);
+
+        // Send verification email (don't fail registration if email fails)
+        try {
+            $verificationService = new VerificationService();
+            $verificationService->sendVerificationEmail((int) $user['id']);
+        } catch (\Throwable $e) {
+            // Log error but don't fail registration
+            log_message('error', 'Failed to send verification email: ' . $e->getMessage());
+        }
+
+        return ApiResponse::success([
+            'access_token' => $accessToken,
+            'refresh_token' => $refreshToken,
+            'expires_in' => (int) (getenv('JWT_ACCESS_TOKEN_TTL') ?: env('JWT_ACCESS_TOKEN_TTL', 3600)),
+            'user' => $user,
+            'message' => 'Registration successful. Please check your email to verify your account.',
+        ]);
     }
 }

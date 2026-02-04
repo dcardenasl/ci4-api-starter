@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Services;
 
+use App\Exceptions\NotFoundException;
 use App\Models\AuditLogModel;
 use App\Services\AuditService;
 use Tests\Support\DatabaseTestCase;
@@ -217,10 +218,9 @@ class AuditServiceTest extends DatabaseTestCase
 
     public function testShowReturnsErrorForNonExistent(): void
     {
-        $result = $this->service->show(['id' => 99999]);
+        $this->expectException(NotFoundException::class);
 
-        $this->assertEquals('error', $result['status']);
-        $this->assertEquals(404, $result['code']);
+        $this->service->show(['id' => 99999]);
     }
 
     public function testShowDecodesJsonValues(): void

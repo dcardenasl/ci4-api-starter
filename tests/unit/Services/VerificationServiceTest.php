@@ -61,32 +61,29 @@ class VerificationServiceTest extends CIUnitTestCase
 
     public function testVerifyEmailHandlesWhitespaceToken(): void
     {
-        $result = $this->service->verifyEmail('   ');
+        // Whitespace token will fail DB lookup and throw NotFoundException
+        $this->expectException(\App\Exceptions\NotFoundException::class);
 
-        // Whitespace should be treated as empty
-        // The service treats non-empty strings as valid tokens to check
-        // This will fail on DB lookup, tested in integration tests
-        $this->assertArrayHasKey('status', $result);
+        $this->service->verifyEmail('   ');
     }
 
     public function testVerifyEmailHandlesVeryLongToken(): void
     {
         $longToken = str_repeat('a', 1000);
 
-        // Should not error on validation, but will fail on DB lookup
-        // Tested in integration tests
-        $result = $this->service->verifyEmail($longToken);
+        // Long invalid token will fail DB lookup and throw NotFoundException
+        $this->expectException(\App\Exceptions\NotFoundException::class);
 
-        $this->assertArrayHasKey('status', $result);
+        $this->service->verifyEmail($longToken);
     }
 
     public function testVerifyEmailHandlesSpecialCharactersInToken(): void
     {
         $specialToken = 'token!@#$%^&*()_+-=[]{}|;:,.<>?';
 
-        // Should handle gracefully
-        $result = $this->service->verifyEmail($specialToken);
+        // Invalid token with special chars will fail DB lookup and throw NotFoundException
+        $this->expectException(\App\Exceptions\NotFoundException::class);
 
-        $this->assertArrayHasKey('status', $result);
+        $this->service->verifyEmail($specialToken);
     }
 }

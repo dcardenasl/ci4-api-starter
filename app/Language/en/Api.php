@@ -11,10 +11,17 @@ return [
 
     // Error messages
     'resourceNotFound' => 'Resource not found',
+    'notFound'         => 'Resource not found',
     'validationFailed' => 'Validation failed',
     'requestFailed'    => 'Request failed',
     'unauthorized'     => 'Unauthorized',
     'forbidden'        => 'Forbidden',
     'serverError'      => 'Internal server error',
     'invalidRequest'   => 'Invalid request',
+    'databaseError'    => 'A database error occurred',
+
+    // Log messages
+    'exception'         => 'API Exception',
+    'exceptionTrace'    => 'Exception trace',
+    'databaseException' => 'Database Exception',
 ];

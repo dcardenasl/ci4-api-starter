@@ -171,24 +171,35 @@ abstract class ApiController extends Controller
     protected function handleException(Exception $e): ResponseInterface
     {
         // Log the exception for debugging
-        log_message('error', 'API Exception: ' . $e->getMessage());
-        log_message('error', 'Exception trace: ' . $e->getTraceAsString());
+        log_message('error', lang('Api.exception') . ': ' . $e->getMessage());
+        log_message('error', lang('Api.exceptionTrace') . ': ' . $e->getTraceAsString());
 
         // Handle custom API exceptions
         if ($e instanceof \App\Exceptions\ApiException) {
             return $this->respond($e->toArray(), $e->getStatusCode());
         }
 
+        // Handle CodeIgniter database exceptions
+        if ($e instanceof \CodeIgniter\Database\Exceptions\DatabaseException) {
+            log_message('critical', lang('Api.databaseException') . ': ' . $e->getMessage());
+            return $this->respond([
+                'status' => 'error',
+                'message' => lang('Api.databaseError'),
+                'errors' => [],
+            ], ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
+        }
+
         // Handle standard exceptions
         $status = match (true) {
             $e instanceof InvalidArgumentException => ResponseInterface::HTTP_BAD_REQUEST,
             $e instanceof RuntimeException => ResponseInterface::HTTP_INTERNAL_SERVER_ERROR,
-            default => ResponseInterface::HTTP_BAD_REQUEST,
+            default => ResponseInterface::HTTP_INTERNAL_SERVER_ERROR,
         };
 
         return $this->respond([
             'status' => 'error',
             'message' => $e->getMessage(),
+            'errors' => [],
         ], $status);
     }
 
@@ -221,8 +232,9 @@ abstract class ApiController extends Controller
      * @param string $message Error message
      * @return ResponseInterface
      */
-    protected function respondNotFound(string $message = 'Resource not found'): ResponseInterface
+    protected function respondNotFound(string $message = null): ResponseInterface
     {
+        $message = $message ?? lang('Api.notFound');
         return $this->respond(['error' => $message], ResponseInterface::HTTP_NOT_FOUND);
     }
 
@@ -232,8 +244,9 @@ abstract class ApiController extends Controller
      * @param string $message Error message
      * @return ResponseInterface
      */
-    protected function respondUnauthorized(string $message = 'Unauthorized'): ResponseInterface
+    protected function respondUnauthorized(string $message = null): ResponseInterface
     {
+        $message = $message ?? lang('Api.unauthorized');
         return $this->respond(['error' => $message], ResponseInterface::HTTP_UNAUTHORIZED);
     }
 

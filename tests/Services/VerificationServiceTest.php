@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Services;
 
+use App\Exceptions\BadRequestException;
+use App\Exceptions\ConflictException;
+use App\Exceptions\NotFoundException;
 use App\Models\UserModel;
 use App\Services\VerificationService;
 use Tests\Support\DatabaseTestCase;
@@ -98,20 +101,18 @@ class VerificationServiceTest extends DatabaseTestCase
 
     public function testSendVerificationEmailFailsForNonExistentUser(): void
     {
-        $result = $this->service->sendVerificationEmail(99999);
+        $this->expectException(NotFoundException::class);
 
-        $this->assertEquals('error', $result['status']);
-        $this->assertEquals(404, $result['code']);
+        $this->service->sendVerificationEmail(99999);
     }
 
     public function testSendVerificationEmailFailsForAlreadyVerifiedUser(): void
     {
         $user = $this->userModel->where('email', 'verified@example.com')->first();
 
-        $result = $this->service->sendVerificationEmail((int) $user->id);
+        $this->expectException(ConflictException::class);
 
-        $this->assertEquals('error', $result['status']);
-        $this->assertArrayHasKey('email', $result['errors']);
+        $this->service->sendVerificationEmail((int) $user->id);
     }
 
     public function testSendVerificationEmailGeneratesSecureToken(): void
@@ -189,10 +190,9 @@ class VerificationServiceTest extends DatabaseTestCase
 
     public function testVerifyEmailFailsWithInvalidToken(): void
     {
-        $result = $this->service->verifyEmail('invalid_token_here');
+        $this->expectException(NotFoundException::class);
 
-        $this->assertEquals('error', $result['status']);
-        $this->assertEquals(400, $result['code']);
+        $this->service->verifyEmail('invalid_token_here');
     }
 
     public function testVerifyEmailFailsWithExpiredToken(): void
@@ -206,13 +206,12 @@ class VerificationServiceTest extends DatabaseTestCase
             'verification_token_expires' => date('Y-m-d H:i:s', time() - 3600), // 1 hour ago
         ]);
 
-        $result = $this->service->verifyEmail($expiredToken);
+        $this->expectException(BadRequestException::class);
 
-        $this->assertEquals('error', $result['status']);
-        $this->assertEquals(400, $result['code']);
+        $this->service->verifyEmail($expiredToken);
     }
 
-    public function testVerifyEmailSucceedsForAlreadyVerifiedUser(): void
+    public function testVerifyEmailFailsForAlreadyVerifiedUser(): void
     {
         $user = $this->userModel->where('email', 'unverified@example.com')->first();
 
@@ -231,10 +230,10 @@ class VerificationServiceTest extends DatabaseTestCase
         ]);
 
         $updatedUser2 = $this->userModel->find($user->id);
-        $result2 = $this->service->verifyEmail($updatedUser2->email_verification_token);
 
-        // Should return success but indicate already verified
-        $this->assertEquals('success', $result2['status']);
+        $this->expectException(ConflictException::class);
+
+        $this->service->verifyEmail($updatedUser2->email_verification_token);
     }
 
     public function testVerifyEmailCannotReuseToken(): void
@@ -250,12 +249,10 @@ class VerificationServiceTest extends DatabaseTestCase
         $result1 = $this->service->verifyEmail($token);
         $this->assertEquals('success', $result1['status']);
 
-        // Try to use same token again
-        $result2 = $this->service->verifyEmail($token);
+        // Try to use same token again - should throw NotFoundException (token cleared after verification)
+        $this->expectException(NotFoundException::class);
 
-        // Should fail because token was cleared
-        $this->assertEquals('error', $result2['status']);
-        $this->assertEquals(400, $result2['code']);
+        $this->service->verifyEmail($token);
     }
 
     public function testVerifyEmailSetsVerifiedTimestamp(): void
@@ -304,20 +301,18 @@ class VerificationServiceTest extends DatabaseTestCase
 
     public function testResendVerificationFailsForNonExistentUser(): void
     {
-        $result = $this->service->resendVerification(99999);
+        $this->expectException(NotFoundException::class);
 
-        $this->assertEquals('error', $result['status']);
-        $this->assertEquals(404, $result['code']);
+        $this->service->resendVerification(99999);
     }
 
     public function testResendVerificationFailsForVerifiedUser(): void
     {
         $user = $this->userModel->where('email', 'verified@example.com')->first();
 
-        $result = $this->service->resendVerification((int) $user->id);
+        $this->expectException(ConflictException::class);
 
-        $this->assertEquals('error', $result['status']);
-        $this->assertArrayHasKey('email', $result['errors']);
+        $this->service->resendVerification((int) $user->id);
     }
 
     public function testResendVerificationUpdatesExpiration(): void
@@ -377,10 +372,10 @@ class VerificationServiceTest extends DatabaseTestCase
         // Resend (generates new token)
         $this->service->resendVerification((int) $user->id);
 
-        // Old token should not work
-        $result = $this->service->verifyEmail($oldToken);
+        // Old token should not work - throws NotFoundException
+        $this->expectException(NotFoundException::class);
 
-        $this->assertEquals('error', $result['status']);
+        $this->service->verifyEmail($oldToken);
     }
 
     public function testTokenExpiresAfter24Hours(): void
@@ -488,9 +483,10 @@ class VerificationServiceTest extends DatabaseTestCase
         // Wait for expiration
         sleep(3);
 
-        // Should be expired now
-        $result2 = $this->service->verifyEmail($token);
-        $this->assertEquals('error', $result2['status']);
+        // Should be expired now - throws BadRequestException
+        $this->expectException(BadRequestException::class);
+
+        $this->service->verifyEmail($token);
     }
 
     // ==================== FULL WORKFLOW TESTS ====================
@@ -540,9 +536,14 @@ class VerificationServiceTest extends DatabaseTestCase
         $newToken = $user2->email_verification_token;
         $this->assertNotEquals($oldToken, $newToken);
 
-        // 4. Old token doesn't work
-        $oldResult = $this->service->verifyEmail($oldToken);
-        $this->assertEquals('error', $oldResult['status']);
+        // 4. Old token doesn't work - throws NotFoundException
+        try {
+            $this->service->verifyEmail($oldToken);
+            $this->fail('Expected NotFoundException for old token');
+        } catch (NotFoundException $e) {
+            // Expected behavior
+            $this->assertTrue(true);
+        }
 
         // 5. New token works
         $newResult = $this->service->verifyEmail($newToken);

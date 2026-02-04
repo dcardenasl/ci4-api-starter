@@ -2,6 +2,9 @@
 
 namespace App\Services;
 
+use App\Exceptions\BadRequestException;
+use App\Exceptions\ConflictException;
+use App\Exceptions\NotFoundException;
 use App\Libraries\ApiResponse;
 use App\Models\UserModel;
 
@@ -27,12 +30,12 @@ class VerificationService
         $user = $this->userModel->find($userId);
 
         if (! $user) {
-            return ApiResponse::error(['user' => lang('Verification.userNotFound')], lang('Verification.userNotFound'), 404);
+            throw new NotFoundException(lang('Verification.userNotFound'));
         }
 
         // Check if already verified
         if ($user->email_verified_at !== null) {
-            return ApiResponse::error(['email' => lang('Verification.alreadyVerified')], lang('Verification.alreadyVerified'));
+            throw new ConflictException(lang('Verification.alreadyVerified'));
         }
 
         // Generate verification token
@@ -81,17 +84,17 @@ class VerificationService
             ->first();
 
         if (! $user) {
-            return ApiResponse::error(['token' => lang('Verification.invalidToken')], lang('Verification.invalidToken'), 400);
+            throw new NotFoundException(lang('Verification.invalidToken'));
         }
 
         // Check if token expired
         if ($user->verification_token_expires && strtotime($user->verification_token_expires) < time()) {
-            return ApiResponse::error(['token' => lang('Verification.tokenExpired')], lang('Verification.tokenExpired'), 400);
+            throw new BadRequestException(lang('Verification.tokenExpired'));
         }
 
         // Check if already verified
         if ($user->email_verified_at !== null) {
-            return ApiResponse::success(['message' => lang('Verification.alreadyVerifiedMsg')], lang('Verification.alreadyVerified'));
+            throw new ConflictException(lang('Verification.alreadyVerified'));
         }
 
         // Mark email as verified
@@ -118,12 +121,12 @@ class VerificationService
         $user = $this->userModel->find($userId);
 
         if (! $user) {
-            return ApiResponse::error(['user' => lang('Verification.userNotFound')], lang('Verification.userNotFound'), 404);
+            throw new NotFoundException(lang('Verification.userNotFound'));
         }
 
         // Check if already verified
         if ($user->email_verified_at !== null) {
-            return ApiResponse::error(['email' => lang('Verification.alreadyVerified')], lang('Verification.alreadyVerified'));
+            throw new ConflictException(lang('Verification.alreadyVerified'));
         }
 
         // Send new verification email

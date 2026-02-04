@@ -201,24 +201,17 @@ class AuditableTest extends DatabaseTestCase
             use Auditable;
 
             protected $DBGroup = 'tests';
+            protected $allowCallbacks = true;
+            protected $beforeUpdate = ['auditBeforeUpdate'];
+            protected $beforeDelete = ['auditBeforeDelete'];
+            protected $afterInsert = ['auditInsert'];
+            protected $afterUpdate = ['auditUpdate'];
+            protected $afterDelete = ['auditDelete'];
 
             public function __construct()
             {
                 parent::__construct();
                 $this->skipValidation = true; // Skip validation for unit tests
-
-                // Ensure callback arrays are initialized
-                if (!is_array($this->afterInsert)) {
-                    $this->afterInsert = [];
-                }
-                if (!is_array($this->afterUpdate)) {
-                    $this->afterUpdate = [];
-                }
-                if (!is_array($this->afterDelete)) {
-                    $this->afterDelete = [];
-                }
-
-                $this->initAuditable();
             }
         };
     }

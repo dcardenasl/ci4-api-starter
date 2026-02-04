@@ -25,6 +25,11 @@ use App\Services\AuditService;
 trait Auditable
 {
     /**
+     * Temporary storage for old values before update/delete
+     */
+    protected array $auditOldValues = [];
+
+    /**
      * Initialize auditable callbacks
      *
      * Call this in model constructor:
@@ -35,9 +40,49 @@ trait Auditable
      */
     protected function initAuditable(): void
     {
+        $this->beforeUpdate[] = 'auditBeforeUpdate';
+        $this->beforeDelete[] = 'auditBeforeDelete';
         $this->afterInsert[] = 'auditInsert';
         $this->afterUpdate[] = 'auditUpdate';
         $this->afterDelete[] = 'auditDelete';
+    }
+
+    /**
+     * Capture old values before update
+     */
+    protected function auditBeforeUpdate(array $data): array
+    {
+        if (isset($data['id'])) {
+            $id = is_array($data['id']) ? (int) $data['id'][0] : (int) $data['id'];
+            $old = $this->find($id);
+
+            if ($old) {
+                $this->auditOldValues[$id] = is_object($old)
+                    ? (method_exists($old, 'toArray') ? $old->toArray() : (array) $old)
+                    : $old;
+            }
+        }
+
+        return $data;
+    }
+
+    /**
+     * Capture entity data before delete
+     */
+    protected function auditBeforeDelete(array $data): array
+    {
+        if (isset($data['id'])) {
+            $id = is_array($data['id']) ? (int) $data['id'][0] : (int) $data['id'];
+            $entity = $this->find($id);
+
+            if ($entity) {
+                $this->auditOldValues[$id] = is_object($entity)
+                    ? (method_exists($entity, 'toArray') ? $entity->toArray() : (array) $entity)
+                    : $entity;
+            }
+        }
+
+        return $data;
     }
 
     /**
@@ -77,17 +122,16 @@ trait Auditable
 
         $id = is_array($data['id']) ? (int) $data['id'][0] : (int) $data['id'];
 
-        // Get old values
-        $old = $this->find($id);
-        if (!$old) {
+        // Get old values from before update (captured in auditBeforeUpdate)
+        if (!isset($this->auditOldValues[$id])) {
             return;
         }
 
-        // Use toArray() to respect Entity filtering (prevents password exposure)
-        $oldValues = is_object($old)
-            ? (method_exists($old, 'toArray') ? $old->toArray() : (array) $old)
-            : $old;
+        $oldValues = $this->auditOldValues[$id];
         $newValues = array_merge($oldValues, $data['data'] ?? []);
+
+        // Clear stored old values
+        unset($this->auditOldValues[$id]);
 
         $auditService = $this->getAuditService();
         $userId = $this->getCurrentUserId();
@@ -109,15 +153,21 @@ trait Auditable
      */
     protected function auditDelete(array $data): void
     {
-        if (!isset($data['id']) || !isset($data['data'])) {
+        if (!isset($data['id'])) {
             return;
         }
 
         $id = is_array($data['id']) ? (int) $data['id'][0] : (int) $data['id'];
-        // Use toArray() to respect Entity filtering (prevents password exposure)
-        $deletedData = is_object($data['data'])
-            ? (method_exists($data['data'], 'toArray') ? $data['data']->toArray() : (array) $data['data'])
-            : $data['data'];
+
+        // Get entity data from before delete (captured in auditBeforeDelete)
+        if (!isset($this->auditOldValues[$id])) {
+            return;
+        }
+
+        $deletedData = $this->auditOldValues[$id];
+
+        // Clear stored old values
+        unset($this->auditOldValues[$id]);
 
         $auditService = $this->getAuditService();
         $userId = $this->getCurrentUserId();

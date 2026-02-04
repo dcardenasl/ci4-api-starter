@@ -437,23 +437,22 @@ class RefreshTokenServiceTest extends DatabaseTestCase
         // Create a valid token
         $token = $this->service->issueRefreshToken(1);
 
-        // Get initial count
+        // Delete the token to simulate an error scenario
+        $this->db->table('refresh_tokens')->where('token', $token)->delete();
+
+        // Get count after deletion (should be 0 for this user)
         $initialCount = $this->db->table('refresh_tokens')
             ->where('user_id', 1)
             ->countAllResults();
 
-        // Mock JWT service to cause failure after token rotation
-        // This would require dependency injection improvements
-        // For now, test with invalid user scenario
-        $this->db->table('refresh_tokens')->where('token', $token)->delete();
-
+        // Try to refresh with non-existent token (should fail)
         $result = $this->service->refreshAccessToken([
             'refresh_token' => $token,
         ]);
 
         $this->assertEquals('error', $result['status']);
 
-        // Verify no new tokens were created
+        // Verify no new tokens were created (count should still be initialCount)
         $finalCount = $this->db->table('refresh_tokens')
             ->where('user_id', 1)
             ->countAllResults();

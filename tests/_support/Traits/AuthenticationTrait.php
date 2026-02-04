@@ -51,6 +51,6 @@ trait AuthenticationTrait
 
         $result = json_decode($response->getJSON());
 
-        return $result->data->token ?? null;
+        return $result->data->access_token ?? null;
     }
 }

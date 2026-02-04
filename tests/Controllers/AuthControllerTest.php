@@ -96,7 +96,8 @@ class AuthControllerTest extends DatabaseTestCase
         $response->assertJSONFragment(['status' => 'success']); // API uses 'status' field
 
         $json = json_decode($response->getJSON());
-        $this->assertObjectHasProperty('token', $json->data);
+        $this->assertObjectHasProperty('access_token', $json->data);
+        $this->assertObjectHasProperty('refresh_token', $json->data);
         $this->assertObjectHasProperty('user', $json->data);
         $this->assertEquals('testuser', $json->data->user->username);
     }
@@ -171,7 +172,7 @@ class AuthControllerTest extends DatabaseTestCase
         $response = $this->get('/api/v1/auth/me');
 
         $response->assertStatus(401);
-        $response->assertJSONFragment(['success' => false]);
+        $response->assertJSONFragment(['status' => 'error']);
         $response->assertJSONFragment(['message' => 'Authorization header missing']);
     }
 
@@ -182,7 +183,7 @@ class AuthControllerTest extends DatabaseTestCase
         ])->get('/api/v1/auth/me');
 
         $response->assertStatus(401);
-        $response->assertJSONFragment(['success' => false]);
+        $response->assertJSONFragment(['status' => 'error']);
         $response->assertJSONFragment(['message' => 'Invalid or expired token']);
     }
 
@@ -195,7 +196,7 @@ class AuthControllerTest extends DatabaseTestCase
             ]);
 
         $json = json_decode($response->getJSON());
-        $token = $json->data->token;
+        $token = $json->data->access_token;
 
         // Decode JWT token (simple base64 decode of payload)
         $parts = explode('.', $token);

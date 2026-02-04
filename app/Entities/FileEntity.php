@@ -17,7 +17,7 @@ class FileEntity extends Entity
         'id' => 'integer',
         'user_id' => 'integer',
         'size' => 'integer',
-        'metadata' => 'json',
+        'metadata' => 'json-array',
     ];
 
     /**

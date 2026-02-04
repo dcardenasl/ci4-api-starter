@@ -122,8 +122,11 @@ jobs:
             sleep 2
           done
 
-      - name: Run database migrations
-        run: php spark migrate --all
+      - name: Verify database connection
+        run: |
+          echo "Testing database connection..."
+          mysql -h 127.0.0.1 -u root -proot -e "SHOW DATABASES;"
+          echo "✓ Database connection successful"
 
       - name: Run tests
         run: vendor/bin/phpunit --configuration phpunit.xml --no-coverage --testdox

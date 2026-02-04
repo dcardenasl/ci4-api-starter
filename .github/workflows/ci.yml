@@ -80,6 +80,19 @@ jobs:
           ENC_KEY=$(php spark key:generate --show | sed 's/.*: //')
           echo "encryption.key = \"${ENC_KEY}\"" >> .env
 
+          # Email configuration for testing
+          echo 'EMAIL_FROM_ADDRESS = noreply@example.com' >> .env
+          echo 'EMAIL_FROM_NAME = "API Application"' >> .env
+          echo 'EMAIL_PROVIDER = smtp' >> .env
+          echo 'EMAIL_SMTP_HOST = localhost' >> .env
+          echo 'EMAIL_SMTP_PORT = 25' >> .env
+          echo 'EMAIL_SMTP_USER = ""' >> .env
+          echo 'EMAIL_SMTP_PASS = ""' >> .env
+          echo 'EMAIL_SMTP_CRYPTO = ""' >> .env
+
+          # File upload configuration for testing
+          echo 'FILE_ALLOWED_TYPES = jpg,jpeg,png,gif,pdf' >> .env
+
       - name: Prepare writable directories
         run: |
           mkdir -p writable/cache

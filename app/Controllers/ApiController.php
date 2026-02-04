@@ -170,6 +170,10 @@ abstract class ApiController extends Controller
      */
     protected function handleException(Exception $e): ResponseInterface
     {
+        // Log the exception for debugging
+        log_message('error', 'API Exception: ' . $e->getMessage());
+        log_message('error', 'Exception trace: ' . $e->getTraceAsString());
+
         // Handle custom API exceptions
         if ($e instanceof \App\Exceptions\ApiException) {
             return $this->respond($e->toArray(), $e->getStatusCode());

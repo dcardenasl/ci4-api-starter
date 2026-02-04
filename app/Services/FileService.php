@@ -260,6 +260,11 @@ class FileService implements FileServiceInterface
         $basename = preg_replace('/[^a-zA-Z0-9_-]/', '', $basename);
         $basename = substr($basename, 0, 50); // Limit length
 
+        // If basename is empty after sanitization, use a default
+        if (empty($basename)) {
+            $basename = 'file';
+        }
+
         return $basename . '_' . uniqid() . '.' . $extension;
     }
 }

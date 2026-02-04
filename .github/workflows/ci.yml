@@ -80,18 +80,18 @@ jobs:
           ENC_KEY=$(php spark key:generate --show | sed 's/.*: //')
           echo "encryption.key = \"${ENC_KEY}\"" >> .env
 
-          # Email configuration for testing
-          echo 'EMAIL_FROM_ADDRESS = noreply@example.com' >> .env
-          echo 'EMAIL_FROM_NAME = "API Application"' >> .env
-          echo 'EMAIL_PROVIDER = smtp' >> .env
-          echo 'EMAIL_SMTP_HOST = localhost' >> .env
-          echo 'EMAIL_SMTP_PORT = 25' >> .env
-          echo 'EMAIL_SMTP_USER = ""' >> .env
-          echo 'EMAIL_SMTP_PASS = ""' >> .env
-          echo 'EMAIL_SMTP_CRYPTO = ""' >> .env
+          # Email configuration for testing (override .env.example)
+          sed -i 's/^EMAIL_FROM_ADDRESS =.*/EMAIL_FROM_ADDRESS = noreply@example.com/' .env
+          sed -i 's/^EMAIL_FROM_NAME =.*/EMAIL_FROM_NAME = "API Application"/' .env
+          sed -i 's/^EMAIL_PROVIDER =.*/EMAIL_PROVIDER = smtp/' .env
+          sed -i 's/^EMAIL_SMTP_HOST =.*/EMAIL_SMTP_HOST = localhost/' .env
+          sed -i 's/^EMAIL_SMTP_PORT =.*/EMAIL_SMTP_PORT = 25/' .env
+          sed -i 's/^EMAIL_SMTP_USER =.*/EMAIL_SMTP_USER = ""/' .env
+          sed -i 's/^EMAIL_SMTP_PASS =.*/EMAIL_SMTP_PASS = ""/' .env
+          sed -i 's/^EMAIL_SMTP_CRYPTO =.*/EMAIL_SMTP_CRYPTO = ""/' .env
 
-          # File upload configuration for testing
-          echo 'FILE_ALLOWED_TYPES = jpg,jpeg,png,gif,pdf' >> .env
+          # File upload configuration for testing (override to exclude txt)
+          sed -i 's/^FILE_ALLOWED_TYPES =.*/FILE_ALLOWED_TYPES = jpg,jpeg,png,gif,pdf/' .env
 
       - name: Prepare writable directories
         run: |

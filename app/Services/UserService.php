@@ -92,15 +92,30 @@ class UserService implements UserServiceInterface
             return ApiResponse::validationError($businessErrors);
         }
 
-        // Model maneja validación y timestamps automáticamente
-        $userId = $this->userModel->insert([
+        // Prepare data for insertion
+        $insertData = [
             'email'    => $data['email'] ?? null,
             'username' => $data['username'] ?? null,
-        ]);
+            'role'     => $data['role'] ?? 'user',
+        ];
+
+        // Hash password if provided
+        if (isset($data['password']) && !empty($data['password'])) {
+            // Validate password before hashing
+            if (!$this->userModel->validate(['password' => $data['password']])) {
+                $errors = $this->userModel->errors();
+                return ApiResponse::validationError($errors ?: ['password' => 'Invalid password']);
+            }
+            $insertData['password'] = password_hash($data['password'], PASSWORD_BCRYPT);
+        }
+
+        // Model maneja validación y timestamps automáticamente
+        $userId = $this->userModel->insert($insertData);
 
         if (!$userId) {
             // Obtener errores de validación del Model
-            return ApiResponse::validationError($this->userModel->errors());
+            $errors = $this->userModel->errors();
+            return ApiResponse::validationError($errors ?: ['general' => 'Failed to create user']);
         }
 
         $user = $this->userModel->find($userId);

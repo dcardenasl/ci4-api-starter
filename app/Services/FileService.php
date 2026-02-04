@@ -36,11 +36,18 @@ class FileService implements FileServiceInterface
     public function upload(array $data): array
     {
         // Validate required fields
-        if (empty($data['file']) || empty($data['user_id'])) {
-            return ApiResponse::error(
-                ['file' => lang('Files.fileRequired')],
-                lang('Files.invalidRequest')
-            );
+        $errors = [];
+
+        if (empty($data['file'])) {
+            $errors['file'] = lang('Files.fileRequired');
+        }
+
+        if (empty($data['user_id'])) {
+            $errors['user_id'] = lang('Files.userIdRequired');
+        }
+
+        if (!empty($errors)) {
+            return ApiResponse::error($errors, lang('Files.invalidRequest'));
         }
 
         $file = $data['file'];
@@ -177,11 +184,18 @@ class FileService implements FileServiceInterface
      */
     public function download(array $data): array
     {
-        if (empty($data['id']) || empty($data['user_id'])) {
-            return ApiResponse::error(
-                ['id' => lang('Files.idRequired')],
-                lang('Files.invalidRequest')
-            );
+        $errors = [];
+
+        if (empty($data['id'])) {
+            $errors['id'] = lang('Files.idRequired');
+        }
+
+        if (empty($data['user_id'])) {
+            $errors['user_id'] = lang('Files.userIdRequired');
+        }
+
+        if (!empty($errors)) {
+            return ApiResponse::error($errors, lang('Files.invalidRequest'));
         }
 
         // First check if file exists
@@ -214,11 +228,18 @@ class FileService implements FileServiceInterface
      */
     public function delete(array $data): array
     {
-        if (empty($data['id']) || empty($data['user_id'])) {
-            return ApiResponse::error(
-                ['id' => lang('Files.idRequired')],
-                lang('Files.invalidRequest')
-            );
+        $errors = [];
+
+        if (empty($data['id'])) {
+            $errors['id'] = lang('Files.idRequired');
+        }
+
+        if (empty($data['user_id'])) {
+            $errors['user_id'] = lang('Files.userIdRequired');
+        }
+
+        if (!empty($errors)) {
+            return ApiResponse::error($errors, lang('Files.invalidRequest'));
         }
 
         // First check if file exists

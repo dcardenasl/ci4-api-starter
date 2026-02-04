@@ -184,7 +184,7 @@ class AuditServiceTest extends DatabaseTestCase
 
         $this->assertEquals('success', $result['status']);
         $this->assertCount(10, $result['data']);
-        $this->assertEquals(1, $result['meta']['pagination']['current_page']);
+        $this->assertEquals(1, $result['meta']['page']);
     }
 
     public function testIndexDecodesJsonValues(): void

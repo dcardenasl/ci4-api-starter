@@ -177,6 +177,8 @@ class RefreshTokenServiceTest extends CIUnitTestCase
 
     public function testRevokeReturnsErrorWhenTokenNotFound(): void
     {
+        $this->expectException(\App\Exceptions\NotFoundException::class);
+
         $token = 'non-existent-token';
 
         $this->mockModel->expects($this->once())
@@ -184,9 +186,7 @@ class RefreshTokenServiceTest extends CIUnitTestCase
             ->with($token)
             ->willReturn(false);
 
-        $result = $this->service->revoke(['refresh_token' => $token]);
-
-        $this->assertErrorResponseWithCode($result, 404);
+        $this->service->revoke(['refresh_token' => $token]);
     }
 
     // ==================== REVOKE ALL USER TOKENS TESTS ====================

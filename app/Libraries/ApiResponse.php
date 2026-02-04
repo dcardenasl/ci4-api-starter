@@ -104,14 +104,12 @@ class ApiResponse
         int $perPage
     ): array {
         return self::success($items, null, [
-            'pagination' => [
-                'total' => $total,
-                'per_page' => $perPage,
-                'current_page' => $page,
-                'last_page' => (int) ceil($total / $perPage),
-                'from' => ($page - 1) * $perPage + 1,
-                'to' => min($page * $perPage, $total),
-            ],
+            'total' => $total,
+            'perPage' => $perPage,
+            'page' => $page,
+            'lastPage' => (int) ceil($total / $perPage),
+            'from' => ($page - 1) * $perPage + 1,
+            'to' => min($page * $perPage, $total),
         ]);
     }
 

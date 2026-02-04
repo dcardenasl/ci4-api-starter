@@ -155,27 +155,33 @@ class FileServiceTest extends CIUnitTestCase
 
     public function testDownloadReturnsErrorForNonExistentFile(): void
     {
+        $this->expectException(\App\Exceptions\NotFoundException::class);
+
         $this->mockFileModel->expects($this->once())
-            ->method('getByIdAndUser')
-            ->with(1, 1)
+            ->method('find')
+            ->with(1)
             ->willReturn(null);
 
-        $result = $this->service->download(['id' => 1, 'user_id' => 1]);
-
-        $this->assertErrorResponseWithCode($result, 404);
+        $this->service->download(['id' => 1, 'user_id' => 1]);
     }
 
     public function testDownloadEnforcesFileOwnership(): void
     {
+        $this->expectException(\App\Exceptions\AuthorizationException::class);
+
         // User 2 trying to access user 1's file
+        $file = new \App\Entities\FileEntity([
+            'id' => 1,
+            'user_id' => 1,
+            'original_name' => 'test.txt',
+        ]);
+
         $this->mockFileModel->expects($this->once())
-            ->method('getByIdAndUser')
-            ->with(1, 2)
-            ->willReturn(null);
+            ->method('find')
+            ->with(1)
+            ->willReturn($file);
 
-        $result = $this->service->download(['id' => 1, 'user_id' => 2]);
-
-        $this->assertErrorResponseWithCode($result, 404);
+        $this->service->download(['id' => 1, 'user_id' => 2]);
     }
 
     // ==================== DELETE TESTS ====================
@@ -202,26 +208,32 @@ class FileServiceTest extends CIUnitTestCase
 
     public function testDeleteReturnsErrorForNonExistentFile(): void
     {
+        $this->expectException(\App\Exceptions\NotFoundException::class);
+
         $this->mockFileModel->expects($this->once())
-            ->method('getByIdAndUser')
-            ->with(1, 1)
+            ->method('find')
+            ->with(1)
             ->willReturn(null);
 
-        $result = $this->service->delete(['id' => 1, 'user_id' => 1]);
-
-        $this->assertErrorResponseWithCode($result, 404);
+        $this->service->delete(['id' => 1, 'user_id' => 1]);
     }
 
     public function testDeleteEnforcesFileOwnership(): void
     {
+        $this->expectException(\App\Exceptions\AuthorizationException::class);
+
         // User 2 trying to delete user 1's file
+        $file = new \App\Entities\FileEntity([
+            'id' => 1,
+            'user_id' => 1,
+            'original_name' => 'test.txt',
+        ]);
+
         $this->mockFileModel->expects($this->once())
-            ->method('getByIdAndUser')
-            ->with(1, 2)
-            ->willReturn(null);
+            ->method('find')
+            ->with(1)
+            ->willReturn($file);
 
-        $result = $this->service->delete(['id' => 1, 'user_id' => 2]);
-
-        $this->assertErrorResponseWithCode($result, 404);
+        $this->service->delete(['id' => 1, 'user_id' => 2]);
     }
 }

@@ -147,7 +147,7 @@ class RefreshTokenService implements RefreshTokenServiceInterface
             throw new NotFoundException(lang('Tokens.tokenNotFound'));
         }
 
-        return ApiResponse::success(null, lang('Tokens.refreshTokenRevoked'));
+        return ApiResponse::success([], lang('Tokens.refreshTokenRevoked'));
     }
 
     /**
@@ -160,6 +160,6 @@ class RefreshTokenService implements RefreshTokenServiceInterface
     {
         $this->refreshTokenModel->revokeAllUserTokens($userId);
 
-        return ApiResponse::success(null, lang('Tokens.allTokensRevoked'));
+        return ApiResponse::success([], lang('Tokens.allTokensRevoked'));
     }
 }

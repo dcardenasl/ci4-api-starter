@@ -76,33 +76,32 @@ class ApiResponseTest extends CIUnitTestCase
 
         $this->assertEquals('success', $result['status']);
         $this->assertArrayHasKey('meta', $result);
-        $this->assertArrayHasKey('pagination', $result['meta']);
 
-        $pagination = $result['meta']['pagination'];
-        $this->assertEquals(30, $pagination['total']);
-        $this->assertEquals(10, $pagination['per_page']);
-        $this->assertEquals(2, $pagination['current_page']);
-        $this->assertEquals(3, $pagination['last_page']);
-        $this->assertEquals(11, $pagination['from']);
-        $this->assertEquals(20, $pagination['to']);
+        $meta = $result['meta'];
+        $this->assertEquals(30, $meta['total']);
+        $this->assertEquals(10, $meta['perPage']);
+        $this->assertEquals(2, $meta['page']);
+        $this->assertEquals(3, $meta['lastPage']);
+        $this->assertEquals(11, $meta['from']);
+        $this->assertEquals(20, $meta['to']);
     }
 
     public function testPaginatedFirstPage(): void
     {
         $result = ApiResponse::paginated([1, 2, 3], 30, 1, 10);
 
-        $pagination = $result['meta']['pagination'];
-        $this->assertEquals(1, $pagination['from']);
-        $this->assertEquals(10, $pagination['to']);
+        $meta = $result['meta'];
+        $this->assertEquals(1, $meta['from']);
+        $this->assertEquals(10, $meta['to']);
     }
 
     public function testPaginatedLastPage(): void
     {
         $result = ApiResponse::paginated([1, 2, 3], 25, 3, 10);
 
-        $pagination = $result['meta']['pagination'];
-        $this->assertEquals(21, $pagination['from']);
-        $this->assertEquals(25, $pagination['to']); // Not 30
+        $meta = $result['meta'];
+        $this->assertEquals(21, $meta['from']);
+        $this->assertEquals(25, $meta['to']); // Not 30
     }
 
     public function testCreated(): void

@@ -148,6 +148,7 @@ class PasswordResetServiceTest extends CIUnitTestCase
     public function testResetPasswordAcceptsValidPassword(): void
     {
         // Valid passwords should pass complexity check
+        // These passwords are valid, so the error should be token-related (NotFoundException)
         $validPasswords = [
             'Password123!',
             'MyP@ssw0rd',
@@ -157,13 +158,12 @@ class PasswordResetServiceTest extends CIUnitTestCase
         ];
 
         foreach ($validPasswords as $password) {
-            // This will fail at token validation, but should pass password validation
-            $result = $this->service->resetPassword('invalid-token', 'test@example.com', $password);
-
-            // Should fail on token, not password
-            $this->assertEquals('error', $result['status']);
-            if (isset($result['errors']['password'])) {
-                $this->fail("Password '{$password}' should be valid but failed validation");
+            try {
+                $this->service->resetPassword('invalid-token', 'test@example.com', $password);
+                $this->fail('Expected NotFoundException for invalid token');
+            } catch (\App\Exceptions\NotFoundException $e) {
+                // Expected - token is invalid, but password passed validation
+                $this->assertTrue(true);
             }
         }
     }
@@ -182,16 +182,13 @@ class PasswordResetServiceTest extends CIUnitTestCase
 
     public function testResetPasswordHashesPassword(): void
     {
+        $this->expectException(\App\Exceptions\NotFoundException::class);
+
         // Verify that the service would hash the password
-        // We can't test the actual hashing without DB, but we can verify
-        // the password is not stored in plain text in our code
+        // Will throw NotFoundException due to invalid token (expected)
         $password = 'TestPassword123!';
 
-        // Password should never be logged or returned
-        $result = $this->service->resetPassword('token', 'test@example.com', $password);
-
-        // Ensure password is not in the response
-        $this->assertStringNotContainsString($password, json_encode($result));
+        $this->service->resetPassword('token', 'test@example.com', $password);
     }
 
     public function testPasswordComplexityRejectsCommonPatterns(): void
@@ -234,37 +231,31 @@ class PasswordResetServiceTest extends CIUnitTestCase
 
     public function testResetPasswordHandlesPasswordWithUnicode(): void
     {
-        // Unicode characters should work if they meet complexity
-        $result = $this->service->resetPassword('token', 'test@example.com', 'Pásswörd123!');
+        $this->expectException(\App\Exceptions\NotFoundException::class);
 
-        // Should fail on token validation, not password (unicode is allowed)
-        $this->assertEquals('error', $result['status']);
+        // Unicode characters should work if they meet complexity
+        // Will throw NotFoundException due to invalid token (expected)
+        $this->service->resetPassword('token', 'test@example.com', 'Pásswörd123!');
     }
 
     public function testResetPasswordExactly8Chars(): void
     {
-        // Minimum length boundary
-        $result = $this->service->resetPassword('token', 'test@example.com', 'Pass123!');
+        $this->expectException(\App\Exceptions\NotFoundException::class);
 
-        // Should fail on token, not password length
-        $this->assertEquals('error', $result['status']);
-        if (isset($result['errors']['password'])) {
-            $this->assertStringNotContainsString('length', strtolower($result['errors']['password']));
-        }
+        // Minimum length boundary - password is valid
+        // Will throw NotFoundException due to invalid token (expected)
+        $this->service->resetPassword('token', 'test@example.com', 'Pass123!');
     }
 
     public function testResetPasswordExactly128Chars(): void
     {
-        // Maximum length boundary - exactly 128 chars
+        $this->expectException(\App\Exceptions\NotFoundException::class);
+
+        // Maximum length boundary - exactly 128 chars, valid password
         $password = str_repeat('Ab1!', 32); // 128 chars
 
-        $result = $this->service->resetPassword('token', 'test@example.com', $password);
-
-        // Should fail on token, not password length
-        $this->assertEquals('error', $result['status']);
-        if (isset($result['errors']['password'])) {
-            $this->assertStringNotContainsString('length', strtolower($result['errors']['password']));
-        }
+        // Will throw NotFoundException due to invalid token (expected)
+        $this->service->resetPassword('token', 'test@example.com', $password);
     }
 
     public function testValidateTokenHandlesBothParamsMissing(): void
@@ -283,13 +274,21 @@ class PasswordResetServiceTest extends CIUnitTestCase
         $sendResult = $this->service->sendResetLink('user@example.com');
         $this->assertEquals('success', $sendResult['status']);
 
-        // 2. Validate token (will fail without DB, but tests the flow)
-        $validateResult = $this->service->validateToken('some-token', 'user@example.com');
-        $this->assertEquals('error', $validateResult['status']); // No token in DB
+        // 2. Validate token (will throw exception without valid DB token)
+        try {
+            $this->service->validateToken('some-token', 'user@example.com');
+            $this->fail('Expected NotFoundException for invalid token');
+        } catch (\App\Exceptions\NotFoundException $e) {
+            $this->assertTrue(true);
+        }
 
-        // 3. Reset password (will fail on token validation)
-        $resetResult = $this->service->resetPassword('some-token', 'user@example.com', 'NewPass123!');
-        $this->assertEquals('error', $resetResult['status']);
+        // 3. Reset password (will throw exception on token validation)
+        try {
+            $this->service->resetPassword('some-token', 'user@example.com', 'NewPass123!');
+            $this->fail('Expected NotFoundException for invalid token');
+        } catch (\App\Exceptions\NotFoundException $e) {
+            $this->assertTrue(true);
+        }
     }
 
     public function testMultipleResetRequestsForSameEmail(): void
@@ -310,15 +309,14 @@ class PasswordResetServiceTest extends CIUnitTestCase
 
         foreach ($specialChars as $char) {
             $password = "Password123{$char}";
-            $result = $this->service->resetPassword('token', 'test@example.com', $password);
 
-            // Should fail on token, not password
-            $this->assertEquals('error', $result['status']);
-            $this->assertArrayNotHasKey(
-                'password',
-                $result['errors'] ?? [],
-                "Password with special char '{$char}' should be valid"
-            );
+            try {
+                $this->service->resetPassword('token', 'test@example.com', $password);
+                $this->fail("Expected NotFoundException for invalid token with password using '{$char}'");
+            } catch (\App\Exceptions\NotFoundException $e) {
+                // Expected - token is invalid, but password with this special char is valid
+                $this->assertTrue(true);
+            }
         }
     }
 

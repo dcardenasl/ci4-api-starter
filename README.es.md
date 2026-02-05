@@ -1,583 +1,279 @@
 # CodeIgniter 4 API Starter Kit
 
-![Versión PHP](https://img.shields.io/badge/PHP-8.1%20%7C%208.2%20%7C%208.3-blue)
+![PHP Version](https://img.shields.io/badge/PHP-8.2%20%7C%208.3-blue)
 ![CodeIgniter](https://img.shields.io/badge/CodeIgniter-4.6-orange)
-![Tests](https://img.shields.io/badge/tests-533%20tests-success)
-![Coverage](https://img.shields.io/badge/cobertura-95%25%20crítica-brightgreen)
-![Licencia](https://img.shields.io/badge/license-MIT-blue)
+![Tests](https://img.shields.io/badge/tests-117%20passing-success)
+![License](https://img.shields.io/badge/license-MIT-blue)
 
 [English](README.md) | Español
 
-Una plantilla REST API lista para producción en CodeIgniter 4 con autenticación JWT, documentación OpenAPI modular y arquitectura limpia por capas.
+Una plantilla de API REST lista para produccion con CodeIgniter 4, autenticacion JWT, arquitectura en capas limpia y cobertura de tests completa.
 
-**Perfecto para:** Iniciar nuevos proyectos API, construir microservicios o aprender desarrollo moderno de APIs en PHP.
+## Caracteristicas
 
-## ✨ Características
+- **Autenticacion JWT** - Tokens de acceso, tokens de refresco y revocacion
+- **Control de Acceso por Roles** - Roles admin y user con proteccion por middleware
+- **Sistema de Email** - Verificacion, restablecimiento de contrasena, soporte de colas
+- **Gestion de Archivos** - Subida/descarga con soporte de almacenamiento en la nube (S3)
+- **Consultas Avanzadas** - Paginacion, filtrado, busqueda, ordenamiento
+- **Health Checks** - Endpoints listos para Kubernetes (`/health`, `/ready`, `/live`)
+- **Auditoria** - Registro automatico de cambios en datos
+- **Documentacion OpenAPI** - Swagger docs auto-generados
+- **117 Tests** - Tests unitarios, de integracion y funcionales
 
-### Características Principales
-- 🔐 **Autenticación JWT** - Autenticación segura basada en tokens con refresh tokens y revocación
-- 📧 **Sistema de Email** - Verificación de email, recuperación de contraseña, infraestructura de colas
-- 📁 **Gestión de Archivos** - Carga/gestión de archivos con soporte para almacenamiento en nube
-- 🔍 **Consultas Avanzadas** - Paginación, filtrado, búsqueda, ordenamiento
-- 📊 **Monitoreo** - Checks de salud, métricas, registro de peticiones, auditoría
-- 🌍 **Internacionalización** - Detección de locale desde cabecera Accept-Language
+## Inicio Rapido
 
-### Arquitectura y Experiencia de Desarrollo
-- 📚 **Documentación OpenAPI Modular** - Documentación basada en esquemas, 60% menos código repetitivo
-- 🏗️ **Arquitectura Limpia** - Patrón Controller → Service → Repository → Entity
-- 🎯 **ApiController Base** - Manejo automático de peticiones, 62% menos código
-- 🔌 **Interfaces de Servicio** - Diseño basado en interfaces para mejor testabilidad
-- ✅ **533 Tests** - Cobertura completa de tests (unit, model, integration)
-- 🎯 **95% Cobertura Crítica** - Toda la seguridad y lógica de negocio testeada
-- 🧪 **Tests Organizados** - Tests separados por tipo: unit, model e integration
-- 🚀 **CI/CD Listo** - GitHub Actions configurado para PHP 8.1, 8.2, 8.3
-- 🔒 **Seguro por Defecto** - Hashing bcrypt, protección timing-attack, validación de entrada
-- 🐳 **Soporte Docker** - Containerización lista para producción incluida
+### Opcion 1: Usar Plantilla de GitHub (Recomendado)
 
-## 🚀 Inicio Rápido (1 minuto)
-
-### Usando Plantilla de GitHub (Recomendado)
-
-1. **Haz clic en el botón "Use this template"** en la parte superior de esta página
-2. **Clona tu nuevo repositorio:**
-   ```bash
-   git clone https://github.com/TU-USUARIO/TU-NUEVO-REPO.git
-   cd TU-NUEVO-REPO
-   ```
-
-3. **Ejecuta el script de inicialización:**
-   ```bash
-   chmod +x init.sh
-   ./init.sh
-   ```
-
-¡Eso es todo! El script:
-- ✓ Instalará dependencias
-- ✓ Generará claves seguras (JWT + encriptación)
-- ✓ Configurará el entorno
-- ✓ Creará la base de datos
-- ✓ Ejecutará las migraciones
-- ✓ Generará la documentación API
-- ✓ Iniciará el servidor de desarrollo
-
-Tu API estará corriendo en `http://localhost:8080` 🎉
-
-### Configuración Manual
+1. Haz clic en **"Use this template"** en la parte superior de esta pagina
+2. Clona tu nuevo repositorio
+3. Ejecuta el script de inicializacion:
 
 ```bash
-# 1. Instalar dependencias
+chmod +x init.sh && ./init.sh
+```
+
+Tu API estara corriendo en `http://localhost:8080`
+
+### Opcion 2: Configuracion Manual
+
+```bash
+# Instalar dependencias
 composer install
 
-# 2. Configurar entorno
+# Configurar entorno
 cp .env.example .env
 
-# 3. Generar claves seguras
+# Generar claves de seguridad
 openssl rand -base64 64  # Agregar a JWT_SECRET_KEY en .env
-php spark key:generate   # Agregar a encryption.key en .env
+php spark key:generate   # Muestra la clave de encriptacion
 
-# 4. Configurar base de datos en .env, luego:
-php setup_mysql.php      # Crear bases de datos
-php spark migrate        # Ejecutar migraciones
+# Configurar base de datos (configura .env primero)
+php spark migrate
 
-# 5. Iniciar servidor
+# Iniciar servidor
 php spark serve
 ```
 
-## 📖 Endpoints de la API
+## Endpoints de la API
 
-### Autenticación (Público)
-```bash
-POST /api/v1/auth/register           # Registrar nuevo usuario
-POST /api/v1/auth/login              # Login (devuelve JWT + refresh token)
-POST /api/v1/auth/refresh            # Refrescar access token
-POST /api/v1/auth/verify-email       # Verificar dirección de email
-POST /api/v1/auth/forgot-password    # Solicitar recuperación de contraseña
-GET  /api/v1/auth/validate-reset-token  # Validar token de recuperación
-POST /api/v1/auth/reset-password     # Restablecer contraseña
+### Autenticacion (Publico)
+```
+POST /api/v1/auth/register     Registrar nuevo usuario
+POST /api/v1/auth/login        Iniciar sesion (devuelve tokens)
+POST /api/v1/auth/refresh      Refrescar token de acceso
+POST /api/v1/auth/forgot-password   Solicitar reset de contrasena
+POST /api/v1/auth/reset-password    Restablecer contrasena
+POST /api/v1/auth/verify-email      Verificar email
 ```
 
-### Autenticación (Protegido)
-```bash
-GET  /api/v1/auth/me                 # Obtener usuario actual
-POST /api/v1/auth/resend-verification # Reenviar email de verificación
-POST /api/v1/auth/revoke             # Revocar token actual
-POST /api/v1/auth/revoke-all         # Revocar todos los tokens del usuario
+### Autenticacion (Protegido)
+```
+GET  /api/v1/auth/me           Obtener usuario actual
+POST /api/v1/auth/revoke       Revocar token actual
+POST /api/v1/auth/revoke-all   Revocar todos los tokens del usuario
 ```
 
-### Usuarios (Protegido - Requiere JWT)
-```bash
-GET    /api/v1/users              # Listar usuarios (soporta paginación, filtrado, búsqueda)
-GET    /api/v1/users/{id}         # Obtener usuario por ID
-POST   /api/v1/users              # Crear usuario (solo admin)
-PUT    /api/v1/users/{id}         # Actualizar usuario (solo admin)
-DELETE /api/v1/users/{id}         # Eliminar usuario (solo admin, soft delete)
+### Usuarios (Protegido)
+```
+GET    /api/v1/users           Listar usuarios (paginado, filtrable)
+GET    /api/v1/users/{id}      Obtener usuario por ID
+POST   /api/v1/users           Crear usuario (solo admin)
+PUT    /api/v1/users/{id}      Actualizar usuario (solo admin)
+DELETE /api/v1/users/{id}      Eliminar usuario (solo admin)
 ```
 
-### Archivos (Protegido - Requiere JWT)
-```bash
-GET    /api/v1/files              # Listar archivos subidos
-POST   /api/v1/files/upload       # Subir archivo
-GET    /api/v1/files/{id}         # Obtener detalles del archivo
-DELETE /api/v1/files/{id}         # Eliminar archivo
+### Archivos (Protegido)
+```
+GET    /api/v1/files           Listar archivos del usuario
+POST   /api/v1/files/upload    Subir archivo
+GET    /api/v1/files/{id}      Obtener detalles del archivo
+DELETE /api/v1/files/{id}      Eliminar archivo
 ```
 
-### Checks de Salud (Público, Sin Rate Limiting)
-```bash
-GET /health                        # Check de salud completo del sistema
-GET /ping                          # Check simple de disponibilidad
-GET /ready                         # Readiness probe (Kubernetes)
-GET /live                          # Liveness probe (Kubernetes)
+### Health (Publico)
+```
+GET /health    Verificacion completa del sistema
+GET /ping      Verificacion simple de disponibilidad
+GET /ready     Sonda de readiness para Kubernetes
+GET /live      Sonda de liveness para Kubernetes
 ```
 
-### Métricas (Solo Admin)
-```bash
-GET  /api/v1/metrics               # Resumen de métricas del sistema
-GET  /api/v1/metrics/requests      # Métricas de peticiones
-GET  /api/v1/metrics/slow-requests # Log de peticiones lentas
-GET  /api/v1/metrics/custom/{name} # Métrica personalizada
-POST /api/v1/metrics/record        # Registrar métrica personalizada
-```
+## Ejemplos de Uso
 
-### Auditoría (Solo Admin)
-```bash
-GET /api/v1/audit                  # Listar todos los logs de auditoría
-GET /api/v1/audit/{id}             # Obtener entrada específica de auditoría
-GET /api/v1/audit/entity/{type}/{id} # Obtener auditorías para entidad específica
-```
-
-### Ejemplos de Uso
-
-**Registrarse:**
+**Registrar:**
 ```bash
 curl -X POST http://localhost:8080/api/v1/auth/register \
   -H "Content-Type: application/json" \
-  -d '{"username":"juan","email":"juan@ejemplo.com","password":"Pass123!"}'
+  -d '{"username":"juan","email":"juan@ejemplo.com","password":"ContrasenaSegura123!"}'
 ```
 
-**Login con refresh token:**
+**Iniciar sesion:**
 ```bash
 curl -X POST http://localhost:8080/api/v1/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"username":"juan","password":"Pass123!"}'
-# Devuelve: {"status":"success","data":{"token":"...","refreshToken":"..."}}
+  -d '{"username":"juan","password":"ContrasenaSegura123!"}'
 ```
 
-**Refrescar access token:**
+**Usar endpoint protegido:**
 ```bash
-curl -X POST http://localhost:8080/api/v1/auth/refresh \
-  -H "Content-Type: application/json" \
-  -d '{"refreshToken":"tu-refresh-token"}'
+curl -X GET http://localhost:8080/api/v1/users \
+  -H "Authorization: Bearer TU_TOKEN_DE_ACCESO"
 ```
 
-**Usar endpoint protegido con filtrado:**
+**Consulta con filtros:**
 ```bash
-TOKEN="tu-jwt-token-aqui"
-curl -X GET "http://localhost:8080/api/v1/users?filter[role][eq]=admin&search=juan&page=1&perPage=10" \
-  -H "Authorization: Bearer $TOKEN"
+curl -X GET "http://localhost:8080/api/v1/users?filter[role][eq]=admin&search=juan&page=1&limit=10" \
+  -H "Authorization: Bearer TU_TOKEN_DE_ACCESO"
 ```
 
-**Subir archivo:**
-```bash
-curl -X POST http://localhost:8080/api/v1/files/upload \
-  -H "Authorization: Bearer $TOKEN" \
-  -F "file=@/ruta/al/archivo.pdf"
-```
-
-**Verificar salud del sistema:**
-```bash
-curl http://localhost:8080/health
-# Devuelve: {"status":"healthy","checks":{"database":"ok","cache":"ok","storage":"ok"}}
-```
-
-**Ver Documentación de la API:**
-- Swagger JSON: http://localhost:8080/swagger.json
-- Importar en [Swagger UI](https://editor.swagger.io/) o [Postman](https://www.postman.com/)
-
-## 🏗️ Estructura del Proyecto
+## Estructura del Proyecto
 
 ```
 app/
-├── Commands/
-│   └── GenerateSwagger.php         # Generador de documentación OpenAPI
-├── Config/
-│   ├── OpenApi.php                 # Configuración documentación API
-│   └── Routes.php                  # Definición de rutas
 ├── Controllers/
-│   ├── ApiController.php           # Controlador base (auto request/response)
-│   └── Api/V1/
-│       ├── AuthController.php      # Autenticación (login, register, me)
-│       ├── UserController.php      # CRUD de usuarios
-│       ├── TokenController.php     # Refresh y revocación de tokens
-│       ├── VerificationController.php  # Verificación de email
-│       ├── PasswordResetController.php # Recuperación de contraseña
-│       ├── FileController.php      # Gestión de archivos
-│       ├── HealthController.php    # Checks de salud
-│       ├── MetricsController.php   # Métricas de monitoreo
-│       └── AuditController.php     # Auditoría
-├── Documentation/                  # Esquemas OpenAPI modulares
-│   ├── Schemas/                    # Modelos de datos reutilizables
-│   ├── Responses/                  # Respuestas de error estándar
-│   └── RequestBodies/              # Payloads de petición
-├── Services/
-│   ├── JwtService.php              # Operaciones JWT
-│   ├── UserService.php             # Lógica de negocio de usuarios
-│   ├── RefreshTokenService.php     # Refresh de tokens
-│   ├── TokenRevocationService.php  # Revocación de tokens
-│   ├── EmailService.php            # Envío de emails
-│   ├── VerificationService.php     # Verificación de email
-│   ├── PasswordResetService.php    # Recuperación de contraseña
-│   ├── FileService.php             # Operaciones de archivos
-│   └── AuditService.php            # Registro de auditoría
-├── Interfaces/                     # Interfaces de servicios
-│   ├── UserServiceInterface.php
-│   ├── JwtServiceInterface.php
-│   ├── RefreshTokenServiceInterface.php
-│   ├── TokenRevocationServiceInterface.php
-│   ├── FileServiceInterface.php
-│   └── AuditServiceInterface.php
-├── Filters/
-│   ├── CorsFilter.php              # Manejo de CORS
-│   ├── ThrottleFilter.php          # Rate limiting
-│   ├── JwtAuthFilter.php           # Validación JWT
-│   ├── RoleAuthorizationFilter.php # Acceso basado en roles
-│   ├── LocaleFilter.php            # Detección de locale i18n
-│   └── RequestLoggingFilter.php    # Registro de peticiones
-├── Traits/
-│   ├── Auditable.php               # Auto registro de auditoría
-│   ├── Filterable.php              # Filtrado avanzado
-│   └── Searchable.php              # Búsqueda de texto completo
-├── Models/
-│   ├── UserModel.php               # Operaciones de base de datos
-│   ├── RefreshTokenModel.php
-│   ├── RevokedTokenModel.php
-│   ├── FileModel.php
-│   └── AuditLogModel.php
-└── Entities/
-    ├── UserEntity.php              # Modelos de datos
-    ├── RefreshTokenEntity.php
-    ├── FileEntity.php
-    └── AuditLogEntity.php
+│   ├── ApiController.php          # Controlador base
+│   └── Api/V1/                    # Controladores API v1
+├── Services/                      # Logica de negocio
+├── Interfaces/                    # Interfaces de servicios
+├── Models/                        # Modelos de base de datos
+├── Entities/                      # Entidades de datos
+├── Filters/                       # Filtros HTTP (auth, throttle, cors)
+├── Exceptions/                    # Excepciones personalizadas
+├── Libraries/
+│   ├── ApiResponse.php           # Respuestas estandarizadas
+│   └── Query/                    # Utilidades del query builder
+└── Traits/                       # Traits de modelos (Filterable, Searchable)
+
+tests/
+├── Unit/                         # 88 tests - Sin base de datos
+│   ├── Libraries/                # Tests de ApiResponse
+│   └── Services/                 # Tests unitarios de servicios
+├── Integration/                  # 19 tests - Requiere base de datos
+│   ├── Models/                   # Tests de modelos
+│   └── Services/                 # Tests de integracion de servicios
+└── Feature/                      # 10 tests - Tests HTTP completos
+    └── Controllers/              # Tests de endpoints
 ```
 
-## 🔍 Características de Consulta Avanzadas
+## Testing
 
-La API soporta capacidades de consulta potentes en endpoints de listado:
-
-### Paginación
 ```bash
-GET /api/v1/users?page=1&perPage=20
+# Ejecutar todos los tests (117)
+vendor/bin/phpunit
+
+# Ejecutar con salida legible
+vendor/bin/phpunit --testdox
+
+# Ejecutar suites especificas
+vendor/bin/phpunit tests/Unit           # Rapidos, sin BD (88 tests)
+vendor/bin/phpunit tests/Integration    # Necesita BD (19 tests)
+vendor/bin/phpunit tests/Feature        # Tests HTTP (10 tests)
+```
+
+## Funciones de Consulta Avanzada
+
+### Paginacion
+```
+GET /api/v1/users?page=2&limit=20
 ```
 
 ### Filtrado
-Usa operadores de campo para filtrar resultados:
-```bash
-# Igual
+```
 GET /api/v1/users?filter[role][eq]=admin
-
-# Similar (coincidencia parcial)
 GET /api/v1/users?filter[email][like]=%@gmail.com
-
-# Mayor que
-GET /api/v1/users?filter[created_at][gt]=2025-01-01
-
-# Múltiples filtros (lógica AND)
-GET /api/v1/users?filter[role][eq]=admin&filter[email][like]=%@empresa.com
+GET /api/v1/users?filter[created_at][gt]=2024-01-01
 ```
 
-**Operadores soportados:** `eq`, `neq`, `gt`, `gte`, `lt`, `lte`, `like`, `in`
+**Operadores:** `eq`, `neq`, `gt`, `gte`, `lt`, `lte`, `like`, `in`
 
-### Búsqueda
-Búsqueda de texto completo en campos configurados:
-```bash
+### Busqueda
+```
 GET /api/v1/users?search=juan
-# Busca en username, email, first_name, last_name
 ```
 
 ### Ordenamiento
-```bash
+```
 GET /api/v1/users?sort=created_at&direction=desc
-GET /api/v1/users?sort=email&direction=asc
 ```
 
-### Combinando Características
-```bash
-GET /api/v1/users?search=juan&filter[role][eq]=user&sort=created_at&direction=desc&page=1&perPage=10
+### Combinado
+```
+GET /api/v1/users?search=juan&filter[role][eq]=user&sort=created_at&direction=desc&page=1&limit=10
 ```
 
-## 🎯 Agregando Nuevos Recursos
+## Configuracion
 
-Crear un nuevo recurso es rápido con los patrones incluidos:
-
-```bash
-# 1. Crear migración
-php spark make:migration CreateProductsTable
-
-# 2. Crear archivos siguiendo el patrón:
-app/Entities/ProductEntity.php       # Modelo de datos
-app/Models/ProductModel.php          # Capa de base de datos
-app/Services/ProductService.php      # Lógica de negocio
-app/Controllers/Api/V1/ProductController.php  # Endpoints API
-app/Documentation/Schemas/ProductSchema.php   # Esquema OpenAPI
-
-# 3. Agregar rutas en app/Config/Routes.php
-$routes->resource('api/v1/products', ['controller' => 'Api\V1\ProductController']);
-
-# 4. Generar documentación
-php spark swagger:generate
+### Requerido (.env)
+```env
+JWT_SECRET_KEY=tu-clave-secreta-min-32-caracteres
+encryption.key=hex2bin:tu-clave-de-encriptacion
+database.default.hostname=localhost
+database.default.database=tu_base_de_datos
+database.default.username=root
+database.default.password=
 ```
 
-**Controlador de Ejemplo (extiende ApiController):**
-```php
-class ProductController extends ApiController
-{
-    protected ProductService $productService;
+### Opcional (.env)
+```env
+# JWT
+JWT_ACCESS_TOKEN_TTL=3600
+JWT_REFRESH_TOKEN_TTL=604800
 
-    protected function getService(): object
-    {
-        return $this->productService;
-    }
+# Email
+EMAIL_FROM_ADDRESS=noreply@ejemplo.com
+EMAIL_SMTP_HOST=smtp.ejemplo.com
 
-    protected function getSuccessStatus(string $method): int
-    {
-        return match($method) {
-            'store' => 201,
-            default => 200,
-        };
-    }
+# Almacenamiento de archivos
+STORAGE_DRIVER=local
+FILE_MAX_SIZE=10485760
 
-    public function index(): ResponseInterface
-    {
-        return $this->handleRequest('index');  // ¡Eso es todo!
-    }
-}
+# Limite de peticiones
+THROTTLE_LIMIT=60
+THROTTLE_WINDOW=60
 ```
 
-**Resultado:** Recurso CRUD completo en ~30 minutos en lugar de 2-3 horas.
-
-## 📚 Documentación
-
-- **[DEVELOPMENT.md](DEVELOPMENT.md)** - Guía completa de arquitectura, patrones y mejores prácticas
-- **[TESTING.md](TESTING.md)** - Guía de testing con ejemplos
-- **[SECURITY.md](SECURITY.md)** - Directrices de seguridad y mejores prácticas
-- **[CI_CD.md](CI_CD.md)** - Configuración CI/CD y despliegue
-- **[TEMPLATE_SETUP.md](TEMPLATE_SETUP.md)** - Cómo configurar como plantilla de GitHub
-
-## ⚙️ Requisitos
-
-- **PHP** 8.1+ (8.2 o 8.3 recomendado)
-- **MySQL** 8.0+
-- **Composer** 2.x
-- **Extensiones**: mysqli, mbstring, intl, json
-
-## 🔒 Características de Seguridad
-
-- ✅ Autenticación JWT con Bearer tokens
-- ✅ Refresh tokens con rotación segura
-- ✅ Revocación de tokens (individual y todos los tokens del usuario)
-- ✅ Hashing de contraseñas con Bcrypt
-- ✅ Protección contra timing-attack en login
-- ✅ Contraseñas nunca expuestas en respuestas
-- ✅ Expiración de tokens (1 hora, configurable)
-- ✅ Verificación de email requerida
-- ✅ Flujo seguro de recuperación de contraseña
-- ✅ Validación de entrada en capa de modelo
-- ✅ Protección contra inyección SQL (query builder)
-- ✅ Rate limiting en todos los endpoints API
-- ✅ Registro de peticiones para monitoreo de seguridad
-- ✅ Auditoría para operaciones sensibles
-- ✅ Protección CSRF disponible
-- ✅ Soft deletes para recuperación de datos
-
-**Importante:** Antes de producción:
-1. Cambiar `JWT_SECRET_KEY` a un valor aleatorio fuerte
-2. Configurar servicio de email (configuración SMTP)
-3. Configurar almacenamiento en nube (compatible con S3)
-4. Usar solo HTTPS
-5. Revisar [SECURITY.md](SECURITY.md) para checklist completo
-
-## 🧪 Testing
-
-El proyecto incluye cobertura completa de tests con **533 tests** organizados por tipo:
-
-### Ejecutar Tests
+## Docker
 
 ```bash
-# Todos los tests
-vendor/bin/phpunit
-
-# Salida legible
-vendor/bin/phpunit --testdox
-
-# Solo unit tests (rápidos, sin base de datos)
-vendor/bin/phpunit tests/unit/
-
-# Tests de modelos (operaciones de base de datos)
-vendor/bin/phpunit tests/Models/
-
-# Tests de integración (capa de servicio completa)
-vendor/bin/phpunit tests/Services/
-
-# Tests de controladores (endpoints HTTP)
-vendor/bin/phpunit tests/Controllers/
-
-# Servicio específico
-vendor/bin/phpunit tests/unit/Services/RefreshTokenServiceTest.php
-```
-
-### Cobertura de Tests por Categoría
-
-**🔐 Autenticación y Seguridad (100%)**
-- ✅ Generación/validación de tokens JWT
-- ✅ Rotación y revocación de refresh tokens
-- ✅ Gestión de blacklist de tokens
-- ✅ Flujo de recuperación de contraseña con protección timing-attack
-- ✅ Verificación de email con expiración
-- ✅ Login con prevención de enumeración de emails
-- ✅ Prevención de inyección de roles
-
-**📁 Gestión de Archivos (100%)**
-- ✅ Validación de carga de archivos (tamaño, tipo, mime)
-- ✅ Abstracción de almacenamiento (local/S3)
-- ✅ Aplicación de propiedad
-- ✅ Rollback en errores
-
-**📊 Auditoría y Logging (100%)**
-- ✅ Registro automático de auditoría
-- ✅ Detección de diferencias old/new values
-- ✅ Seguimiento de historial de entidades
-- ✅ Seguimiento de acciones de usuario
-
-**📧 Servicio de Email (100%)**
-- ✅ Envío de emails (inmediato/en cola)
-- ✅ Renderizado de plantillas
-- ✅ Configuración SMTP
-
-**👥 Gestión de Usuarios (100%)**
-- ✅ Operaciones CRUD
-- ✅ Hashing y verificación de contraseñas
-- ✅ Control de acceso basado en roles
-
-### Organización de Tests
-
-```
-tests/
-├── unit/                    # Unit tests (142 tests, 93% passing)
-│   └── Services/           # Capa de servicio con dependencias mockeadas
-├── Models/                  # Tests de modelos (150 tests)
-│   └── Operaciones de base de datos con DB real
-├── Services/                # Tests de integración (220 tests)
-│   └── Capa de servicio completa con dependencias
-└── Controllers/             # Tests de controladores (21 tests)
-    └── Testing de endpoints HTTP
-```
-
-### Estadísticas de Tests
-
-- **Total de Tests**: 533 tests
-- **Tasa de Éxito Unit Tests**: 93% (132/142)
-- **Cobertura Crítica**: 95%
-- **Archivos de Test Creados**: 20 archivos
-- **Líneas de Código de Tests**: ~16,000 líneas
-
-### Integración Continua
-
-CI ejecuta automáticamente todos los tests en PHP 8.1, 8.2 y 8.3 mediante GitHub Actions.
-
-**Base de datos de tests** configurada por separado en `phpunit.xml` usando la base de datos `ci4_test`.
-
-## 🐳 Soporte Docker
-
-```bash
-# Configuración lista para producción
 docker-compose up -d
 
-# Tu API corre en http://localhost:8080
-# MySQL en localhost:3306
-# Adminer en http://localhost:8081
+# API: http://localhost:8080
+# MySQL: localhost:3306
+# Adminer: http://localhost:8081
 ```
 
-Ver `docker-compose.yml` para configuración.
+## Caracteristicas de Seguridad
 
-## 🛠️ Comandos Comunes
+- JWT con JTI para revocacion individual de tokens
+- Hash de contrasenas con Bcrypt
+- Proteccion contra ataques de timing en login
+- Contrasenas nunca expuestas en respuestas
+- Sanitizacion de entrada (prevencion XSS)
+- Proteccion contra inyeccion SQL (query builder)
+- Limite de peticiones
+- Eliminacion suave (soft deletes)
 
-```bash
-# Desarrollo
-php spark serve                   # Iniciar servidor dev
-php spark routes                  # Listar todas las rutas
-php spark swagger:generate        # Regenerar documentación API
+## Requisitos
 
-# Base de datos
-php spark migrate                 # Ejecutar migraciones
-php spark migrate:rollback        # Revertir migraciones
-php spark db:seed UserSeeder      # Sembrar datos
+- PHP 8.2+
+- MySQL 8.0+
+- Composer 2.x
+- Extensiones: mysqli, mbstring, intl, json
 
-# Testing
-vendor/bin/phpunit                # Ejecutar todos los tests
-composer audit                    # Check de seguridad
-```
+## Documentacion
 
-## 📦 Qué Está Incluido
+- **CLAUDE.md** - Guia de desarrollo para asistentes de IA
+- **swagger.json** - Documentacion OpenAPI (generar con `php spark swagger:generate`)
 
-### Dependencias Principales
-- `codeigniter4/framework` ^4.5 - Framework principal
-- `firebase/php-jwt` ^7.0 - Autenticación JWT
-- `zircote/swagger-php` ^6.0 - Documentación OpenAPI
+## Licencia
 
-### Dependencias de Desarrollo
-- `phpunit/phpunit` - Framework de testing
-- `fakerphp/faker` - Generación de datos de prueba
-- `php-cs-fixer` - Cumplimiento de estilo de código
-- `phpstan` - Análisis estático
-- Configuración Docker
+Licencia MIT
 
-### Características Incluidas
-- Autenticación JWT con refresh tokens y revocación
-- Verificación de email y recuperación de contraseña
-- Carga de archivos con soporte de almacenamiento en nube
-- Paginación, filtrado, búsqueda avanzados
-- Checks de salud para Kubernetes/monitoreo
-- Métricas y seguimiento de rendimiento
-- Registro de auditoría
-- Registro de peticiones y rate limiting
-- Internacionalización (i18n)
-- Documentación OpenAPI completa
+## Contribuir
 
-## 🔄 Mantenerse Actualizado
-
-Esta es una plantilla starter, no un paquete. Después de crear tu proyecto:
-
-1. **Personaliza según tus necesidades** - Este es tu codebase ahora
-2. **Elimina características no utilizadas** - Borra lo que no necesites
-3. **Agrega tus recursos** - Sigue los patrones establecidos
-4. **Verifica actualizaciones** - Ocasionalmente revisa la plantilla original
-
-## 🤝 Contribuir
-
-¡Las contribuciones para mejorar el starter kit son bienvenidas!
-
-1. Fork el repositorio
-2. Crea rama de característica (`git checkout -b feature/mejora`)
-3. Commit de cambios (`git commit -m 'Agregar mejora'`)
+1. Haz fork del repositorio
+2. Crea una rama de feature (`git checkout -b feature/mejora`)
+3. Haz commit de los cambios (`git commit -m 'Agregar mejora'`)
 4. Push a la rama (`git push origin feature/mejora`)
-5. Abrir Pull Request
-
-## 📄 Licencia
-
-Licencia MIT - úsala para proyectos personales o comerciales.
-
-## 🙏 Reconocimientos
-
-Construido con:
-- [CodeIgniter 4](https://codeigniter.com/)
-- [firebase/php-jwt](https://github.com/firebase/php-jwt)
-- [swagger-php](https://github.com/zircote/swagger-php)
-
-## 💬 Soporte
-
-- **Issues:** [GitHub Issues](https://github.com/dcardenasl/ci4-api-starter/issues)
-- **Discusiones:** [GitHub Discussions](https://github.com/dcardenasl/ci4-api-starter/discussions)
-- **Documentación:** Ver la carpeta `/docs`
-
----
-
-**¿Listo para construir tu API?** ¡Haz clic en "Use this template" arriba para comenzar! 🚀
+5. Abre un Pull Request

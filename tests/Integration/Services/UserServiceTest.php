@@ -23,8 +23,10 @@ class UserServiceTest extends CIUnitTestCase
     use DatabaseTestTrait;
     use CustomAssertionsTrait;
 
-    protected $migrate = true;
-    protected $refresh = true;
+    protected $migrate     = true;
+    protected $migrateOnce = false;
+    protected $refresh     = true;
+    protected $namespace   = 'App';  // Use app migrations
 
     protected UserService $userService;
     protected UserModel $userModel;

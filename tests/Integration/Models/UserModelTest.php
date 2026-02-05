@@ -18,8 +18,10 @@ class UserModelTest extends CIUnitTestCase
 {
     use DatabaseTestTrait;
 
-    protected $migrate = true;
-    protected $refresh = true;
+    protected $migrate     = true;
+    protected $migrateOnce = false;
+    protected $refresh     = true;
+    protected $namespace   = 'App';  // Use app migrations
 
     protected UserModel $userModel;
 
@@ -183,7 +185,8 @@ class UserModelTest extends CIUnitTestCase
             'role' => 'user',
         ]);
 
-        $admins = $this->userModel->filter(['role' => ['eq' => 'admin']])->findAll();
+        // Use applyFilters() method from Filterable trait
+        $admins = $this->userModel->applyFilters(['role' => ['eq' => 'admin']])->findAll();
 
         $this->assertCount(1, $admins);
         $this->assertEquals('admin', $admins[0]->role);

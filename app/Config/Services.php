@@ -249,4 +249,21 @@ class Services extends BaseService
 
         return new \App\Libraries\Storage\StorageManager();
     }
+
+    /**
+     * Input Validation Service
+     *
+     * Provides centralized input validation functionality
+     *
+     * @param bool $getShared
+     * @return \App\Services\InputValidationService
+     */
+    public static function inputValidationService(bool $getShared = true)
+    {
+        if ($getShared) {
+            return static::getSharedInstance('inputValidationService');
+        }
+
+        return new \App\Services\InputValidationService();
+    }
 }

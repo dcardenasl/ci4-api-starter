@@ -77,12 +77,12 @@ abstract class BaseValidation
     protected function paginationMessages(): array
     {
         return [
-            'page.is_natural_no_zero'         => 'Page must be a positive integer',
-            'per_page.is_natural_no_zero'     => 'Items per page must be a positive integer',
-            'per_page.less_than_equal_to'     => 'Items per page cannot exceed 100',
-            'sort_by.alpha_dash'              => 'Sort field contains invalid characters',
-            'sort_dir.in_list'                => 'Sort direction must be either asc or desc',
-            'search.max_length'               => 'Search query is too long',
+            'page.is_natural_no_zero'     => lang('InputValidation.common.pageMustBePositive'),
+            'per_page.is_natural_no_zero' => lang('InputValidation.common.perPageMustBePositive'),
+            'per_page.less_than_equal_to' => lang('InputValidation.common.perPageExceedsMax'),
+            'sort_by.alpha_dash'          => lang('InputValidation.common.sortFieldInvalid'),
+            'sort_dir.in_list'            => lang('InputValidation.common.sortDirInvalid'),
+            'search.max_length'           => lang('InputValidation.common.searchTooLong'),
         ];
     }
 
@@ -107,9 +107,10 @@ abstract class BaseValidation
      */
     protected function idMessages(string $field = 'id'): array
     {
+        $fieldName = ucfirst($field);
         return [
-            "{$field}.required"           => ucfirst($field) . ' is required',
-            "{$field}.is_natural_no_zero" => ucfirst($field) . ' must be a positive integer',
+            "{$field}.required"           => lang('InputValidation.common.idRequired', [$fieldName]),
+            "{$field}.is_natural_no_zero" => lang('InputValidation.common.idMustBePositive', [$fieldName]),
         ];
     }
 

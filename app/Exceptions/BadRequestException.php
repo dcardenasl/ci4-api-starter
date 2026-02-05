@@ -17,11 +17,11 @@ class BadRequestException extends ApiException
     /**
      * Constructor
      *
-     * @param string $message Error message (default: "Bad request")
+     * @param string|null $message Error message (default: lang('Exceptions.badRequest'))
      * @param array $errors Additional error details
      */
-    public function __construct(string $message = 'Bad request', array $errors = [])
+    public function __construct(?string $message = null, array $errors = [])
     {
-        parent::__construct($message, $errors);
+        parent::__construct($message ?? lang('Exceptions.badRequest'), $errors);
     }
 }

@@ -192,15 +192,15 @@ class AuditService implements AuditServiceInterface
     {
         if (empty($data['id'])) {
             throw new BadRequestException(
-                'Invalid request',
-                ['id' => 'Audit log ID is required']
+                lang('Api.invalidRequest'),
+                ['id' => lang('Audit.idRequired')]
             );
         }
 
         $log = $this->auditLogModel->find($data['id']);
 
         if (!$log) {
-            throw new NotFoundException('Audit log not found');
+            throw new NotFoundException(lang('Audit.notFound'));
         }
 
         return ApiResponse::success([
@@ -227,8 +227,8 @@ class AuditService implements AuditServiceInterface
     {
         if (empty($data['entity_type']) || empty($data['entity_id'])) {
             throw new BadRequestException(
-                'Invalid request',
-                ['entity' => 'Entity type and ID are required']
+                lang('Api.invalidRequest'),
+                ['entity' => lang('Audit.entityRequired')]
             );
         }
 

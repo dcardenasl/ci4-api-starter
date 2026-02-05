@@ -51,16 +51,16 @@ class UserValidation extends BaseValidation
     public function getMessages(string $action): array
     {
         $commonMessages = [
-            'username.required'        => 'Username is required',
-            'username.alpha_numeric'   => 'Username can only contain letters and numbers',
-            'username.min_length'      => 'Username must be at least 3 characters',
-            'username.max_length'      => 'Username cannot exceed 100 characters',
-            'email.required'           => 'Email is required',
-            'email.valid_email_idn'    => 'Please provide a valid email address',
-            'email.max_length'         => 'Email cannot exceed 255 characters',
-            'password.required'        => 'Password is required',
-            'password.strong_password' => 'Password must be 8-128 characters with uppercase, lowercase, number, and special character',
-            'role.in_list'             => 'Role must be either user or admin',
+            'username.required'        => lang('InputValidation.common.usernameRequired'),
+            'username.alpha_numeric'   => lang('InputValidation.common.usernameAlphaNumeric'),
+            'username.min_length'      => lang('InputValidation.common.usernameMinLength'),
+            'username.max_length'      => lang('InputValidation.common.usernameMaxLength'),
+            'email.required'           => lang('InputValidation.common.emailRequired'),
+            'email.valid_email_idn'    => lang('InputValidation.common.emailInvalid'),
+            'email.max_length'         => lang('InputValidation.common.emailMaxLength'),
+            'password.required'        => lang('InputValidation.common.passwordRequired'),
+            'password.strong_password' => lang('InputValidation.common.passwordStrength'),
+            'role.in_list'             => lang('InputValidation.common.roleInvalid'),
         ];
 
         return match ($action) {

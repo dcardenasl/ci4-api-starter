@@ -26,11 +26,11 @@ class ServiceUnavailableException extends ApiException
     /**
      * Constructor
      *
-     * @param string $message Error message
+     * @param string|null $message Error message (default: lang('Exceptions.serviceUnavailable'))
      * @param array $errors Structured error details
      */
-    public function __construct(string $message = 'Service temporarily unavailable', array $errors = [])
+    public function __construct(?string $message = null, array $errors = [])
     {
-        parent::__construct($message, $errors);
+        parent::__construct($message ?? lang('Exceptions.serviceUnavailable'), $errors);
     }
 }

@@ -42,8 +42,8 @@ class FileValidation extends BaseValidation
             'show', 'delete' => $this->idMessages(),
 
             'upload' => [
-                'file.uploaded' => 'No file was uploaded',
-                'file.max_size' => 'File size cannot exceed 10MB',
+                'file.uploaded' => lang('InputValidation.file.noFileUploaded'),
+                'file.max_size' => lang('InputValidation.file.fileTooLarge'),
             ],
 
             default => [],

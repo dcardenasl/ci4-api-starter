@@ -25,11 +25,11 @@ class TooManyRequestsException extends ApiException
     /**
      * Constructor
      *
-     * @param string $message Error message
+     * @param string|null $message Error message (default: lang('Exceptions.tooManyRequests'))
      * @param array $errors Structured error details
      */
-    public function __construct(string $message = 'Too many requests', array $errors = [])
+    public function __construct(?string $message = null, array $errors = [])
     {
-        parent::__construct($message, $errors);
+        parent::__construct($message ?? lang('Exceptions.tooManyRequests'), $errors);
     }
 }

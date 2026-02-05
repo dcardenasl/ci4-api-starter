@@ -122,7 +122,7 @@ class UserService implements UserServiceInterface
         if (!$userId) {
             throw new ValidationException(
                 lang('Api.validationFailed'),
-                $this->userModel->errors() ?: ['general' => 'Failed to create user']
+                $this->userModel->errors() ?: ['general' => lang('Users.createError')]
             );
         }
 

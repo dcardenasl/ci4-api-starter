@@ -52,29 +52,29 @@ class AuditValidation extends BaseValidation
             'index' => $this->mergeMessages(
                 $this->paginationMessages(),
                 [
-                    'action.alpha_dash'           => 'Action contains invalid characters',
-                    'action.max_length'           => 'Action cannot exceed 50 characters',
-                    'entity_type.alpha_dash'      => 'Entity type contains invalid characters',
-                    'entity_type.max_length'      => 'Entity type cannot exceed 50 characters',
-                    'user_id.is_natural_no_zero'  => 'User ID must be a positive integer',
-                    'from_date.valid_date'        => 'From date must be in Y-m-d format',
-                    'to_date.valid_date'          => 'To date must be in Y-m-d format',
+                    'action.alpha_dash'          => lang('InputValidation.audit.actionInvalidChars'),
+                    'action.max_length'          => lang('InputValidation.audit.actionTooLong'),
+                    'entity_type.alpha_dash'     => lang('InputValidation.audit.entityTypeInvalidChars'),
+                    'entity_type.max_length'     => lang('InputValidation.audit.entityTypeTooLong'),
+                    'user_id.is_natural_no_zero' => lang('InputValidation.common.userIdMustBePositive'),
+                    'from_date.valid_date'       => lang('InputValidation.audit.fromDateInvalid'),
+                    'to_date.valid_date'         => lang('InputValidation.audit.toDateInvalid'),
                 ]
             ),
 
             'show' => $this->idMessages(),
 
             'by_entity' => [
-                'entity_type.required'           => 'Entity type is required',
-                'entity_type.alpha_dash'         => 'Entity type contains invalid characters',
-                'entity_type.max_length'         => 'Entity type cannot exceed 50 characters',
-                'entity_id.required'             => 'Entity ID is required',
-                'entity_id.is_natural_no_zero'   => 'Entity ID must be a positive integer',
+                'entity_type.required'         => lang('InputValidation.audit.entityTypeRequired'),
+                'entity_type.alpha_dash'       => lang('InputValidation.audit.entityTypeInvalidChars'),
+                'entity_type.max_length'       => lang('InputValidation.audit.entityTypeTooLong'),
+                'entity_id.required'           => lang('InputValidation.audit.entityIdRequired'),
+                'entity_id.is_natural_no_zero' => lang('InputValidation.audit.entityIdMustBePositive'),
             ],
 
             'by_user' => [
-                'user_id.required'              => 'User ID is required',
-                'user_id.is_natural_no_zero'    => 'User ID must be a positive integer',
+                'user_id.required'             => lang('InputValidation.common.userIdRequired'),
+                'user_id.is_natural_no_zero'   => lang('InputValidation.common.userIdMustBePositive'),
             ],
 
             default => [],

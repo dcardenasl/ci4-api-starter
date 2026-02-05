@@ -40,12 +40,12 @@ class TokenValidation extends BaseValidation
     {
         return match ($action) {
             'refresh', 'revoke' => [
-                'refresh_token.required'   => 'Refresh token is required',
-                'refresh_token.min_length' => 'Invalid refresh token format',
+                'refresh_token.required'   => lang('InputValidation.token.refreshTokenRequired'),
+                'refresh_token.min_length' => lang('InputValidation.token.refreshTokenInvalid'),
             ],
 
             'revoke_all' => [
-                'user_id.is_natural_no_zero' => 'User ID must be a positive integer',
+                'user_id.is_natural_no_zero' => lang('InputValidation.common.userIdMustBePositive'),
             ],
 
             default => [],

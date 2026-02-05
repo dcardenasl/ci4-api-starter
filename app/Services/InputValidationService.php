@@ -12,7 +12,7 @@ use App\Validations\BaseValidation;
 use App\Validations\FileValidation;
 use App\Validations\TokenValidation;
 use App\Validations\UserValidation;
-use CodeIgniter\Validation\Validation;
+use CodeIgniter\Validation\ValidationInterface;
 
 /**
  * Input Validation Service
@@ -28,9 +28,9 @@ class InputValidationService implements InputValidationServiceInterface
     protected array $validators = [];
 
     /**
-     * @var Validation CodeIgniter validation instance
+     * @var ValidationInterface CodeIgniter validation instance
      */
-    protected Validation $validation;
+    protected ValidationInterface $validation;
 
     /**
      * Constructor

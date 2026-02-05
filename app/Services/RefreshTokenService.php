@@ -5,10 +5,13 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Exceptions\AuthenticationException;
+use App\Exceptions\BadRequestException;
 use App\Exceptions\NotFoundException;
+use App\Interfaces\JwtServiceInterface;
 use App\Interfaces\RefreshTokenServiceInterface;
 use App\Libraries\ApiResponse;
 use App\Models\RefreshTokenModel;
+use App\Models\UserModel;
 
 /**
  * Refresh Token Service
@@ -17,11 +20,11 @@ use App\Models\RefreshTokenModel;
  */
 class RefreshTokenService implements RefreshTokenServiceInterface
 {
-    protected RefreshTokenModel $refreshTokenModel;
-
-    public function __construct(RefreshTokenModel $refreshTokenModel)
-    {
-        $this->refreshTokenModel = $refreshTokenModel;
+    public function __construct(
+        protected RefreshTokenModel $refreshTokenModel,
+        protected JwtServiceInterface $jwtService,
+        protected UserModel $userModel
+    ) {
     }
 
     /**
@@ -63,9 +66,9 @@ class RefreshTokenService implements RefreshTokenServiceInterface
     public function refreshAccessToken(array $data): array
     {
         if (empty($data['refresh_token'])) {
-            return ApiResponse::error(
-                ['refresh_token' => lang('Tokens.refreshTokenRequired')],
-                lang('Tokens.invalidRequest')
+            throw new BadRequestException(
+                lang('Tokens.invalidRequest'),
+                ['refresh_token' => lang('Tokens.refreshTokenRequired')]
             );
         }
 
@@ -102,19 +105,15 @@ class RefreshTokenService implements RefreshTokenServiceInterface
         // Issue new refresh token
         $newRefreshToken = $this->issueRefreshToken((int) $tokenRecord->user_id);
 
-        // Generate new access token
-        $jwtService = \Config\Services::jwtService();
-
         // Get user to get role
-        $userModel = new \App\Models\UserModel();
-        $user = $userModel->find($tokenRecord->user_id);
+        $user = $this->userModel->find($tokenRecord->user_id);
 
         if (!$user) {
             $db->transRollback();
             throw new AuthenticationException(lang('Tokens.userNotFound'));
         }
 
-        $accessToken = $jwtService->encode((int) $user->id, $user->role);
+        $accessToken = $this->jwtService->encode((int) $user->id, $user->role);
 
         // Commit transaction - all changes are now permanent
         $db->transComplete();
@@ -135,9 +134,9 @@ class RefreshTokenService implements RefreshTokenServiceInterface
     public function revoke(array $data): array
     {
         if (empty($data['refresh_token'])) {
-            return ApiResponse::error(
-                ['refresh_token' => lang('Tokens.refreshTokenRequired')],
-                lang('Tokens.invalidRequest')
+            throw new BadRequestException(
+                lang('Tokens.invalidRequest'),
+                ['refresh_token' => lang('Tokens.refreshTokenRequired')]
             );
         }
 

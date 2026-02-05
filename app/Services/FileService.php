@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Exceptions\AuthorizationException;
+use App\Exceptions\BadRequestException;
 use App\Exceptions\NotFoundException;
+use App\Exceptions\ValidationException;
 use App\Interfaces\FileServiceInterface;
 use App\Libraries\ApiResponse;
 use App\Libraries\Storage\StorageManager;
@@ -18,13 +20,10 @@ use App\Models\FileModel;
  */
 class FileService implements FileServiceInterface
 {
-    protected FileModel $fileModel;
-    protected StorageManager $storage;
-
-    public function __construct(FileModel $fileModel, StorageManager $storage)
-    {
-        $this->fileModel = $fileModel;
-        $this->storage = $storage;
+    public function __construct(
+        protected FileModel $fileModel,
+        protected StorageManager $storage
+    ) {
     }
 
     /**
@@ -47,7 +46,7 @@ class FileService implements FileServiceInterface
         }
 
         if (!empty($errors)) {
-            return ApiResponse::error($errors, lang('Files.invalidRequest'));
+            throw new BadRequestException(lang('Files.invalidRequest'), $errors);
         }
 
         $file = $data['file'];
@@ -55,26 +54,26 @@ class FileService implements FileServiceInterface
 
         // Validate file object
         if (!is_object($file) || !method_exists($file, 'isValid')) {
-            return ApiResponse::error(
-                ['file' => lang('Files.invalidFileObject')],
-                lang('Files.invalidRequest')
+            throw new BadRequestException(
+                lang('Files.invalidRequest'),
+                ['file' => lang('Files.invalidFileObject')]
             );
         }
 
         // Check if file is valid
         if (!$file->isValid()) {
-            return ApiResponse::error(
-                ['file' => lang('Files.uploadFailed', [$file->getErrorString()])],
-                lang('Files.uploadFailed', [$file->getErrorString()])
+            throw new BadRequestException(
+                lang('Files.uploadFailed', [$file->getErrorString()]),
+                ['file' => lang('Files.uploadFailed', [$file->getErrorString()])]
             );
         }
 
         // Validate file size
         $maxSize = (int) env('FILE_MAX_SIZE', 10485760); // 10MB default
         if ($file->getSize() > $maxSize) {
-            return ApiResponse::error(
-                ['file' => lang('Files.fileTooLarge')],
-                lang('Files.fileTooLarge')
+            throw new ValidationException(
+                lang('Files.fileTooLarge'),
+                ['file' => lang('Files.fileTooLarge')]
             );
         }
 
@@ -83,9 +82,9 @@ class FileService implements FileServiceInterface
         $extension = $file->getExtension();
 
         if (!in_array(strtolower($extension), $allowedTypes, true)) {
-            return ApiResponse::error(
-                ['file' => lang('Files.invalidFileType')],
-                lang('Files.invalidFileType')
+            throw new ValidationException(
+                lang('Files.invalidFileType'),
+                ['file' => lang('Files.invalidFileType')]
             );
         }
 
@@ -98,10 +97,7 @@ class FileService implements FileServiceInterface
         $stored = $this->storage->put($path, $contents);
 
         if (!$stored) {
-            return ApiResponse::error(
-                ['file' => lang('Files.storageFailed')],
-                lang('Files.storageError')
-            );
+            throw new \RuntimeException(lang('Files.storageError'));
         }
 
         // Save metadata to database
@@ -127,7 +123,10 @@ class FileService implements FileServiceInterface
             // Rollback: delete file from storage
             $this->storage->delete($path);
 
-            return ApiResponse::validationError($this->fileModel->errors());
+            throw new ValidationException(
+                lang('Files.saveFailed'),
+                $this->fileModel->errors() ?: ['file' => lang('Files.saveFailed')]
+            );
         }
 
         $savedFile = $this->fileModel->find($fileId);
@@ -152,9 +151,9 @@ class FileService implements FileServiceInterface
     public function index(array $data): array
     {
         if (empty($data['user_id'])) {
-            return ApiResponse::error(
-                ['user_id' => lang('Files.userIdRequired')],
-                lang('Files.invalidRequest')
+            throw new BadRequestException(
+                lang('Files.invalidRequest'),
+                ['user_id' => lang('Files.userIdRequired')]
             );
         }
 
@@ -195,7 +194,7 @@ class FileService implements FileServiceInterface
         }
 
         if (!empty($errors)) {
-            return ApiResponse::error($errors, lang('Files.invalidRequest'));
+            throw new BadRequestException(lang('Files.invalidRequest'), $errors);
         }
 
         // First check if file exists
@@ -239,7 +238,7 @@ class FileService implements FileServiceInterface
         }
 
         if (!empty($errors)) {
-            return ApiResponse::error($errors, lang('Files.invalidRequest'));
+            throw new BadRequestException(lang('Files.invalidRequest'), $errors);
         }
 
         // First check if file exists

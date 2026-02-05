@@ -1,22 +1,23 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services;
 
 use App\Exceptions\BadRequestException;
 use App\Exceptions\ConflictException;
 use App\Exceptions\NotFoundException;
+use App\Interfaces\EmailServiceInterface;
+use App\Interfaces\VerificationServiceInterface;
 use App\Libraries\ApiResponse;
 use App\Models\UserModel;
 
-class VerificationService
+class VerificationService implements VerificationServiceInterface
 {
-    protected UserModel $userModel;
-    protected EmailService $emailService;
-
-    public function __construct()
-    {
-        $this->userModel = new UserModel();
-        $this->emailService = new EmailService();
+    public function __construct(
+        protected UserModel $userModel,
+        protected EmailServiceInterface $emailService
+    ) {
     }
 
     /**
@@ -69,13 +70,18 @@ class VerificationService
     /**
      * Verify email with token
      *
-     * @param string $token
+     * @param array $data Contains 'token'
      * @return array<string, mixed>
      */
-    public function verifyEmail(string $token): array
+    public function verifyEmail(array $data): array
     {
+        $token = $data['token'] ?? '';
+
         if (empty($token)) {
-            return ApiResponse::validationError(['token' => lang('Verification.tokenRequired')]);
+            throw new BadRequestException(
+                lang('Verification.tokenRequired'),
+                ['token' => lang('Verification.tokenRequired')]
+            );
         }
 
         // Find user by token
@@ -113,11 +119,12 @@ class VerificationService
     /**
      * Resend verification email
      *
-     * @param int $userId
+     * @param array $data Contains 'user_id'
      * @return array<string, mixed>
      */
-    public function resendVerification(int $userId): array
+    public function resendVerification(array $data): array
     {
+        $userId = (int) ($data['user_id'] ?? 0);
         $user = $this->userModel->find($userId);
 
         if (! $user) {

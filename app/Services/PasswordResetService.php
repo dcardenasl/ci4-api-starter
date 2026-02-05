@@ -1,33 +1,36 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services;
 
+use App\Exceptions\BadRequestException;
 use App\Exceptions\NotFoundException;
+use App\Exceptions\ValidationException;
+use App\Interfaces\EmailServiceInterface;
+use App\Interfaces\PasswordResetServiceInterface;
 use App\Libraries\ApiResponse;
 use App\Models\PasswordResetModel;
 use App\Models\UserModel;
 
-class PasswordResetService
+class PasswordResetService implements PasswordResetServiceInterface
 {
-    protected UserModel $userModel;
-    protected PasswordResetModel $passwordResetModel;
-    protected EmailService $emailService;
-
-    public function __construct()
-    {
-        $this->userModel = new UserModel();
-        $this->passwordResetModel = new PasswordResetModel();
-        $this->emailService = new EmailService();
+    public function __construct(
+        protected UserModel $userModel,
+        protected PasswordResetModel $passwordResetModel,
+        protected EmailServiceInterface $emailService
+    ) {
     }
 
     /**
      * Send password reset link to email
      *
-     * @param string $email
+     * @param array $data Contains 'email'
      * @return array<string, mixed>
      */
-    public function sendResetLink(string $email): array
+    public function sendResetLink(array $data): array
     {
+        $email = $data['email'] ?? '';
         // Validate email (support international domain names)
         // Try converting IDN to ASCII for validation
         $emailToValidate = $email;
@@ -41,7 +44,10 @@ class PasswordResetService
         }
 
         if (empty($email) || ! filter_var($emailToValidate, FILTER_VALIDATE_EMAIL)) {
-            return ApiResponse::validationError(['email' => lang('PasswordReset.emailRequired')]);
+            throw new ValidationException(
+                lang('PasswordReset.emailRequired'),
+                ['email' => lang('PasswordReset.emailRequired')]
+            );
         }
 
         // Find user by email
@@ -85,16 +91,19 @@ class PasswordResetService
     /**
      * Validate reset token
      *
-     * @param string $token
-     * @param string $email
+     * @param array $data Contains 'token' and 'email'
      * @return array<string, mixed>
      */
-    public function validateToken(string $token, string $email): array
+    public function validateToken(array $data): array
     {
+        $token = $data['token'] ?? '';
+        $email = $data['email'] ?? '';
+
         if (empty($token) || empty($email)) {
-            return ApiResponse::validationError([
-                'token' => lang('PasswordReset.tokenRequired'),
-            ]);
+            throw new BadRequestException(
+                lang('PasswordReset.tokenRequired'),
+                ['token' => lang('PasswordReset.tokenRequired')]
+            );
         }
 
         // Clean expired tokens
@@ -111,37 +120,39 @@ class PasswordResetService
     /**
      * Reset password using token
      *
-     * @param string $token
-     * @param string $email
-     * @param string $newPassword
+     * @param array $data Contains 'token', 'email', 'password'
      * @return array<string, mixed>
      */
-    public function resetPassword(string $token, string $email, string $newPassword): array
+    public function resetPassword(array $data): array
     {
+        $token = $data['token'] ?? '';
+        $email = $data['email'] ?? '';
+        $newPassword = $data['password'] ?? '';
+
         // Validate inputs
         if (empty($token) || empty($email) || empty($newPassword)) {
-            return ApiResponse::validationError([
-                'password' => lang('PasswordReset.allFieldsRequired'),
-            ]);
+            throw new BadRequestException(
+                lang('PasswordReset.allFieldsRequired'),
+                ['password' => lang('PasswordReset.allFieldsRequired')]
+            );
         }
 
         // Validate password strength
+        $passwordErrors = [];
+
         if (strlen($newPassword) < 8) {
-            return ApiResponse::validationError([
-                'password' => lang('PasswordReset.passwordMinLength'),
-            ]);
+            $passwordErrors['password'] = lang('PasswordReset.passwordMinLength');
+        } elseif (strlen($newPassword) > 128) {
+            $passwordErrors['password'] = lang('PasswordReset.passwordMaxLength');
+        } elseif (!preg_match('/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).+$/', $newPassword)) {
+            $passwordErrors['password'] = lang('PasswordReset.passwordComplexity');
         }
 
-        if (strlen($newPassword) > 128) {
-            return ApiResponse::validationError([
-                'password' => lang('PasswordReset.passwordMaxLength'),
-            ]);
-        }
-
-        if (!preg_match('/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).+$/', $newPassword)) {
-            return ApiResponse::validationError([
-                'password' => lang('PasswordReset.passwordComplexity'),
-            ]);
+        if (!empty($passwordErrors)) {
+            throw new ValidationException(
+                lang('PasswordReset.passwordValidationFailed'),
+                $passwordErrors
+            );
         }
 
         // Clean expired tokens

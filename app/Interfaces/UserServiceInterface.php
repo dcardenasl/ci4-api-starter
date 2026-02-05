@@ -7,8 +7,8 @@ namespace App\Interfaces;
 /**
  * User Service Interface
  *
- * Defines the contract for user-related business logic operations.
- * Implementations must provide CRUD operations and authentication methods.
+ * Defines the contract for user CRUD operations.
+ * Authentication methods have been moved to AuthServiceInterface.
  */
 interface UserServiceInterface
 {
@@ -51,36 +51,4 @@ interface UserServiceInterface
      * @return array Result with success message or errors
      */
     public function destroy(array $data): array;
-
-    /**
-     * Authenticate user with credentials
-     *
-     * @param array $data Login credentials (username/email, password)
-     * @return array Result with user data or errors
-     */
-    public function login(array $data): array;
-
-    /**
-     * Register a new user with password
-     *
-     * @param array $data Registration data (username, email, password)
-     * @return array Result with created user data or errors
-     */
-    public function register(array $data): array;
-
-    /**
-     * Authenticate user and return JWT token
-     *
-     * @param array $data Login credentials
-     * @return array Result with token and user data, or errors
-     */
-    public function loginWithToken(array $data): array;
-
-    /**
-     * Register new user and return JWT token
-     *
-     * @param array $data Registration data
-     * @return array Result with token and user data, or errors
-     */
-    public function registerWithToken(array $data): array;
 }

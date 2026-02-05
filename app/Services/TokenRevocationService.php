@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Exceptions\BadRequestException;
 use App\Interfaces\TokenRevocationServiceInterface;
 use App\Libraries\ApiResponse;
 use App\Models\RefreshTokenModel;
 use App\Models\TokenBlacklistModel;
+use CodeIgniter\Cache\CacheInterface;
 
 /**
  * Token Revocation Service
@@ -16,15 +18,13 @@ use App\Models\TokenBlacklistModel;
  */
 class TokenRevocationService implements TokenRevocationServiceInterface
 {
-    protected TokenBlacklistModel $blacklistModel;
-    protected RefreshTokenModel $refreshTokenModel;
-
     public function __construct(
-        TokenBlacklistModel $blacklistModel,
-        RefreshTokenModel $refreshTokenModel
+        protected TokenBlacklistModel $blacklistModel,
+        protected RefreshTokenModel $refreshTokenModel,
+        protected ?CacheInterface $cache = null
     ) {
-        $this->blacklistModel = $blacklistModel;
-        $this->refreshTokenModel = $refreshTokenModel;
+        // Use injected cache or get from Services
+        $this->cache = $cache ?? \Config\Services::cache();
     }
 
     /**
@@ -39,9 +39,9 @@ class TokenRevocationService implements TokenRevocationServiceInterface
         $added = $this->blacklistModel->addToBlacklist($jti, $expiresAt);
 
         if (!$added) {
-            return ApiResponse::error(
-                ['token' => lang('Tokens.revocationFailed')],
-                lang('Tokens.revocationFailed')
+            throw new BadRequestException(
+                lang('Tokens.revocationFailed'),
+                ['token' => lang('Tokens.revocationFailed')]
             );
         }
 
@@ -57,10 +57,9 @@ class TokenRevocationService implements TokenRevocationServiceInterface
     public function isRevoked(string $jti): bool
     {
         // Check cache first for performance
-        $cache = \Config\Services::cache();
         $cacheKey = "token_revoked_{$jti}";
 
-        $cached = $cache->get($cacheKey);
+        $cached = $this->cache->get($cacheKey);
         if ($cached !== null) {
             return (bool) $cached;
         }
@@ -69,7 +68,7 @@ class TokenRevocationService implements TokenRevocationServiceInterface
         $isBlacklisted = $this->blacklistModel->isBlacklisted($jti);
 
         // Cache result for 5 minutes
-        $cache->save($cacheKey, $isBlacklisted ? 1 : 0, 300);
+        $this->cache->save($cacheKey, $isBlacklisted ? 1 : 0, 300);
 
         return $isBlacklisted;
     }

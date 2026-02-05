@@ -1,30 +1,45 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services;
 
+use App\Interfaces\EmailServiceInterface;
 use App\Libraries\Queue\QueueManager;
 use Symfony\Component\Mailer\Mailer;
+use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mailer\Transport;
 use Symfony\Component\Mime\Email;
 use Throwable;
 
-class EmailService
+class EmailService implements EmailServiceInterface
 {
-    protected Mailer $mailer;
+    protected MailerInterface $mailer;
     protected QueueManager $queueManager;
     protected string $fromAddress;
     protected string $fromName;
 
-    public function __construct()
-    {
+    public function __construct(
+        ?MailerInterface $mailer = null,
+        ?QueueManager $queueManager = null
+    ) {
         $this->fromAddress = env('EMAIL_FROM_ADDRESS', 'noreply@example.com');
         $this->fromName = env('EMAIL_FROM_NAME', 'API Application');
 
-        // Create mailer transport
-        $transport = $this->createTransport();
-        $this->mailer = new Mailer($transport);
+        // Use injected mailer or create default
+        $this->mailer = $mailer ?? $this->createDefaultMailer();
+        $this->queueManager = $queueManager ?? new QueueManager();
+    }
 
-        $this->queueManager = new QueueManager();
+    /**
+     * Create default mailer from configuration
+     *
+     * @return Mailer
+     */
+    protected function createDefaultMailer(): Mailer
+    {
+        $transport = $this->createTransport();
+        return new Mailer($transport);
     }
 
     /**

@@ -1,71 +1,35 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Controllers\Api\V1;
 
 use App\Controllers\ApiController;
-use App\Services\VerificationService;
 use CodeIgniter\HTTP\ResponseInterface;
 
+/**
+ * Verification Controller - Email verification
+ */
 class VerificationController extends ApiController
 {
-    protected VerificationService $verificationService;
+    protected string $serviceName = 'verificationService';
 
-    public function __construct()
-    {
-        $this->verificationService = new VerificationService();
-    }
-
-    /**
-     * Get the service instance
-     *
-     * @return object
-     */
-    protected function getService(): object
-    {
-        return $this->verificationService;
-    }
-
-    /**
-     * Get success status code for method
-     *
-     * @param string $method
-     * @return int
-     */
-    protected function getSuccessStatus(string $method): int
-    {
-        return 200;
-    }
-
-    /**
-     * Verify email with token
-     *
-     * POST /api/v1/auth/verify-email
-     *
-     * @return ResponseInterface
-     */
     public function verify(): ResponseInterface
     {
-        return $this->handleRequest('verifyEmail');
+        $token = $this->request->getVar('token') ?? '';
+        return $this->handleRequest('verifyEmail', ['token' => $token]);
     }
 
-    /**
-     * Resend verification email
-     *
-     * POST /api/v1/auth/resend-verification
-     * Requires authentication
-     *
-     * @return ResponseInterface
-     */
     public function resend(): ResponseInterface
     {
-        $userId = $this->request->userId ?? null;
+        $userId = $this->getUserId();
 
-        if (! $userId) {
+        if (!$userId) {
             return $this->respondUnauthorized('Authentication required');
         }
 
-        $result = $this->verificationService->resendVerification($userId);
-
-        return $this->respond($result, $result['status_code'] ?? 200);
+        return $this->handleRequest('resendVerification', [
+            'user_id' => $userId,
+        ]);
     }
 }

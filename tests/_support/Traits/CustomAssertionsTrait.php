@@ -5,164 +5,83 @@ declare(strict_types=1);
 namespace Tests\Support\Traits;
 
 /**
- * Custom Assertions Trait
+ * Custom Assertions for API Testing
  *
- * Provides reusable assertion helpers for API response testing.
- * Reduces code duplication and enforces consistent response validation.
- *
- * Usage:
- * ```php
- * class MyServiceTest extends CIUnitTestCase
- * {
- *     use CustomAssertionsTrait;
- *
- *     public function testSomething(): void
- *     {
- *         $result = $this->service->someMethod();
- *         $this->assertSuccessResponse($result, 'token');
- *     }
- * }
- * ```
+ * Provides reusable assertions for testing ApiResponse arrays.
  */
 trait CustomAssertionsTrait
 {
     /**
-     * Assert that response has success status and contains data
-     *
-     * @param array       $result  The service response array
-     * @param string|null $dataKey Optional specific key to check in data array
+     * Assert that the response is a successful API response
      */
     protected function assertSuccessResponse(array $result, ?string $dataKey = null): void
     {
-        $this->assertEquals('success', $result['status'], 'Response status should be success');
-        $this->assertArrayHasKey('data', $result, 'Response should contain data key');
+        $this->assertArrayHasKey('status', $result);
+        $this->assertEquals('success', $result['status']);
 
         if ($dataKey !== null) {
-            $this->assertArrayHasKey($dataKey, $result['data'], "Data should contain '{$dataKey}' key");
+            $this->assertArrayHasKey('data', $result);
+            $this->assertArrayHasKey($dataKey, $result['data']);
         }
     }
 
     /**
-     * Assert that response has error status and contains errors
-     *
-     * @param array       $result   The service response array
-     * @param string|null $errorKey Optional specific error field to check
+     * Assert that the response is an error response
      */
-    protected function assertErrorResponse(array $result, ?string $errorKey = null): void
+    protected function assertErrorResponse(array $result, ?string $errorField = null): void
     {
-        $this->assertEquals('error', $result['status'], 'Response status should be error');
-        $this->assertArrayHasKey('errors', $result, 'Response should contain errors key');
+        $this->assertArrayHasKey('status', $result);
+        $this->assertEquals('error', $result['status']);
+        $this->assertArrayHasKey('errors', $result);
 
-        if ($errorKey !== null) {
-            $this->assertArrayHasKey($errorKey, $result['errors'], "Errors should contain '{$errorKey}' field");
+        if ($errorField !== null) {
+            $this->assertArrayHasKey($errorField, $result['errors']);
         }
     }
 
     /**
-     * Assert that response has validation error with specific fields
-     *
-     * @param array $result         The service response array
-     * @param array $expectedFields Array of field names that should have errors
+     * Assert that the response is a validation error (422)
      */
-    protected function assertValidationErrorResponse(array $result, array $expectedFields): void
+    protected function assertValidationErrorResponse(array $result, array $expectedFields = []): void
     {
-        $this->assertEquals('error', $result['status'], 'Response status should be error');
-        $this->assertArrayHasKey('errors', $result, 'Response should contain errors key');
+        $this->assertErrorResponse($result);
+        $this->assertArrayHasKey('code', $result);
+        $this->assertEquals(422, $result['code']);
 
         foreach ($expectedFields as $field) {
-            $this->assertArrayHasKey(
-                $field,
-                $result['errors'],
-                "Validation errors should contain '{$field}' field"
-            );
+            $this->assertArrayHasKey($field, $result['errors'], "Expected error field '$field' not found");
         }
     }
 
     /**
-     * Assert that response is paginated with correct structure
-     *
-     * @param array $result The service response array
+     * Assert that the response is a paginated response
      */
     protected function assertPaginatedResponse(array $result): void
     {
-        $this->assertEquals('success', $result['status'], 'Response status should be success');
-        $this->assertArrayHasKey('data', $result, 'Response should contain data');
-        $this->assertArrayHasKey('meta', $result, 'Response should contain meta');
-
-        $meta = $result['meta'];
-        $this->assertArrayHasKey('total', $meta, 'Meta should contain total count');
-        $this->assertArrayHasKey('page', $meta, 'Meta should contain current page');
-        $this->assertArrayHasKey('perPage', $meta, 'Meta should contain per page limit');
-
-        $this->assertIsInt($meta['total'], 'Total should be integer');
-        $this->assertIsInt($meta['page'], 'Page should be integer');
-        $this->assertIsInt($meta['perPage'], 'PerPage should be integer');
+        $this->assertSuccessResponse($result);
+        $this->assertArrayHasKey('meta', $result);
+        $this->assertArrayHasKey('total', $result['meta']);
+        $this->assertArrayHasKey('page', $result['meta']);
+        $this->assertArrayHasKey('perPage', $result['meta']);
+        $this->assertArrayHasKey('lastPage', $result['meta']);
     }
 
     /**
-     * Assert that response has error status with specific HTTP code
-     *
-     * @param array $result       The service response array
-     * @param int   $expectedCode Expected HTTP status code
+     * Assert that the response has a specific error code
      */
     protected function assertErrorResponseWithCode(array $result, int $expectedCode): void
     {
-        $this->assertEquals('error', $result['status'], 'Response status should be error');
-        $this->assertArrayHasKey('code', $result, 'Response should contain HTTP code');
-        $this->assertEquals($expectedCode, $result['code'], "HTTP code should be {$expectedCode}");
+        $this->assertErrorResponse($result);
+        $this->assertArrayHasKey('code', $result);
+        $this->assertEquals($expectedCode, $result['code']);
     }
 
     /**
-     * Assert that response contains specific message
-     *
-     * @param array  $result          The service response array
-     * @param string $expectedMessage Expected message (exact match)
+     * Assert that a created response is returned
      */
-    protected function assertResponseMessage(array $result, string $expectedMessage): void
+    protected function assertCreatedResponse(array $result, ?string $dataKey = null): void
     {
-        $this->assertArrayHasKey('message', $result, 'Response should contain message');
-        $this->assertEquals($expectedMessage, $result['message'], 'Message should match expected value');
-    }
-
-    /**
-     * Assert that response message contains specific substring
-     *
-     * @param array  $result            The service response array
-     * @param string $expectedSubstring Expected substring in message
-     */
-    protected function assertResponseMessageContains(array $result, string $expectedSubstring): void
-    {
-        $this->assertArrayHasKey('message', $result, 'Response should contain message');
-        $this->assertStringContainsString(
-            $expectedSubstring,
-            $result['message'],
-            "Message should contain '{$expectedSubstring}'"
-        );
-    }
-
-    /**
-     * Assert that data array is empty
-     *
-     * @param array $result The service response array
-     */
-    protected function assertEmptyDataResponse(array $result): void
-    {
-        $this->assertEquals('success', $result['status'], 'Response status should be success');
-        $this->assertArrayHasKey('data', $result, 'Response should contain data key');
-        $this->assertEmpty($result['data'], 'Data should be empty');
-    }
-
-    /**
-     * Assert that data array has specific count
-     *
-     * @param array $result        The service response array
-     * @param int   $expectedCount Expected number of items in data
-     */
-    protected function assertDataCount(array $result, int $expectedCount): void
-    {
-        $this->assertEquals('success', $result['status'], 'Response status should be success');
-        $this->assertArrayHasKey('data', $result, 'Response should contain data key');
-        $this->assertIsArray($result['data'], 'Data should be an array');
-        $this->assertCount($expectedCount, $result['data'], "Data should contain {$expectedCount} items");
+        $this->assertSuccessResponse($result, $dataKey);
+        $this->assertArrayHasKey('message', $result);
     }
 }

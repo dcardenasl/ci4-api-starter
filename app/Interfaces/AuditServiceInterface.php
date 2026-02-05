@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Interfaces;
 
+use CodeIgniter\HTTP\RequestInterface;
+
 /**
  * Audit Service Interface
  *
@@ -20,6 +22,7 @@ interface AuditServiceInterface
      * @param array $oldValues Old values before change
      * @param array $newValues New values after change
      * @param int|null $userId User who performed action
+     * @param RequestInterface|null $request Request object for IP/User-Agent (optional)
      * @return void
      */
     public function log(
@@ -28,7 +31,8 @@ interface AuditServiceInterface
         ?int $entityId,
         array $oldValues,
         array $newValues,
-        ?int $userId = null
+        ?int $userId = null,
+        ?RequestInterface $request = null
     ): void;
 
     /**
@@ -38,13 +42,15 @@ interface AuditServiceInterface
      * @param int $entityId
      * @param array $data
      * @param int|null $userId
+     * @param RequestInterface|null $request
      * @return void
      */
     public function logCreate(
         string $entityType,
         int $entityId,
         array $data,
-        ?int $userId = null
+        ?int $userId = null,
+        ?RequestInterface $request = null
     ): void;
 
     /**
@@ -55,6 +61,7 @@ interface AuditServiceInterface
      * @param array $oldValues
      * @param array $newValues
      * @param int|null $userId
+     * @param RequestInterface|null $request
      * @return void
      */
     public function logUpdate(
@@ -62,7 +69,8 @@ interface AuditServiceInterface
         int $entityId,
         array $oldValues,
         array $newValues,
-        ?int $userId = null
+        ?int $userId = null,
+        ?RequestInterface $request = null
     ): void;
 
     /**
@@ -72,13 +80,15 @@ interface AuditServiceInterface
      * @param int $entityId
      * @param array $data
      * @param int|null $userId
+     * @param RequestInterface|null $request
      * @return void
      */
     public function logDelete(
         string $entityType,
         int $entityId,
         array $data,
-        ?int $userId = null
+        ?int $userId = null,
+        ?RequestInterface $request = null
     ): void;
 
     /**

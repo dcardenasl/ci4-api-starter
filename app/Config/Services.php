@@ -19,17 +19,6 @@ use CodeIgniter\Config\BaseService;
  */
 class Services extends BaseService
 {
-    /*
-     * public static function example($getShared = true)
-     * {
-     *     if ($getShared) {
-     *         return static::getSharedInstance('example');
-     *     }
-     *
-     *     return new \CodeIgniter\Example();
-     * }
-     */
-
     /**
      * User Service
      *
@@ -44,10 +33,31 @@ class Services extends BaseService
             return static::getSharedInstance('userService');
         }
 
-        // Crear UserModel (CI4 proporciona la conexión DB automáticamente)
-        $userModel = new \App\Models\UserModel();
+        return new \App\Services\UserService(
+            new \App\Models\UserModel()
+        );
+    }
 
-        return new \App\Services\UserService($userModel);
+    /**
+     * Auth Service
+     *
+     * Provides authentication and registration functionality
+     *
+     * @param bool $getShared
+     * @return \App\Services\AuthService
+     */
+    public static function authService(bool $getShared = true)
+    {
+        if ($getShared) {
+            return static::getSharedInstance('authService');
+        }
+
+        return new \App\Services\AuthService(
+            new \App\Models\UserModel(),
+            static::jwtService(),
+            static::refreshTokenService(),
+            static::verificationService()
+        );
     }
 
     /**
@@ -115,7 +125,10 @@ class Services extends BaseService
             return static::getSharedInstance('verificationService');
         }
 
-        return new \App\Services\VerificationService();
+        return new \App\Services\VerificationService(
+            new \App\Models\UserModel(),
+            static::emailService()
+        );
     }
 
     /**
@@ -132,7 +145,11 @@ class Services extends BaseService
             return static::getSharedInstance('passwordResetService');
         }
 
-        return new \App\Services\PasswordResetService();
+        return new \App\Services\PasswordResetService(
+            new \App\Models\UserModel(),
+            new \App\Models\PasswordResetModel(),
+            static::emailService()
+        );
     }
 
     /**
@@ -151,7 +168,8 @@ class Services extends BaseService
 
         return new \App\Services\TokenRevocationService(
             new \App\Models\TokenBlacklistModel(),
-            new \App\Models\RefreshTokenModel()
+            new \App\Models\RefreshTokenModel(),
+            static::cache()
         );
     }
 
@@ -170,7 +188,9 @@ class Services extends BaseService
         }
 
         return new \App\Services\RefreshTokenService(
-            new \App\Models\RefreshTokenModel()
+            new \App\Models\RefreshTokenModel(),
+            static::jwtService(),
+            new \App\Models\UserModel()
         );
     }
 

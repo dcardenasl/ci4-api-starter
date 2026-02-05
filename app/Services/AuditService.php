@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Exceptions\BadRequestException;
 use App\Exceptions\NotFoundException;
 use App\Interfaces\AuditServiceInterface;
 use App\Libraries\ApiResponse;
 use App\Libraries\Query\QueryBuilder;
 use App\Models\AuditLogModel;
+use CodeIgniter\HTTP\RequestInterface;
 
 /**
  * Audit Service
@@ -17,11 +19,9 @@ use App\Models\AuditLogModel;
  */
 class AuditService implements AuditServiceInterface
 {
-    protected AuditLogModel $auditLogModel;
-
-    public function __construct(AuditLogModel $auditLogModel)
-    {
-        $this->auditLogModel = $auditLogModel;
+    public function __construct(
+        protected AuditLogModel $auditLogModel
+    ) {
     }
 
     /**
@@ -33,6 +33,7 @@ class AuditService implements AuditServiceInterface
      * @param array $oldValues Old values before change
      * @param array $newValues New values after change
      * @param int|null $userId User who performed action
+     * @param RequestInterface|null $request Request object for IP/User-Agent (optional)
      * @return void
      */
     public function log(
@@ -41,9 +42,11 @@ class AuditService implements AuditServiceInterface
         ?int $entityId,
         array $oldValues,
         array $newValues,
-        ?int $userId = null
+        ?int $userId = null,
+        ?RequestInterface $request = null
     ): void {
-        $request = \Config\Services::request();
+        // Use injected request or get from Services as fallback
+        $request = $request ?? \Config\Services::request();
 
         $this->auditLogModel->insert([
             'user_id' => $userId,
@@ -65,15 +68,17 @@ class AuditService implements AuditServiceInterface
      * @param int $entityId
      * @param array $data
      * @param int|null $userId
+     * @param RequestInterface|null $request
      * @return void
      */
     public function logCreate(
         string $entityType,
         int $entityId,
         array $data,
-        ?int $userId = null
+        ?int $userId = null,
+        ?RequestInterface $request = null
     ): void {
-        $this->log('create', $entityType, $entityId, [], $data, $userId);
+        $this->log('create', $entityType, $entityId, [], $data, $userId, $request);
     }
 
     /**
@@ -84,6 +89,7 @@ class AuditService implements AuditServiceInterface
      * @param array $oldValues
      * @param array $newValues
      * @param int|null $userId
+     * @param RequestInterface|null $request
      * @return void
      */
     public function logUpdate(
@@ -91,12 +97,13 @@ class AuditService implements AuditServiceInterface
         int $entityId,
         array $oldValues,
         array $newValues,
-        ?int $userId = null
+        ?int $userId = null,
+        ?RequestInterface $request = null
     ): void {
         // Only log if there are actual changes
         $diff = array_diff_assoc($newValues, $oldValues);
         if (!empty($diff)) {
-            $this->log('update', $entityType, $entityId, $oldValues, $newValues, $userId);
+            $this->log('update', $entityType, $entityId, $oldValues, $newValues, $userId, $request);
         }
     }
 
@@ -107,15 +114,17 @@ class AuditService implements AuditServiceInterface
      * @param int $entityId
      * @param array $data
      * @param int|null $userId
+     * @param RequestInterface|null $request
      * @return void
      */
     public function logDelete(
         string $entityType,
         int $entityId,
         array $data,
-        ?int $userId = null
+        ?int $userId = null,
+        ?RequestInterface $request = null
     ): void {
-        $this->log('delete', $entityType, $entityId, $data, [], $userId);
+        $this->log('delete', $entityType, $entityId, $data, [], $userId, $request);
     }
 
     /**
@@ -182,9 +191,9 @@ class AuditService implements AuditServiceInterface
     public function show(array $data): array
     {
         if (empty($data['id'])) {
-            return ApiResponse::error(
-                ['id' => 'Audit log ID is required'],
-                'Invalid request'
+            throw new BadRequestException(
+                'Invalid request',
+                ['id' => 'Audit log ID is required']
             );
         }
 
@@ -217,9 +226,9 @@ class AuditService implements AuditServiceInterface
     public function byEntity(array $data): array
     {
         if (empty($data['entity_type']) || empty($data['entity_id'])) {
-            return ApiResponse::error(
-                ['entity' => 'Entity type and ID are required'],
-                'Invalid request'
+            throw new BadRequestException(
+                'Invalid request',
+                ['entity' => 'Entity type and ID are required']
             );
         }
 

@@ -4,32 +4,64 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Models\UserModel;
-use App\Entities\UserEntity;
+use App\Exceptions\BadRequestException;
 use App\Exceptions\NotFoundException;
 use App\Exceptions\ValidationException;
-use App\Exceptions\BadRequestException;
 use App\Interfaces\UserServiceInterface;
 use App\Libraries\ApiResponse;
+use App\Libraries\Query\QueryBuilder;
+use App\Models\UserModel;
 
+/**
+ * User Service
+ *
+ * Handles CRUD operations for users.
+ * Authentication methods have been moved to AuthService.
+ */
 class UserService implements UserServiceInterface
 {
-    protected UserModel $userModel;
-
-    public function __construct(UserModel $userModel)
-    {
-        $this->userModel = $userModel;
+    public function __construct(
+        protected UserModel $userModel
+    ) {
     }
 
     /**
-     * Obtener todos los usuarios
+     * Obtener todos los usuarios con paginación, filtros, búsqueda y ordenamiento
      */
     public function index(array $data): array
     {
-        $users = $this->userModel->findAll();
+        $builder = new QueryBuilder($this->userModel);
 
-        return ApiResponse::success(
-            array_map(fn($user) => $user->toArray(), $users)
+        // Apply filters if provided
+        if (!empty($data['filter']) && is_array($data['filter'])) {
+            $builder->filter($data['filter']);
+        }
+
+        // Apply search if provided
+        if (!empty($data['search'])) {
+            $builder->search($data['search']);
+        }
+
+        // Apply sorting if provided
+        if (!empty($data['sort'])) {
+            $builder->sort($data['sort']);
+        }
+
+        // Get pagination parameters
+        $page = isset($data['page']) ? max((int) $data['page'], 1) : 1;
+        $limit = isset($data['limit']) ? (int) $data['limit'] : (int) env('PAGINATION_DEFAULT_LIMIT', 20);
+
+        // Paginate results
+        $result = $builder->paginate($page, $limit);
+
+        // Convert entities to arrays
+        $result['data'] = array_map(fn ($user) => $user->toArray(), $result['data']);
+
+        return ApiResponse::paginated(
+            $result['data'],
+            $result['total'],
+            $result['page'],
+            $result['perPage']
         );
     }
 
@@ -39,9 +71,9 @@ class UserService implements UserServiceInterface
     public function show(array $data): array
     {
         if (!isset($data['id'])) {
-            return ApiResponse::error(
-                ['id' => lang('Users.idRequired')],
-                'Invalid request'
+            throw new BadRequestException(
+                'Invalid request',
+                ['id' => lang('Users.idRequired')]
             );
         }
 
@@ -59,22 +91,33 @@ class UserService implements UserServiceInterface
      */
     public function store(array $data): array
     {
+        validateOrFail($data, 'user', 'store');
+
         // Validaciones de reglas de negocio (más allá de integridad de datos)
-        // Ejemplo: verificar dominio de email permitido, consultar API externa, etc.
         $businessErrors = $this->validateBusinessRules($data);
         if (!empty($businessErrors)) {
-            return ApiResponse::validationError($businessErrors);
+            throw new ValidationException(
+                lang('Api.validationFailed'),
+                $businessErrors
+            );
         }
 
-        // Model maneja validación y timestamps automáticamente
-        $userId = $this->userModel->insert([
+        // Prepare data for insertion with hashed password
+        $insertData = [
             'email'    => $data['email'] ?? null,
             'username' => $data['username'] ?? null,
-        ]);
+            'password' => isset($data['password']) ? password_hash($data['password'], PASSWORD_BCRYPT) : null,
+            'role'     => $data['role'] ?? 'user',
+        ];
+
+        // Model maneja validación y timestamps automáticamente
+        $userId = $this->userModel->insert($insertData);
 
         if (!$userId) {
-            // Obtener errores de validación del Model
-            return ApiResponse::validationError($this->userModel->errors());
+            throw new ValidationException(
+                lang('Api.validationFailed'),
+                $this->userModel->errors() ?: ['general' => lang('Users.createError')]
+            );
         }
 
         $user = $this->userModel->find($userId);
@@ -88,9 +131,9 @@ class UserService implements UserServiceInterface
     public function update(array $data): array
     {
         if (!isset($data['id'])) {
-            return ApiResponse::error(
-                ['id' => lang('Users.idRequired')],
-                'Invalid request'
+            throw new BadRequestException(
+                'Invalid request',
+                ['id' => lang('Users.idRequired')]
             );
         }
 
@@ -103,9 +146,9 @@ class UserService implements UserServiceInterface
 
         // Regla de negocio: al menos un campo requerido
         if (empty($data['email']) && empty($data['username'])) {
-            return ApiResponse::error(
-                ['fields' => lang('Users.fieldRequired')],
-                'Invalid request'
+            throw new BadRequestException(
+                'Invalid request',
+                ['fields' => lang('Users.fieldRequired')]
             );
         }
 
@@ -113,13 +156,16 @@ class UserService implements UserServiceInterface
         $updateData = array_filter([
             'email'    => $data['email'] ?? null,
             'username' => $data['username'] ?? null,
-        ], fn($value) => $value !== null);
+        ], fn ($value) => $value !== null);
 
         // Model maneja validación y updated_at automáticamente
         $success = $this->userModel->update($id, $updateData);
 
         if (!$success) {
-            return ApiResponse::validationError($this->userModel->errors());
+            throw new ValidationException(
+                lang('Api.validationFailed'),
+                $this->userModel->errors()
+            );
         }
 
         $user = $this->userModel->find($id);
@@ -133,9 +179,9 @@ class UserService implements UserServiceInterface
     public function destroy(array $data): array
     {
         if (!isset($data['id'])) {
-            return ApiResponse::error(
-                ['id' => lang('Users.idRequired')],
-                'Invalid request'
+            throw new BadRequestException(
+                'Invalid request',
+                ['id' => lang('Users.idRequired')]
             );
         }
 
@@ -168,143 +214,5 @@ class UserService implements UserServiceInterface
         // }
 
         return $errors;
-    }
-
-    /**
-     * Authenticate user with credentials
-     * Protected against timing attacks by always verifying password hash
-     */
-    public function login(array $data): array
-    {
-        if (empty($data['username']) || empty($data['password'])) {
-            return ApiResponse::error(
-                ['credentials' => lang('Users.auth.credentialsRequired')],
-                'Invalid credentials'
-            );
-        }
-
-        $user = $this->userModel
-            ->where('username', $data['username'])
-            ->orWhere('email', $data['username'])
-            ->first();
-
-        // Use a fake hash for non-existent users to prevent timing attacks
-        // This ensures password_verify() is always called, keeping response time constant
-        $storedHash = $user
-            ? $user->password
-            : '$2y$10$fakeHashToPreventTimingAttacksByEnsuringConstantTimeResponse1234567890';
-
-        $passwordValid = password_verify($data['password'], $storedHash);
-
-        if (!$user || !$passwordValid) {
-            return ApiResponse::error(
-                ['credentials' => lang('Users.auth.invalidCredentials')],
-                'Invalid credentials'
-            );
-        }
-
-        return ApiResponse::success([
-            'id' => $user->id,
-            'username' => $user->username,
-            'email' => $user->email,
-            'role' => $user->role,
-        ]);
-    }
-
-    /**
-     * Register a new user with password
-     */
-    public function register(array $data): array
-    {
-        if (empty($data['password'])) {
-            return ApiResponse::error(
-                ['password' => lang('Users.passwordRequired')],
-                'Invalid request'
-            );
-        }
-
-        // Validate password strength using model rules
-        if (!$this->userModel->validate($data)) {
-            return ApiResponse::validationError($this->userModel->errors());
-        }
-
-        $businessErrors = $this->validateBusinessRules($data);
-        if (!empty($businessErrors)) {
-            return ApiResponse::validationError($businessErrors);
-        }
-
-        $userId = $this->userModel->insert([
-            'email'    => $data['email'] ?? null,
-            'username' => $data['username'] ?? null,
-            'password' => password_hash($data['password'], PASSWORD_BCRYPT),
-            'role'     => 'user', // Always 'user' for self-registration (security fix)
-        ]); // Returns the inserted ID
-
-        if (!$userId) {
-            return ApiResponse::validationError($this->userModel->errors());
-        }
-
-        $user = $this->userModel->find($userId);
-
-        return ApiResponse::created([
-            'id' => $user->id,
-            'username' => $user->username,
-            'email' => $user->email,
-            'role' => $user->role,
-        ]);
-    }
-
-    /**
-     * Authenticate user and return JWT token
-     *
-     * This method combines login authentication with token generation.
-     * Used by AuthController for login endpoint.
-     *
-     * @param array $data Login credentials
-     * @return array Result with token and user data, or errors
-     */
-    public function loginWithToken(array $data): array
-    {
-        $result = $this->login($data);
-
-        if (isset($result['errors'])) {
-            return $result;
-        }
-
-        $user = $result['data'];
-        $jwtService = \Config\Services::jwtService();
-        $token = $jwtService->encode((int) $user['id'], $user['role']);
-
-        return ApiResponse::success([
-            'token' => $token,
-            'user' => $user,
-        ]);
-    }
-
-    /**
-     * Register new user and return JWT token
-     *
-     * This method combines user registration with token generation.
-     * Used by AuthController for register endpoint.
-     *
-     * @param array $data Registration data
-     * @return array Result with token and user data, or errors
-     */
-    public function registerWithToken(array $data): array
-    {
-        $result = $this->register($data);
-
-        if (isset($result['errors'])) {
-            return $result;
-        }
-
-        $user = $result['data'];
-        $jwtService = \Config\Services::jwtService();
-        $token = $jwtService->encode((int) $user['id'], $user['role']);
-
-        return ApiResponse::success([
-            'token' => $token,
-            'user' => $user,
-        ]);
     }
 }

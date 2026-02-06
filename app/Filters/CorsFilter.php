@@ -84,7 +84,17 @@ class CorsFilter implements FilterInterface
             return array_map('trim', explode(',', $originsEnv));
         }
 
-        // Default allowed origins
+        // In production, only allow the app's own URL if no CORS origins are explicitly configured
+        if (ENVIRONMENT === 'production') {
+            $appUrl = env('app.baseURL', '');
+            if (!empty($appUrl)) {
+                return [rtrim($appUrl, '/')];
+            }
+            // No origins allowed if nothing is configured in production
+            return [];
+        }
+
+        // Development defaults (localhost only)
         $defaults = [
             'http://localhost:3000',
             'http://localhost:8080',
@@ -93,7 +103,6 @@ class CorsFilter implements FilterInterface
             'http://127.0.0.1:8080',
         ];
 
-        // Add production origin if set
         $appUrl = env('app.baseURL', '');
         if (!empty($appUrl)) {
             $defaults[] = rtrim($appUrl, '/');
@@ -116,12 +125,12 @@ class CorsFilter implements FilterInterface
         }
 
         // Check for wildcard
-        if (in_array('*', $allowedOrigins)) {
+        if (in_array('*', $allowedOrigins, true)) {
             return true;
         }
 
         // Check exact match
-        if (in_array($origin, $allowedOrigins)) {
+        if (in_array($origin, $allowedOrigins, true)) {
             return true;
         }
 

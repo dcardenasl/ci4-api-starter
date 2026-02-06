@@ -152,6 +152,10 @@ _modules/*
 .phpunit.result.cache
 .phpunit.cache
 
+# Code Quality Tools
+.php-cs-fixer.cache
+.phpstan.cache
+
 # Note: composer.lock should be committed in production projects
 # Uncommented here for flexibility
 composer.lock
@@ -174,3 +178,5 @@ docker/data/
 backup/
 
 CLAUDE.md
+
+AGENTS.md

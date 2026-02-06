@@ -17,11 +17,11 @@ class AuthenticationException extends ApiException
     /**
      * Constructor
      *
-     * @param string $message Error message (default: "Authentication failed")
+     * @param string|null $message Error message (default: lang('Exceptions.authenticationFailed'))
      * @param array $errors Additional error details
      */
-    public function __construct(string $message = 'Authentication failed', array $errors = [])
+    public function __construct(?string $message = null, array $errors = [])
     {
-        parent::__construct($message, $errors);
+        parent::__construct($message ?? lang('Exceptions.authenticationFailed'), $errors);
     }
 }

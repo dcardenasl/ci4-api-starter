@@ -4,7 +4,6 @@ namespace App\Commands;
 
 use CodeIgniter\CLI\BaseCommand;
 use CodeIgniter\CLI\CLI;
-use OpenApi\Attributes as OA;
 
 class GenerateSwagger extends BaseCommand
 {

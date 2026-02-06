@@ -17,11 +17,11 @@ class ValidationException extends ApiException
     /**
      * Constructor
      *
-     * @param string $message Error message (default: "Validation failed")
+     * @param string|null $message Error message (default: lang('Exceptions.validationFailed'))
      * @param array $errors Validation error details
      */
-    public function __construct(string $message = 'Validation failed', array $errors = [])
+    public function __construct(?string $message = null, array $errors = [])
     {
-        parent::__construct($message, $errors);
+        parent::__construct($message ?? lang('Exceptions.validationFailed'), $errors);
     }
 }

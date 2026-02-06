@@ -17,6 +17,7 @@ return [
 
     // Error messages
     'deleteError'     => 'Error deleting user',
+    'createError'     => 'Failed to create user',
 
     // Validation messages
     'validation' => [

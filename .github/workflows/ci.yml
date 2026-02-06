@@ -80,6 +80,19 @@ jobs:
           ENC_KEY=$(php spark key:generate --show | sed 's/.*: //')
           echo "encryption.key = \"${ENC_KEY}\"" >> .env
 
+          # Email configuration for testing (override .env.example)
+          sed -i 's/^EMAIL_FROM_ADDRESS =.*/EMAIL_FROM_ADDRESS = noreply@example.com/' .env
+          sed -i 's/^EMAIL_FROM_NAME =.*/EMAIL_FROM_NAME = "API Application"/' .env
+          sed -i 's/^EMAIL_PROVIDER =.*/EMAIL_PROVIDER = smtp/' .env
+          sed -i 's/^EMAIL_SMTP_HOST =.*/EMAIL_SMTP_HOST = localhost/' .env
+          sed -i 's/^EMAIL_SMTP_PORT =.*/EMAIL_SMTP_PORT = 25/' .env
+          sed -i 's/^EMAIL_SMTP_USER =.*/EMAIL_SMTP_USER = ""/' .env
+          sed -i 's/^EMAIL_SMTP_PASS =.*/EMAIL_SMTP_PASS = ""/' .env
+          sed -i 's/^EMAIL_SMTP_CRYPTO =.*/EMAIL_SMTP_CRYPTO = ""/' .env
+
+          # File upload configuration for testing (override to exclude txt)
+          sed -i 's/^FILE_ALLOWED_TYPES =.*/FILE_ALLOWED_TYPES = jpg,jpeg,png,gif,pdf/' .env
+
       - name: Prepare writable directories
         run: |
           mkdir -p writable/cache
@@ -97,6 +110,23 @@ jobs:
             exit 1
           fi
           echo "✓ phpunit.xml found"
+
+      - name: Wait for MySQL to be ready
+        run: |
+          for i in {1..30}; do
+            if mysqladmin ping -h 127.0.0.1 -u root -proot --silent; then
+              echo "✓ MySQL is ready"
+              break
+            fi
+            echo "Waiting for MySQL... ($i/30)"
+            sleep 2
+          done
+
+      - name: Verify database connection
+        run: |
+          echo "Testing database connection..."
+          mysql -h 127.0.0.1 -u root -proot -e "SHOW DATABASES;"
+          echo "✓ Database connection successful"
 
       - name: Run tests
         run: vendor/bin/phpunit --configuration phpunit.xml --no-coverage --testdox

@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Filters;
 
+use App\Libraries\ApiResponse;
 use CodeIgniter\Filters\FilterInterface;
 use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
-use App\Services\JwtService;
 use Config\Services;
 
 class JwtAuthFilter implements FilterInterface
@@ -20,11 +20,11 @@ class JwtAuthFilter implements FilterInterface
         $authHeader = $request->getHeaderLine('Authorization');
 
         if (empty($authHeader)) {
-            return $this->unauthorized('Authorization header missing');
+            return $this->unauthorized(lang('Auth.headerMissing'));
         }
 
         if (!preg_match('/Bearer\s+(.*)$/i', $authHeader, $matches)) {
-            return $this->unauthorized('Invalid authorization header format');
+            return $this->unauthorized(lang('Auth.invalidFormat'));
         }
 
         $token = $matches[1];
@@ -33,7 +33,20 @@ class JwtAuthFilter implements FilterInterface
         $decoded = $jwtService->decode($token);
 
         if ($decoded === null) {
-            return $this->unauthorized('Invalid or expired token');
+            return $this->unauthorized(lang('Auth.invalidToken'));
+        }
+
+        // Check if token is revoked (if revocation check is enabled)
+        if (env('JWT_REVOCATION_CHECK', 'true') === 'true') {
+            $jti = $decoded->jti ?? null;
+
+            if ($jti) {
+                $tokenRevocationService = Services::tokenRevocationService();
+
+                if ($tokenRevocationService->isRevoked($jti)) {
+                    return $this->unauthorized(lang('Auth.tokenRevoked'));
+                }
+            }
         }
 
         // Inject user data into request
@@ -50,10 +63,7 @@ class JwtAuthFilter implements FilterInterface
     private function unauthorized(string $message): ResponseInterface
     {
         return Services::response()
-            ->setJSON([
-                'success' => false,
-                'message' => $message,
-            ])
+            ->setJSON(ApiResponse::unauthorized($message))
             ->setStatusCode(401);
     }
 

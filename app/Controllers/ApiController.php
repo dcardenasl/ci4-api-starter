@@ -7,58 +7,101 @@ namespace App\Controllers;
 use CodeIgniter\API\ResponseTrait;
 use CodeIgniter\Controller;
 use CodeIgniter\HTTP\ResponseInterface;
-use CodeIgniter\HTTP\IncomingRequest;
 use Exception;
-use InvalidArgumentException;
-use RuntimeException;
 
 /**
  * Base API Controller
  *
- * Provides a standardized way to handle API requests in CodeIgniter 4 applications.
- * Handles multiple data sources (GET, POST, JSON, Files) and provides unified error responses.
- *
- * @package App\Controllers
- * @author Your Name <your.email@example.com>
- * @license MIT
- * @version 1.0.0
+ * Provides standardized CRUD operations and request handling.
+ * Child controllers only need to define $serviceName.
  */
 abstract class ApiController extends Controller
 {
     use ResponseTrait;
 
     /**
-     * @var IncomingRequest
+     * Service name to load from Config\Services
+     * Override in child controllers
      */
-    protected $request;
+    protected string $serviceName = '';
 
     /**
-     * Get the service instance that handles business logic
-     *
-     * @return object Service instance
+     * Cached service instance
      */
-    abstract protected function getService(): object;
+    protected ?object $service = null;
 
     /**
-     * Get the appropriate HTTP status code for successful operations
-     *
-     * @param string $method The service method name
-     * @return int HTTP status code
+     * Custom status codes per method
+     * Override in child controllers if needed
      */
-    abstract protected function getSuccessStatus(string $method): int;
+    protected array $statusCodes = [
+        'store'   => 201,
+        'upload'  => 201,
+        'destroy' => 200,
+        'delete'  => 200,
+    ];
+
+    /**
+     * Get the service instance
+     */
+    protected function getService(): object
+    {
+        if ($this->service === null) {
+            $method = $this->serviceName;
+            $this->service = \Config\Services::$method();
+        }
+        return $this->service;
+    }
+
+    /**
+     * Get HTTP status code for successful operations
+     */
+    protected function getSuccessStatus(string $method): int
+    {
+        return $this->statusCodes[$method] ?? 200;
+    }
+
+    // =========================================================================
+    // CRUD Methods - Override only when needed
+    // =========================================================================
+
+    public function index(): ResponseInterface
+    {
+        return $this->handleRequest('index');
+    }
+
+    public function show($id = null): ResponseInterface
+    {
+        return $this->handleRequest('show', ['id' => $id]);
+    }
+
+    public function create(): ResponseInterface
+    {
+        return $this->handleRequest('store');
+    }
+
+    public function update($id = null): ResponseInterface
+    {
+        return $this->handleRequest('update', ['id' => $id]);
+    }
+
+    public function delete($id = null): ResponseInterface
+    {
+        return $this->handleRequest('destroy', ['id' => $id]);
+    }
+
+    // =========================================================================
+    // Request Handling
+    // =========================================================================
 
     /**
      * Handle an API request by delegating to the service layer
-     *
-     * @param string $method Service method to call
-     * @param array|null $item Additional data to merge with request
-     * @return ResponseInterface JSON response
      */
-    protected function handleRequest(string $method, ?array $item = null): ResponseInterface
+    protected function handleRequest(string $method, ?array $params = null): ResponseInterface
     {
         try {
-            $requestData = $this->collectRequestData($item);
-            $result = $this->getService()->$method($requestData);
+            $data = $this->collectRequestData($params);
+            $result = $this->getService()->$method($data);
             $status = $this->determineStatus($result, $method);
 
             return $this->respond($result, $status);
@@ -69,35 +112,41 @@ abstract class ApiController extends Controller
 
     /**
      * Collect all request data from various sources
-     *
-     * Merges data from GET, POST, raw input, uploaded files, JSON body, and optional item array.
-     *
-     * @param array|null $item Additional data to merge (e.g., route parameters)
-     * @return array Combined request data
      */
-    protected function collectRequestData(?array $item = null): array
+    protected function collectRequestData(?array $params = null): array
     {
-        $requestData = array_merge(
+        $data = array_merge(
             $this->request->getGet() ?? [],
             $this->request->getPost() ?? [],
             $this->request->getRawInput(),
-            $this->request->getFiles(),
             $this->getJsonData(),
-            $item ?? []
+            $params ?? []
         );
 
-        // Sanitize input to prevent XSS attacks
-        return $this->sanitizeInput($requestData);
+        // Add authenticated user ID if available
+        if ($userId = $this->getUserId()) {
+            $data['user_id'] = $userId;
+        }
+
+        return $this->sanitizeInput($data);
     }
 
     /**
-     * Recursively sanitize input data
-     *
-     * Strips HTML tags and trims whitespace from string values.
-     * Protects against Stored XSS attacks.
-     *
-     * @param array $data Input data to sanitize
-     * @return array Sanitized data
+     * Parse JSON data from request body
+     */
+    protected function getJsonData(): array
+    {
+        $body = $this->request->getBody();
+        if (empty($body)) {
+            return [];
+        }
+
+        $json = json_decode($body, true);
+        return (json_last_error() === JSON_ERROR_NONE && is_array($json)) ? $json : [];
+    }
+
+    /**
+     * Sanitize input to prevent XSS
      */
     protected function sanitizeInput(array $data): array
     {
@@ -113,47 +162,7 @@ abstract class ApiController extends Controller
     }
 
     /**
-     * Get uploaded file from request
-     *
-     * @param string $fieldName Field name in the request (default: 'file')
-     * @return array Array containing the uploaded file
-     */
-    protected function getFileInput(string $fieldName = 'file'): array
-    {
-        $file = $this->request->getFile($fieldName);
-        return [$fieldName => $file];
-    }
-
-    /**
-     * Parse JSON data from request body
-     *
-     * Safely decodes JSON and returns empty array on errors.
-     *
-     * @return array Decoded JSON data or empty array
-     */
-    protected function getJsonData(): array
-    {
-        $body = $this->request->getBody();
-
-        if (empty($body)) {
-            return [];
-        }
-
-        $jsonData = json_decode($body, true);
-
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            return [];
-        }
-
-        return is_array($jsonData) ? $jsonData : [];
-    }
-
-    /**
      * Determine HTTP status code based on result
-     *
-     * @param array $result Service method result
-     * @param string $method Service method name
-     * @return int HTTP status code
      */
     protected function determineStatus(array $result, string $method): int
     {
@@ -164,83 +173,81 @@ abstract class ApiController extends Controller
 
     /**
      * Handle exceptions and return appropriate error response
-     *
-     * @param Exception $e The exception to handle
-     * @return ResponseInterface JSON error response
      */
     protected function handleException(Exception $e): ResponseInterface
     {
-        // Handle custom API exceptions
+        log_message('error', 'API Exception: ' . $e->getMessage());
+        log_message('error', 'Trace: ' . $e->getTraceAsString());
+
+        // Custom API exceptions
         if ($e instanceof \App\Exceptions\ApiException) {
             return $this->respond($e->toArray(), $e->getStatusCode());
         }
 
-        // Handle standard exceptions
-        $status = match (true) {
-            $e instanceof InvalidArgumentException => ResponseInterface::HTTP_BAD_REQUEST,
-            $e instanceof RuntimeException => ResponseInterface::HTTP_INTERNAL_SERVER_ERROR,
-            default => ResponseInterface::HTTP_BAD_REQUEST,
-        };
+        // Database exceptions
+        if ($e instanceof \CodeIgniter\Database\Exceptions\DatabaseException) {
+            log_message('critical', 'Database error: ' . $e->getMessage());
+            return $this->respond([
+                'status' => 'error',
+                'message' => lang('Api.databaseError'),
+                'errors' => [],
+            ], 500);
+        }
 
+        // Generic exceptions
         return $this->respond([
             'status' => 'error',
             'message' => $e->getMessage(),
-        ], $status);
+            'errors' => [],
+        ], 500);
+    }
+
+    // =========================================================================
+    // Auth Helpers
+    // =========================================================================
+
+    /**
+     * Get authenticated user ID from request (set by JwtAuthFilter)
+     */
+    protected function getUserId(): ?int
+    {
+        return $this->request->userId ?? null;
     }
 
     /**
-     * Respond with created resource (201)
-     *
-     * @param array $data Response data
-     * @return ResponseInterface
+     * Get authenticated user role from request (set by JwtAuthFilter)
      */
+    protected function getUserRole(): ?string
+    {
+        return $this->request->userRole ?? null;
+    }
+
+    // =========================================================================
+    // Response Helpers
+    // =========================================================================
+
     protected function respondCreated(array $data = []): ResponseInterface
     {
-        return $this->respond($data, ResponseInterface::HTTP_CREATED);
+        return $this->respond($data, 201);
     }
 
-    /**
-     * Respond with no content (204)
-     *
-     * Typically used for successful DELETE operations
-     *
-     * @return ResponseInterface
-     */
     protected function respondNoContent(): ResponseInterface
     {
-        return $this->respond(null, ResponseInterface::HTTP_NO_CONTENT);
+        return $this->respond(null, 204);
     }
 
-    /**
-     * Respond with not found error (404)
-     *
-     * @param string $message Error message
-     * @return ResponseInterface
-     */
-    protected function respondNotFound(string $message = 'Resource not found'): ResponseInterface
+    protected function respondNotFound(?string $message = null): ResponseInterface
     {
-        return $this->respond(['error' => $message], ResponseInterface::HTTP_NOT_FOUND);
+        return $this->respond(['error' => $message ?? 'Not found'], 404);
     }
 
-    /**
-     * Respond with unauthorized error (401)
-     *
-     * @param string $message Error message
-     * @return ResponseInterface
-     */
-    protected function respondUnauthorized(string $message = 'Unauthorized'): ResponseInterface
+    protected function respondUnauthorized(?string $message = null): ResponseInterface
     {
-        return $this->respond(['error' => $message], ResponseInterface::HTTP_UNAUTHORIZED);
+        return $this->respond(['error' => $message ?? 'Unauthorized'], 401);
     }
 
-    /**
-     * Respond with validation error (422)
-     *
-     * @param array $errors Validation errors
-     * @return ResponseInterface
-     */
     protected function respondValidationError(array $errors): ResponseInterface
     {
-        return $this->respond(['errors' => $errors], ResponseInterface::HTTP_UNPROCESSABLE_ENTITY);
+        return $this->respond(['errors' => $errors], 422);
     }
 }

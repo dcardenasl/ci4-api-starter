@@ -1,325 +1,279 @@
 # CodeIgniter 4 API Starter Kit
 
-![PHP Version](https://img.shields.io/badge/PHP-8.1%20%7C%208.2%20%7C%208.3-blue)
+![PHP Version](https://img.shields.io/badge/PHP-8.2%20%7C%208.3-blue)
 ![CodeIgniter](https://img.shields.io/badge/CodeIgniter-4.6-orange)
-![Tests](https://img.shields.io/badge/tests-49%20passed-success)
+![Tests](https://img.shields.io/badge/tests-117%20passing-success)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 
-A production-ready REST API starter template for CodeIgniter 4 with JWT authentication, modular OpenAPI documentation, and clean layered architecture.
+English | [Español](README.es.md)
 
-**Perfect for:** Starting new API projects, building microservices, or learning modern PHP API development.
+A production-ready REST API starter template for CodeIgniter 4 with JWT authentication, clean layered architecture, and comprehensive test coverage.
 
-## ✨ Features
+## Features
 
-- 🔐 **JWT Authentication** - Secure token-based auth with refresh capability
-- 📚 **Modular OpenAPI Documentation** - Schema-based docs, 60% less boilerplate
-- 🏗️ **Clean Architecture** - Controller → Service → Repository → Entity pattern
-- 🎯 **ApiController Base** - Automatic request handling, 62% less code
-- ✅ **49 Passing Tests** - Complete test coverage with PHPUnit
-- 🚀 **CI/CD Ready** - GitHub Actions configured for PHP 8.1, 8.2, 8.3
-- 🔒 **Secure by Default** - Bcrypt hashing, input validation, CSRF protection
-- 🐳 **Docker Support** - Production-ready containerization included
+- **JWT Authentication** - Access tokens, refresh tokens, and revocation
+- **Role-Based Access** - Admin and user roles with middleware protection
+- **Email System** - Verification, password reset, queue support
+- **File Management** - Upload/download with cloud storage support (S3)
+- **Advanced Querying** - Pagination, filtering, searching, sorting
+- **Health Checks** - Kubernetes-ready endpoints (`/health`, `/ready`, `/live`)
+- **Audit Trail** - Automatic logging of data changes
+- **OpenAPI Documentation** - Auto-generated Swagger docs
+- **117 Tests** - Unit, integration, and feature tests
 
-## 🚀 Quick Start (1 minute)
+## Quick Start
 
-### Using GitHub Template (Recommended)
+### Option 1: Use GitHub Template (Recommended)
 
-1. **Click "Use this template"** button at the top of this page
-2. **Clone your new repository:**
-   ```bash
-   git clone https://github.com/YOUR-USERNAME/YOUR-NEW-REPO.git
-   cd YOUR-NEW-REPO
-   ```
-
-3. **Run the initialization script:**
-   ```bash
-   chmod +x init.sh
-   ./init.sh
-   ```
-
-That's it! The script will:
-- ✓ Install dependencies
-- ✓ Generate secure keys (JWT + encryption)
-- ✓ Configure environment
-- ✓ Create database
-- ✓ Run migrations
-- ✓ Generate API documentation
-- ✓ Start development server
-
-Your API will be running at `http://localhost:8080` 🎉
-
-### Manual Setup
+1. Click **"Use this template"** at the top of this page
+2. Clone your new repository
+3. Run the initialization script:
 
 ```bash
-# 1. Install dependencies
+chmod +x init.sh && ./init.sh
+```
+
+Your API will be running at `http://localhost:8080`
+
+### Option 2: Manual Setup
+
+```bash
+# Install dependencies
 composer install
 
-# 2. Configure environment
+# Configure environment
 cp .env.example .env
 
-# 3. Generate secure keys
+# Generate security keys
 openssl rand -base64 64  # Add to JWT_SECRET_KEY in .env
-php spark key:generate   # Add to encryption.key in .env
+php spark key:generate   # Shows encryption key
 
-# 4. Configure database in .env, then:
-php setup_mysql.php      # Create databases
-php spark migrate        # Run migrations
+# Setup database (configure .env first)
+php spark migrate
 
-# 5. Start server
+# Start server
 php spark serve
 ```
 
-## 📖 API Endpoints
+## API Endpoints
 
 ### Authentication (Public)
-```bash
-POST /api/v1/auth/register  # Register new user
-POST /api/v1/auth/login     # Login (returns JWT)
-GET  /api/v1/auth/me        # Get current user (protected)
+```
+POST /api/v1/auth/register     Register new user
+POST /api/v1/auth/login        Login (returns tokens)
+POST /api/v1/auth/refresh      Refresh access token
+POST /api/v1/auth/forgot-password   Request password reset
+POST /api/v1/auth/reset-password    Reset password
+POST /api/v1/auth/verify-email      Verify email address
 ```
 
-### Users (Protected - Requires JWT)
-```bash
-GET    /api/v1/users        # List all users
-GET    /api/v1/users/{id}   # Get user by ID
-POST   /api/v1/users        # Create user
-PUT    /api/v1/users/{id}   # Update user
-DELETE /api/v1/users/{id}   # Delete user (soft)
+### Authentication (Protected)
+```
+GET  /api/v1/auth/me           Get current user
+POST /api/v1/auth/revoke       Revoke current token
+POST /api/v1/auth/revoke-all   Revoke all user tokens
 ```
 
-### Example Usage
+### Users (Protected)
+```
+GET    /api/v1/users           List users (paginated, filterable)
+GET    /api/v1/users/{id}      Get user by ID
+POST   /api/v1/users           Create user (admin only)
+PUT    /api/v1/users/{id}      Update user (admin only)
+DELETE /api/v1/users/{id}      Soft delete user (admin only)
+```
+
+### Files (Protected)
+```
+GET    /api/v1/files           List user's files
+POST   /api/v1/files/upload    Upload file
+GET    /api/v1/files/{id}      Get file details
+DELETE /api/v1/files/{id}      Delete file
+```
+
+### Health (Public)
+```
+GET /health    Full system health check
+GET /ping      Simple uptime check
+GET /ready     Kubernetes readiness probe
+GET /live      Kubernetes liveness probe
+```
+
+## Usage Examples
 
 **Register:**
 ```bash
 curl -X POST http://localhost:8080/api/v1/auth/register \
   -H "Content-Type: application/json" \
-  -d '{"username":"john","email":"john@example.com","password":"Pass123!"}'
+  -d '{"username":"john","email":"john@example.com","password":"SecurePass123!"}'
+```
+
+**Login:**
+```bash
+curl -X POST http://localhost:8080/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"john","password":"SecurePass123!"}'
 ```
 
 **Use protected endpoint:**
 ```bash
-TOKEN="your-jwt-token-here"
 curl -X GET http://localhost:8080/api/v1/users \
-  -H "Authorization: Bearer $TOKEN"
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
 ```
 
-**View API Documentation:**
-- Swagger JSON: http://localhost:8080/swagger.json
-- Import into [Swagger UI](https://editor.swagger.io/) or [Postman](https://www.postman.com/)
+**Query with filters:**
+```bash
+curl -X GET "http://localhost:8080/api/v1/users?filter[role][eq]=admin&search=john&page=1&limit=10" \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+```
 
-## 🏗️ Project Structure
+## Project Structure
 
 ```
 app/
-├── Commands/
-│   └── GenerateSwagger.php         # OpenAPI doc generator
-├── Config/
-│   ├── OpenApi.php                 # API documentation config
-│   └── Routes.php                  # Route definitions
 ├── Controllers/
-│   ├── ApiController.php           # Base controller (auto request/response)
-│   └── Api/V1/
-│       ├── AuthController.php      # Authentication (login, register, me)
-│       └── UserController.php      # User CRUD
-├── Documentation/                  # 🆕 Modular OpenAPI schemas
-│   ├── Schemas/
-│   │   ├── UserSchema.php          # Reusable User model (used 7x)
-│   │   └── AuthTokenSchema.php     # JWT response structure
-│   ├── Responses/
-│   │   ├── UnauthorizedResponse.php
-│   │   └── ValidationErrorResponse.php
-│   └── RequestBodies/
-│       ├── LoginRequest.php
-│       ├── RegisterRequest.php
-│       ├── CreateUserRequest.php
-│       └── UpdateUserRequest.php
-├── Services/
-│   ├── JwtService.php              # JWT operations
-│   └── UserService.php             # User business logic
-├── Models/
-│   └── UserModel.php               # Database operations
-└── Entities/
-    └── UserEntity.php              # Data model
+│   ├── ApiController.php          # Base controller
+│   └── Api/V1/                    # API v1 controllers
+├── Services/                      # Business logic
+├── Interfaces/                    # Service interfaces
+├── Models/                        # Database models
+├── Entities/                      # Data entities
+├── Filters/                       # HTTP filters (auth, throttle, cors)
+├── Exceptions/                    # Custom exceptions
+├── Libraries/
+│   ├── ApiResponse.php           # Standardized responses
+│   └── Query/                    # Query builder utilities
+└── Traits/                       # Model traits (Filterable, Searchable)
+
+tests/
+├── Unit/                         # 88 tests - No database required
+│   ├── Libraries/                # ApiResponse tests
+│   └── Services/                 # Service unit tests
+├── Integration/                  # 19 tests - Database required
+│   ├── Models/                   # Model tests
+│   └── Services/                 # Service integration tests
+└── Feature/                      # 10 tests - Full HTTP tests
+    └── Controllers/              # Endpoint tests
 ```
 
-## 🎯 Adding New Resources
-
-Creating a new resource is fast with the included patterns:
+## Testing
 
 ```bash
-# 1. Create migration
-php spark make:migration CreateProductsTable
+# Run all tests (117)
+vendor/bin/phpunit
 
-# 2. Create files following the pattern:
-app/Entities/ProductEntity.php       # Data model
-app/Models/ProductModel.php          # Database layer
-app/Services/ProductService.php      # Business logic
-app/Controllers/Api/V1/ProductController.php  # API endpoints
-app/Documentation/Schemas/ProductSchema.php   # OpenAPI schema
+# Run with readable output
+vendor/bin/phpunit --testdox
 
-# 3. Add routes in app/Config/Routes.php
-$routes->resource('api/v1/products', ['controller' => 'Api\V1\ProductController']);
-
-# 4. Generate documentation
-php spark swagger:generate
+# Run specific suites
+vendor/bin/phpunit tests/Unit           # Fast, no DB (88 tests)
+vendor/bin/phpunit tests/Integration    # Needs DB (19 tests)
+vendor/bin/phpunit tests/Feature        # HTTP tests (10 tests)
 ```
 
-**Example Controller (extends ApiController):**
-```php
-class ProductController extends ApiController
-{
-    protected ProductService $productService;
+## Advanced Query Features
 
-    protected function getService(): object
-    {
-        return $this->productService;
-    }
-
-    protected function getSuccessStatus(string $method): int
-    {
-        return match($method) {
-            'store' => 201,
-            default => 200,
-        };
-    }
-
-    public function index(): ResponseInterface
-    {
-        return $this->handleRequest('index');  // That's it!
-    }
-}
+### Pagination
+```
+GET /api/v1/users?page=2&limit=20
 ```
 
-**Result:** Complete CRUD resource in ~30 minutes instead of 2-3 hours.
+### Filtering
+```
+GET /api/v1/users?filter[role][eq]=admin
+GET /api/v1/users?filter[email][like]=%@gmail.com
+GET /api/v1/users?filter[created_at][gt]=2024-01-01
+```
 
-## 📚 Documentation
+**Operators:** `eq`, `neq`, `gt`, `gte`, `lt`, `lte`, `like`, `in`
 
-- **[DEVELOPMENT.md](DEVELOPMENT.md)** - Complete architecture guide, patterns, and best practices
-- **[TESTING.md](TESTING.md)** - Testing guide with examples
-- **[SECURITY.md](SECURITY.md)** - Security guidelines and best practices
-- **[CI_CD.md](CI_CD.md)** - CI/CD configuration and deployment
-- **[TEMPLATE_SETUP.md](TEMPLATE_SETUP.md)** - How to configure as GitHub template
+### Searching
+```
+GET /api/v1/users?search=john
+```
 
-## ⚙️ Requirements
+### Sorting
+```
+GET /api/v1/users?sort=created_at&direction=desc
+```
 
-- **PHP** 8.1+ (8.2 or 8.3 recommended)
-- **MySQL** 8.0+
-- **Composer** 2.x
-- **Extensions**: mysqli, mbstring, intl, json
+### Combined
+```
+GET /api/v1/users?search=john&filter[role][eq]=user&sort=created_at&direction=desc&page=1&limit=10
+```
 
-## 🔒 Security Features
+## Configuration
 
-- ✅ JWT authentication with Bearer tokens
-- ✅ Bcrypt password hashing
-- ✅ Passwords never exposed in responses
-- ✅ Token expiration (1 hour, configurable)
-- ✅ Input validation at model layer
-- ✅ SQL injection protection (query builder)
-- ✅ CSRF protection available
-- ✅ Soft deletes for data recovery
+### Required (.env)
+```env
+JWT_SECRET_KEY=your-secret-key-min-32-chars
+encryption.key=hex2bin:your-encryption-key
+database.default.hostname=localhost
+database.default.database=your_database
+database.default.username=root
+database.default.password=
+```
 
-**Important:** Before production:
-1. Change `JWT_SECRET_KEY` to a strong random value
-2. Use HTTPS only
-3. Review [SECURITY.md](SECURITY.md) for complete checklist
+### Optional (.env)
+```env
+# JWT
+JWT_ACCESS_TOKEN_TTL=3600
+JWT_REFRESH_TOKEN_TTL=604800
 
-## 🧪 Testing
+# Email
+EMAIL_FROM_ADDRESS=noreply@example.com
+EMAIL_SMTP_HOST=smtp.example.com
 
-Run the complete test suite:
+# File Storage
+STORAGE_DRIVER=local
+FILE_MAX_SIZE=10485760
+
+# Rate Limiting
+THROTTLE_LIMIT=60
+THROTTLE_WINDOW=60
+```
+
+## Docker
 
 ```bash
-vendor/bin/phpunit           # All 49 tests
-vendor/bin/phpunit --testdox # Human-readable output
-```
-
-**Test Coverage:**
-- ✅ 49 tests, 166 assertions
-- ✅ Controllers (API endpoints)
-- ✅ Services (business logic)
-- ✅ Models (database operations)
-- ✅ JWT authentication flow
-
-CI automatically runs tests on PHP 8.1, 8.2, and 8.3.
-
-## 🐳 Docker Support
-
-```bash
-# Production-ready setup
 docker-compose up -d
 
-# Your API runs at http://localhost:8080
-# MySQL at localhost:3306
-# Adminer at http://localhost:8081
+# API: http://localhost:8080
+# MySQL: localhost:3306
+# Adminer: http://localhost:8081
 ```
 
-See `docker-compose.yml` for configuration.
+## Security Features
 
-## 🛠️ Common Commands
+- JWT with JTI for individual token revocation
+- Bcrypt password hashing
+- Timing-attack protection on login
+- Passwords never exposed in responses
+- Input sanitization (XSS prevention)
+- SQL injection protection (query builder)
+- Rate limiting
+- Soft deletes
 
-```bash
-# Development
-php spark serve                   # Start dev server
-php spark routes                  # List all routes
-php spark swagger:generate        # Regenerate API docs
+## Requirements
 
-# Database
-php spark migrate                 # Run migrations
-php spark migrate:rollback        # Rollback migrations
-php spark db:seed UserSeeder      # Seed data
+- PHP 8.2+
+- MySQL 8.0+
+- Composer 2.x
+- Extensions: mysqli, mbstring, intl, json
 
-# Testing
-vendor/bin/phpunit                # Run all tests
-composer audit                    # Security check
-```
+## Documentation
 
-## 📦 What's Included
+- **CLAUDE.md** - Development guide for AI assistants
+- **swagger.json** - OpenAPI documentation (generate with `php spark swagger:generate`)
 
-### Core Dependencies
-- `codeigniter4/framework` ^4.5
-- `firebase/php-jwt` ^7.0 - JWT handling
-- `zircote/swagger-php` ^6.0 - OpenAPI generation
+## License
 
-### Dev Dependencies
-- `phpunit/phpunit` - Testing
-- `fakerphp/faker` - Test data
-- Docker configuration
+MIT License
 
-## 🔄 Keeping Updated
-
-This is a starter template, not a package. After creating your project:
-
-1. **Customize for your needs** - This is your codebase now
-2. **Remove unused features** - Delete what you don't need
-3. **Add your resources** - Follow the established patterns
-4. **Check for updates** - Occasionally review the original template
-
-## 🤝 Contributing
-
-Contributions to improve the starter kit are welcome!
+## Contributing
 
 1. Fork the repository
 2. Create feature branch (`git checkout -b feature/improvement`)
 3. Commit changes (`git commit -m 'Add improvement'`)
 4. Push to branch (`git push origin feature/improvement`)
 5. Open Pull Request
-
-## 📄 License
-
-MIT License - use for personal or commercial projects.
-
-## 🙏 Acknowledgments
-
-Built with:
-- [CodeIgniter 4](https://codeigniter.com/)
-- [firebase/php-jwt](https://github.com/firebase/php-jwt)
-- [swagger-php](https://github.com/zircote/swagger-php)
-
-## 💬 Support
-
-- **Issues:** [GitHub Issues](https://github.com/dcardenasl/ci4-api-starter/issues)
-- **Discussions:** [GitHub Discussions](https://github.com/dcardenasl/ci4-api-starter/discussions)
-- **Documentation:** See the `/docs` folder
-
----
-
-**Ready to build your API?** Click "Use this template" above to get started! 🚀

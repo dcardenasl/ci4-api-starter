@@ -2,11 +2,15 @@
 
 namespace App\Models;
 
-use CodeIgniter\Model;
 use App\Entities\UserEntity;
+use App\Traits\Filterable;
+use App\Traits\Searchable;
+use CodeIgniter\Model;
 
 class UserModel extends Model
 {
+    use Filterable;
+    use Searchable;
     // Configuración de tabla
     protected $table            = 'users';
     protected $primaryKey       = 'id';
@@ -18,7 +22,15 @@ class UserModel extends Model
 
     // Protección contra mass assignment
     protected $protectFields    = true;
-    protected $allowedFields    = ['username', 'email', 'password', 'role'];
+    protected $allowedFields    = [
+        'username',
+        'email',
+        'password',
+        'role',
+        'email_verification_token',
+        'verification_token_expires',
+        'email_verified_at',
+    ];
 
     // Gestión automática de timestamps
     protected $useTimestamps      = true;
@@ -30,10 +42,10 @@ class UserModel extends Model
     // Reglas de validación (integridad de datos)
     protected $validationRules = [
         'email' => [
-            'rules'  => 'required|valid_email|max_length[255]|is_unique[users.email,id,{id}]',
+            'rules'  => 'required|valid_email_idn|max_length[255]|is_unique[users.email,id,{id}]',
             'errors' => [
                 'required'    => '{field} is required',
-                'valid_email' => 'Please provide a valid email',
+                'valid_email_idn' => 'Please provide a valid email',
                 'is_unique'   => 'This email is already registered',
             ],
         ],
@@ -46,18 +58,15 @@ class UserModel extends Model
                 'is_unique'     => 'This username is already taken',
             ],
         ],
-        'password' => [
-            'rules'  => 'required|min_length[8]|regex_match[/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/]',
-            'errors' => [
-                'required'    => '{field} is required',
-                'min_length'  => 'Password must be at least {param} characters',
-                'regex_match' => 'Password must contain at least one uppercase letter, one lowercase letter, and one number',
-            ],
-        ],
     ];
 
     protected $skipValidation       = false;
     protected $cleanValidationRules = true;
+
+    // Search and filter configuration
+    protected array $searchableFields = ['username', 'email'];
+    protected array $filterableFields = ['role', 'email', 'created_at', 'id', 'username'];
+    protected array $sortableFields = ['id', 'username', 'email', 'created_at', 'role'];
 
     // Callbacks para procesamiento adicional
     protected $allowCallbacks = true;

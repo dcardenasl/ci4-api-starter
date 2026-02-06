@@ -2,6 +2,14 @@
 
 namespace Config;
 
+use App\Filters\AuthThrottleFilter;
+use App\Filters\CorsFilter;
+use App\Filters\JwtAuthFilter;
+use App\Filters\LocaleFilter;
+use App\Filters\RequestLoggingFilter;
+use App\Filters\RoleAuthorizationFilter;
+use App\Filters\SecurityHeadersFilter;
+use App\Filters\ThrottleFilter;
 use CodeIgniter\Config\Filters as BaseFilters;
 use CodeIgniter\Filters\Cors;
 use CodeIgniter\Filters\CSRF;
@@ -11,11 +19,6 @@ use CodeIgniter\Filters\Honeypot;
 use CodeIgniter\Filters\InvalidChars;
 use CodeIgniter\Filters\PageCache;
 use CodeIgniter\Filters\PerformanceMetrics;
-use CodeIgniter\Filters\SecureHeaders;
-use App\Filters\JwtAuthFilter;
-use App\Filters\CorsFilter;
-use App\Filters\ThrottleFilter;
-use App\Filters\RoleAuthorizationFilter;
 
 class Filters extends BaseFilters
 {
@@ -43,14 +46,17 @@ class Filters extends BaseFilters
         'toolbar'       => DebugToolbar::class,
         'honeypot'      => Honeypot::class,
         'invalidchars'  => InvalidChars::class,
-        'secureheaders' => SecureHeaders::class,
+        'secureheaders' => SecurityHeadersFilter::class,
         'cors'          => CorsFilter::class,
         'forcehttps'    => ForceHTTPS::class,
         'pagecache'     => PageCache::class,
         'performance'   => PerformanceMetrics::class,
         'jwtauth'       => JwtAuthFilter::class,
         'throttle'      => ThrottleFilter::class,
+        'authThrottle'  => AuthThrottleFilter::class,
         'roleauth'      => RoleAuthorizationFilter::class,
+        'requestLogging' => RequestLoggingFilter::class,
+        'locale'        => LocaleFilter::class,
     ];
 
     /**
@@ -89,15 +95,17 @@ class Filters extends BaseFilters
      */
     public array $globals = [
         'before' => [
+            'locale', // Set locale from Accept-Language header
             'cors', // Handle CORS preflight (OPTIONS) requests
+            'invalidchars', // Filter invalid/malicious characters from requests
             // 'honeypot',
             // 'csrf',
-            // 'invalidchars',
         ],
         'after' => [
             'cors', // Add CORS headers to all responses
             // 'honeypot',
             'secureheaders', // Add security headers to all responses
+            'requestLogging', // Log all requests/responses
         ],
     ];
 

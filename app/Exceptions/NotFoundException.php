@@ -17,11 +17,11 @@ class NotFoundException extends ApiException
     /**
      * Constructor
      *
-     * @param string $message Error message (default: "Resource not found")
+     * @param string|null $message Error message (default: lang('Exceptions.resourceNotFound'))
      * @param array $errors Additional error details
      */
-    public function __construct(string $message = 'Resource not found', array $errors = [])
+    public function __construct(?string $message = null, array $errors = [])
     {
-        parent::__construct($message, $errors);
+        parent::__construct($message ?? lang('Exceptions.resourceNotFound'), $errors);
     }
 }

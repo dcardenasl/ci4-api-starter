@@ -17,6 +17,7 @@ return [
 
     // Mensajes de error
     'deleteError'     => 'Error al eliminar el usuario',
+    'createError'     => 'Error al crear el usuario',
 
     // Mensajes de validación
     'validation' => [

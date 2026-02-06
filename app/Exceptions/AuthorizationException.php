@@ -17,11 +17,11 @@ class AuthorizationException extends ApiException
     /**
      * Constructor
      *
-     * @param string $message Error message (default: "Insufficient permissions")
+     * @param string|null $message Error message (default: lang('Exceptions.insufficientPermissions'))
      * @param array $errors Additional error details
      */
-    public function __construct(string $message = 'Insufficient permissions', array $errors = [])
+    public function __construct(?string $message = null, array $errors = [])
     {
-        parent::__construct($message, $errors);
+        parent::__construct($message ?? lang('Exceptions.insufficientPermissions'), $errors);
     }
 }

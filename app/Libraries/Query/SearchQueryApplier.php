@@ -1,0 +1,100 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Libraries\Query;
+
+use CodeIgniter\Database\BaseBuilder;
+use CodeIgniter\Model;
+
+/**
+ * Search Query Applier
+ *
+ * Applies FULLTEXT or LIKE search queries to query builders.
+ * Centralizes search logic to eliminate duplication.
+ */
+class SearchQueryApplier
+{
+    /**
+     * Apply search to a query builder
+     *
+     * @param Model|BaseBuilder $builder Query builder instance
+     * @param string $query Search query string
+     * @param array $searchableFields Fields to search in
+     * @param bool $useFulltext Whether to use FULLTEXT search (MySQL only)
+     * @return void
+     */
+    public static function apply(
+        Model|BaseBuilder $builder,
+        string $query,
+        array $searchableFields,
+        bool $useFulltext = true
+    ): void {
+        if (empty($searchableFields) || empty($query)) {
+            return;
+        }
+
+        // Check minimum search length
+        $minLength = (int) env('SEARCH_MIN_LENGTH', 3);
+        if (strlen($query) < $minLength) {
+            return;
+        }
+
+        // Check if search is enabled
+        if (env('SEARCH_ENABLED', 'true') !== 'true') {
+            return;
+        }
+
+        if ($useFulltext) {
+            self::applyFulltext($builder, $query, $searchableFields);
+        } else {
+            self::applyLike($builder, $query, $searchableFields);
+        }
+    }
+
+    /**
+     * Apply FULLTEXT search (MySQL only)
+     *
+     * @param Model|BaseBuilder $builder
+     * @param string $query
+     * @param array $searchableFields
+     * @return void
+     */
+    public static function applyFulltext(
+        Model|BaseBuilder $builder,
+        string $query,
+        array $searchableFields
+    ): void {
+        $fields = implode(', ', $searchableFields);
+        // Get database connection
+        $db = $builder instanceof Model ? $builder->db : $builder->db();
+        $escapedQuery = $db->escape($query);
+        $builder->where("MATCH($fields) AGAINST($escapedQuery IN BOOLEAN MODE)", null, false);
+    }
+
+    /**
+     * Apply LIKE search fallback
+     *
+     * @param Model|BaseBuilder $builder
+     * @param string $query
+     * @param array $searchableFields
+     * @return void
+     */
+    public static function applyLike(
+        Model|BaseBuilder $builder,
+        string $query,
+        array $searchableFields
+    ): void {
+        $builder->groupStart();
+
+        foreach ($searchableFields as $index => $field) {
+            if ($index === 0) {
+                $builder->like($field, $query);
+            } else {
+                $builder->orLike($field, $query);
+            }
+        }
+
+        $builder->groupEnd();
+    }
+}

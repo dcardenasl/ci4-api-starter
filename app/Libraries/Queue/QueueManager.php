@@ -1,0 +1,260 @@
+<?php
+
+namespace App\Libraries\Queue;
+
+use CodeIgniter\Database\BaseConnection;
+use Config\Database;
+use Config\Queue as QueueConfig;
+use Throwable;
+
+class QueueManager
+{
+    protected QueueConfig $config;
+    protected BaseConnection $db;
+
+    public function __construct()
+    {
+        $this->config = config('Queue');
+        $this->db = Database::connect($this->config->databaseConnection);
+    }
+
+    /**
+     * Push a job onto the queue
+     *
+     * @param string $job Job class name
+     * @param array<string, mixed> $data Job data
+     * @param string $queue Queue name
+     * @return int Job ID
+     */
+    public function push(string $job, array $data = [], string $queue = 'default'): int
+    {
+        $payload = json_encode([
+            'job' => $job,
+            'data' => $data,
+        ]);
+
+        $now = time();
+
+        $jobData = [
+            'queue' => $queue,
+            'payload' => $payload,
+            'attempts' => 0,
+            'reserved_at' => null,
+            'available_at' => $now,
+            'created_at' => $now,
+        ];
+
+        $this->db->table('jobs')->insert($jobData);
+
+        return (int) $this->db->insertID();
+    }
+
+    /**
+     * Push a job onto the queue with delay
+     *
+     * @param int $delay Delay in seconds
+     * @param string $job Job class name
+     * @param array<string, mixed> $data Job data
+     * @param string $queue Queue name
+     * @return int Job ID
+     */
+    public function later(int $delay, string $job, array $data = [], string $queue = 'default'): int
+    {
+        $payload = json_encode([
+            'job' => $job,
+            'data' => $data,
+        ]);
+
+        $now = time();
+
+        $jobData = [
+            'queue' => $queue,
+            'payload' => $payload,
+            'attempts' => 0,
+            'reserved_at' => null,
+            'available_at' => $now + $delay,
+            'created_at' => $now,
+        ];
+
+        $this->db->table('jobs')->insert($jobData);
+
+        return (int) $this->db->insertID();
+    }
+
+    /**
+     * Process jobs from the queue
+     *
+     * @param string $queue Queue name
+     * @return void
+     */
+    public function process(string $queue = 'default'): void
+    {
+        $job = $this->getNextJob($queue);
+
+        if (! $job) {
+            return;
+        }
+
+        $this->processJob($job);
+    }
+
+    /**
+     * Get the next available job
+     *
+     * @param string $queue
+     * @return object|null
+     */
+    protected function getNextJob(string $queue): ?object
+    {
+        $now = time();
+
+        // Find next available job
+        $job = $this->db->table('jobs')
+            ->where('queue', $queue)
+            ->where('reserved_at', null)
+            ->where('available_at <=', $now)
+            ->orderBy('id', 'ASC')
+            ->get()
+            ->getRow();
+
+        if (! $job) {
+            return null;
+        }
+
+        // Reserve the job
+        $this->db->table('jobs')
+            ->where('id', $job->id)
+            ->update(['reserved_at' => $now]);
+
+        return $job;
+    }
+
+    /**
+     * Process a single job
+     *
+     * @param object $jobRecord
+     * @return void
+     */
+    protected function processJob(object $jobRecord): void
+    {
+        try {
+            $payload = json_decode($jobRecord->payload, true);
+            $jobClass = $payload['job'];
+            $jobData = $payload['data'] ?? [];
+
+            if (! class_exists($jobClass)) {
+                throw new \RuntimeException("Job class {$jobClass} does not exist");
+            }
+
+            /** @var Job $job */
+            $job = new $jobClass($jobData);
+            $job->setAttempts((int) $jobRecord->attempts + 1);
+            $job->setJobId((int) $jobRecord->id);
+
+            // Execute the job
+            $job->handle();
+
+            // Job succeeded - delete it
+            $this->db->table('jobs')->delete(['id' => $jobRecord->id]);
+        } catch (Throwable $e) {
+            $this->handleFailedJob($jobRecord, $e);
+        }
+    }
+
+    /**
+     * Handle a failed job
+     *
+     * @param object $jobRecord
+     * @param Throwable $exception
+     * @return void
+     */
+    protected function handleFailedJob(object $jobRecord, Throwable $exception): void
+    {
+        $attempts = (int) $jobRecord->attempts + 1;
+
+        if ($attempts >= $this->config->maxAttempts) {
+            // Move to failed_jobs table
+            $this->moveToFailedJobs($jobRecord, $exception);
+
+            // Delete from jobs table
+            $this->db->table('jobs')->delete(['id' => $jobRecord->id]);
+
+            // Call the job's failed method
+            try {
+                $payload = json_decode($jobRecord->payload, true);
+                $jobClass = $payload['job'];
+                $jobData = $payload['data'] ?? [];
+
+                if (class_exists($jobClass)) {
+                    /** @var Job $job */
+                    $job = new $jobClass($jobData);
+                    $job->failed($exception);
+                }
+            } catch (Throwable $e) {
+                log_message('error', 'Failed to call job failed handler: ' . $e->getMessage());
+            }
+        } else {
+            // Retry the job
+            $retryAt = time() + $this->config->retryAfter;
+
+            $this->db->table('jobs')
+                ->where('id', $jobRecord->id)
+                ->update([
+                    'attempts' => $attempts,
+                    'reserved_at' => null,
+                    'available_at' => $retryAt,
+                ]);
+
+            log_message('info', "Job {$jobRecord->id} failed, will retry (attempt {$attempts})");
+        }
+    }
+
+    /**
+     * Move a job to the failed_jobs table
+     *
+     * @param object $jobRecord
+     * @param Throwable $exception
+     * @return void
+     */
+    protected function moveToFailedJobs(object $jobRecord, Throwable $exception): void
+    {
+        $failedJob = [
+            'connection' => $this->config->databaseConnection,
+            'queue' => $jobRecord->queue,
+            'payload' => $jobRecord->payload,
+            'exception' => $exception->getMessage() . "\n" . $exception->getTraceAsString(),
+            'failed_at' => date('Y-m-d H:i:s'),
+        ];
+
+        $this->db->table('failed_jobs')->insert($failedJob);
+    }
+
+    /**
+     * Get queue statistics
+     *
+     * @param string $queue
+     * @return array<string, int>
+     */
+    public function getStats(string $queue = 'default'): array
+    {
+        $pending = $this->db->table('jobs')
+            ->where('queue', $queue)
+            ->where('reserved_at', null)
+            ->countAllResults();
+
+        $processing = $this->db->table('jobs')
+            ->where('queue', $queue)
+            ->where('reserved_at IS NOT NULL')
+            ->countAllResults();
+
+        $failed = $this->db->table('failed_jobs')
+            ->where('queue', $queue)
+            ->countAllResults();
+
+        return [
+            'pending' => $pending,
+            'processing' => $processing,
+            'failed' => $failed,
+        ];
+    }
+}

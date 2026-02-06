@@ -8,9 +8,8 @@ return [
     'notFound'        => 'User not found',
     'idRequired'      => 'User ID is required',
     'emailRequired'   => 'Email is required',
-    'usernameRequired' => 'Username is required',
     'passwordRequired' => 'Password is required',
-    'fieldRequired'   => 'At least one field (email or username) is required',
+    'fieldRequired'   => 'At least one field (email, first name, last name, password, role) is required',
 
     // Success messages
     'deletedSuccess'  => 'User deleted successfully',
@@ -26,11 +25,11 @@ return [
             'valid'       => 'Please provide a valid email',
             'unique'      => 'This email is already registered',
         ],
-        'username' => [
-            'required'     => 'Username is required',
-            'alphaNumeric' => 'Username can only contain letters and numbers',
-            'minLength'    => 'Username must be at least {0} characters',
-            'unique'       => 'This username is already taken',
+        'first_name' => [
+            'maxLength' => 'First name cannot exceed {0} characters',
+        ],
+        'last_name' => [
+            'maxLength' => 'Last name cannot exceed {0} characters',
         ],
         'password' => [
             'required'   => 'Password is required',
@@ -45,6 +44,6 @@ return [
         'loginSuccess'       => 'Login successful',
         'registerSuccess'    => 'User registered successfully',
         'notAuthenticated'   => 'User not authenticated',
-        'credentialsRequired' => 'Username and password are required',
+        'credentialsRequired' => 'Email and password are required',
     ],
 ];

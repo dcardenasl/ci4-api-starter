@@ -66,7 +66,7 @@
         </div>
 
         <div class="content">
-            <h2><?= lang('Email.verification.greeting', [esc($username ?? 'User')]) ?></h2>
+            <h2><?= lang('Email.verification.greeting', [esc($display_name ?? 'User')]) ?></h2>
 
             <p><?= lang('Email.verification.intro') ?></p>
 

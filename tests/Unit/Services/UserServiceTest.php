@@ -39,8 +39,9 @@ class UserServiceTest extends CIUnitTestCase
     {
         $user = $this->createUserEntity([
             'id' => 1,
-            'username' => 'testuser',
             'email' => 'test@example.com',
+            'first_name' => 'Test',
+            'last_name' => 'User',
             'role' => 'user',
         ]);
 
@@ -54,7 +55,7 @@ class UserServiceTest extends CIUnitTestCase
 
         $this->assertSuccessResponse($result);
         $this->assertEquals(1, $result['data']['id']);
-        $this->assertEquals('testuser', $result['data']['username']);
+        $this->assertEquals('test@example.com', $result['data']['email']);
     }
 
     public function testShowWithoutIdThrowsException(): void
@@ -87,7 +88,6 @@ class UserServiceTest extends CIUnitTestCase
 
         $createdUser = $this->createUserEntity([
             'id' => 1,
-            'username' => 'newuser',
             'email' => 'new@example.com',
             'role' => 'user',
         ]);
@@ -97,8 +97,9 @@ class UserServiceTest extends CIUnitTestCase
             ->willReturn($createdUser);
 
         $result = $this->service->store([
-            'username' => 'newuser',
             'email' => 'new@example.com',
+            'first_name' => 'New',
+            'last_name' => 'User',
             'password' => 'ValidPass123!',
         ]);
 
@@ -111,7 +112,6 @@ class UserServiceTest extends CIUnitTestCase
         $this->expectException(ValidationException::class);
 
         $this->service->store([
-            'username' => 'newuser',
             'email' => 'invalid',
             'password' => 'ValidPass123!',
         ]);
@@ -134,7 +134,6 @@ class UserServiceTest extends CIUnitTestCase
         $this->mockUserModel->method('find')->willReturn($createdUser);
 
         $this->service->store([
-            'username' => 'newuser',
             'email' => 'new@example.com',
             'password' => 'ValidPass123!',
         ]);
@@ -146,14 +145,14 @@ class UserServiceTest extends CIUnitTestCase
     {
         $existingUser = $this->createUserEntity([
             'id' => 1,
-            'username' => 'olduser',
             'email' => 'old@example.com',
+            'first_name' => 'Old',
         ]);
 
         $updatedUser = $this->createUserEntity([
             'id' => 1,
-            'username' => 'newuser',
             'email' => 'new@example.com',
+            'first_name' => 'New',
         ]);
 
         $this->mockUserModel
@@ -164,25 +163,25 @@ class UserServiceTest extends CIUnitTestCase
             ->expects($this->once())
             ->method('update')
             ->with(1, $this->callback(function ($data) {
-                return $data['username'] === 'newuser' && $data['email'] === 'new@example.com';
+                return $data['email'] === 'new@example.com' && $data['first_name'] === 'New';
             }))
             ->willReturn(true);
 
         $result = $this->service->update([
             'id' => 1,
-            'username' => 'newuser',
             'email' => 'new@example.com',
+            'first_name' => 'New',
         ]);
 
         $this->assertSuccessResponse($result);
-        $this->assertEquals('newuser', $result['data']['username']);
+        $this->assertEquals('new@example.com', $result['data']['email']);
     }
 
     public function testUpdateWithoutIdThrowsException(): void
     {
         $this->expectException(BadRequestException::class);
 
-        $this->service->update(['username' => 'newuser']);
+        $this->service->update(['email' => 'new@example.com']);
     }
 
     public function testUpdateNonExistentUserThrowsNotFoundException(): void
@@ -193,7 +192,7 @@ class UserServiceTest extends CIUnitTestCase
 
         $this->expectException(NotFoundException::class);
 
-        $this->service->update(['id' => 999, 'username' => 'test']);
+        $this->service->update(['id' => 999, 'email' => 'test@example.com']);
     }
 
     public function testUpdateWithoutFieldsThrowsException(): void

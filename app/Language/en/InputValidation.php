@@ -23,12 +23,9 @@ return [
         'sortDirInvalid'         => 'Sort direction must be either asc or desc',
         'searchTooLong'          => 'Search query is too long',
 
-        // Username
-        'usernameRequired'       => 'Username is required',
-        'usernameAlphaNumeric'   => 'Username can only contain letters and numbers',
-        'usernameMinLength'      => 'Username must be at least 3 characters',
-        'usernameMaxLength'      => 'Username cannot exceed 100 characters',
-        'usernameTooLong'        => 'Username is too long',
+        // Names
+        'firstNameMaxLength'     => 'First name cannot exceed 100 characters',
+        'lastNameMaxLength'      => 'Last name cannot exceed 100 characters',
 
         // Email
         'emailRequired'          => 'Email is required',
@@ -43,6 +40,12 @@ return [
         // Role
         'roleInvalid'            => 'Role must be either user or admin',
 
+        // OAuth
+        'oauthProviderInvalid'   => 'OAuth provider is not supported',
+        'oauthProviderIdMaxLength' => 'OAuth provider id cannot exceed 255 characters',
+        'avatarUrlInvalid'       => 'Avatar URL must be a valid URL',
+        'avatarUrlMaxLength'     => 'Avatar URL cannot exceed 255 characters',
+
         // User ID
         'userIdMustBePositive'   => 'User ID must be a positive integer',
         'userIdRequired'         => 'User ID is required',
@@ -53,7 +56,7 @@ return [
     // ========================================
     'auth' => [
         // Login
-        'usernameOrEmailRequired' => 'Username or email is required',
+        'emailRequired'          => 'Email is required',
 
         // Token
         'resetTokenRequired'      => 'Reset token is required',

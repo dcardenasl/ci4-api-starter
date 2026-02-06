@@ -18,14 +18,15 @@ class AuthValidation extends BaseValidation
     {
         return match ($action) {
             'login' => [
-                'username' => 'required|string|max_length[255]',
+                'email'    => 'required|valid_email_idn|max_length[255]',
                 'password' => 'required|string',
             ],
 
             'register' => [
-                'username' => 'required|alpha_numeric|min_length[3]|max_length[100]',
-                'email'    => 'required|valid_email_idn|max_length[255]',
-                'password' => 'required|strong_password',
+                'email'      => 'required|valid_email_idn|max_length[255]',
+                'first_name' => 'permit_empty|string|max_length[100]',
+                'last_name'  => 'permit_empty|string|max_length[100]',
+                'password'   => 'required|strong_password',
             ],
 
             'forgot_password' => [
@@ -58,19 +59,18 @@ class AuthValidation extends BaseValidation
     {
         return match ($action) {
             'login' => [
-                'username.required'   => lang('InputValidation.auth.usernameOrEmailRequired'),
-                'username.max_length' => lang('InputValidation.common.usernameTooLong'),
+                'email.required'        => lang('InputValidation.common.emailRequired'),
+                'email.valid_email_idn' => lang('InputValidation.common.emailInvalid'),
+                'email.max_length'      => lang('InputValidation.common.emailMaxLength'),
                 'password.required'   => lang('InputValidation.common.passwordRequired'),
             ],
 
             'register' => [
-                'username.required'        => lang('InputValidation.common.usernameRequired'),
-                'username.alpha_numeric'   => lang('InputValidation.common.usernameAlphaNumeric'),
-                'username.min_length'      => lang('InputValidation.common.usernameMinLength'),
-                'username.max_length'      => lang('InputValidation.common.usernameMaxLength'),
                 'email.required'           => lang('InputValidation.common.emailRequired'),
                 'email.valid_email_idn'    => lang('InputValidation.common.emailInvalid'),
                 'email.max_length'         => lang('InputValidation.common.emailMaxLength'),
+                'first_name.max_length'    => lang('InputValidation.common.firstNameMaxLength'),
+                'last_name.max_length'     => lang('InputValidation.common.lastNameMaxLength'),
                 'password.required'        => lang('InputValidation.common.passwordRequired'),
                 'password.strong_password' => lang('InputValidation.common.passwordStrength'),
             ],

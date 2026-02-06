@@ -54,9 +54,16 @@ class VerificationService implements VerificationServiceInterface
         $verificationLink = "{$baseUrl}/api/v1/auth/verify-email?token={$token}";
 
         // Queue verification email
+        $displayName = 'User';
+        if (is_object($user) && method_exists($user, 'getDisplayName')) {
+            $displayName = $user->getDisplayName();
+        } elseif (is_object($user) && !empty($user->email)) {
+            $displayName = explode('@', $user->email)[0];
+        }
+
         $this->emailService->queueTemplate('verification', $user->email, [
             'subject' => lang('Email.verification.subject'),
-            'username' => $user->username,
+            'display_name' => $displayName,
             'verification_link' => $verificationLink,
             'expires_at' => date('F j, Y g:i A', strtotime($expiresAt)),
         ]);

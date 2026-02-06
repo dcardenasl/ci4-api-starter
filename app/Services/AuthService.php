@@ -34,12 +34,12 @@ class AuthService implements AuthServiceInterface
      * Authenticate user with credentials
      * Protected against timing attacks by always verifying password hash
      *
-     * @param array $data Login credentials (username/email, password)
+     * @param array $data Login credentials (email, password)
      * @return array Result with user data
      */
     public function login(array $data): array
     {
-        if (empty($data['username']) || empty($data['password'])) {
+        if (empty($data['email']) || empty($data['password'])) {
             throw new AuthenticationException(
                 'Invalid credentials',
                 ['credentials' => lang('Users.auth.credentialsRequired')]
@@ -47,8 +47,7 @@ class AuthService implements AuthServiceInterface
         }
 
         $user = $this->userModel
-            ->where('username', $data['username'])
-            ->orWhere('email', $data['username'])
+            ->where('email', $data['email'])
             ->first();
 
         // Use a fake hash for non-existent users to prevent timing attacks
@@ -68,8 +67,10 @@ class AuthService implements AuthServiceInterface
 
         return ApiResponse::success([
             'id' => $user->id,
-            'username' => $user->username,
             'email' => $user->email,
+            'first_name' => $user->first_name,
+            'last_name' => $user->last_name,
+            'avatar_url' => $user->avatar_url,
             'role' => $user->role,
         ]);
     }
@@ -104,7 +105,7 @@ class AuthService implements AuthServiceInterface
     /**
      * Register a new user with password
      *
-     * @param array $data Registration data (username, email, password)
+     * @param array $data Registration data (email, password, names)
      * @return array Result with created user data
      */
     public function register(array $data): array
@@ -128,8 +129,9 @@ class AuthService implements AuthServiceInterface
         }
 
         $userId = $this->userModel->insert([
-            'email'    => $data['email'] ?? null,
-            'username' => $data['username'] ?? null,
+            'email'      => $data['email'] ?? null,
+            'first_name' => $data['first_name'] ?? null,
+            'last_name'  => $data['last_name'] ?? null,
             'password' => password_hash($data['password'], PASSWORD_BCRYPT),
             'role'     => 'user', // Always 'user' for self-registration (security fix)
         ]);
@@ -145,8 +147,10 @@ class AuthService implements AuthServiceInterface
 
         return ApiResponse::created([
             'id' => $user->id,
-            'username' => $user->username,
             'email' => $user->email,
+            'first_name' => $user->first_name,
+            'last_name' => $user->last_name,
+            'avatar_url' => $user->avatar_url,
             'role' => $user->role,
         ]);
     }

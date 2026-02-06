@@ -23,10 +23,14 @@ class UserModel extends Model
     // Protección contra mass assignment
     protected $protectFields    = true;
     protected $allowedFields    = [
-        'username',
         'email',
+        'first_name',
+        'last_name',
         'password',
         'role',
+        'oauth_provider',
+        'oauth_provider_id',
+        'avatar_url',
         'email_verification_token',
         'verification_token_expires',
         'email_verified_at',
@@ -49,13 +53,35 @@ class UserModel extends Model
                 'is_unique'   => 'This email is already registered',
             ],
         ],
-        'username' => [
-            'rules'  => 'required|alpha_numeric|min_length[3]|max_length[100]|is_unique[users.username,id,{id}]',
+        'first_name' => [
+            'rules'  => 'permit_empty|string|max_length[100]',
             'errors' => [
-                'required'      => '{field} is required',
-                'alpha_numeric' => 'Username can only contain letters and numbers',
-                'min_length'    => 'Username must be at least {param} characters',
-                'is_unique'     => 'This username is already taken',
+                'max_length' => 'First name cannot exceed {param} characters',
+            ],
+        ],
+        'last_name' => [
+            'rules'  => 'permit_empty|string|max_length[100]',
+            'errors' => [
+                'max_length' => 'Last name cannot exceed {param} characters',
+            ],
+        ],
+        'oauth_provider' => [
+            'rules'  => 'permit_empty|in_list[google,github]',
+            'errors' => [
+                'in_list' => 'OAuth provider is not supported',
+            ],
+        ],
+        'oauth_provider_id' => [
+            'rules'  => 'permit_empty|string|max_length[255]',
+            'errors' => [
+                'max_length' => 'OAuth provider id cannot exceed {param} characters',
+            ],
+        ],
+        'avatar_url' => [
+            'rules'  => 'permit_empty|valid_url|max_length[255]',
+            'errors' => [
+                'valid_url'        => 'Avatar URL must be a valid URL',
+                'max_length'       => 'Avatar URL cannot exceed {param} characters',
             ],
         ],
     ];
@@ -64,9 +90,9 @@ class UserModel extends Model
     protected $cleanValidationRules = true;
 
     // Search and filter configuration
-    protected array $searchableFields = ['username', 'email'];
-    protected array $filterableFields = ['role', 'email', 'created_at', 'id', 'username'];
-    protected array $sortableFields = ['id', 'username', 'email', 'created_at', 'role'];
+    protected array $searchableFields = ['email', 'first_name', 'last_name'];
+    protected array $filterableFields = ['role', 'email', 'created_at', 'id', 'first_name', 'last_name'];
+    protected array $sortableFields = ['id', 'email', 'created_at', 'role', 'first_name', 'last_name'];
 
     // Callbacks para procesamiento adicional
     protected $allowCallbacks = true;

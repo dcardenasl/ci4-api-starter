@@ -23,19 +23,27 @@ class UserValidation extends BaseValidation
             'show' => $this->idRules(),
 
             'store' => [
-                'username' => 'required|alpha_numeric|min_length[3]|max_length[100]',
-                'email'    => 'required|valid_email_idn|max_length[255]',
-                'password' => 'required|strong_password',
-                'role'     => 'permit_empty|in_list[user,admin]',
+                'email'      => 'required|valid_email_idn|max_length[255]',
+                'first_name' => 'permit_empty|string|max_length[100]',
+                'last_name'  => 'permit_empty|string|max_length[100]',
+                'password'   => 'required|strong_password',
+                'role'       => 'permit_empty|in_list[user,admin]',
+                'oauth_provider' => 'permit_empty|in_list[google,github]',
+                'oauth_provider_id' => 'permit_empty|string|max_length[255]',
+                'avatar_url' => 'permit_empty|valid_url|max_length[255]',
             ],
 
             'update' => $this->mergeRules(
                 $this->idRules(),
                 [
-                    'username' => 'permit_empty|alpha_numeric|min_length[3]|max_length[100]',
-                    'email'    => 'permit_empty|valid_email_idn|max_length[255]',
-                    'password' => 'permit_empty|strong_password',
-                    'role'     => 'permit_empty|in_list[user,admin]',
+                    'email'      => 'permit_empty|valid_email_idn|max_length[255]',
+                    'first_name' => 'permit_empty|string|max_length[100]',
+                    'last_name'  => 'permit_empty|string|max_length[100]',
+                    'password'   => 'permit_empty|strong_password',
+                    'role'       => 'permit_empty|in_list[user,admin]',
+                    'oauth_provider' => 'permit_empty|in_list[google,github]',
+                    'oauth_provider_id' => 'permit_empty|string|max_length[255]',
+                    'avatar_url' => 'permit_empty|valid_url|max_length[255]',
                 ]
             ),
 
@@ -51,16 +59,18 @@ class UserValidation extends BaseValidation
     public function getMessages(string $action): array
     {
         $commonMessages = [
-            'username.required'        => lang('InputValidation.common.usernameRequired'),
-            'username.alpha_numeric'   => lang('InputValidation.common.usernameAlphaNumeric'),
-            'username.min_length'      => lang('InputValidation.common.usernameMinLength'),
-            'username.max_length'      => lang('InputValidation.common.usernameMaxLength'),
             'email.required'           => lang('InputValidation.common.emailRequired'),
             'email.valid_email_idn'    => lang('InputValidation.common.emailInvalid'),
             'email.max_length'         => lang('InputValidation.common.emailMaxLength'),
+            'first_name.max_length'    => lang('InputValidation.common.firstNameMaxLength'),
+            'last_name.max_length'     => lang('InputValidation.common.lastNameMaxLength'),
             'password.required'        => lang('InputValidation.common.passwordRequired'),
             'password.strong_password' => lang('InputValidation.common.passwordStrength'),
             'role.in_list'             => lang('InputValidation.common.roleInvalid'),
+            'oauth_provider.in_list'   => lang('InputValidation.common.oauthProviderInvalid'),
+            'oauth_provider_id.max_length' => lang('InputValidation.common.oauthProviderIdMaxLength'),
+            'avatar_url.valid_url'     => lang('InputValidation.common.avatarUrlInvalid'),
+            'avatar_url.max_length'    => lang('InputValidation.common.avatarUrlMaxLength'),
         ];
 
         return match ($action) {

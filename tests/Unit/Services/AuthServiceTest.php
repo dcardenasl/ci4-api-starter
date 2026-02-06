@@ -94,8 +94,9 @@ class AuthServiceTest extends CIUnitTestCase
     {
         $user = $this->createUserEntity([
             'id' => 1,
-            'username' => 'testuser',
             'email' => 'test@example.com',
+            'first_name' => 'Test',
+            'last_name' => 'User',
             'password' => password_hash('ValidPass123!', PASSWORD_BCRYPT),
             'role' => 'user',
         ]);
@@ -103,14 +104,15 @@ class AuthServiceTest extends CIUnitTestCase
         $service = $this->createServiceWithUserQuery($user);
 
         $result = $service->login([
-            'username' => 'testuser',
+            'email' => 'test@example.com',
             'password' => 'ValidPass123!',
         ]);
 
         $this->assertSuccessResponse($result);
         $this->assertEquals(1, $result['data']['id']);
-        $this->assertEquals('testuser', $result['data']['username']);
         $this->assertEquals('test@example.com', $result['data']['email']);
+        $this->assertEquals('Test', $result['data']['first_name']);
+        $this->assertEquals('User', $result['data']['last_name']);
         $this->assertEquals('user', $result['data']['role']);
     }
 
@@ -118,7 +120,6 @@ class AuthServiceTest extends CIUnitTestCase
     {
         $user = $this->createUserEntity([
             'id' => 1,
-            'username' => 'testuser',
             'password' => password_hash('CorrectPass123!', PASSWORD_BCRYPT),
         ]);
 
@@ -127,7 +128,7 @@ class AuthServiceTest extends CIUnitTestCase
         $this->expectException(AuthenticationException::class);
 
         $service->login([
-            'username' => 'testuser',
+            'email' => 'test@example.com',
             'password' => 'WrongPassword123!',
         ]);
     }
@@ -139,7 +140,7 @@ class AuthServiceTest extends CIUnitTestCase
         $this->expectException(AuthenticationException::class);
 
         $service->login([
-            'username' => 'nonexistent',
+            'email' => 'nonexistent@example.com',
             'password' => 'AnyPassword123!',
         ]);
     }
@@ -151,7 +152,7 @@ class AuthServiceTest extends CIUnitTestCase
         $this->expectException(AuthenticationException::class);
 
         $service->login([
-            'username' => '',
+            'email' => '',
             'password' => '',
         ]);
     }
@@ -163,7 +164,7 @@ class AuthServiceTest extends CIUnitTestCase
         $this->expectException(AuthenticationException::class);
 
         $service->login([
-            'username' => 'testuser',
+            'email' => 'test@example.com',
         ]);
     }
 
@@ -173,8 +174,9 @@ class AuthServiceTest extends CIUnitTestCase
     {
         $user = $this->createUserEntity([
             'id' => 1,
-            'username' => 'testuser',
             'email' => 'test@example.com',
+            'first_name' => 'Test',
+            'last_name' => 'User',
             'password' => password_hash('ValidPass123!', PASSWORD_BCRYPT),
             'role' => 'user',
         ]);
@@ -194,7 +196,7 @@ class AuthServiceTest extends CIUnitTestCase
             ->willReturn('refresh.token.here');
 
         $result = $service->loginWithToken([
-            'username' => 'testuser',
+            'email' => 'test@example.com',
             'password' => 'ValidPass123!',
         ]);
 
@@ -211,22 +213,23 @@ class AuthServiceTest extends CIUnitTestCase
     {
         $createdUser = $this->createUserEntity([
             'id' => 1,
-            'username' => 'newuser',
             'email' => 'new@example.com',
+            'first_name' => 'New',
+            'last_name' => 'User',
             'role' => 'user',
         ]);
 
         $service = $this->createServiceWithUserQuery($createdUser);
 
         $result = $service->register([
-            'username' => 'newuser',
             'email' => 'new@example.com',
+            'first_name' => 'New',
+            'last_name' => 'User',
             'password' => 'ValidPass123!',
         ]);
 
         $this->assertSuccessResponse($result);
         $this->assertEquals(1, $result['data']['id']);
-        $this->assertEquals('newuser', $result['data']['username']);
         $this->assertEquals('user', $result['data']['role']);
     }
 
@@ -237,7 +240,6 @@ class AuthServiceTest extends CIUnitTestCase
         $this->expectException(BadRequestException::class);
 
         $service->register([
-            'username' => 'newuser',
             'email' => 'new@example.com',
         ]);
     }
@@ -249,7 +251,6 @@ class AuthServiceTest extends CIUnitTestCase
         $this->expectException(ValidationException::class);
 
         $service->register([
-            'username' => 'newuser',
             'email' => 'invalid-email',
             'password' => 'ValidPass123!',
         ]);
@@ -261,8 +262,9 @@ class AuthServiceTest extends CIUnitTestCase
     {
         $createdUser = $this->createUserEntity([
             'id' => 1,
-            'username' => 'newuser',
             'email' => 'new@example.com',
+            'first_name' => 'New',
+            'last_name' => 'User',
             'role' => 'user',
         ]);
 
@@ -282,8 +284,9 @@ class AuthServiceTest extends CIUnitTestCase
             ->with(1);
 
         $result = $service->registerWithToken([
-            'username' => 'newuser',
             'email' => 'new@example.com',
+            'first_name' => 'New',
+            'last_name' => 'User',
             'password' => 'ValidPass123!',
         ]);
 
@@ -297,8 +300,9 @@ class AuthServiceTest extends CIUnitTestCase
     {
         $createdUser = $this->createUserEntity([
             'id' => 1,
-            'username' => 'newuser',
             'email' => 'new@example.com',
+            'first_name' => 'New',
+            'last_name' => 'User',
             'role' => 'user',
         ]);
 
@@ -314,8 +318,9 @@ class AuthServiceTest extends CIUnitTestCase
 
         // Should not throw - registration should still succeed
         $result = $service->registerWithToken([
-            'username' => 'newuser',
             'email' => 'new@example.com',
+            'first_name' => 'New',
+            'last_name' => 'User',
             'password' => 'ValidPass123!',
         ]);
 

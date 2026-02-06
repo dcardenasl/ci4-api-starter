@@ -196,8 +196,9 @@ Authorization: Bearer <jwt_token>
 Content-Type: application/json
 
 {
-  "username": "john_doe",
   "email": "john@example.com",
+  "first_name": "John",
+  "last_name": "Doe",
   "password": "SecurePass123!",
   "role": "user"
 }
@@ -405,10 +406,11 @@ class UserService implements UserServiceInterface
 
         // 3. Preparar datos (hash password, defaults)
         $insertData = [
-            'email'    => $data['email'],
-            'username' => $data['username'],
-            'password' => password_hash($data['password'], PASSWORD_BCRYPT),
-            'role'     => $data['role'] ?? 'user',
+            'email'      => $data['email'],
+            'first_name' => $data['first_name'] ?? null,
+            'last_name'  => $data['last_name'] ?? null,
+            'password'   => password_hash($data['password'], PASSWORD_BCRYPT),
+            'role'       => $data['role'] ?? 'user',
         ];
 
         // 4. Persistir
@@ -471,7 +473,8 @@ class UserModel extends Model
     // ========== MASS ASSIGNMENT PROTECTION ==========
     protected $protectFields    = true;
     protected $allowedFields    = [
-        'username', 'email', 'password', 'role',
+        'email', 'first_name', 'last_name', 'password', 'role',
+        'oauth_provider', 'oauth_provider_id', 'avatar_url',
         'email_verification_token', 'verification_token_expires',
         'email_verified_at',
     ];
@@ -492,8 +495,12 @@ class UserModel extends Model
                 'is_unique'   => 'This email is already registered',
             ],
         ],
-        'username' => [
-            'rules'  => 'required|alpha_numeric|min_length[3]|max_length[100]|is_unique[users.username,id,{id}]',
+        'first_name' => [
+            'rules'  => 'permit_empty|string|max_length[100]',
+            // ...
+        ],
+        'last_name' => [
+            'rules'  => 'permit_empty|string|max_length[100]',
             // ...
         ],
         'password' => [
@@ -503,9 +510,9 @@ class UserModel extends Model
     ];
 
     // ========== FILTRADO Y BUSQUEDA ==========
-    protected array $searchableFields = ['username', 'email'];
-    protected array $filterableFields = ['role', 'email', 'created_at', 'id', 'username'];
-    protected array $sortableFields = ['id', 'username', 'email', 'created_at', 'role'];
+    protected array $searchableFields = ['email', 'first_name', 'last_name'];
+    protected array $filterableFields = ['role', 'email', 'created_at', 'id', 'first_name', 'last_name'];
+    protected array $sortableFields = ['id', 'email', 'created_at', 'role', 'first_name', 'last_name'];
 }
 ```
 
@@ -660,7 +667,8 @@ class UserEntity extends Entity
 
     public function getDisplayName(): string
     {
-        return $this->username ?: explode('@', $this->email)[0];
+        $full = trim(($this->first_name ?? '') . ' ' . ($this->last_name ?? ''));
+        return $full !== '' ? $full : explode('@', $this->email)[0];
     }
 
     public function getMaskedEmail(): string
@@ -702,7 +710,7 @@ $display = $user->getDisplayName();
 $userData = $user->toArray();
 
 // Serializar solo campos especificos
-$publicData = $user->toArrayOnly(['id', 'username', 'email']);
+$publicData = $user->toArrayOnly(['id', 'email', 'first_name', 'last_name']);
 ```
 
 ---
@@ -925,14 +933,15 @@ class AuthValidation extends BaseValidation
     {
         return match ($action) {
             'login' => [
-                'username' => 'required|string|max_length[255]',
+                'email'    => 'required|valid_email_idn|max_length[255]',
                 'password' => 'required|string',
             ],
 
             'register' => [
-                'username' => 'required|alpha_numeric|min_length[3]|max_length[100]',
-                'email'    => 'required|valid_email_idn|max_length[255]',
-                'password' => 'required|strong_password',  // Regla custom
+                'email'      => 'required|valid_email_idn|max_length[255]',
+                'first_name' => 'permit_empty|string|max_length[100]',
+                'last_name'  => 'permit_empty|string|max_length[100]',
+                'password'   => 'required|strong_password',  // Regla custom
             ],
 
             'reset_password' => [
@@ -949,9 +958,9 @@ class AuthValidation extends BaseValidation
     {
         return match ($action) {
             'register' => [
-                'username.required'        => lang('InputValidation.common.usernameRequired'),
-                'username.alpha_numeric'   => lang('InputValidation.common.usernameAlphaNumeric'),
                 'email.valid_email_idn'    => lang('InputValidation.common.emailInvalid'),
+                'first_name.max_length'    => lang('InputValidation.common.firstNameMaxLength'),
+                'last_name.max_length'     => lang('InputValidation.common.lastNameMaxLength'),
                 'password.strong_password' => lang('InputValidation.common.passwordStrength'),
             ],
             default => [],
@@ -1267,8 +1276,9 @@ class ApiResponse
   "message": "User retrieved successfully",
   "data": {
     "id": 1,
-    "username": "john_doe",
     "email": "john@example.com",
+    "first_name": "John",
+    "last_name": "Doe",
     "role": "user",
     "created_at": "2026-01-28T10:30:00+00:00"
   }
@@ -1281,8 +1291,8 @@ class ApiResponse
 {
   "status": "success",
   "data": [
-    {"id": 1, "username": "john_doe"},
-    {"id": 2, "username": "jane_doe"}
+    {"id": 1, "email": "john@example.com"},
+    {"id": 2, "email": "jane@example.com"}
   ],
   "meta": {
     "total": 100,
@@ -1356,7 +1366,7 @@ return [
     // Registro
     'registerSuccess'   => 'Registration successful',
     'emailExists'       => 'Email is already registered',
-    'usernameExists'    => 'Username is already taken',
+    'oauthProviderInvalid' => 'OAuth provider is not supported',
 ];
 ```
 
@@ -1374,7 +1384,7 @@ return [
 
     'registerSuccess'   => 'Registro exitoso',
     'emailExists'       => 'El email ya esta registrado',
-    'usernameExists'    => 'El nombre de usuario ya esta en uso',
+    'oauthProviderInvalid' => 'El proveedor OAuth no es compatible',
 ];
 ```
 
@@ -1466,7 +1476,7 @@ class QueryBuilder
     /**
      * Aplicar ordenamiento con validacion
      *
-     * Formato: "-created_at,username" (- prefix = DESC)
+     * Formato: "-created_at,email" (- prefix = DESC)
      * Valida contra whitelist para prevenir SQL injection
      */
     public function sort(string $sort): self
@@ -1551,8 +1561,8 @@ class FilterParser
     /**
      * Parsear y validar campos de ordenamiento
      *
-     * Input: "-created_at,username"
-     * Output: [['created_at', 'DESC'], ['username', 'ASC']]
+     * Input: "-created_at,email"
+     * Output: [['created_at', 'DESC'], ['email', 'ASC']]
      */
     public static function parseSort(string $sort, array $allowedFields = []): array
     {
@@ -1664,13 +1674,13 @@ GET /api/v1/users?filter[role]=[in,[admin,moderator]]
 GET /api/v1/users?search=john
 
 # Ordenamiento (- = descendente)
-GET /api/v1/users?sort=-created_at,username
+GET /api/v1/users?sort=-created_at,email
 
 # Paginacion
 GET /api/v1/users?page=2&limit=50
 
 # Combinado
-GET /api/v1/users?filter[role]=admin&search=john&sort=-created_at&page=1&limit=20
+GET /api/v1/users?filter[role]=admin&search=john&sort=-created_at,email&page=1&limit=20
 ```
 
 ---
@@ -1802,7 +1812,7 @@ TokenRevocationService
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │ 1. LOGIN                                                        │
-│    POST /api/v1/auth/login {username, password}                 │
+│    POST /api/v1/auth/login {email, password}                    │
 │    │                                                            │
 │    ├─> AuthService::loginWithToken()                            │
 │    │      ├─> Validar credenciales                              │

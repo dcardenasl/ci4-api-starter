@@ -46,11 +46,11 @@ class UserValidationTest extends CIUnitTestCase
     {
         $rules = $this->validation->getRules('store');
 
-        $this->assertArrayHasKey('username', $rules);
         $this->assertArrayHasKey('email', $rules);
+        $this->assertArrayHasKey('first_name', $rules);
+        $this->assertArrayHasKey('last_name', $rules);
         $this->assertArrayHasKey('password', $rules);
         $this->assertArrayHasKey('role', $rules);
-        $this->assertStringContainsString('required', $rules['username']);
         $this->assertStringContainsString('required', $rules['email']);
         $this->assertStringContainsString('required', $rules['password']);
         $this->assertStringContainsString('permit_empty', $rules['role']);
@@ -62,8 +62,9 @@ class UserValidationTest extends CIUnitTestCase
         $rules = $this->validation->getRules('update');
 
         $this->assertArrayHasKey('id', $rules);
-        $this->assertArrayHasKey('username', $rules);
         $this->assertArrayHasKey('email', $rules);
+        $this->assertArrayHasKey('first_name', $rules);
+        $this->assertArrayHasKey('last_name', $rules);
         $this->assertArrayHasKey('password', $rules);
         $this->assertArrayHasKey('role', $rules);
 
@@ -71,7 +72,6 @@ class UserValidationTest extends CIUnitTestCase
         $this->assertStringContainsString('required', $rules['id']);
 
         // Other fields are optional for update
-        $this->assertStringContainsString('permit_empty', $rules['username']);
         $this->assertStringContainsString('permit_empty', $rules['email']);
         $this->assertStringContainsString('permit_empty', $rules['password']);
     }
@@ -112,8 +112,9 @@ class UserValidationTest extends CIUnitTestCase
     {
         $messages = $this->validation->getMessages('store');
 
-        $this->assertArrayHasKey('username.required', $messages);
         $this->assertArrayHasKey('email.required', $messages);
+        $this->assertArrayHasKey('first_name.max_length', $messages);
+        $this->assertArrayHasKey('last_name.max_length', $messages);
         $this->assertArrayHasKey('password.required', $messages);
         $this->assertArrayHasKey('role.in_list', $messages);
     }

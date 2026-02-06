@@ -39,7 +39,6 @@ class AuthControllerTest extends CIUnitTestCase
     {
         $result = $this->withBodyFormat('json')
             ->post('/api/v1/auth/register', [
-                'username' => 'newuser',
                 'email' => 'new@example.com',
                 'password' => 'ValidPass123!',
             ]);
@@ -58,7 +57,6 @@ class AuthControllerTest extends CIUnitTestCase
     {
         $result = $this->withBodyFormat('json')
             ->post('/api/v1/auth/register', [
-                'username' => 'ab', // Too short
                 'email' => 'invalid-email',
                 'password' => 'weak',
             ]);
@@ -74,7 +72,6 @@ class AuthControllerTest extends CIUnitTestCase
     {
         // Create existing user
         $this->userModel->insert([
-            'username' => 'existing',
             'email' => 'existing@example.com',
             'password' => password_hash('ValidPass123!', PASSWORD_BCRYPT),
             'role' => 'user',
@@ -82,7 +79,6 @@ class AuthControllerTest extends CIUnitTestCase
 
         $result = $this->withBodyFormat('json')
             ->post('/api/v1/auth/register', [
-                'username' => 'newuser',
                 'email' => 'existing@example.com',
                 'password' => 'ValidPass123!',
             ]);
@@ -99,7 +95,6 @@ class AuthControllerTest extends CIUnitTestCase
     {
         // Create user
         $this->userModel->insert([
-            'username' => 'logintest',
             'email' => 'login@example.com',
             'password' => password_hash('ValidPass123!', PASSWORD_BCRYPT),
             'role' => 'user',
@@ -107,7 +102,7 @@ class AuthControllerTest extends CIUnitTestCase
 
         $result = $this->withBodyFormat('json')
             ->post('/api/v1/auth/login', [
-                'username' => 'logintest',
+                'email' => 'login@example.com',
                 'password' => 'ValidPass123!',
             ]);
 
@@ -123,7 +118,7 @@ class AuthControllerTest extends CIUnitTestCase
     {
         $result = $this->withBodyFormat('json')
             ->post('/api/v1/auth/login', [
-                'username' => 'nonexistent',
+                'email' => 'nonexistent@example.com',
                 'password' => 'WrongPass123!',
             ]);
 
@@ -137,7 +132,7 @@ class AuthControllerTest extends CIUnitTestCase
     {
         $result = $this->withBodyFormat('json')
             ->post('/api/v1/auth/login', [
-                'username' => '',
+                'email' => '',
                 'password' => '',
             ]);
 
@@ -157,7 +152,6 @@ class AuthControllerTest extends CIUnitTestCase
     {
         // Create user and get token
         $this->userModel->insert([
-            'username' => 'authtest',
             'email' => 'auth@example.com',
             'password' => password_hash('ValidPass123!', PASSWORD_BCRYPT),
             'role' => 'admin',
@@ -165,7 +159,7 @@ class AuthControllerTest extends CIUnitTestCase
 
         $loginResult = $this->withBodyFormat('json')
             ->post('/api/v1/auth/login', [
-                'username' => 'authtest',
+                'email' => 'auth@example.com',
                 'password' => 'ValidPass123!',
             ]);
 

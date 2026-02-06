@@ -10,20 +10,20 @@ use OpenApi\Attributes as OA;
  * Login Request Body
  *
  * Request schema for user authentication.
- * Accepts username or email with password.
+ * Accepts email with password.
  */
 #[OA\RequestBody(
     request: 'LoginRequest',
     description: 'User login credentials',
     required: true,
     content: new OA\JsonContent(
-        required: ['username', 'password'],
+        required: ['email', 'password'],
         properties: [
             new OA\Property(
-                property: 'username',
+                property: 'email',
                 type: 'string',
-                description: 'Username or email',
-                example: 'testuser'
+                description: 'Email address',
+                example: 'user@example.com'
             ),
             new OA\Property(
                 property: 'password',

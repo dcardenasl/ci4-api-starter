@@ -9,8 +9,17 @@ class AddSearchIndexesToUsers extends Migration
     public function up()
     {
         try {
-            // Add FULLTEXT index for search functionality on username and email
-            $this->db->query('ALTER TABLE users ADD FULLTEXT KEY idx_search (username, email)');
+            if (! $this->db->tableExists('users')) {
+                return;
+            }
+
+            if ($this->db->fieldExists('first_name', 'users')) {
+                // Updated index
+                $this->db->query('ALTER TABLE users ADD FULLTEXT KEY idx_search (email, first_name, last_name)');
+            } else {
+                // Minimal index (email only)
+                $this->db->query('ALTER TABLE users ADD FULLTEXT KEY idx_search (email)');
+            }
         } catch (\Exception $e) {
             // Table doesn't exist yet or index already exists, skip silently
         }

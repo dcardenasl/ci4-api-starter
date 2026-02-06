@@ -105,14 +105,14 @@ GET /live      Kubernetes liveness probe
 ```bash
 curl -X POST http://localhost:8080/api/v1/auth/register \
   -H "Content-Type: application/json" \
-  -d '{"username":"john","email":"john@example.com","password":"SecurePass123!"}'
+  -d '{"email":"john@example.com","first_name":"John","last_name":"Doe","password":"SecurePass123!"}'
 ```
 
 **Login:**
 ```bash
 curl -X POST http://localhost:8080/api/v1/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"username":"john","password":"SecurePass123!"}'
+  -d '{"email":"john@example.com","password":"SecurePass123!"}'
 ```
 
 **Use protected endpoint:**

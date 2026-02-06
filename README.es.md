@@ -105,14 +105,14 @@ GET /live      Sonda de liveness para Kubernetes
 ```bash
 curl -X POST http://localhost:8080/api/v1/auth/register \
   -H "Content-Type: application/json" \
-  -d '{"username":"juan","email":"juan@ejemplo.com","password":"ContrasenaSegura123!"}'
+  -d '{"email":"juan@ejemplo.com","first_name":"Juan","last_name":"Perez","password":"ContrasenaSegura123!"}'
 ```
 
 **Iniciar sesion:**
 ```bash
 curl -X POST http://localhost:8080/api/v1/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"username":"juan","password":"ContrasenaSegura123!"}'
+  -d '{"email":"juan@ejemplo.com","password":"ContrasenaSegura123!"}'
 ```
 
 **Usar endpoint protegido:**

@@ -99,28 +99,39 @@ class UserEntity extends Entity
     }
 
     /**
-     * Get user initials (first letter of username)
+     * Get user initials (first and last name initials)
      *
      * @return string
      */
     public function getInitials(): string
     {
-        if (empty($this->username)) {
+        $first = trim((string) ($this->first_name ?? ''));
+        $last = trim((string) ($this->last_name ?? ''));
+
+        if ($first === '' && $last === '') {
+            if (!empty($this->email)) {
+                return strtoupper(substr($this->email, 0, 2));
+            }
             return '';
         }
 
-        return strtoupper(substr($this->username, 0, 2));
+        $initials = strtoupper(substr($first, 0, 1) . substr($last, 0, 1));
+        return trim($initials);
     }
 
     /**
-     * Get display name (username or email local part)
+     * Get display name (first/last name or email local part)
      *
      * @return string
      */
     public function getDisplayName(): string
     {
-        if (!empty($this->username)) {
-            return $this->username;
+        $first = trim((string) ($this->first_name ?? ''));
+        $last = trim((string) ($this->last_name ?? ''));
+        $full = trim($first . ' ' . $last);
+
+        if ($full !== '') {
+            return $full;
         }
 
         if (!empty($this->email)) {

@@ -31,7 +31,7 @@ interface UserServiceInterface
     /**
      * Create a new user
      *
-     * @param array $data User data (email, username)
+     * @param array $data User data (email, names)
      * @return array Result with created user data or errors
      */
     public function store(array $data): array;

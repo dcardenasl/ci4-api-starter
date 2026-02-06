@@ -8,9 +8,8 @@ return [
     'notFound'        => 'Usuario no encontrado',
     'idRequired'      => 'El ID del usuario es obligatorio',
     'emailRequired'   => 'El email es obligatorio',
-    'usernameRequired' => 'El nombre de usuario es obligatorio',
     'passwordRequired' => 'La contraseña es obligatoria',
-    'fieldRequired'   => 'Se requiere al menos un campo (email o nombre de usuario)',
+    'fieldRequired'   => 'Se requiere al menos un campo (email, nombre, apellido, contraseña, rol)',
 
     // Mensajes de éxito
     'deletedSuccess'  => 'Usuario eliminado correctamente',
@@ -26,11 +25,11 @@ return [
             'valid'       => 'Debe proporcionar un email válido',
             'unique'      => 'Este email ya está registrado',
         ],
-        'username' => [
-            'required'     => 'El nombre de usuario es obligatorio',
-            'alphaNumeric' => 'El nombre de usuario solo puede contener letras y números',
-            'minLength'    => 'El nombre de usuario debe tener al menos {0} caracteres',
-            'unique'       => 'Este nombre de usuario ya está en uso',
+        'first_name' => [
+            'maxLength' => 'El nombre no puede exceder {0} caracteres',
+        ],
+        'last_name' => [
+            'maxLength' => 'El apellido no puede exceder {0} caracteres',
         ],
         'password' => [
             'required'   => 'La contraseña es obligatoria',
@@ -45,6 +44,6 @@ return [
         'loginSuccess'       => 'Inicio de sesión exitoso',
         'registerSuccess'    => 'Usuario registrado exitosamente',
         'notAuthenticated'   => 'Usuario no autenticado',
-        'credentialsRequired' => 'Se requiere nombre de usuario y contraseña',
+        'credentialsRequired' => 'Se requiere email y contraseña',
     ],
 ];

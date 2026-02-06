@@ -44,8 +44,9 @@ class UserServiceTest extends CIUnitTestCase
     public function testStoreCreatesUserInDatabase(): void
     {
         $result = $this->userService->store([
-            'username' => 'integrationuser',
             'email' => 'integration@example.com',
+            'first_name' => 'Integration',
+            'last_name' => 'User',
             'password' => 'ValidPass123!',
         ]);
 
@@ -55,7 +56,7 @@ class UserServiceTest extends CIUnitTestCase
         // Verify in database
         $user = $this->userModel->find($result['data']['id']);
         $this->assertNotNull($user);
-        $this->assertEquals('integrationuser', $user->username);
+        $this->assertEquals('integration@example.com', $user->email);
     }
 
     public function testStoreHashesPasswordBeforeSaving(): void
@@ -63,7 +64,6 @@ class UserServiceTest extends CIUnitTestCase
         $plainPassword = 'ValidPass123!';
 
         $result = $this->userService->store([
-            'username' => 'hashtest',
             'email' => 'hash@example.com',
             'password' => $plainPassword,
         ]);
@@ -81,7 +81,6 @@ class UserServiceTest extends CIUnitTestCase
         $this->expectException(ValidationException::class);
 
         $this->userService->store([
-            'username' => 'ab', // Too short
             'email' => 'invalid',
             'password' => 'weak',
         ]);
@@ -92,7 +91,6 @@ class UserServiceTest extends CIUnitTestCase
     public function testShowReturnsExistingUser(): void
     {
         $userId = $this->userModel->insert([
-            'username' => 'showtest',
             'email' => 'show@example.com',
             'password' => password_hash('ValidPass123!', PASSWORD_BCRYPT),
             'role' => 'user',
@@ -101,7 +99,7 @@ class UserServiceTest extends CIUnitTestCase
         $result = $this->userService->show(['id' => $userId]);
 
         $this->assertSuccessResponse($result);
-        $this->assertEquals('showtest', $result['data']['username']);
+        $this->assertEquals('show@example.com', $result['data']['email']);
     }
 
     public function testShowThrowsNotFoundForMissingUser(): void
@@ -116,7 +114,6 @@ class UserServiceTest extends CIUnitTestCase
     public function testUpdateModifiesUserInDatabase(): void
     {
         $userId = $this->userModel->insert([
-            'username' => 'oldname',
             'email' => 'old@example.com',
             'password' => password_hash('ValidPass123!', PASSWORD_BCRYPT),
             'role' => 'user',
@@ -124,16 +121,18 @@ class UserServiceTest extends CIUnitTestCase
 
         $result = $this->userService->update([
             'id' => $userId,
-            'username' => 'newname',
             'email' => 'new@example.com',
+            'first_name' => 'New',
+            'last_name' => 'Name',
         ]);
 
         $this->assertSuccessResponse($result);
 
         // Verify changes persisted
         $user = $this->userModel->find($userId);
-        $this->assertEquals('newname', $user->username);
         $this->assertEquals('new@example.com', $user->email);
+        $this->assertEquals('New', $user->first_name);
+        $this->assertEquals('Name', $user->last_name);
     }
 
     // ==================== DESTROY INTEGRATION TESTS ====================
@@ -141,7 +140,6 @@ class UserServiceTest extends CIUnitTestCase
     public function testDestroySoftDeletesUser(): void
     {
         $userId = $this->userModel->insert([
-            'username' => 'todelete',
             'email' => 'delete@example.com',
             'password' => password_hash('ValidPass123!', PASSWORD_BCRYPT),
             'role' => 'user',
@@ -168,8 +166,8 @@ class UserServiceTest extends CIUnitTestCase
         // Create multiple users
         for ($i = 1; $i <= 5; $i++) {
             $this->userModel->insert([
-                'username' => "user{$i}",
                 'email' => "user{$i}@example.com",
+                'first_name' => "User{$i}",
                 'password' => password_hash('ValidPass123!', PASSWORD_BCRYPT),
                 'role' => 'user',
             ]);
@@ -185,15 +183,15 @@ class UserServiceTest extends CIUnitTestCase
     public function testIndexFiltersUsers(): void
     {
         $this->userModel->insert([
-            'username' => 'adminuser',
             'email' => 'admin@example.com',
+            'first_name' => 'Admin',
             'password' => password_hash('ValidPass123!', PASSWORD_BCRYPT),
             'role' => 'admin',
         ]);
 
         $this->userModel->insert([
-            'username' => 'normaluser',
             'email' => 'normal@example.com',
+            'first_name' => 'Normal',
             'password' => password_hash('ValidPass123!', PASSWORD_BCRYPT),
             'role' => 'user',
         ]);

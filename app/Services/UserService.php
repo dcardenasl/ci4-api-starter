@@ -104,10 +104,11 @@ class UserService implements UserServiceInterface
 
         // Prepare data for insertion with hashed password
         $insertData = [
-            'email'    => $data['email'] ?? null,
-            'username' => $data['username'] ?? null,
-            'password' => isset($data['password']) ? password_hash($data['password'], PASSWORD_BCRYPT) : null,
-            'role'     => $data['role'] ?? 'user',
+            'email'      => $data['email'] ?? null,
+            'first_name' => $data['first_name'] ?? null,
+            'last_name'  => $data['last_name'] ?? null,
+            'password'   => isset($data['password']) ? password_hash($data['password'], PASSWORD_BCRYPT) : null,
+            'role'       => $data['role'] ?? 'user',
         ];
 
         // Model maneja validación y timestamps automáticamente
@@ -145,7 +146,13 @@ class UserService implements UserServiceInterface
         }
 
         // Regla de negocio: al menos un campo requerido
-        if (empty($data['email']) && empty($data['username'])) {
+        if (
+            empty($data['email']) &&
+            empty($data['first_name']) &&
+            empty($data['last_name']) &&
+            empty($data['password']) &&
+            empty($data['role'])
+        ) {
             throw new BadRequestException(
                 'Invalid request',
                 ['fields' => lang('Users.fieldRequired')]
@@ -154,8 +161,11 @@ class UserService implements UserServiceInterface
 
         // Preparar datos de actualización
         $updateData = array_filter([
-            'email'    => $data['email'] ?? null,
-            'username' => $data['username'] ?? null,
+            'email'      => $data['email'] ?? null,
+            'first_name' => $data['first_name'] ?? null,
+            'last_name'  => $data['last_name'] ?? null,
+            'password'   => isset($data['password']) ? password_hash($data['password'], PASSWORD_BCRYPT) : null,
+            'role'       => $data['role'] ?? null,
         ], fn ($value) => $value !== null);
 
         // Model maneja validación y updated_at automáticamente

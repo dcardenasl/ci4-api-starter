@@ -14,7 +14,7 @@ interface AuthServiceInterface
     /**
      * Authenticate user with credentials
      *
-     * @param array $data Login credentials (username/email, password)
+     * @param array $data Login credentials (email, password)
      * @return array Result with user data or errors
      */
     public function login(array $data): array;
@@ -30,7 +30,7 @@ interface AuthServiceInterface
     /**
      * Register a new user with password
      *
-     * @param array $data Registration data (username, email, password)
+     * @param array $data Registration data (email, password, names)
      * @return array Result with created user data or errors
      */
     public function register(array $data): array;

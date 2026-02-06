@@ -194,7 +194,7 @@
                 "tags": [
                     "Authentication"
                 ],
-                "summary": "Login with username or email",
+                "summary": "Login with email",
                 "operationId": "2dae767e12186fc9aa78c2a60d00802c",
                 "requestBody": {
                     "$ref": "#/components/requestBodies/LoginRequest"
@@ -1877,7 +1877,6 @@
                 "description": "User object with all properties",
                 "required": [
                     "id",
-                    "username",
                     "email",
                     "role",
                     "created_at",
@@ -1889,16 +1888,41 @@
                         "type": "integer",
                         "example": 1
                     },
-                    "username": {
-                        "description": "Username for login",
+                    "first_name": {
+                        "description": "First name",
                         "type": "string",
-                        "example": "testuser"
+                        "example": "Alex",
+                        "nullable": true
+                    },
+                    "last_name": {
+                        "description": "Last name",
+                        "type": "string",
+                        "example": "Doe",
+                        "nullable": true
                     },
                     "email": {
                         "description": "User email address",
                         "type": "string",
                         "format": "email",
                         "example": "test@example.com"
+                    },
+                    "avatar_url": {
+                        "description": "Avatar URL",
+                        "type": "string",
+                        "example": "https://example.com/avatar.png",
+                        "nullable": true
+                    },
+                    "oauth_provider": {
+                        "description": "OAuth provider (google, github)",
+                        "type": "string",
+                        "example": "google",
+                        "nullable": true
+                    },
+                    "oauth_provider_id": {
+                        "description": "OAuth provider user id",
+                        "type": "string",
+                        "example": "1234567890",
+                        "nullable": true
                     },
                     "role": {
                         "description": "User role (user, admin, etc.)",
@@ -2000,14 +2024,14 @@
                     "application/json": {
                         "schema": {
                             "required": [
-                                "username",
+                                "email",
                                 "password"
                             ],
                             "properties": {
-                                "username": {
-                                    "description": "Username or email",
+                                "email": {
+                                    "description": "Email address",
                                     "type": "string",
-                                    "example": "testuser"
+                                    "example": "user@example.com"
                                 },
                                 "password": {
                                     "description": "User password",
@@ -2028,15 +2052,19 @@
                     "application/json": {
                         "schema": {
                             "required": [
-                                "username",
                                 "email",
                                 "password"
                             ],
                             "properties": {
-                                "username": {
-                                    "description": "Unique username for the account",
+                                "first_name": {
+                                    "description": "First name",
                                     "type": "string",
-                                    "example": "newuser"
+                                    "example": "Alex"
+                                },
+                                "last_name": {
+                                    "description": "Last name",
+                                    "type": "string",
+                                    "example": "Doe"
                                 },
                                 "email": {
                                     "description": "User email address",
@@ -2063,20 +2091,36 @@
                     "application/json": {
                         "schema": {
                             "required": [
-                                "username",
-                                "email"
+                                "email",
+                                "password"
                             ],
                             "properties": {
-                                "username": {
-                                    "description": "Unique username",
+                                "first_name": {
+                                    "description": "First name",
                                     "type": "string",
-                                    "example": "newuser"
+                                    "example": "Alex"
+                                },
+                                "last_name": {
+                                    "description": "Last name",
+                                    "type": "string",
+                                    "example": "Doe"
                                 },
                                 "email": {
                                     "description": "User email address",
                                     "type": "string",
                                     "format": "email",
                                     "example": "newuser@example.com"
+                                },
+                                "role": {
+                                    "description": "User role",
+                                    "type": "string",
+                                    "example": "user"
+                                },
+                                "password": {
+                                    "description": "User password",
+                                    "type": "string",
+                                    "format": "password",
+                                    "example": "Password123"
                                 }
                             },
                             "type": "object"
@@ -2091,16 +2135,32 @@
                     "application/json": {
                         "schema": {
                             "properties": {
-                                "username": {
-                                    "description": "Updated username",
+                                "first_name": {
+                                    "description": "Updated first name",
                                     "type": "string",
-                                    "example": "updateduser"
+                                    "example": "Alex"
+                                },
+                                "last_name": {
+                                    "description": "Updated last name",
+                                    "type": "string",
+                                    "example": "Doe"
                                 },
                                 "email": {
                                     "description": "Updated email address",
                                     "type": "string",
                                     "format": "email",
                                     "example": "updated@example.com"
+                                },
+                                "password": {
+                                    "description": "Updated password",
+                                    "type": "string",
+                                    "format": "password",
+                                    "example": "NewPassword123"
+                                },
+                                "role": {
+                                    "description": "Updated role",
+                                    "type": "string",
+                                    "example": "user"
                                 }
                             },
                             "type": "object"

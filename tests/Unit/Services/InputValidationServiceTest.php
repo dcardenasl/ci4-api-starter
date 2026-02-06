@@ -78,7 +78,7 @@ class InputValidationServiceTest extends CIUnitTestCase
         $rules = $this->service->getRules('auth', 'login');
 
         $this->assertNotEmpty($rules);
-        $this->assertArrayHasKey('username', $rules);
+        $this->assertArrayHasKey('email', $rules);
         $this->assertArrayHasKey('password', $rules);
     }
 
@@ -103,7 +103,7 @@ class InputValidationServiceTest extends CIUnitTestCase
         $messages = $this->service->getMessages('auth', 'login');
 
         $this->assertNotEmpty($messages);
-        $this->assertArrayHasKey('username.required', $messages);
+        $this->assertArrayHasKey('email.required', $messages);
     }
 
     public function testGetMessagesReturnsEmptyArrayForInvalidDomain(): void
@@ -118,7 +118,7 @@ class InputValidationServiceTest extends CIUnitTestCase
     public function testValidateOrFailDoesNothingForValidData(): void
     {
         $data = [
-            'username' => 'testuser',
+            'email' => 'test@example.com',
             'password' => 'secretpassword',
         ];
 
@@ -131,7 +131,7 @@ class InputValidationServiceTest extends CIUnitTestCase
     public function testValidateOrFailThrowsExceptionForInvalidData(): void
     {
         $data = [
-            'username' => '',
+            'email' => '',
             'password' => '',
         ];
 
@@ -214,7 +214,6 @@ class InputValidationServiceTest extends CIUnitTestCase
     {
         $rules = $this->service->getRules('user', 'store');
 
-        $this->assertArrayHasKey('username', $rules);
         $this->assertArrayHasKey('email', $rules);
         $this->assertArrayHasKey('password', $rules);
         $this->assertStringContainsString('strong_password', $rules['password']);

@@ -119,7 +119,7 @@ class FilterParser
     /**
      * Parse sort parameter
      *
-     * @param string $sort Sort string (e.g., "-created_at,username")
+     * @param string $sort Sort string (e.g., "-created_at,email")
      * @param array $allowedFields List of allowed field names for sorting
      * @return array Array of [field, direction] pairs
      */

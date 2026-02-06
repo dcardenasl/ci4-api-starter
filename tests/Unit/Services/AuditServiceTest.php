@@ -58,7 +58,7 @@ class AuditServiceTest extends CIUnitTestCase
             'user',
             1,
             [],
-            ['username' => 'newuser'],
+            ['email' => 'newuser@example.com'],
             99,
             $this->mockRequest
         );
@@ -92,7 +92,7 @@ class AuditServiceTest extends CIUnitTestCase
 
     public function testLogCreateLogsWithEmptyOldValues(): void
     {
-        $newData = ['username' => 'newuser', 'email' => 'new@example.com'];
+        $newData = ['first_name' => 'New', 'email' => 'new@example.com'];
 
         $this->mockAuditLogModel
             ->expects($this->once())
@@ -140,7 +140,7 @@ class AuditServiceTest extends CIUnitTestCase
 
     public function testLogDeleteLogsWithEmptyNewValues(): void
     {
-        $oldData = ['username' => 'deleted', 'email' => 'deleted@example.com'];
+        $oldData = ['first_name' => 'Deleted', 'email' => 'deleted@example.com'];
 
         $this->mockAuditLogModel
             ->expects($this->once())
@@ -165,7 +165,7 @@ class AuditServiceTest extends CIUnitTestCase
             'entity_type' => 'user',
             'entity_id' => 1,
             'old_values' => null,
-            'new_values' => '{"username":"test"}',
+            'new_values' => '{"first_name":"Test"}',
             'ip_address' => '127.0.0.1',
             'user_agent' => 'Test',
             'created_at' => '2024-01-01 00:00:00',

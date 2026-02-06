@@ -10,20 +10,26 @@ use OpenApi\Attributes as OA;
  * Register Request Body
  *
  * Request schema for new user registration.
- * Creates new user account with username, email, and password.
+ * Creates new user account with email, password, and optional names.
  */
 #[OA\RequestBody(
     request: 'RegisterRequest',
     description: 'New user registration data',
     required: true,
     content: new OA\JsonContent(
-        required: ['username', 'email', 'password'],
+        required: ['email', 'password'],
         properties: [
             new OA\Property(
-                property: 'username',
+                property: 'first_name',
                 type: 'string',
-                description: 'Unique username for the account',
-                example: 'newuser'
+                description: 'First name',
+                example: 'Alex'
+            ),
+            new OA\Property(
+                property: 'last_name',
+                type: 'string',
+                description: 'Last name',
+                example: 'Doe'
             ),
             new OA\Property(
                 property: 'email',

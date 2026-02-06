@@ -16,7 +16,7 @@ use OpenApi\Attributes as OA;
     schema: 'User',
     title: 'User',
     description: 'User object with all properties',
-    required: ['id', 'username', 'email', 'role', 'created_at', 'updated_at'],
+    required: ['id', 'email', 'role', 'created_at', 'updated_at'],
     properties: [
         new OA\Property(
             property: 'id',
@@ -25,10 +25,18 @@ use OpenApi\Attributes as OA;
             example: 1
         ),
         new OA\Property(
-            property: 'username',
+            property: 'first_name',
             type: 'string',
-            description: 'Username for login',
-            example: 'testuser'
+            description: 'First name',
+            example: 'Alex',
+            nullable: true
+        ),
+        new OA\Property(
+            property: 'last_name',
+            type: 'string',
+            description: 'Last name',
+            example: 'Doe',
+            nullable: true
         ),
         new OA\Property(
             property: 'email',
@@ -36,6 +44,27 @@ use OpenApi\Attributes as OA;
             format: 'email',
             description: 'User email address',
             example: 'test@example.com'
+        ),
+        new OA\Property(
+            property: 'avatar_url',
+            type: 'string',
+            description: 'Avatar URL',
+            example: 'https://example.com/avatar.png',
+            nullable: true
+        ),
+        new OA\Property(
+            property: 'oauth_provider',
+            type: 'string',
+            description: 'OAuth provider (google, github)',
+            example: 'google',
+            nullable: true
+        ),
+        new OA\Property(
+            property: 'oauth_provider_id',
+            type: 'string',
+            description: 'OAuth provider user id',
+            example: '1234567890',
+            nullable: true
         ),
         new OA\Property(
             property: 'role',

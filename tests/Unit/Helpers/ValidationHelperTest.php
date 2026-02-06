@@ -58,7 +58,7 @@ class ValidationHelperTest extends CIUnitTestCase
 
     public function testValidateOrFailDoesNothingForValidData(): void
     {
-        $data = ['username' => 'test', 'password' => 'secret'];
+        $data = ['email' => 'test@example.com', 'password' => 'secret'];
 
         // Should not throw
         validateOrFail($data, 'auth', 'login');
@@ -68,7 +68,7 @@ class ValidationHelperTest extends CIUnitTestCase
 
     public function testValidateOrFailThrowsExceptionForInvalidData(): void
     {
-        $data = ['username' => '', 'password' => ''];
+        $data = ['email' => '', 'password' => ''];
 
         $this->expectException(ValidationException::class);
 

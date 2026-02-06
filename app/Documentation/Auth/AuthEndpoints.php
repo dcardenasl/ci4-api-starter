@@ -9,7 +9,7 @@ use OpenApi\Attributes as OA;
 #[OA\Post(
     path: '/api/v1/auth/login',
     tags: ['Authentication'],
-    summary: 'Login with username or email',
+    summary: 'Login with email',
     requestBody: new OA\RequestBody(
         ref: '#/components/requestBodies/LoginRequest'
     ),

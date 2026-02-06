@@ -26,9 +26,9 @@ class AuthValidationTest extends CIUnitTestCase
     {
         $rules = $this->validation->getRules('login');
 
-        $this->assertArrayHasKey('username', $rules);
+        $this->assertArrayHasKey('email', $rules);
         $this->assertArrayHasKey('password', $rules);
-        $this->assertStringContainsString('required', $rules['username']);
+        $this->assertStringContainsString('required', $rules['email']);
         $this->assertStringContainsString('required', $rules['password']);
     }
 
@@ -36,10 +36,10 @@ class AuthValidationTest extends CIUnitTestCase
     {
         $rules = $this->validation->getRules('register');
 
-        $this->assertArrayHasKey('username', $rules);
         $this->assertArrayHasKey('email', $rules);
+        $this->assertArrayHasKey('first_name', $rules);
+        $this->assertArrayHasKey('last_name', $rules);
         $this->assertArrayHasKey('password', $rules);
-        $this->assertStringContainsString('alpha_numeric', $rules['username']);
         $this->assertStringContainsString('valid_email_idn', $rules['email']);
         $this->assertStringContainsString('strong_password', $rules['password']);
     }
@@ -91,7 +91,7 @@ class AuthValidationTest extends CIUnitTestCase
     {
         $messages = $this->validation->getMessages('login');
 
-        $this->assertArrayHasKey('username.required', $messages);
+        $this->assertArrayHasKey('email.required', $messages);
         $this->assertArrayHasKey('password.required', $messages);
     }
 
@@ -99,8 +99,9 @@ class AuthValidationTest extends CIUnitTestCase
     {
         $messages = $this->validation->getMessages('register');
 
-        $this->assertArrayHasKey('username.required', $messages);
         $this->assertArrayHasKey('email.required', $messages);
+        $this->assertArrayHasKey('first_name.max_length', $messages);
+        $this->assertArrayHasKey('last_name.max_length', $messages);
         $this->assertArrayHasKey('password.required', $messages);
         $this->assertArrayHasKey('password.strong_password', $messages);
     }

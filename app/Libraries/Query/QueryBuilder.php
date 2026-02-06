@@ -46,7 +46,7 @@ class QueryBuilder
      * SECURITY: Validates sort fields against model's sortableFields whitelist
      * to prevent SQL injection attacks via sort parameter.
      *
-     * @param string $sort Sort string in format: "-created_at,username" (- prefix for DESC)
+     * @param string $sort Sort string in format: "-created_at,email" (- prefix for DESC)
      * @return self
      */
     public function sort(string $sort): self

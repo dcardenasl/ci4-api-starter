@@ -23,12 +23,9 @@ return [
         'sortDirInvalid'         => 'La dirección de ordenamiento debe ser asc o desc',
         'searchTooLong'          => 'La consulta de búsqueda es demasiado larga',
 
-        // Nombre de usuario
-        'usernameRequired'       => 'El nombre de usuario es obligatorio',
-        'usernameAlphaNumeric'   => 'El nombre de usuario solo puede contener letras y números',
-        'usernameMinLength'      => 'El nombre de usuario debe tener al menos 3 caracteres',
-        'usernameMaxLength'      => 'El nombre de usuario no puede exceder 100 caracteres',
-        'usernameTooLong'        => 'El nombre de usuario es demasiado largo',
+        // Nombres
+        'firstNameMaxLength'     => 'El nombre no puede exceder 100 caracteres',
+        'lastNameMaxLength'      => 'El apellido no puede exceder 100 caracteres',
 
         // Email
         'emailRequired'          => 'El email es obligatorio',
@@ -43,6 +40,12 @@ return [
         // Rol
         'roleInvalid'            => 'El rol debe ser user o admin',
 
+        // OAuth
+        'oauthProviderInvalid'     => 'El proveedor OAuth no es compatible',
+        'oauthProviderIdMaxLength' => 'El ID del proveedor OAuth no puede exceder 255 caracteres',
+        'avatarUrlInvalid'         => 'La URL del avatar debe ser válida',
+        'avatarUrlMaxLength'       => 'La URL del avatar no puede exceder 255 caracteres',
+
         // ID de usuario
         'userIdMustBePositive'   => 'El ID de usuario debe ser un entero positivo',
         'userIdRequired'         => 'El ID de usuario es obligatorio',
@@ -53,7 +56,7 @@ return [
     // ========================================
     'auth' => [
         // Login
-        'usernameOrEmailRequired' => 'El nombre de usuario o email es obligatorio',
+        'emailRequired'          => 'El email es obligatorio',
 
         // Token
         'resetTokenRequired'      => 'El token de restablecimiento es obligatorio',

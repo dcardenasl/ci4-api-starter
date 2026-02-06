@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Documentation\Responses;
+namespace App\Documentation\Common;
 
 use OpenApi\Attributes as OA;
 
@@ -20,14 +20,27 @@ use OpenApi\Attributes as OA;
             new OA\Property(
                 property: 'status',
                 type: 'string',
-                description: 'Error status',
+                description: 'Response status',
                 example: 'error'
+            ),
+            new OA\Property(
+                property: 'message',
+                type: 'string',
+                description: 'Main error message',
+                example: 'Validation failed'
             ),
             new OA\Property(
                 property: 'errors',
                 type: 'object',
                 description: 'Field-specific error messages',
                 example: ['email' => 'This email is already registered']
+            ),
+            new OA\Property(
+                property: 'code',
+                type: 'integer',
+                description: 'Error code',
+                example: 422,
+                nullable: true
             ),
         ]
     )

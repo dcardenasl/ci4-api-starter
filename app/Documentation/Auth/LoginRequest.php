@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Documentation\RequestBodies;
+namespace App\Documentation\Auth;
 
 use OpenApi\Attributes as OA;
 

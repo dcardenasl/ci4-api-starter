@@ -12,13 +12,190 @@
         }
     ],
     "paths": {
+        "/api/v1/audit": {
+            "get": {
+                "tags": [
+                    "Audit"
+                ],
+                "summary": "List audit logs",
+                "operationId": "41e87451bfc90c0c467029924181436a",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Paginated audit logs",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/AuditLog"
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/audit/{id}": {
+            "get": {
+                "tags": [
+                    "Audit"
+                ],
+                "summary": "Get audit log by ID",
+                "operationId": "15933b30077831ab50c19ae9ad19da5a",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Audit log entry",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/AuditLog"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "404": {
+                        "description": "Audit log not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/audit/entity/{type}/{id}": {
+            "get": {
+                "tags": [
+                    "Audit"
+                ],
+                "summary": "Get audit logs for an entity",
+                "operationId": "59a87e8b54c2a8a12a71075dd71493f7",
+                "parameters": [
+                    {
+                        "name": "type",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Audit logs for entity",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/AuditLog"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "404": {
+                        "description": "Entity not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/v1/auth/login": {
             "post": {
                 "tags": [
                     "Authentication"
                 ],
-                "summary": "User login",
-                "operationId": "12bd69849349679dff198119b6480033",
+                "summary": "Login with username or email",
+                "operationId": "2dae767e12186fc9aa78c2a60d00802c",
                 "requestBody": {
                     "$ref": "#/components/requestBodies/LoginRequest"
                 },
@@ -34,29 +211,19 @@
                                             "example": "success"
                                         },
                                         "data": {
-                                            "$ref": "#/components/schemas/AuthToken"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Invalid credentials",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "status": {
-                                            "type": "string",
-                                            "example": "error"
-                                        },
-                                        "errors": {
                                             "properties": {
-                                                "credentials": {
-                                                    "type": "string",
-                                                    "example": "Invalid credentials"
+                                                "access_token": {
+                                                    "type": "string"
+                                                },
+                                                "refresh_token": {
+                                                    "type": "string"
+                                                },
+                                                "expires_in": {
+                                                    "type": "integer",
+                                                    "example": 3600
+                                                },
+                                                "user": {
+                                                    "$ref": "#/components/schemas/User"
                                                 }
                                             },
                                             "type": "object"
@@ -66,6 +233,12 @@
                                 }
                             }
                         }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationErrorResponse"
                     }
                 }
             }
@@ -75,14 +248,14 @@
                 "tags": [
                     "Authentication"
                 ],
-                "summary": "Register new user",
-                "operationId": "3e37920a2395c9f5337fc84b110e6246",
+                "summary": "Register a new user",
+                "operationId": "7ffd1ae566eebee2f1d97e8bfc47f15c",
                 "requestBody": {
                     "$ref": "#/components/requestBodies/RegisterRequest"
                 },
                 "responses": {
                     "201": {
-                        "description": "User registered successfully",
+                        "description": "Registration successful",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -92,7 +265,25 @@
                                             "example": "success"
                                         },
                                         "data": {
-                                            "$ref": "#/components/schemas/AuthToken"
+                                            "properties": {
+                                                "access_token": {
+                                                    "type": "string"
+                                                },
+                                                "refresh_token": {
+                                                    "type": "string"
+                                                },
+                                                "expires_in": {
+                                                    "type": "integer",
+                                                    "example": 3600
+                                                },
+                                                "user": {
+                                                    "$ref": "#/components/schemas/User"
+                                                },
+                                                "message": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "type": "object"
                                         }
                                     },
                                     "type": "object"
@@ -111,11 +302,11 @@
                 "tags": [
                     "Authentication"
                 ],
-                "summary": "Get current authenticated user",
-                "operationId": "f7dc90479b302f59027228dadb342e43",
+                "summary": "Get current user profile",
+                "operationId": "30fd9073987ec366646e1b08842dfe42",
                 "responses": {
                     "200": {
-                        "description": "Current user details",
+                        "description": "Current user profile",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -134,24 +325,1080 @@
                         }
                     },
                     "401": {
-                        "description": "Unauthorized",
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/auth/forgot-password": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Send password reset link",
+                "operationId": "19c04fe755ee9d6901b8d3b85b293141",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Reset link queued",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "properties": {
                                         "status": {
                                             "type": "string",
-                                            "example": "error"
+                                            "example": "success"
                                         },
                                         "message": {
-                                            "type": "string",
-                                            "example": "User not authenticated"
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "message": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "type": "object"
                                         }
                                     },
                                     "type": "object"
                                 }
                             }
                         }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationErrorResponse"
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/validate-reset-token": {
+            "get": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Validate password reset token",
+                "operationId": "34ef7d48db3714aa11ed654064417545",
+                "parameters": [
+                    {
+                        "name": "token",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "email",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "email"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Token is valid",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "valid": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Invalid token"
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/reset-password": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Reset password using token",
+                "operationId": "3d815d329499a08001e685dacbaa5642",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "token",
+                                    "email",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "token": {
+                                        "type": "string"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Password reset successful",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "message": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationErrorResponse"
+                    },
+                    "404": {
+                        "description": "Invalid token"
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/refresh": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Refresh access token",
+                "operationId": "063a05c344969a8428f2deffd730d406",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "refresh_token"
+                                ],
+                                "properties": {
+                                    "refresh_token": {
+                                        "description": "Refresh token issued at login/register",
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Token refreshed",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "access_token": {
+                                                    "type": "string"
+                                                },
+                                                "refresh_token": {
+                                                    "type": "string"
+                                                },
+                                                "expires_in": {
+                                                    "type": "integer",
+                                                    "example": 3600
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationErrorResponse"
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/revoke": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Revoke current access token",
+                "operationId": "5f45c466b72ec5c588260656758d5e48",
+                "responses": {
+                    "200": {
+                        "description": "Token revoked",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Token revoked"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid token"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/auth/revoke-all": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Revoke all tokens for current user",
+                "operationId": "cb5af7be466925aee2736665b1e3dc2e",
+                "responses": {
+                    "200": {
+                        "description": "All tokens revoked",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "All tokens revoked"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/auth/verify-email": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Verify email with token",
+                "operationId": "cbaa1c2d07150c7b9eaf1d4f30b38aa4",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "token"
+                                ],
+                                "properties": {
+                                    "token": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Email verified",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "message": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid or expired token"
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/resend-verification": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Resend verification email",
+                "operationId": "d5a90d02b38dbd87a577c2f4e8fc1154",
+                "responses": {
+                    "200": {
+                        "description": "Verification email sent",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "message": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/files": {
+            "get": {
+                "tags": [
+                    "Files"
+                ],
+                "summary": "List files for current user",
+                "operationId": "32d01599dc632a4988116bc96b542436",
+                "responses": {
+                    "200": {
+                        "description": "File list",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/File"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/files/upload": {
+            "post": {
+                "tags": [
+                    "Files"
+                ],
+                "summary": "Upload a file",
+                "operationId": "2f91ab5ac27a01eab02a88a66d24f873",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "file"
+                                ],
+                                "properties": {
+                                    "file": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "File uploaded",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/File"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationErrorResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/files/{id}": {
+            "get": {
+                "tags": [
+                    "Files"
+                ],
+                "summary": "Download or get file metadata",
+                "operationId": "f33a0fcf1fc83a8b99ba1e7a15f79bd9",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "File metadata (or file download for local storage)",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/FileDownload"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "404": {
+                        "description": "File not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Files"
+                ],
+                "summary": "Delete file",
+                "operationId": "e2d213f1a143d4656d600707b3e97580",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "File deleted",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "404": {
+                        "description": "File not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/health": {
+            "get": {
+                "tags": [
+                    "Health"
+                ],
+                "summary": "Health check",
+                "operationId": "8134f87e7bbe4107dc228a3b8d62d619",
+                "responses": {
+                    "200": {
+                        "description": "System healthy",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "healthy"
+                                        },
+                                        "timestamp": {
+                                            "type": "string"
+                                        },
+                                        "checks": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "System unhealthy or monitoring disabled"
+                    }
+                }
+            }
+        },
+        "/ping": {
+            "get": {
+                "tags": [
+                    "Health"
+                ],
+                "summary": "Ping",
+                "operationId": "dbed0a220ea82e65e99701b5a0827c7e",
+                "responses": {
+                    "200": {
+                        "description": "Service reachable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "ok"
+                                        },
+                                        "timestamp": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/ready": {
+            "get": {
+                "tags": [
+                    "Health"
+                ],
+                "summary": "Readiness check",
+                "operationId": "e5d2e3dea8c7b5d8c0113dce7beb0d09",
+                "responses": {
+                    "200": {
+                        "description": "Ready to serve",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "ready"
+                                        },
+                                        "timestamp": {
+                                            "type": "string"
+                                        },
+                                        "database": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Not ready"
+                    }
+                }
+            }
+        },
+        "/live": {
+            "get": {
+                "tags": [
+                    "Health"
+                ],
+                "summary": "Liveness check",
+                "operationId": "7a050261f6e4cedb42617b378f1e1415",
+                "responses": {
+                    "200": {
+                        "description": "Service alive",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "alive"
+                                        },
+                                        "timestamp": {
+                                            "type": "string"
+                                        },
+                                        "uptime_seconds": {
+                                            "type": "integer",
+                                            "example": 12345
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/metrics": {
+            "get": {
+                "tags": [
+                    "Metrics"
+                ],
+                "summary": "Get metrics overview",
+                "operationId": "d54a564b36f982c52d3a8c1a1593b596",
+                "parameters": [
+                    {
+                        "name": "period",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "day"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Metrics overview",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/MetricsOverview"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "503": {
+                        "description": "Metrics disabled"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/metrics/requests": {
+            "get": {
+                "tags": [
+                    "Metrics"
+                ],
+                "summary": "Get request statistics",
+                "operationId": "4ad673b05b918627545403c054eddb53",
+                "parameters": [
+                    {
+                        "name": "period",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "day"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Request statistics",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/metrics/slow-requests": {
+            "get": {
+                "tags": [
+                    "Metrics"
+                ],
+                "summary": "Get slow requests",
+                "operationId": "2e9739bb742c177cd3ffe85a2f5bc464",
+                "parameters": [
+                    {
+                        "name": "threshold",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1000
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 10
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Slow request list",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/metrics/custom/{name}": {
+            "get": {
+                "tags": [
+                    "Metrics"
+                ],
+                "summary": "Get custom metrics",
+                "operationId": "c0af6e1d26713795572a2303b98a03e4",
+                "parameters": [
+                    {
+                        "name": "name",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "period",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "day"
+                        }
+                    },
+                    {
+                        "name": "aggregate",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Custom metric data",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/metrics/record": {
+            "post": {
+                "tags": [
+                    "Metrics"
+                ],
+                "summary": "Record a custom metric",
+                "operationId": "2c377b33a6d82bf982b4347fcbc9f04d",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "value"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "value": {
+                                        "type": "number"
+                                    },
+                                    "tags": {
+                                        "type": "object"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Metric recorded",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/MetricRecord"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationErrorResponse"
                     }
                 },
                 "security": [
@@ -166,11 +1413,39 @@
                 "tags": [
                     "Users"
                 ],
-                "summary": "Get all users",
-                "operationId": "7439bb52a8bc9a8d9a5fdc16a5c6d8bb",
+                "summary": "List users",
+                "operationId": "bb16d86dd4253aeb9142d6f70fd5dcaa",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
-                        "description": "List of users",
+                        "description": "Paginated user list",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -184,6 +1459,35 @@
                                             "items": {
                                                 "$ref": "#/components/schemas/User"
                                             }
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "total": {
+                                                    "type": "integer",
+                                                    "example": 100
+                                                },
+                                                "perPage": {
+                                                    "type": "integer",
+                                                    "example": 20
+                                                },
+                                                "page": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "lastPage": {
+                                                    "type": "integer",
+                                                    "example": 5
+                                                },
+                                                "from": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "to": {
+                                                    "type": "integer",
+                                                    "example": 20
+                                                }
+                                            },
+                                            "type": "object"
                                         }
                                     },
                                     "type": "object"
@@ -205,14 +1509,14 @@
                 "tags": [
                     "Users"
                 ],
-                "summary": "Create new user",
-                "operationId": "6516656b80724975409e688e6f8cbe49",
+                "summary": "Create user (admin)",
+                "operationId": "462c00c3a4c6ef2fc9646c721e9f22d7",
                 "requestBody": {
                     "$ref": "#/components/requestBodies/CreateUserRequest"
                 },
                 "responses": {
                     "201": {
-                        "description": "User created successfully",
+                        "description": "User created",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -230,11 +1534,11 @@
                             }
                         }
                     },
-                    "400": {
-                        "$ref": "#/components/responses/ValidationErrorResponse"
-                    },
                     "401": {
                         "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationErrorResponse"
                     }
                 },
                 "security": [
@@ -250,7 +1554,7 @@
                     "Users"
                 ],
                 "summary": "Get user by ID",
-                "operationId": "04b7310fd866ef764fcdf537ea796578",
+                "operationId": "f75dc71b97800024d1f43c723b617d77",
                 "parameters": [
                     {
                         "name": "id",
@@ -258,8 +1562,7 @@
                         "required": true,
                         "schema": {
                             "type": "integer"
-                        },
-                        "example": 1
+                        }
                     }
                 ],
                 "responses": {
@@ -282,24 +1585,11 @@
                             }
                         }
                     },
-                    "400": {
-                        "description": "User not found",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "error": {
-                                            "type": "string",
-                                            "example": "Usuario no encontrado"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
                     "401": {
                         "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "404": {
+                        "description": "User not found"
                     }
                 },
                 "security": [
@@ -312,8 +1602,8 @@
                 "tags": [
                     "Users"
                 ],
-                "summary": "Update user",
-                "operationId": "92972fae1d46dfcadd3470e13f69aab6",
+                "summary": "Update user (admin)",
+                "operationId": "8f5d3d5fba6849d4bc22555d2fae4786",
                 "parameters": [
                     {
                         "name": "id",
@@ -321,8 +1611,7 @@
                         "required": true,
                         "schema": {
                             "type": "integer"
-                        },
-                        "example": 1
+                        }
                     }
                 ],
                 "requestBody": {
@@ -330,7 +1619,7 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "User updated successfully",
+                        "description": "User updated",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -348,11 +1637,14 @@
                             }
                         }
                     },
-                    "400": {
-                        "$ref": "#/components/responses/ValidationErrorResponse"
-                    },
                     "401": {
                         "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "404": {
+                        "description": "User not found"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationErrorResponse"
                     }
                 },
                 "security": [
@@ -365,8 +1657,8 @@
                 "tags": [
                     "Users"
                 ],
-                "summary": "Delete user (soft delete)",
-                "operationId": "c7133c6d9af64942be53fd6b731ac407",
+                "summary": "Delete user (admin)",
+                "operationId": "5a802bd6daed8d9b1b4890ffd96f8c60",
                 "parameters": [
                     {
                         "name": "id",
@@ -374,13 +1666,12 @@
                         "required": true,
                         "schema": {
                             "type": "integer"
-                        },
-                        "example": 1
+                        }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "User deleted successfully",
+                        "description": "User deleted",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -390,24 +1681,7 @@
                                             "example": "success"
                                         },
                                         "message": {
-                                            "type": "string",
-                                            "example": "Usuario eliminado correctamente"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "User not found",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "error": {
-                                            "type": "string",
-                                            "example": "Usuario no encontrado"
+                                            "type": "string"
                                         }
                                     },
                                     "type": "object"
@@ -417,6 +1691,9 @@
                     },
                     "401": {
                         "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "404": {
+                        "description": "User not found"
                     }
                 },
                 "security": [
@@ -429,6 +1706,57 @@
     },
     "components": {
         "schemas": {
+            "AuditLog": {
+                "title": "Audit Log",
+                "description": "Audit log entry",
+                "properties": {
+                    "id": {
+                        "description": "Audit Log Schema",
+                        "type": "integer",
+                        "example": 10
+                    },
+                    "user_id": {
+                        "type": "integer",
+                        "example": 1,
+                        "nullable": true
+                    },
+                    "action": {
+                        "type": "string",
+                        "example": "update"
+                    },
+                    "entity_type": {
+                        "type": "string",
+                        "example": "user"
+                    },
+                    "entity_id": {
+                        "type": "integer",
+                        "example": 5,
+                        "nullable": true
+                    },
+                    "old_values": {
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "new_values": {
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "ip_address": {
+                        "type": "string",
+                        "example": "127.0.0.1"
+                    },
+                    "user_agent": {
+                        "type": "string",
+                        "example": "Mozilla/5.0"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-02-06T19:00:00Z"
+                    }
+                },
+                "type": "object"
+            },
             "AuthToken": {
                 "title": "Authentication Token",
                 "description": "JWT token with associated user data",
@@ -444,6 +1772,102 @@
                     },
                     "user": {
                         "$ref": "#/components/schemas/User"
+                    }
+                },
+                "type": "object"
+            },
+            "File": {
+                "title": "File",
+                "description": "File metadata",
+                "properties": {
+                    "id": {
+                        "description": "File Schema\n\nReusable File object schema.",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "original_name": {
+                        "type": "string",
+                        "example": "document.pdf"
+                    },
+                    "size": {
+                        "type": "integer",
+                        "example": 102400
+                    },
+                    "human_size": {
+                        "type": "string",
+                        "example": "100 KB"
+                    },
+                    "mime_type": {
+                        "type": "string",
+                        "example": "application/pdf"
+                    },
+                    "url": {
+                        "type": "string",
+                        "example": "https://example.com/files/1"
+                    },
+                    "uploaded_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-02-06T19:00:00Z"
+                    },
+                    "is_image": {
+                        "type": "boolean",
+                        "example": false
+                    }
+                },
+                "type": "object"
+            },
+            "FileDownload": {
+                "title": "File Download",
+                "description": "File download or storage metadata",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "original_name": {
+                        "type": "string",
+                        "example": "document.pdf"
+                    },
+                    "url": {
+                        "type": "string",
+                        "example": "https://example.com/files/1"
+                    },
+                    "path": {
+                        "type": "string",
+                        "example": "2026/02/06/document_abc.pdf"
+                    },
+                    "storage_driver": {
+                        "type": "string",
+                        "example": "local"
+                    }
+                },
+                "type": "object"
+            },
+            "MetricsOverview": {
+                "title": "Metrics Overview",
+                "description": "Overview of request stats and slow requests",
+                "properties": {
+                    "request_stats": {
+                        "description": "Metrics Schemas",
+                        "type": "object"
+                    },
+                    "slow_requests": {
+                        "type": "array",
+                        "items": {
+                            "type": "object"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "MetricRecord": {
+                "title": "Metric Record",
+                "description": "Recorded metric acknowledgement",
+                "properties": {
+                    "message": {
+                        "type": "string",
+                        "example": "Metric recorded successfully"
                     }
                 },
                 "type": "object"
@@ -511,15 +1935,20 @@
                     "application/json": {
                         "schema": {
                             "properties": {
-                                "success": {
-                                    "description": "Operation success status",
-                                    "type": "boolean",
-                                    "example": false
+                                "status": {
+                                    "description": "Response status",
+                                    "type": "string",
+                                    "example": "error"
                                 },
                                 "message": {
                                     "description": "Error message",
                                     "type": "string",
-                                    "example": "Authorization header missing"
+                                    "example": "Unauthorized"
+                                },
+                                "errors": {
+                                    "description": "Error details",
+                                    "type": "object",
+                                    "nullable": true
                                 }
                             },
                             "type": "object"
@@ -534,9 +1963,14 @@
                         "schema": {
                             "properties": {
                                 "status": {
-                                    "description": "Error status",
+                                    "description": "Response status",
                                     "type": "string",
                                     "example": "error"
+                                },
+                                "message": {
+                                    "description": "Main error message",
+                                    "type": "string",
+                                    "example": "Validation failed"
                                 },
                                 "errors": {
                                     "description": "Field-specific error messages",
@@ -544,6 +1978,12 @@
                                     "example": {
                                         "email": "This email is already registered"
                                     }
+                                },
+                                "code": {
+                                    "description": "Error code",
+                                    "type": "integer",
+                                    "example": 422,
+                                    "nullable": true
                                 }
                             },
                             "type": "object"
@@ -553,34 +1993,6 @@
             }
         },
         "requestBodies": {
-            "CreateUserRequest": {
-                "description": "Data for creating a new user",
-                "required": true,
-                "content": {
-                    "application/json": {
-                        "schema": {
-                            "required": [
-                                "username",
-                                "email"
-                            ],
-                            "properties": {
-                                "username": {
-                                    "description": "Unique username",
-                                    "type": "string",
-                                    "example": "newuser"
-                                },
-                                "email": {
-                                    "description": "User email address",
-                                    "type": "string",
-                                    "format": "email",
-                                    "example": "newuser@example.com"
-                                }
-                            },
-                            "type": "object"
-                        }
-                    }
-                }
-            },
             "LoginRequest": {
                 "description": "User login credentials",
                 "required": true,
@@ -644,6 +2056,34 @@
                     }
                 }
             },
+            "CreateUserRequest": {
+                "description": "Data for creating a new user",
+                "required": true,
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "required": [
+                                "username",
+                                "email"
+                            ],
+                            "properties": {
+                                "username": {
+                                    "description": "Unique username",
+                                    "type": "string",
+                                    "example": "newuser"
+                                },
+                                "email": {
+                                    "description": "User email address",
+                                    "type": "string",
+                                    "format": "email",
+                                    "example": "newuser@example.com"
+                                }
+                            },
+                            "type": "object"
+                        }
+                    }
+                }
+            },
             "UpdateUserRequest": {
                 "description": "Data for updating a user",
                 "required": true,
@@ -686,6 +2126,22 @@
         {
             "name": "Users",
             "description": "User management endpoints"
+        },
+        {
+            "name": "Files",
+            "description": "File management endpoints"
+        },
+        {
+            "name": "Metrics",
+            "description": "Operational metrics endpoints"
+        },
+        {
+            "name": "Audit",
+            "description": "Audit log endpoints"
+        },
+        {
+            "name": "Health",
+            "description": "Health and readiness endpoints"
         }
     ]
 }

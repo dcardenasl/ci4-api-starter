@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Documentation\Schemas;
+namespace App\Documentation\Common;
 
 use OpenApi\Attributes as OA;
 

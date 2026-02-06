@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Documentation\Responses;
+namespace App\Documentation\Common;
 
 use OpenApi\Attributes as OA;
 
@@ -18,18 +18,25 @@ use OpenApi\Attributes as OA;
     content: new OA\JsonContent(
         properties: [
             new OA\Property(
-                property: 'success',
-                type: 'boolean',
-                description: 'Operation success status',
-                example: false
+                property: 'status',
+                type: 'string',
+                description: 'Response status',
+                example: 'error'
             ),
             new OA\Property(
                 property: 'message',
                 type: 'string',
                 description: 'Error message',
-                example: 'Authorization header missing'
+                example: 'Unauthorized'
             ),
-        ]
+            new OA\Property(
+                property: 'errors',
+                type: 'object',
+                description: 'Error details',
+                nullable: true
+            ),
+        ],
+        type: 'object'
     )
 )]
 class UnauthorizedResponse

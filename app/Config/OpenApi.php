@@ -31,6 +31,22 @@ use OpenApi\Attributes as OA;
     name: 'Users',
     description: 'User management endpoints'
 )]
+#[OA\Tag(
+    name: 'Files',
+    description: 'File management endpoints'
+)]
+#[OA\Tag(
+    name: 'Metrics',
+    description: 'Operational metrics endpoints'
+)]
+#[OA\Tag(
+    name: 'Audit',
+    description: 'Audit log endpoints'
+)]
+#[OA\Tag(
+    name: 'Health',
+    description: 'Health and readiness endpoints'
+)]
 class OpenApi
 {
     // This class only holds OpenAPI annotations

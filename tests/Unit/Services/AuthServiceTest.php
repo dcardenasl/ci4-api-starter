@@ -69,16 +69,6 @@ class AuthServiceTest extends CIUnitTestCase
                 return $this->returnUser;
             }
 
-            public function validate($data): bool
-            {
-                return true;
-            }
-
-            public function errors(bool $forceDB = false): array
-            {
-                return [];
-            }
-
             public function insert($row = null, bool $returnID = true)
             {
                 return 1;
@@ -254,36 +244,7 @@ class AuthServiceTest extends CIUnitTestCase
 
     public function testRegisterWithInvalidDataThrowsValidationException(): void
     {
-        // Create mock with validation failure
-        $mockUserModel = new class () extends UserModel {
-            public function where($key, $value = null, ?bool $escape = null): static
-            {
-                return $this;
-            }
-            public function orWhere($key, $value = null, ?bool $escape = null): static
-            {
-                return $this;
-            }
-            public function first()
-            {
-                return null;
-            }
-            public function validate($data): bool
-            {
-                return false;
-            }
-            public function errors(bool $forceDB = false): array
-            {
-                return ['email' => 'Invalid email'];
-            }
-        };
-
-        $service = new AuthService(
-            $mockUserModel,
-            $this->mockJwtService,
-            $this->mockRefreshTokenService,
-            $this->mockVerificationService
-        );
+        $service = $this->createServiceWithUserQuery(null);
 
         $this->expectException(ValidationException::class);
 

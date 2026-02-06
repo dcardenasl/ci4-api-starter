@@ -81,10 +81,6 @@ class UserServiceTest extends CIUnitTestCase
     public function testStoreCreatesUser(): void
     {
         $this->mockUserModel
-            ->method('validate')
-            ->willReturn(true);
-
-        $this->mockUserModel
             ->expects($this->once())
             ->method('insert')
             ->willReturn(1);
@@ -112,14 +108,6 @@ class UserServiceTest extends CIUnitTestCase
 
     public function testStoreWithInvalidDataThrowsValidationException(): void
     {
-        $this->mockUserModel
-            ->method('validate')
-            ->willReturn(false);
-
-        $this->mockUserModel
-            ->method('errors')
-            ->willReturn(['email' => 'Invalid email format']);
-
         $this->expectException(ValidationException::class);
 
         $this->service->store([
@@ -131,8 +119,6 @@ class UserServiceTest extends CIUnitTestCase
 
     public function testStoreHashesPassword(): void
     {
-        $this->mockUserModel->method('validate')->willReturn(true);
-
         $this->mockUserModel
             ->expects($this->once())
             ->method('insert')

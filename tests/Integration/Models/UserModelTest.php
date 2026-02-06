@@ -115,18 +115,6 @@ class UserModelTest extends CIUnitTestCase
         $this->assertArrayHasKey('email', $this->userModel->errors());
     }
 
-    public function testValidationRejectsWeakPassword(): void
-    {
-        $result = $this->userModel->validate([
-            'username' => 'testuser',
-            'email' => 'test@example.com',
-            'password' => 'weak',
-        ]);
-
-        $this->assertFalse($result);
-        $this->assertArrayHasKey('password', $this->userModel->errors());
-    }
-
     public function testValidationRejectsDuplicateEmail(): void
     {
         $this->userModel->insert([

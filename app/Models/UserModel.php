@@ -42,10 +42,10 @@ class UserModel extends Model
     // Reglas de validación (integridad de datos)
     protected $validationRules = [
         'email' => [
-            'rules'  => 'required|valid_email|max_length[255]|is_unique[users.email,id,{id}]',
+            'rules'  => 'required|valid_email_idn|max_length[255]|is_unique[users.email,id,{id}]',
             'errors' => [
                 'required'    => '{field} is required',
-                'valid_email' => 'Please provide a valid email',
+                'valid_email_idn' => 'Please provide a valid email',
                 'is_unique'   => 'This email is already registered',
             ],
         ],
@@ -56,15 +56,6 @@ class UserModel extends Model
                 'alpha_numeric' => 'Username can only contain letters and numbers',
                 'min_length'    => 'Username must be at least {param} characters',
                 'is_unique'     => 'This username is already taken',
-            ],
-        ],
-        'password' => [
-            'rules'  => 'required|min_length[8]|max_length[128]|regex_match[/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).+$/]',
-            'errors' => [
-                'required'    => '{field} is required',
-                'min_length'  => 'Password must be at least {param} characters',
-                'max_length'  => 'Password must not exceed {param} characters',
-                'regex_match' => 'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character',
             ],
         ],
     ];

@@ -116,13 +116,8 @@ class AuthService implements AuthServiceInterface
             );
         }
 
-        // Validate password strength using model rules
-        if (!$this->userModel->validate($data)) {
-            throw new ValidationException(
-                lang('Api.validationFailed'),
-                $this->userModel->errors()
-            );
-        }
+        // Validate request input (format, required fields, password strength)
+        validateOrFail($data, 'auth', 'register');
 
         $businessErrors = $this->validateBusinessRules($data);
         if (!empty($businessErrors)) {

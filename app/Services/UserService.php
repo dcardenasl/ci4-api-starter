@@ -91,13 +91,7 @@ class UserService implements UserServiceInterface
      */
     public function store(array $data): array
     {
-        // Validate all fields before hashing password
-        if (!$this->userModel->validate($data)) {
-            throw new ValidationException(
-                lang('Api.validationFailed'),
-                $this->userModel->errors()
-            );
-        }
+        validateOrFail($data, 'user', 'store');
 
         // Validaciones de reglas de negocio (más allá de integridad de datos)
         $businessErrors = $this->validateBusinessRules($data);

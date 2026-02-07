@@ -179,6 +179,7 @@ class AuthServiceTest extends CIUnitTestCase
             'last_name' => 'User',
             'password' => password_hash('ValidPass123!', PASSWORD_BCRYPT),
             'role' => 'user',
+            'email_verified_at' => date('Y-m-d H:i:s'),
         ]);
 
         $service = $this->createServiceWithUserQuery($user);
@@ -205,6 +206,73 @@ class AuthServiceTest extends CIUnitTestCase
         $this->assertEquals('refresh.token.here', $result['data']['refresh_token']);
         $this->assertArrayHasKey('expires_in', $result['data']);
         $this->assertArrayHasKey('user', $result['data']);
+    }
+
+    public function testLoginWithTokenFailsIfEmailNotVerified(): void
+    {
+        $user = $this->createUserEntity([
+            'id' => 1,
+            'email' => 'test@example.com',
+            'first_name' => 'Test',
+            'last_name' => 'User',
+            'password' => password_hash('ValidPass123!', PASSWORD_BCRYPT),
+            'role' => 'user',
+            'email_verified_at' => null,
+        ]);
+
+        $service = $this->createServiceWithUserQuery($user);
+
+        $this->mockJwtService
+            ->expects($this->never())
+            ->method('encode');
+
+        $this->mockRefreshTokenService
+            ->expects($this->never())
+            ->method('issueRefreshToken');
+
+        $this->expectException(AuthenticationException::class);
+
+        $service->loginWithToken([
+            'email' => 'test@example.com',
+            'password' => 'ValidPass123!',
+        ]);
+    }
+
+    public function testLoginWithTokenAllowsGoogleOauthWithoutVerification(): void
+    {
+        $user = $this->createUserEntity([
+            'id' => 1,
+            'email' => 'test@example.com',
+            'first_name' => 'Test',
+            'last_name' => 'User',
+            'password' => password_hash('ValidPass123!', PASSWORD_BCRYPT),
+            'role' => 'user',
+            'email_verified_at' => null,
+            'oauth_provider' => 'google',
+        ]);
+
+        $service = $this->createServiceWithUserQuery($user);
+
+        $this->mockJwtService
+            ->expects($this->once())
+            ->method('encode')
+            ->with(1, 'user')
+            ->willReturn('jwt.access.token');
+
+        $this->mockRefreshTokenService
+            ->expects($this->once())
+            ->method('issueRefreshToken')
+            ->with(1)
+            ->willReturn('refresh.token.here');
+
+        $result = $service->loginWithToken([
+            'email' => 'test@example.com',
+            'password' => 'ValidPass123!',
+        ]);
+
+        $this->assertSuccessResponse($result);
+        $this->assertEquals('jwt.access.token', $result['data']['access_token']);
+        $this->assertEquals('refresh.token.here', $result['data']['refresh_token']);
     }
 
     // ==================== REGISTER TESTS ====================

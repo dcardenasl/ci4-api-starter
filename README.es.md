@@ -64,7 +64,7 @@ POST /api/v1/auth/login        Iniciar sesion (devuelve tokens)
 POST /api/v1/auth/refresh      Refrescar token de acceso
 POST /api/v1/auth/forgot-password   Solicitar reset de contrasena
 POST /api/v1/auth/reset-password    Restablecer contrasena
-POST /api/v1/auth/verify-email      Verificar email
+GET  /api/v1/auth/verify-email      Verificar email (token en query)
 ```
 
 ### Verificacion de correo (Opcional)

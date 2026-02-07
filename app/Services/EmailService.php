@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Interfaces\EmailServiceInterface;
+use App\Libraries\Queue\Jobs\SendTemplateEmailJob;
 use App\Libraries\Queue\QueueManager;
 use Symfony\Component\Mailer\Mailer;
 use Symfony\Component\Mailer\MailerInterface;
@@ -169,7 +170,7 @@ class EmailService implements EmailServiceInterface
     public function queueTemplate(string $template, string $to, array $data): int
     {
         return $this->queueManager->push(
-            \App\Libraries\Queue\Jobs\SendTemplateEmailJob::class,
+            SendTemplateEmailJob::class,
             [
                 'template' => $template,
                 'to' => $to,

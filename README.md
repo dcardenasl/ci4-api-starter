@@ -64,7 +64,7 @@ POST /api/v1/auth/login        Login (returns tokens)
 POST /api/v1/auth/refresh      Refresh access token
 POST /api/v1/auth/forgot-password   Request password reset
 POST /api/v1/auth/reset-password    Reset password
-POST /api/v1/auth/verify-email      Verify email address
+GET  /api/v1/auth/verify-email      Verify email address (token in query)
 ```
 
 ### Email Verification (Optional)

@@ -11,6 +11,7 @@ use App\Interfaces\EmailServiceInterface;
 use App\Interfaces\VerificationServiceInterface;
 use App\Libraries\ApiResponse;
 use App\Models\UserModel;
+use CodeIgniter\I18n\Time;
 
 class VerificationService implements VerificationServiceInterface
 {
@@ -101,7 +102,11 @@ class VerificationService implements VerificationServiceInterface
         }
 
         // Check if token expired
-        if ($user->verification_token_expires && strtotime($user->verification_token_expires) < time()) {
+        $expiresAt = $user->verification_token_expires ?? null;
+        if ($expiresAt instanceof Time) {
+            $expiresAt = $expiresAt->toDateTimeString();
+        }
+        if (! empty($expiresAt) && strtotime((string) $expiresAt) < time()) {
             throw new BadRequestException(lang('Verification.tokenExpired'));
         }
 

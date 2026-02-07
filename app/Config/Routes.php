@@ -29,6 +29,7 @@ $routes->group('api/v1', ['namespace' => 'App\Controllers\Api\V1', 'filter' => '
     });
 
     // Email verification routes (public, standard rate limiting)
+    $routes->get('auth/verify-email', 'VerificationController::verify');
     $routes->post('auth/verify-email', 'VerificationController::verify');
     $routes->get('auth/validate-reset-token', 'PasswordResetController::validateToken');
 

@@ -240,6 +240,50 @@ class AuthServiceTest extends CIUnitTestCase
         ]);
     }
 
+    public function testLoginWithTokenAllowsUnverifiedEmailWhenDisabled(): void
+    {
+        $previous = getenv('AUTH_REQUIRE_EMAIL_VERIFICATION');
+        putenv('AUTH_REQUIRE_EMAIL_VERIFICATION=false');
+
+        $user = $this->createUserEntity([
+            'id' => 1,
+            'email' => 'test@example.com',
+            'first_name' => 'Test',
+            'last_name' => 'User',
+            'password' => password_hash('ValidPass123!', PASSWORD_BCRYPT),
+            'role' => 'user',
+            'status' => 'active',
+            'email_verified_at' => null,
+        ]);
+
+        $service = $this->createServiceWithUserQuery($user);
+
+        $this->mockJwtService
+            ->expects($this->once())
+            ->method('encode')
+            ->with(1, 'user')
+            ->willReturn('jwt.access.token');
+
+        $this->mockRefreshTokenService
+            ->expects($this->once())
+            ->method('issueRefreshToken')
+            ->with(1)
+            ->willReturn('refresh.token.here');
+
+        $result = $service->loginWithToken([
+            'email' => 'test@example.com',
+            'password' => 'ValidPass123!',
+        ]);
+
+        $this->assertSuccessResponse($result);
+
+        if ($previous === false || $previous === '') {
+            putenv('AUTH_REQUIRE_EMAIL_VERIFICATION');
+        } else {
+            putenv('AUTH_REQUIRE_EMAIL_VERIFICATION=' . $previous);
+        }
+    }
+
     public function testLoginWithTokenAllowsGoogleOauthWithoutVerification(): void
     {
         $user = $this->createUserEntity([

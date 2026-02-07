@@ -12,6 +12,7 @@ return [
     'emailNotVerified'        => 'Email not verified',
     'accountPendingApproval'  => 'Account pending admin approval',
     'registrationPendingApproval' => 'Registration received. Please verify your email and wait for admin approval.',
+    'registrationPendingApprovalNoVerification' => 'Registration received. Please wait for admin approval.',
 
     // Authentication messages
     'authRequired'            => 'Authentication required',

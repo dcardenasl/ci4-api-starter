@@ -65,7 +65,11 @@ class JwtAuthFilter implements FilterInterface
             }
 
             $isGoogleOAuth = ($user->oauth_provider ?? null) === 'google';
-            if ($user->email_verified_at === null && ! $isGoogleOAuth) {
+            if (
+                is_email_verification_required()
+                && $user->email_verified_at === null
+                && ! $isGoogleOAuth
+            ) {
                 return $this->unauthorized(lang('Auth.emailNotVerified'));
             }
         }

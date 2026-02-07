@@ -67,6 +67,10 @@ POST /api/v1/auth/reset-password    Restablecer contrasena
 POST /api/v1/auth/verify-email      Verificar email
 ```
 
+### Verificacion de correo (Opcional)
+
+Configura `AUTH_REQUIRE_EMAIL_VERIFICATION` en `.env` para controlar si la verificacion de correo es obligatoria antes de login/refresh/rutas protegidas. El valor por defecto es `true`.
+
 ### Autenticacion (Protegido)
 ```
 GET  /api/v1/auth/me           Obtener usuario actual

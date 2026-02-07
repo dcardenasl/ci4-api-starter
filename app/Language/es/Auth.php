@@ -12,6 +12,7 @@ return [
     'emailNotVerified'        => 'El correo electrónico no está verificado',
     'accountPendingApproval'  => 'La cuenta está pendiente de aprobación por un administrador',
     'registrationPendingApproval' => 'Registro recibido. Verifica tu correo y espera la aprobación del administrador.',
+    'registrationPendingApprovalNoVerification' => 'Registro recibido. Espera la aprobación del administrador.',
 
     // Mensajes de autenticación
     'authRequired'            => 'Autenticación requerida',

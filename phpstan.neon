@@ -2,6 +2,7 @@ parameters:
     level: 6
     bootstrapFiles:
         - app/Helpers/validation_helper.php
+        - app/Helpers/security_helper.php
     paths:
         - app/Controllers
         - app/Services

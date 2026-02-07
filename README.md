@@ -67,6 +67,10 @@ POST /api/v1/auth/reset-password    Reset password
 POST /api/v1/auth/verify-email      Verify email address
 ```
 
+### Email Verification (Optional)
+
+Set `AUTH_REQUIRE_EMAIL_VERIFICATION` in `.env` to control whether email verification is required before login/refresh/protected routes. Default is `true`.
+
 ### Authentication (Protected)
 ```
 GET  /api/v1/auth/me           Get current user

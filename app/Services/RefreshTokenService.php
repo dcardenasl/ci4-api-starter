@@ -123,7 +123,11 @@ class RefreshTokenService implements RefreshTokenServiceInterface
         }
 
         $isGoogleOAuth = ($user->oauth_provider ?? null) === 'google';
-        if ($user->email_verified_at === null && ! $isGoogleOAuth) {
+        if (
+            is_email_verification_required()
+            && $user->email_verified_at === null
+            && ! $isGoogleOAuth
+        ) {
             $db->transRollback();
             throw new AuthenticationException(
                 'Email not verified',

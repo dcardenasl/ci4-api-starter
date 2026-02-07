@@ -36,6 +36,21 @@ if (!function_exists('verify_password')) {
     }
 }
 
+if (!function_exists('is_email_verification_required')) {
+    /**
+     * Check if email verification is required
+     *
+     * @return bool True if verification is required
+     */
+    function is_email_verification_required(): bool
+    {
+        return (bool) filter_var(
+            env('AUTH_REQUIRE_EMAIL_VERIFICATION', 'true'),
+            FILTER_VALIDATE_BOOLEAN
+        );
+    }
+}
+
 if (!function_exists('generate_token')) {
     /**
      * Generate a cryptographically secure random token

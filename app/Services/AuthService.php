@@ -105,7 +105,11 @@ class AuthService implements AuthServiceInterface
         }
 
         $isGoogleOAuth = ($userEntity->oauth_provider ?? null) === 'google';
-        if ($userEntity->email_verified_at === null && ! $isGoogleOAuth) {
+        if (
+            is_email_verification_required()
+            && $userEntity->email_verified_at === null
+            && ! $isGoogleOAuth
+        ) {
             throw new AuthenticationException(
                 'Email not verified',
                 ['email' => lang('Auth.emailNotVerified')]
@@ -180,6 +184,11 @@ class AuthService implements AuthServiceInterface
             log_message('error', 'Failed to send verification email: ' . $e->getMessage());
         }
 
+        $message = lang('Auth.registrationPendingApproval');
+        if (! is_email_verification_required()) {
+            $message = lang('Auth.registrationPendingApprovalNoVerification');
+        }
+
         return ApiResponse::created([
             'user' => [
                 'id' => $user->id,
@@ -189,7 +198,7 @@ class AuthService implements AuthServiceInterface
                 'avatar_url' => $user->avatar_url,
                 'role' => $user->role,
             ],
-        ], lang('Auth.registrationPendingApproval'));
+        ], $message);
     }
 
     /**

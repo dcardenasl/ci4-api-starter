@@ -127,6 +127,29 @@ curl -X GET "http://localhost:8080/api/v1/users?filter[role][eq]=admin&search=ju
   -H "Authorization: Bearer TU_TOKEN_DE_ACCESO"
 ```
 
+## Documentacion interactiva y Postman
+
+**Swagger UI local:**
+```bash
+# Generar/actualizar swagger.json
+php spark swagger:generate
+
+# Levantar Swagger UI con Docker
+docker run --rm -p 8081:8080 \
+  -e SWAGGER_JSON=/swagger.json \
+  -v "$(pwd)/public/swagger.json:/swagger.json" \
+  swaggerapi/swagger-ui
+```
+Abrir `http://localhost:8081`.
+
+**Swagger UI embebido (sin Docker):**
+- Archivo: `public/docs/index.html`
+- Abrir `http://localhost:8080/docs/`
+
+**Postman:**
+- Coleccion: `docs/postman/ci4-auth-flow.postman_collection.json`
+- Entorno: `docs/postman/ci4-auth-flow.postman_environment.json`
+
 ## Estructura del Proyecto
 
 ```

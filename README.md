@@ -127,6 +127,29 @@ curl -X GET "http://localhost:8080/api/v1/users?filter[role][eq]=admin&search=jo
   -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
 ```
 
+## Interactive Docs and Postman
+
+**Local Swagger UI:**
+```bash
+# Generate/update swagger.json
+php spark swagger:generate
+
+# Run Swagger UI with Docker
+docker run --rm -p 8081:8080 \
+  -e SWAGGER_JSON=/swagger.json \
+  -v "$(pwd)/public/swagger.json:/swagger.json" \
+  swaggerapi/swagger-ui
+```
+Open `http://localhost:8081`.
+
+**Embedded Swagger UI (no Docker):**
+- File: `public/docs/index.html`
+- Open `http://localhost:8080/docs/`
+
+**Postman:**
+- Collection: `docs/postman/ci4-auth-flow.postman_collection.json`
+- Environment: `docs/postman/ci4-auth-flow.postman_environment.json`
+
 ## Project Structure
 
 ```

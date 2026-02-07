@@ -57,6 +57,20 @@ class TokenBlacklistModel extends Model
     }
 
     /**
+     * Check if a token JTI exists in the blacklist (regardless of expiration)
+     *
+     * @param string $jti Token JTI
+     * @return bool
+     */
+    public function existsByJti(string $jti): bool
+    {
+        $record = $this->where("BINARY token_jti = BINARY '{$this->db->escapeString($jti)}'", null, false)
+            ->first();
+
+        return $record !== null;
+    }
+
+    /**
      * Add token JTI to blacklist
      *
      * @param string $jti Token JTI
@@ -65,6 +79,10 @@ class TokenBlacklistModel extends Model
      */
     public function addToBlacklist(string $jti, int $expiresAt): bool
     {
+        if ($this->existsByJti($jti)) {
+            return true;
+        }
+
         $id = $this->insert([
             'token_jti' => $jti,
             'expires_at' => date('Y-m-d H:i:s', $expiresAt),

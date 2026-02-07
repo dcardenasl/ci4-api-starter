@@ -45,6 +45,10 @@ class TokenRevocationService implements TokenRevocationServiceInterface
             );
         }
 
+        // Ensure revocation is effective immediately even if a stale cache entry exists
+        $cacheKey = "token_revoked_{$jti}";
+        $this->cache->save($cacheKey, 1, 300);
+
         return ApiResponse::success(null, lang('Tokens.tokenRevokedSuccess'));
     }
 

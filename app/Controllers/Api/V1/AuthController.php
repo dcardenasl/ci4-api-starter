@@ -15,7 +15,7 @@ class AuthController extends ApiController
     protected string $serviceName = 'authService';
 
     protected array $statusCodes = [
-        'registerWithToken' => 201,
+        'register' => 201,
     ];
 
     public function login(): ResponseInterface
@@ -25,7 +25,7 @@ class AuthController extends ApiController
 
     public function register(): ResponseInterface
     {
-        return $this->handleRequest('registerWithToken');
+        return $this->handleRequest('register');
     }
 
     public function me(): ResponseInterface

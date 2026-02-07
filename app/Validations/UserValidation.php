@@ -26,7 +26,7 @@ class UserValidation extends BaseValidation
                 'email'      => 'required|valid_email_idn|max_length[255]',
                 'first_name' => 'permit_empty|string|max_length[100]',
                 'last_name'  => 'permit_empty|string|max_length[100]',
-                'password'   => 'required|strong_password',
+                'password'   => 'permit_empty|strong_password',
                 'role'       => 'permit_empty|in_list[user,admin]',
                 'oauth_provider' => 'permit_empty|in_list[google,github]',
                 'oauth_provider_id' => 'permit_empty|string|max_length[255]',

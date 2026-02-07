@@ -52,7 +52,7 @@ class UserValidationTest extends CIUnitTestCase
         $this->assertArrayHasKey('password', $rules);
         $this->assertArrayHasKey('role', $rules);
         $this->assertStringContainsString('required', $rules['email']);
-        $this->assertStringContainsString('required', $rules['password']);
+        $this->assertStringContainsString('permit_empty', $rules['password']);
         $this->assertStringContainsString('permit_empty', $rules['role']);
         $this->assertStringContainsString('in_list[user,admin]', $rules['role']);
     }

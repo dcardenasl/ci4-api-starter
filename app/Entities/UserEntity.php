@@ -27,6 +27,8 @@ class UserEntity extends Entity
         'deleted_at',
         'email_verified_at',
         'verification_token_expires',
+        'approved_at',
+        'invited_at',
     ];
 
     /**
@@ -35,6 +37,9 @@ class UserEntity extends Entity
     protected $casts = [
         'id'   => 'integer',
         'role' => 'string',
+        'status' => 'string',
+        'approved_by' => 'integer',
+        'invited_by' => 'integer',
     ];
 
     /**
@@ -96,6 +101,26 @@ class UserEntity extends Entity
     public function isAdmin(): bool
     {
         return $this->role === 'admin';
+    }
+
+    /**
+     * Check if the user is approved
+     *
+     * @return bool
+     */
+    public function isApproved(): bool
+    {
+        return $this->status === 'active';
+    }
+
+    /**
+     * Check if the user is pending approval
+     *
+     * @return bool
+     */
+    public function isPendingApproval(): bool
+    {
+        return $this->status === 'pending_approval';
     }
 
     /**

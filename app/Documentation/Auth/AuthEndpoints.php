@@ -56,13 +56,10 @@ use OpenApi\Attributes as OA;
                         property: 'data',
                         type: 'object',
                         properties: [
-                            new OA\Property(property: 'access_token', type: 'string'),
-                            new OA\Property(property: 'refresh_token', type: 'string'),
-                            new OA\Property(property: 'expires_in', type: 'integer', example: 3600),
                             new OA\Property(property: 'user', ref: '#/components/schemas/User'),
-                            new OA\Property(property: 'message', type: 'string'),
                         ]
                     ),
+                    new OA\Property(property: 'message', type: 'string'),
                 ],
                 type: 'object'
             )

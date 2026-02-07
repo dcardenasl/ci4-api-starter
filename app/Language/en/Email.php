@@ -10,7 +10,7 @@ return [
         'title'       => 'Verify Your Email',
         'welcome'     => 'Welcome to {0}!',
         'greeting'    => 'Hello, {0}!',
-        'intro'       => 'Thank you for registering. To complete your registration and activate your account, please verify your email address by clicking the button below:',
+        'intro'       => 'Thank you for registering. To complete your registration, please verify your email address. Your account will be activated after admin approval.',
         'buttonText'  => 'Verify Email Address',
         'linkIntro'   => 'Or copy and paste this link into your browser:',
         'expiration'  => 'This link expires on {0}',
@@ -32,5 +32,28 @@ return [
         'securityNotice' => 'If you did not request a password reset, please ignore this email or contact support if you have concerns about your account security.',
         'autoMessage'    => 'This is an automated message, please do not reply.',
         'copyright'      => 'All rights reserved.',
+    ],
+
+    // Invitation email
+    'invitation' => [
+        'subject'     => 'You Are Invited',
+        'title'       => 'Your Account Invitation',
+        'greeting'    => 'Hello, {0}!',
+        'intro'       => 'An administrator created an account for you. Please set your password to activate access.',
+        'buttonText'  => 'Set Password',
+        'linkIntro'   => 'Or copy and paste this link into your browser:',
+        'expiration'  => 'This link expires in {0}',
+        'autoMessage' => 'This is an automated message, please do not reply.',
+        'copyright'   => 'All rights reserved.',
+    ],
+
+    // Account approved email
+    'accountApproved' => [
+        'subject'     => 'Your Account Has Been Approved',
+        'title'       => 'Account Approved',
+        'greeting'    => 'Hello, {0}!',
+        'intro'       => 'Your account has been approved. You can now sign in.',
+        'autoMessage' => 'This is an automated message, please do not reply.',
+        'copyright'   => 'All rights reserved.',
     ],
 ];

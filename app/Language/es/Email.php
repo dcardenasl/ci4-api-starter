@@ -10,7 +10,7 @@ return [
         'title'       => 'Verifica tu Correo',
         'welcome'     => '¡Bienvenido a {0}!',
         'greeting'    => '¡Hola, {0}!',
-        'intro'       => 'Gracias por registrarte. Para completar tu registro y activar tu cuenta, por favor verifica tu correo electrónico haciendo clic en el botón de abajo:',
+        'intro'       => 'Gracias por registrarte. Para completar tu registro, verifica tu correo electrónico. Tu cuenta se activará después de la aprobación del administrador.',
         'buttonText'  => 'Verificar Correo',
         'linkIntro'   => 'O copia y pega este enlace en tu navegador:',
         'expiration'  => 'Este enlace expira el {0}',
@@ -32,5 +32,28 @@ return [
         'securityNotice' => 'Si no solicitaste un restablecimiento de contraseña, ignora este correo o contacta a soporte si tienes preocupaciones sobre la seguridad de tu cuenta.',
         'autoMessage'    => 'Este es un mensaje automático, por favor no respondas.',
         'copyright'      => 'Todos los derechos reservados.',
+    ],
+
+    // Correo de invitación
+    'invitation' => [
+        'subject'     => 'Has sido invitado',
+        'title'       => 'Invitación de Cuenta',
+        'greeting'    => '¡Hola, {0}!',
+        'intro'       => 'Un administrador creó una cuenta para ti. Por favor establece tu contraseña para activar el acceso.',
+        'buttonText'  => 'Establecer Contraseña',
+        'linkIntro'   => 'O copia y pega este enlace en tu navegador:',
+        'expiration'  => 'Este enlace expira en {0}',
+        'autoMessage' => 'Este es un mensaje automático, por favor no respondas.',
+        'copyright'   => 'Todos los derechos reservados.',
+    ],
+
+    // Correo de cuenta aprobada
+    'accountApproved' => [
+        'subject'     => 'Tu cuenta fue aprobada',
+        'title'       => 'Cuenta Aprobada',
+        'greeting'    => '¡Hola, {0}!',
+        'intro'       => 'Tu cuenta ha sido aprobada. Ya puedes iniciar sesión.',
+        'autoMessage' => 'Este es un mensaje automático, por favor no respondas.',
+        'copyright'   => 'Todos los derechos reservados.',
     ],
 ];

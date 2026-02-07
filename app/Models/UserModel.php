@@ -28,6 +28,11 @@ class UserModel extends Model
         'last_name',
         'password',
         'role',
+        'status',
+        'approved_at',
+        'approved_by',
+        'invited_at',
+        'invited_by',
         'oauth_provider',
         'oauth_provider_id',
         'avatar_url',
@@ -91,8 +96,8 @@ class UserModel extends Model
 
     // Search and filter configuration
     protected array $searchableFields = ['email', 'first_name', 'last_name'];
-    protected array $filterableFields = ['role', 'email', 'created_at', 'id', 'first_name', 'last_name'];
-    protected array $sortableFields = ['id', 'email', 'created_at', 'role', 'first_name', 'last_name'];
+    protected array $filterableFields = ['role', 'status', 'email', 'created_at', 'id', 'first_name', 'last_name'];
+    protected array $sortableFields = ['id', 'email', 'created_at', 'role', 'status', 'first_name', 'last_name'];
 
     // Callbacks para procesamiento adicional
     protected $allowCallbacks = true;

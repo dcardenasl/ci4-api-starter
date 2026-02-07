@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Exceptions\AuthenticationException;
+use App\Exceptions\AuthorizationException;
 use App\Exceptions\BadRequestException;
 use App\Exceptions\ValidationException;
 use App\Interfaces\AuthServiceInterface;
@@ -96,6 +97,13 @@ class AuthService implements AuthServiceInterface
             );
         }
 
+        if (($userEntity->status ?? null) !== 'active') {
+            throw new AuthorizationException(
+                'Account pending approval',
+                ['status' => lang('Auth.accountPendingApproval')]
+            );
+        }
+
         $isGoogleOAuth = ($userEntity->oauth_provider ?? null) === 'google';
         if ($userEntity->email_verified_at === null && ! $isGoogleOAuth) {
             throw new AuthenticationException(
@@ -150,6 +158,9 @@ class AuthService implements AuthServiceInterface
             'last_name'  => $data['last_name'] ?? null,
             'password' => password_hash($data['password'], PASSWORD_BCRYPT),
             'role'     => 'user', // Always 'user' for self-registration (security fix)
+            'status'   => 'pending_approval',
+            'approved_at' => null,
+            'approved_by' => null,
         ]);
 
         if (!$userId) {
@@ -161,14 +172,24 @@ class AuthService implements AuthServiceInterface
 
         $user = $this->userModel->find($userId);
 
+        // Send verification email (don't fail registration if email fails)
+        try {
+            $this->verificationService->sendVerificationEmail((int) $userId);
+        } catch (\Throwable $e) {
+            // Log error but don't fail registration
+            log_message('error', 'Failed to send verification email: ' . $e->getMessage());
+        }
+
         return ApiResponse::created([
-            'id' => $user->id,
-            'email' => $user->email,
-            'first_name' => $user->first_name,
-            'last_name' => $user->last_name,
-            'avatar_url' => $user->avatar_url,
-            'role' => $user->role,
-        ]);
+            'user' => [
+                'id' => $user->id,
+                'email' => $user->email,
+                'first_name' => $user->first_name,
+                'last_name' => $user->last_name,
+                'avatar_url' => $user->avatar_url,
+                'role' => $user->role,
+            ],
+        ], lang('Auth.registrationPendingApproval'));
     }
 
     /**
@@ -179,32 +200,7 @@ class AuthService implements AuthServiceInterface
      */
     public function registerWithToken(array $data): array
     {
-        $result = $this->register($data);
-
-        // register() now throws exceptions on error, so if we get here, it's successful
-        $user = $result['data'];
-
-        // Generate access token
-        $accessToken = $this->jwtService->encode((int) $user['id'], $user['role']);
-
-        // Generate refresh token
-        $refreshToken = $this->refreshTokenService->issueRefreshToken((int) $user['id']);
-
-        // Send verification email (don't fail registration if email fails)
-        try {
-            $this->verificationService->sendVerificationEmail((int) $user['id']);
-        } catch (\Throwable $e) {
-            // Log error but don't fail registration
-            log_message('error', 'Failed to send verification email: ' . $e->getMessage());
-        }
-
-        return ApiResponse::success([
-            'access_token' => $accessToken,
-            'refresh_token' => $refreshToken,
-            'expires_in' => (int) (getenv('JWT_ACCESS_TOKEN_TTL') ?: env('JWT_ACCESS_TOKEN_TTL', 3600)),
-            'user' => $user,
-            'message' => 'Registration successful. Please check your email to verify your account.',
-        ]);
+        return $this->register($data);
     }
 
     /**

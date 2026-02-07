@@ -10,6 +10,8 @@ return [
     'invalidToken'            => 'Token inválido o expirado',
     'tokenRevoked'            => 'El token ha sido revocado',
     'emailNotVerified'        => 'El correo electrónico no está verificado',
+    'accountPendingApproval'  => 'La cuenta está pendiente de aprobación por un administrador',
+    'registrationPendingApproval' => 'Registro recibido. Verifica tu correo y espera la aprobación del administrador.',
 
     // Mensajes de autenticación
     'authRequired'            => 'Autenticación requerida',

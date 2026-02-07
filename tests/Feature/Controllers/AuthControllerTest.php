@@ -35,7 +35,7 @@ class AuthControllerTest extends CIUnitTestCase
 
     // ==================== REGISTER ENDPOINT TESTS ====================
 
-    public function testRegisterWithValidDataReturnsTokens(): void
+    public function testRegisterWithValidDataReturnsPendingApprovalMessage(): void
     {
         $result = $this->withBodyFormat('json')
             ->post('/api/v1/auth/register', [
@@ -48,9 +48,10 @@ class AuthControllerTest extends CIUnitTestCase
 
         $json = json_decode($result->getJSON(), true);
         $this->assertEquals('success', $json['status']);
-        $this->assertArrayHasKey('access_token', $json['data']);
-        $this->assertArrayHasKey('refresh_token', $json['data']);
         $this->assertArrayHasKey('user', $json['data']);
+        $this->assertArrayNotHasKey('access_token', $json['data']);
+        $this->assertArrayNotHasKey('refresh_token', $json['data']);
+        $this->assertArrayHasKey('message', $json);
     }
 
     public function testRegisterWithInvalidDataReturnsValidationError(): void
@@ -98,6 +99,8 @@ class AuthControllerTest extends CIUnitTestCase
             'email' => 'login@example.com',
             'password' => password_hash('ValidPass123!', PASSWORD_BCRYPT),
             'role' => 'user',
+            'status' => 'active',
+            'email_verified_at' => date('Y-m-d H:i:s'),
         ]);
 
         $result = $this->withBodyFormat('json')
@@ -112,6 +115,28 @@ class AuthControllerTest extends CIUnitTestCase
         $this->assertEquals('success', $json['status']);
         $this->assertArrayHasKey('access_token', $json['data']);
         $this->assertArrayHasKey('refresh_token', $json['data']);
+    }
+
+    public function testLoginWithPendingApprovalReturnsForbidden(): void
+    {
+        $this->userModel->insert([
+            'email' => 'pending@example.com',
+            'password' => password_hash('ValidPass123!', PASSWORD_BCRYPT),
+            'role' => 'user',
+            'status' => 'pending_approval',
+            'email_verified_at' => date('Y-m-d H:i:s'),
+        ]);
+
+        $result = $this->withBodyFormat('json')
+            ->post('/api/v1/auth/login', [
+                'email' => 'pending@example.com',
+                'password' => 'ValidPass123!',
+            ]);
+
+        $result->assertStatus(403);
+
+        $json = json_decode($result->getJSON(), true);
+        $this->assertEquals('error', $json['status']);
     }
 
     public function testLoginWithInvalidCredentialsReturnsUnauthorized(): void
@@ -155,6 +180,8 @@ class AuthControllerTest extends CIUnitTestCase
             'email' => 'auth@example.com',
             'password' => password_hash('ValidPass123!', PASSWORD_BCRYPT),
             'role' => 'admin',
+            'status' => 'active',
+            'email_verified_at' => date('Y-m-d H:i:s'),
         ]);
 
         $loginResult = $this->withBodyFormat('json')
@@ -175,6 +202,51 @@ class AuthControllerTest extends CIUnitTestCase
 
         $json = json_decode($result->getJSON(), true);
         $this->assertEquals('success', $json['status']);
+    }
+
+    public function testApprovePendingUserAllowsLogin(): void
+    {
+        $adminId = $this->userModel->insert([
+            'email' => 'admin@example.com',
+            'password' => password_hash('ValidPass123!', PASSWORD_BCRYPT),
+            'role' => 'admin',
+            'status' => 'active',
+            'email_verified_at' => date('Y-m-d H:i:s'),
+        ]);
+
+        $pendingId = $this->userModel->insert([
+            'email' => 'approve@example.com',
+            'password' => password_hash('ValidPass123!', PASSWORD_BCRYPT),
+            'role' => 'user',
+            'status' => 'pending_approval',
+            'email_verified_at' => date('Y-m-d H:i:s'),
+        ]);
+
+        $loginResult = $this->withBodyFormat('json')
+            ->post('/api/v1/auth/login', [
+                'email' => 'admin@example.com',
+                'password' => 'ValidPass123!',
+            ]);
+
+        $loginJson = json_decode($loginResult->getJSON(), true);
+        $token = $loginJson['data']['access_token'];
+
+        $approveResult = $this->withHeaders([
+            'Authorization' => "Bearer {$token}",
+        ])->post("/api/v1/users/{$pendingId}/approve");
+
+        $approveResult->assertStatus(200);
+
+        $user = $this->userModel->find($pendingId);
+        $this->assertEquals('active', $user->status);
+
+        $loginPending = $this->withBodyFormat('json')
+            ->post('/api/v1/auth/login', [
+                'email' => 'approve@example.com',
+                'password' => 'ValidPass123!',
+            ]);
+
+        $loginPending->assertStatus(200);
     }
 
     // ==================== HEALTH CHECK TESTS ====================

@@ -7,9 +7,11 @@ namespace App\Services;
 use App\Exceptions\BadRequestException;
 use App\Exceptions\NotFoundException;
 use App\Exceptions\ValidationException;
+use App\Interfaces\EmailServiceInterface;
 use App\Interfaces\UserServiceInterface;
 use App\Libraries\ApiResponse;
 use App\Libraries\Query\QueryBuilder;
+use App\Models\PasswordResetModel;
 use App\Models\UserModel;
 
 /**
@@ -21,7 +23,9 @@ use App\Models\UserModel;
 class UserService implements UserServiceInterface
 {
     public function __construct(
-        protected UserModel $userModel
+        protected UserModel $userModel,
+        protected EmailServiceInterface $emailService,
+        protected PasswordResetModel $passwordResetModel
     ) {
     }
 
@@ -93,6 +97,19 @@ class UserService implements UserServiceInterface
     {
         validateOrFail($data, 'user', 'store');
 
+        $passwordProvided = !empty($data['password']);
+        $sendInvite = array_key_exists('send_invite', $data)
+            ? filter_var($data['send_invite'], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE)
+            : ! $passwordProvided;
+        $sendInvite = $sendInvite ?? false;
+
+        if (! $sendInvite && ! $passwordProvided) {
+            throw new ValidationException(
+                lang('Api.validationFailed'),
+                ['password' => lang('Users.passwordRequired')]
+            );
+        }
+
         // Validaciones de reglas de negocio (más allá de integridad de datos)
         $businessErrors = $this->validateBusinessRules($data);
         if (!empty($businessErrors)) {
@@ -102,13 +119,26 @@ class UserService implements UserServiceInterface
             );
         }
 
+        $adminId = isset($data['user_id']) ? (int) $data['user_id'] : null;
+        $now = date('Y-m-d H:i:s');
+
+        $passwordToHash = $data['password'] ?? null;
+        if (! $passwordToHash) {
+            $passwordToHash = bin2hex(random_bytes(24)) . 'A1!';
+        }
+
         // Prepare data for insertion with hashed password
         $insertData = [
             'email'      => $data['email'] ?? null,
             'first_name' => $data['first_name'] ?? null,
             'last_name'  => $data['last_name'] ?? null,
-            'password'   => isset($data['password']) ? password_hash($data['password'], PASSWORD_BCRYPT) : null,
+            'password'   => password_hash($passwordToHash, PASSWORD_BCRYPT),
             'role'       => $data['role'] ?? 'user',
+            'status'     => 'active',
+            'approved_at' => $adminId ? $now : null,
+            'approved_by' => $adminId,
+            'invited_at'  => $sendInvite ? $now : null,
+            'invited_by'  => $sendInvite ? $adminId : null,
         ];
 
         // Model maneja validación y timestamps automáticamente
@@ -122,6 +152,15 @@ class UserService implements UserServiceInterface
         }
 
         $user = $this->userModel->find($userId);
+
+        if ($sendInvite && $user) {
+            try {
+                $this->sendInvitationEmail($user);
+            } catch (\Throwable $e) {
+                log_message('error', 'Failed to send invitation email: ' . $e->getMessage());
+            }
+            return ApiResponse::created($user->toArray(), lang('Users.invitationSent'));
+        }
 
         return ApiResponse::created($user->toArray());
     }
@@ -224,5 +263,78 @@ class UserService implements UserServiceInterface
         // }
 
         return $errors;
+    }
+
+    /**
+     * Approve a pending user
+     */
+    public function approve(array $data): array
+    {
+        if (!isset($data['id'])) {
+            throw new BadRequestException(
+                'Invalid request',
+                ['id' => lang('Users.idRequired')]
+            );
+        }
+
+        $id = (int) $data['id'];
+        $adminId = isset($data['user_id']) ? (int) $data['user_id'] : null;
+
+        $user = $this->userModel->find($id);
+        if (! $user) {
+            throw new NotFoundException(lang('Users.notFound'));
+        }
+
+        if (($user->status ?? null) !== 'active') {
+            $this->userModel->update($id, [
+                'status' => 'active',
+                'approved_at' => date('Y-m-d H:i:s'),
+                'approved_by' => $adminId,
+            ]);
+        }
+
+        $user = $this->userModel->find($id);
+        if ($user) {
+            $this->emailService->queueTemplate('account-approved', $user->email, [
+                'subject' => lang('Email.accountApproved.subject'),
+                'display_name' => method_exists($user, 'getDisplayName') ? $user->getDisplayName() : 'User',
+            ]);
+        }
+
+        return ApiResponse::success($user->toArray(), lang('Users.approvedSuccess'));
+    }
+
+    /**
+     * Send invitation email using password reset flow
+     *
+     * @param object $user
+     * @return void
+     */
+    protected function sendInvitationEmail(object $user): void
+    {
+        if (empty($user->email)) {
+            return;
+        }
+
+        $token = bin2hex(random_bytes(32));
+
+        $this->passwordResetModel->where('email', $user->email)->delete();
+        $this->passwordResetModel->insert([
+            'email' => $user->email,
+            'token' => $token,
+            'created_at' => date('Y-m-d H:i:s'),
+        ]);
+
+        $baseUrl = rtrim(env('app.baseURL', base_url()), '/');
+        $resetLink = "{$baseUrl}/api/v1/auth/reset-password?token={$token}&email=" . urlencode($user->email);
+
+        $displayName = method_exists($user, 'getDisplayName') ? $user->getDisplayName() : 'User';
+
+        $this->emailService->queueTemplate('invitation', $user->email, [
+            'subject' => lang('Email.invitation.subject'),
+            'display_name' => $displayName,
+            'reset_link' => $resetLink,
+            'expires_in' => '60 minutes',
+        ]);
     }
 }

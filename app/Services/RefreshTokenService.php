@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Exceptions\AuthenticationException;
+use App\Exceptions\AuthorizationException;
 use App\Exceptions\BadRequestException;
 use App\Exceptions\NotFoundException;
 use App\Interfaces\JwtServiceInterface;
@@ -111,6 +112,23 @@ class RefreshTokenService implements RefreshTokenServiceInterface
         if (!$user) {
             $db->transRollback();
             throw new AuthenticationException(lang('Tokens.userNotFound'));
+        }
+
+        if (($user->status ?? null) !== 'active') {
+            $db->transRollback();
+            throw new AuthorizationException(
+                'Account pending approval',
+                ['status' => lang('Auth.accountPendingApproval')]
+            );
+        }
+
+        $isGoogleOAuth = ($user->oauth_provider ?? null) === 'google';
+        if ($user->email_verified_at === null && ! $isGoogleOAuth) {
+            $db->transRollback();
+            throw new AuthenticationException(
+                'Email not verified',
+                ['email' => lang('Auth.emailNotVerified')]
+            );
         }
 
         $accessToken = $this->jwtService->encode((int) $user->id, $user->role);

@@ -10,6 +10,8 @@ return [
     'invalidToken'            => 'Invalid or expired token',
     'tokenRevoked'            => 'Token has been revoked',
     'emailNotVerified'        => 'Email not verified',
+    'accountPendingApproval'  => 'Account pending admin approval',
+    'registrationPendingApproval' => 'Registration received. Please verify your email and wait for admin approval.',
 
     // Authentication messages
     'authRequired'            => 'Authentication required',

@@ -34,7 +34,9 @@ class Services extends BaseService
         }
 
         return new \App\Services\UserService(
-            new \App\Models\UserModel()
+            new \App\Models\UserModel(),
+            static::emailService(),
+            new \App\Models\PasswordResetModel()
         );
     }
 

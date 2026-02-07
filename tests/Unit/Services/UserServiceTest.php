@@ -8,6 +8,8 @@ use App\Entities\UserEntity;
 use App\Exceptions\BadRequestException;
 use App\Exceptions\NotFoundException;
 use App\Exceptions\ValidationException;
+use App\Interfaces\EmailServiceInterface;
+use App\Models\PasswordResetModel;
 use App\Models\UserModel;
 use App\Services\UserService;
 use CodeIgniter\Test\CIUnitTestCase;
@@ -24,13 +26,21 @@ class UserServiceTest extends CIUnitTestCase
 
     protected UserService $service;
     protected UserModel $mockUserModel;
+    protected EmailServiceInterface $mockEmailService;
+    protected PasswordResetModel $mockPasswordResetModel;
 
     protected function setUp(): void
     {
         parent::setUp();
 
         $this->mockUserModel = $this->createMock(UserModel::class);
-        $this->service = new UserService($this->mockUserModel);
+        $this->mockEmailService = $this->createMock(EmailServiceInterface::class);
+        $this->mockPasswordResetModel = $this->createMock(PasswordResetModel::class);
+        $this->service = new UserService(
+            $this->mockUserModel,
+            $this->mockEmailService,
+            $this->mockPasswordResetModel
+        );
     }
 
     // ==================== SHOW TESTS ====================

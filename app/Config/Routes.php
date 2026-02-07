@@ -59,6 +59,7 @@ $routes->group('api/v1', ['namespace' => 'App\Controllers\Api\V1', 'filter' => '
             $routes->post('users', 'UserController::create');
             $routes->put('users/(:num)', 'UserController::update/$1');
             $routes->delete('users/(:num)', 'UserController::delete/$1');
+            $routes->post('users/(:num)/approve', 'UserController::approve/$1');
 
             // Metrics endpoints (admin only)
             $routes->get('metrics', 'MetricsController::index');

@@ -10,14 +10,14 @@ use OpenApi\Attributes as OA;
  * Create User Request Body
  *
  * Request schema for creating a new user via the admin endpoint.
- * Requires email and password.
+ * Requires email; password optional when sending invitation.
  */
 #[OA\RequestBody(
     request: 'CreateUserRequest',
     description: 'Data for creating a new user',
     required: true,
     content: new OA\JsonContent(
-        required: ['email', 'password'],
+        required: ['email'],
         properties: [
             new OA\Property(
                 property: 'first_name',
@@ -50,6 +50,12 @@ use OpenApi\Attributes as OA;
                 format: 'password',
                 description: 'User password',
                 example: 'Password123'
+            ),
+            new OA\Property(
+                property: 'send_invite',
+                type: 'boolean',
+                description: 'Send invitation email and allow user to set password',
+                example: true
             ),
         ]
     )

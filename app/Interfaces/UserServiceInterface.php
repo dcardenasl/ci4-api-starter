@@ -51,4 +51,12 @@ interface UserServiceInterface
      * @return array Result with success message or errors
      */
     public function destroy(array $data): array;
+
+    /**
+     * Approve a pending user
+     *
+     * @param array $data Request data containing 'id'
+     * @return array Result with approved user data
+     */
+    public function approve(array $data): array;
 }

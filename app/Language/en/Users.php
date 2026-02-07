@@ -13,6 +13,8 @@ return [
 
     // Success messages
     'deletedSuccess'  => 'User deleted successfully',
+    'invitationSent'  => 'Invitation email sent successfully',
+    'approvedSuccess' => 'User approved successfully',
 
     // Error messages
     'deleteError'     => 'Error deleting user',

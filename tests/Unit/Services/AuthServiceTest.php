@@ -179,6 +179,7 @@ class AuthServiceTest extends CIUnitTestCase
             'last_name' => 'User',
             'password' => password_hash('ValidPass123!', PASSWORD_BCRYPT),
             'role' => 'user',
+            'status' => 'active',
             'email_verified_at' => date('Y-m-d H:i:s'),
         ]);
 
@@ -217,6 +218,7 @@ class AuthServiceTest extends CIUnitTestCase
             'last_name' => 'User',
             'password' => password_hash('ValidPass123!', PASSWORD_BCRYPT),
             'role' => 'user',
+            'status' => 'active',
             'email_verified_at' => null,
         ]);
 
@@ -247,6 +249,7 @@ class AuthServiceTest extends CIUnitTestCase
             'last_name' => 'User',
             'password' => password_hash('ValidPass123!', PASSWORD_BCRYPT),
             'role' => 'user',
+            'status' => 'active',
             'email_verified_at' => null,
             'oauth_provider' => 'google',
         ]);
@@ -275,6 +278,37 @@ class AuthServiceTest extends CIUnitTestCase
         $this->assertEquals('refresh.token.here', $result['data']['refresh_token']);
     }
 
+    public function testLoginWithTokenFailsIfPendingApproval(): void
+    {
+        $user = $this->createUserEntity([
+            'id' => 1,
+            'email' => 'test@example.com',
+            'first_name' => 'Test',
+            'last_name' => 'User',
+            'password' => password_hash('ValidPass123!', PASSWORD_BCRYPT),
+            'role' => 'user',
+            'status' => 'pending_approval',
+            'email_verified_at' => date('Y-m-d H:i:s'),
+        ]);
+
+        $service = $this->createServiceWithUserQuery($user);
+
+        $this->mockJwtService
+            ->expects($this->never())
+            ->method('encode');
+
+        $this->mockRefreshTokenService
+            ->expects($this->never())
+            ->method('issueRefreshToken');
+
+        $this->expectException(\App\Exceptions\AuthorizationException::class);
+
+        $service->loginWithToken([
+            'email' => 'test@example.com',
+            'password' => 'ValidPass123!',
+        ]);
+    }
+
     // ==================== REGISTER TESTS ====================
 
     public function testRegisterWithValidDataCreatesUser(): void
@@ -297,8 +331,8 @@ class AuthServiceTest extends CIUnitTestCase
         ]);
 
         $this->assertSuccessResponse($result);
-        $this->assertEquals(1, $result['data']['id']);
-        $this->assertEquals('user', $result['data']['role']);
+        $this->assertEquals(1, $result['data']['user']['id']);
+        $this->assertEquals('user', $result['data']['user']['role']);
     }
 
     public function testRegisterWithoutPasswordThrowsException(): void
@@ -326,7 +360,7 @@ class AuthServiceTest extends CIUnitTestCase
 
     // ==================== REGISTER WITH TOKEN TESTS ====================
 
-    public function testRegisterWithTokenReturnsTokensAndSendsVerification(): void
+    public function testRegisterWithTokenSendsVerificationAndReturnsMessage(): void
     {
         $createdUser = $this->createUserEntity([
             'id' => 1,
@@ -337,14 +371,6 @@ class AuthServiceTest extends CIUnitTestCase
         ]);
 
         $service = $this->createServiceWithUserQuery($createdUser);
-
-        $this->mockJwtService
-            ->method('encode')
-            ->willReturn('jwt.access.token');
-
-        $this->mockRefreshTokenService
-            ->method('issueRefreshToken')
-            ->willReturn('refresh.token');
 
         $this->mockVerificationService
             ->expects($this->once())
@@ -359,9 +385,7 @@ class AuthServiceTest extends CIUnitTestCase
         ]);
 
         $this->assertSuccessResponse($result);
-        $this->assertArrayHasKey('access_token', $result['data']);
-        $this->assertArrayHasKey('refresh_token', $result['data']);
-        $this->assertArrayHasKey('message', $result['data']);
+        $this->assertArrayHasKey('message', $result);
     }
 
     public function testRegisterWithTokenContinuesIfVerificationEmailFails(): void
@@ -375,9 +399,6 @@ class AuthServiceTest extends CIUnitTestCase
         ]);
 
         $service = $this->createServiceWithUserQuery($createdUser);
-
-        $this->mockJwtService->method('encode')->willReturn('jwt.token');
-        $this->mockRefreshTokenService->method('issueRefreshToken')->willReturn('refresh.token');
 
         // Email sending fails
         $this->mockVerificationService

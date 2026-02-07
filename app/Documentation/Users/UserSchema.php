@@ -73,6 +73,50 @@ use OpenApi\Attributes as OA;
             example: 'user'
         ),
         new OA\Property(
+            property: 'status',
+            type: 'string',
+            description: 'Account status (pending_approval, active)',
+            example: 'pending_approval'
+        ),
+        new OA\Property(
+            property: 'email_verified_at',
+            type: 'string',
+            format: 'date-time',
+            description: 'Email verification timestamp',
+            nullable: true,
+            example: null
+        ),
+        new OA\Property(
+            property: 'approved_at',
+            type: 'string',
+            format: 'date-time',
+            description: 'Approval timestamp',
+            nullable: true,
+            example: null
+        ),
+        new OA\Property(
+            property: 'approved_by',
+            type: 'integer',
+            description: 'Admin user id who approved',
+            nullable: true,
+            example: null
+        ),
+        new OA\Property(
+            property: 'invited_at',
+            type: 'string',
+            format: 'date-time',
+            description: 'Invitation timestamp',
+            nullable: true,
+            example: null
+        ),
+        new OA\Property(
+            property: 'invited_by',
+            type: 'integer',
+            description: 'Admin user id who invited',
+            nullable: true,
+            example: null
+        ),
+        new OA\Property(
             property: 'created_at',
             type: 'string',
             format: 'date-time',

@@ -174,9 +174,16 @@ class PasswordResetService implements PasswordResetServiceInterface
         $hashedPassword = password_hash($newPassword, PASSWORD_BCRYPT);
 
         // Update password
-        $this->userModel->update($user->id, [
-            'password' => $hashedPassword,
-        ]);
+        $updateData = ['password' => $hashedPassword];
+
+        if (! empty($user->invited_at)) {
+            $updateData['email_verified_at'] = date('Y-m-d H:i:s');
+            $updateData['invited_at'] = null;
+            $updateData['invited_by'] = null;
+            $updateData['status'] = 'active';
+        }
+
+        $this->userModel->update($user->id, $updateData);
 
         // Delete used reset token
         $this->passwordResetModel

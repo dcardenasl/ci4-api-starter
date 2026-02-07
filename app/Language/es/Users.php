@@ -13,6 +13,8 @@ return [
 
     // Mensajes de éxito
     'deletedSuccess'  => 'Usuario eliminado correctamente',
+    'invitationSent'  => 'Invitación enviada correctamente',
+    'approvedSuccess' => 'Usuario aprobado correctamente',
 
     // Mensajes de error
     'deleteError'     => 'Error al eliminar el usuario',

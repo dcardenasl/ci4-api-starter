@@ -36,10 +36,10 @@ interface AuthServiceInterface
     public function register(array $data): array;
 
     /**
-     * Register new user and return JWT tokens
+     * Register new user (legacy method, no tokens returned)
      *
      * @param array $data Registration data
-     * @return array Result with access token, refresh token, and user data
+     * @return array Result with created user data
      */
     public function registerWithToken(array $data): array;
 }

@@ -36,7 +36,11 @@ class UserServiceTest extends CIUnitTestCase
         parent::setUp();
 
         $this->userModel = new UserModel();
-        $this->userService = new UserService($this->userModel);
+        $this->userService = new UserService(
+            $this->userModel,
+            \Config\Services::emailService(),
+            new \App\Models\PasswordResetModel()
+        );
     }
 
     // ==================== STORE INTEGRATION TESTS ====================

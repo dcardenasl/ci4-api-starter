@@ -60,6 +60,10 @@ class JwtAuthFilter implements FilterInterface
                 return $this->unauthorized(lang('Auth.invalidToken'));
             }
 
+            if (($user->status ?? null) !== 'active') {
+                return $this->forbidden(lang('Auth.accountPendingApproval'));
+            }
+
             $isGoogleOAuth = ($user->oauth_provider ?? null) === 'google';
             if ($user->email_verified_at === null && ! $isGoogleOAuth) {
                 return $this->unauthorized(lang('Auth.emailNotVerified'));
@@ -82,6 +86,19 @@ class JwtAuthFilter implements FilterInterface
         return Services::response()
             ->setJSON(ApiResponse::unauthorized($message))
             ->setStatusCode(401);
+    }
+
+    /**
+     * Helper method to return forbidden response
+     *
+     * @param string $message Error message
+     * @return ResponseInterface
+     */
+    private function forbidden(string $message): ResponseInterface
+    {
+        return Services::response()
+            ->setJSON(ApiResponse::forbidden($message))
+            ->setStatusCode(403);
     }
 
     public function after(RequestInterface $request, ResponseInterface $response, $arguments = null)

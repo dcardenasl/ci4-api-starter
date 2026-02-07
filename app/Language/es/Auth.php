@@ -9,6 +9,7 @@ return [
     'invalidFormat'           => 'Formato de encabezado de autorización inválido',
     'invalidToken'            => 'Token inválido o expirado',
     'tokenRevoked'            => 'El token ha sido revocado',
+    'emailNotVerified'        => 'El correo electrónico no está verificado',
 
     // Mensajes de autenticación
     'authRequired'            => 'Autenticación requerida',

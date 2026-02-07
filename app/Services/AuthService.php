@@ -87,6 +87,22 @@ class AuthService implements AuthServiceInterface
 
         // login() now throws exceptions on error, so if we get here, it's successful
         $user = $result['data'];
+        $userEntity = $this->userModel->find((int) $user['id']);
+
+        if (! $userEntity) {
+            throw new AuthenticationException(
+                'Invalid credentials',
+                ['credentials' => lang('Users.auth.invalidCredentials')]
+            );
+        }
+
+        $isGoogleOAuth = ($userEntity->oauth_provider ?? null) === 'google';
+        if ($userEntity->email_verified_at === null && ! $isGoogleOAuth) {
+            throw new AuthenticationException(
+                'Email not verified',
+                ['email' => lang('Auth.emailNotVerified')]
+            );
+        }
 
         // Generate access token
         $accessToken = $this->jwtService->encode((int) $user['id'], $user['role']);

@@ -9,6 +9,7 @@ return [
     'invalidFormat'           => 'Invalid authorization header format',
     'invalidToken'            => 'Invalid or expired token',
     'tokenRevoked'            => 'Token has been revoked',
+    'emailNotVerified'        => 'Email not verified',
 
     // Authentication messages
     'authRequired'            => 'Authentication required',

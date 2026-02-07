@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Filters;
 
 use App\Libraries\ApiResponse;
+use App\Models\UserModel;
 use CodeIgniter\Filters\FilterInterface;
 use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
@@ -46,6 +47,22 @@ class JwtAuthFilter implements FilterInterface
                 if ($tokenRevocationService->isRevoked($jti)) {
                     return $this->unauthorized(lang('Auth.tokenRevoked'));
                 }
+            }
+        }
+
+        // Enforce email verification for non-OAuth users
+        $userId = (int) ($decoded->uid ?? 0);
+        if ($userId > 0) {
+            $userModel = new UserModel();
+            $user = $userModel->find($userId);
+
+            if (! $user) {
+                return $this->unauthorized(lang('Auth.invalidToken'));
+            }
+
+            $isGoogleOAuth = ($user->oauth_provider ?? null) === 'google';
+            if ($user->email_verified_at === null && ! $isGoogleOAuth) {
+                return $this->unauthorized(lang('Auth.emailNotVerified'));
             }
         }
 

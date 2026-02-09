@@ -151,8 +151,9 @@ Open `http://localhost:8081`.
 - Open `http://localhost:8080/docs/`
 
 **Postman:**
-- Collection: `docs/postman/ci4-auth-flow.postman_collection.json`
-- Environment: `docs/postman/ci4-auth-flow.postman_environment.json`
+- Collection (full API): `docs/postman/ci4-api.postman_collection.json`
+  Variables are stored at the collection level (`baseUrl`, `accessToken`, `refreshToken`, `userId`, `fileId`).
+- Optional environment: `docs/postman/ci4-api.postman_environment.json`
 
 ## Project Structure
 
@@ -173,29 +174,29 @@ app/
 └── Traits/                       # Model traits (Filterable, Searchable)
 
 tests/
-├── Unit/                         # 88 tests - No database required
+├── Unit/                         # No database required
 │   ├── Libraries/                # ApiResponse tests
 │   └── Services/                 # Service unit tests
-├── Integration/                  # 19 tests - Database required
+├── Integration/                  # Database required
 │   ├── Models/                   # Model tests
 │   └── Services/                 # Service integration tests
-└── Feature/                      # 10 tests - Full HTTP tests
+└── Feature/                      # Full HTTP tests
     └── Controllers/              # Endpoint tests
 ```
 
 ## Testing
 
 ```bash
-# Run all tests (117)
+# Run all tests
 vendor/bin/phpunit
 
 # Run with readable output
 vendor/bin/phpunit --testdox
 
 # Run specific suites
-vendor/bin/phpunit tests/Unit           # Fast, no DB (88 tests)
-vendor/bin/phpunit tests/Integration    # Needs DB (19 tests)
-vendor/bin/phpunit tests/Feature        # HTTP tests (10 tests)
+vendor/bin/phpunit tests/Unit           # Fast, no DB
+vendor/bin/phpunit tests/Integration    # Needs DB
+vendor/bin/phpunit tests/Feature        # HTTP tests
 ```
 
 ## Advanced Query Features

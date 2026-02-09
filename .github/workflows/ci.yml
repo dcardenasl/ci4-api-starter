@@ -102,6 +102,15 @@ jobs:
           mkdir -p writable/debugbar
           chmod -R 777 writable
 
+      - name: Generate Swagger and verify up to date
+        run: |
+          php spark swagger:generate
+          if ! git diff --exit-code public/swagger.json; then
+            echo "swagger.json is out of date. Run 'php spark swagger:generate' and commit changes."
+            git --no-pager diff -- public/swagger.json
+            exit 1
+          fi
+
       - name: Verify PHPUnit configuration
         run: |
           echo "Checking for phpunit.xml..."

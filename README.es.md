@@ -151,8 +151,9 @@ Abrir `http://localhost:8081`.
 - Abrir `http://localhost:8080/docs/`
 
 **Postman:**
-- Coleccion: `docs/postman/ci4-auth-flow.postman_collection.json`
-- Entorno: `docs/postman/ci4-auth-flow.postman_environment.json`
+- Coleccion (API completa): `docs/postman/ci4-api.postman_collection.json`
+  Las variables estan en la coleccion (`baseUrl`, `accessToken`, `refreshToken`, `userId`, `fileId`).
+- Entorno opcional: `docs/postman/ci4-api.postman_environment.json`
 
 ## Estructura del Proyecto
 
@@ -173,29 +174,29 @@ app/
 └── Traits/                       # Traits de modelos (Filterable, Searchable)
 
 tests/
-├── Unit/                         # 88 tests - Sin base de datos
+├── Unit/                         # Sin base de datos
 │   ├── Libraries/                # Tests de ApiResponse
 │   └── Services/                 # Tests unitarios de servicios
-├── Integration/                  # 19 tests - Requiere base de datos
+├── Integration/                  # Requiere base de datos
 │   ├── Models/                   # Tests de modelos
 │   └── Services/                 # Tests de integracion de servicios
-└── Feature/                      # 10 tests - Tests HTTP completos
+└── Feature/                      # Tests HTTP completos
     └── Controllers/              # Tests de endpoints
 ```
 
 ## Testing
 
 ```bash
-# Ejecutar todos los tests (117)
+# Ejecutar todos los tests
 vendor/bin/phpunit
 
 # Ejecutar con salida legible
 vendor/bin/phpunit --testdox
 
 # Ejecutar suites especificas
-vendor/bin/phpunit tests/Unit           # Rapidos, sin BD (88 tests)
-vendor/bin/phpunit tests/Integration    # Necesita BD (19 tests)
-vendor/bin/phpunit tests/Feature        # Tests HTTP (10 tests)
+vendor/bin/phpunit tests/Unit           # Rapidos, sin BD
+vendor/bin/phpunit tests/Integration    # Necesita BD
+vendor/bin/phpunit tests/Feature        # Tests HTTP
 ```
 
 ## Funciones de Consulta Avanzada

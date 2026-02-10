@@ -266,6 +266,17 @@ class FileService implements FileServiceInterface
     }
 
     /**
+     * Destroy a file (alias for delete)
+     *
+     * @param array $data Request data with 'id' and 'user_id'
+     * @return array
+     */
+    public function destroy(array $data): array
+    {
+        return $this->delete($data);
+    }
+
+    /**
      * Generate unique filename
      *
      * @param string $originalName Original filename

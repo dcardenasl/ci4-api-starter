@@ -42,4 +42,12 @@ interface FileServiceInterface
      * @return array
      */
     public function delete(array $data): array;
+
+    /**
+     * Destroy a file (alias for delete, used by ApiController)
+     *
+     * @param array $data Request data with 'id' and 'user_id'
+     * @return array
+     */
+    public function destroy(array $data): array;
 }

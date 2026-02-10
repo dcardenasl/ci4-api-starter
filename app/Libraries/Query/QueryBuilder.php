@@ -30,6 +30,11 @@ class QueryBuilder
      */
     public function filter(array $filters): self
     {
+        // Validate fields against model's filterableFields whitelist
+        if (property_exists($this->model, 'filterableFields') && !empty($this->model->filterableFields)) {
+            $filters = FilterParser::filterAllowedFields($filters, $this->model->filterableFields);
+        }
+
         $this->filters = FilterParser::parse($filters);
 
         foreach ($this->filters as $field => $condition) {

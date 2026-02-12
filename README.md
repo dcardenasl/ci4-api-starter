@@ -291,8 +291,19 @@ docker-compose up -d
 
 ## Documentation
 
-- **CLAUDE.md** - Development guide for AI assistants
+- **CLAUDE.md** - Development guide for AI assistants (Claude Code)
+- **.claude/agents/** - Specialized Claude Code agent for CRUD generation
 - **swagger.json** - OpenAPI documentation (generate with `php spark swagger:generate`)
+
+### AI-Assisted Development
+
+This template includes a specialized [Claude Code](https://claude.ai/code) agent that acts as an expert architect for this project. When using Claude Code, the agent automatically helps you:
+- Create complete CRUD resources following all architectural patterns
+- Generate migrations, entities, models, services, controllers, and tests
+- Maintain consistency with existing code conventions
+- Follow security and testing best practices
+
+See `.claude/README.md` for details on using the agent.
 
 ## License
 

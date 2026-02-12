@@ -177,6 +177,8 @@ docker/data/
 *.bak
 backup/
 
-CLAUDE.md
-
-AGENTS.md
+#-------------------------
+# Claude Code
+#-------------------------
+# Keep documentation and agents, but ignore personal settings
+.claude/settings.local.json

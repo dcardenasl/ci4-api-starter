@@ -1,5 +1,17 @@
 # CI4 API Starter - Arquitectura y Patrones de Diseno
 
+> **📢 NOTICE:** This document has been reorganized for better navigation and learning.
+>
+> **Recommended reading:**
+> - **New to the project?** Start with [`../GETTING_STARTED.md`](../GETTING_STARTED.md)
+> - **Want organized docs?** See [`architecture/`](architecture/) directory (13 focused documents)
+> - **Need quick reference?** See [`AGENT_QUICK_REFERENCE.md`](AGENT_QUICK_REFERENCE.md)
+> - **Full roadmap:** See [`architecture/README.md`](architecture/README.md)
+>
+> This monolithic document (2,400+ lines) remains available as a comprehensive searchable reference, but the content has been reorganized into smaller, focused documents for easier learning and navigation.
+
+---
+
 ## Tabla de Contenidos
 
 1. [Resumen Ejecutivo](#1-resumen-ejecutivo)

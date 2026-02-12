@@ -631,6 +631,10 @@ This same pattern applies to **every resource** in the project.
 
 **Full documentation roadmap:** See [`docs/architecture/README.md`](docs/architecture/README.md)
 
+**En español:**
+- Ver [`docs/architecture/README.es.md`](docs/architecture/README.es.md) para roadmap completo
+- Todos los documentos de arquitectura disponibles en español (sufijo `.es.md`)
+
 ### 🧪 Run Tests
 
 ```bash

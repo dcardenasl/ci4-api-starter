@@ -1,6 +1,5 @@
 # Extension Guide
 
-**Quick Reference** - For complete details see `../ARCHITECTURE.md` section 19.
 
 ## Adding a New CRUD Resource
 
@@ -50,4 +49,3 @@ class PaymentRequiredException extends ApiException
 }
 ```
 
-**See `../ARCHITECTURE.md` section 19 for complete extension examples.**

@@ -125,7 +125,7 @@ Welcome to the architecture documentation. This directory contains detailed, foc
 | [I18N.md](I18N.md) | Internationalization | ~150 | Advanced |
 | [EXTENSION_GUIDE.md](EXTENSION_GUIDE.md) | Extending the system | ~250 | Advanced |
 
-**Total:** ~2,700 lines (vs 2,431 in monolithic ARCHITECTURE.md)
+**Total:** ~2,700 lines
 **Benefit:** Focused, digestible documents
 
 ---
@@ -182,9 +182,6 @@ For a condensed, table-based quick reference optimized for rapid lookup:
 
 For hands-on, step-by-step tutorial:
 → See [`../GETTING_STARTED.md`](../GETTING_STARTED.md)
-
-For comprehensive, monolithic reference (deprecated):
-→ See [`../ARCHITECTURE.md`](../ARCHITECTURE.md) (legacy)
 
 ---
 

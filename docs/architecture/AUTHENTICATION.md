@@ -1,6 +1,5 @@
 # JWT Authentication
 
-**Quick Reference** - For complete details see `../ARCHITECTURE.md` section 15.
 
 ## Authentication Flow
 
@@ -52,4 +51,3 @@ curl -X POST /api/v1/auth/revoke \
   -H "Authorization: Bearer ACCESS_TOKEN"
 ```
 
-**See `../ARCHITECTURE.md` section 15 for complete JWT implementation.**

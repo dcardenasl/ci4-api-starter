@@ -1,6 +1,5 @@
 # Formato de Respuesta API
 
-**Referencia Rápida** - Para detalles completos ver `../ARCHITECTURE.md` sección 11.
 
 ## Librería ApiResponse
 
@@ -74,4 +73,3 @@ ApiResponse::forbidden($message = null)
 }
 ```
 
-**Ver `../ARCHITECTURE.md` sección 11 para formatos completos de respuesta.**

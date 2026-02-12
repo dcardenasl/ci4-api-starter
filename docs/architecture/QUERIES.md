@@ -1,6 +1,5 @@
 # Advanced Querying
 
-**Quick Reference** - For complete details see `../ARCHITECTURE.md` section 13.
 
 ## QueryBuilder
 
@@ -52,4 +51,3 @@ if (!empty($data['sort'])) {
 $result = $builder->paginate($page, $limit);
 ```
 
-**See `../ARCHITECTURE.md` section 13 for complete QueryBuilder implementation.**

@@ -1,6 +1,5 @@
 # Design Patterns
 
-**Quick Reference** - For complete details see `../ARCHITECTURE.md` section 16.
 
 ## Patterns Used
 

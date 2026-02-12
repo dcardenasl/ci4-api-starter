@@ -1,6 +1,5 @@
 # Autenticación JWT
 
-**Referencia Rápida** - Para detalles completos ver `../ARCHITECTURE.md` sección 15.
 
 ## Flujo de Autenticación
 

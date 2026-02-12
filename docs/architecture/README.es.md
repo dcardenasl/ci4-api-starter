@@ -125,7 +125,7 @@ Bienvenido a la documentación de arquitectura. Este directorio contiene documen
 | [I18N.es.md](I18N.es.md) | Internacionalización | ~150 | Avanzado |
 | [EXTENSION_GUIDE.es.md](EXTENSION_GUIDE.es.md) | Extender el sistema | ~250 | Avanzado |
 
-**Total:** ~2,700 líneas (vs 2,431 en ARCHITECTURE.md monolítico)
+**Total:** ~2,700 líneas
 **Beneficio:** Documentos enfocados y digeribles
 
 ---

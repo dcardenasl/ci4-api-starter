@@ -1,6 +1,5 @@
 # Patrones de Diseño
 
-**Referencia Rápida** - Para detalles completos ver `../ARCHITECTURE.md` sección 16.
 
 ## Patrones Utilizados
 

@@ -1,6 +1,5 @@
 # Contenedor de Servicios (IoC)
 
-**Referencia Rápida** - Para detalles completos ver `../ARCHITECTURE.md` sección 14.
 
 ## Registrar Servicios
 
@@ -49,4 +48,3 @@ public static function authService(bool $getShared = true)
 }
 ```
 
-**Ver `../ARCHITECTURE.md` sección 14 para patrones completos del contenedor IoC.**

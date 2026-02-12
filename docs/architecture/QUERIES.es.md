@@ -1,6 +1,5 @@
 # Consultas Avanzadas
 
-**Referencia Rápida** - Para detalles completos ver `../ARCHITECTURE.md` sección 13.
 
 ## QueryBuilder
 

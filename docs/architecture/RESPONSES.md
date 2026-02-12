@@ -1,6 +1,5 @@
 # API Response Format
 
-**Quick Reference** - For complete details see `../ARCHITECTURE.md` section 11.
 
 ## ApiResponse Library
 
@@ -74,4 +73,3 @@ ApiResponse::forbidden($message = null)
 }
 ```
 
-**See `../ARCHITECTURE.md` section 11 for complete response formats.**

@@ -1,6 +1,5 @@
 # Filters (Middleware)
 
-**Quick Reference** - For complete details see `../ARCHITECTURE.md` section 8.
 
 ## Filter Pipeline
 
@@ -65,4 +64,3 @@ public array $aliases = [
 ];
 ```
 
-**See `../ARCHITECTURE.md` section 8 for complete filter implementation details.**

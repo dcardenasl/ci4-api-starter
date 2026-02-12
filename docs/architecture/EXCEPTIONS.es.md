@@ -1,6 +1,5 @@
 # Sistema de Excepciones
 
-**Referencia Rápida** - Para detalles completos ver `../ARCHITECTURE.md` sección 10.
 
 ## Jerarquía de Excepciones
 

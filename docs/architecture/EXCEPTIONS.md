@@ -1,6 +1,5 @@
 # Exception System
 
-**Quick Reference** - For complete details see `../ARCHITECTURE.md` section 10.
 
 ## Exception Hierarchy
 
@@ -50,4 +49,3 @@ throw new AuthorizationException('Admin access required');
 
 All exceptions are caught in `ApiController::handleException()` and automatically converted to appropriate HTTP responses with consistent JSON structure.
 
-**See `../ARCHITECTURE.md` section 10 for complete exception implementation.**

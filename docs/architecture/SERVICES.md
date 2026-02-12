@@ -1,6 +1,5 @@
 # Service Container (IoC)
 
-**Quick Reference** - For complete details see `../ARCHITECTURE.md` section 14.
 
 ## Registering Services
 
@@ -49,4 +48,3 @@ public static function authService(bool $getShared = true)
 }
 ```
 
-**See `../ARCHITECTURE.md` section 14 for complete IoC container patterns.**

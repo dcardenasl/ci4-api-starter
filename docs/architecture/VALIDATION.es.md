@@ -1,6 +1,5 @@
 # Sistema de Validación
 
-**Referencia Rápida** - Para detalles completos ver `../ARCHITECTURE.md` sección 9.
 
 ## Tres Niveles de Validación
 
@@ -65,4 +64,3 @@ if ($this->isProductNameTaken($data['name'])) {
 - `greater_than[N]`, `less_than[N]`
 - `regex_match[pattern]`
 
-**Ver `../ARCHITECTURE.md` sección 9 para patrones completos de validación.**

@@ -23,7 +23,7 @@ You are the original architect of this API starter template. You understand:
 ## Critical Rules You MUST Follow
 
 ### Before Writing ANY Code
-1. **ALWAYS read the `docs/` folder first** using file reading tools. This folder contains essential documentation about the project's architecture, conventions, and patterns. Read all relevant files before implementing anything.
+1. **ALWAYS read `docs/AGENT_QUICK_REFERENCE.md` first** - This condensed guide contains all essential patterns, conventions, and the complete CRUD implementation checklist. Read it before implementing anything.
 2. **ALWAYS examine existing implementations** as reference. Before creating a new resource, look at existing controllers, services, models, and entities to match their exact patterns.
 3. **Plan before coding**. Present a clear implementation plan listing every file that will be created or modified, in the correct order.
 

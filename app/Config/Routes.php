@@ -5,7 +5,26 @@ use CodeIgniter\Router\RouteCollection;
 /**
  * @var RouteCollection $routes
  */
-$routes->get('/', 'Home::index');
+// API Information Endpoint
+$routes->get('/', static function () {
+    return response()->setJSON([
+        'name'        => 'CodeIgniter 4 API Starter',
+        'version'     => '1.0.0',
+        'description' => 'Production-ready REST API with JWT authentication',
+        'documentation' => [
+            'openapi' => base_url('swagger.json'),
+            'github'  => 'https://github.com/david-cardenas/ci4-api-starter',
+        ],
+        'endpoints' => [
+            'health' => base_url('health'),
+            'ping'   => base_url('ping'),
+            'auth'   => base_url('api/v1/auth'),
+            'users'  => base_url('api/v1/users'),
+            'files'  => base_url('api/v1/files'),
+        ],
+        'timestamp' => date('Y-m-d H:i:s'),
+    ])->setStatusCode(200);
+});
 
 // Health check endpoints (public, no rate limiting for Kubernetes/monitoring)
 $routes->group('', ['namespace' => 'App\Controllers\Api\V1'], function ($routes) {

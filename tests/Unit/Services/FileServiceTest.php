@@ -139,15 +139,51 @@ class FileServiceTest extends CIUnitTestCase
             ]),
         ];
 
-        $this->mockFileModel
-            ->expects($this->once())
-            ->method('getByUser')
-            ->with(1)
-            ->willReturn($files);
+        // Mock con clase anónima que soporta QueryBuilder
+        $this->mockFileModel = new class ($files) extends FileModel {
+            private array $returnFiles;
+
+            public function __construct(array $files)
+            {
+                $this->returnFiles = $files;
+            }
+
+            public function where($key, $value = null, ?bool $escape = null): static
+            {
+                return $this;
+            }
+
+            public function orderBy(string $orderBy, string $direction = '', ?bool $escape = null): static
+            {
+                return $this;
+            }
+
+            public function countAllResults(bool $reset = true, bool $test = false)
+            {
+                return count($this->returnFiles);
+            }
+
+            public function findAll(?int $limit = null, int $offset = 0)
+            {
+                return $this->returnFiles;
+            }
+
+            public function applyFilters(array $filters): static
+            {
+                return $this;
+            }
+
+            public function search(string $query): static
+            {
+                return $this;
+            }
+        };
+
+        $this->service = new FileService($this->mockFileModel, $this->mockStorage);
 
         $result = $this->service->index(['user_id' => 1]);
 
-        $this->assertSuccessResponse($result);
+        $this->assertPaginatedResponse($result);
         $this->assertCount(2, $result['data']);
     }
 

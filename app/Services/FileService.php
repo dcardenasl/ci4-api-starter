@@ -10,6 +10,7 @@ use App\Exceptions\NotFoundException;
 use App\Exceptions\ValidationException;
 use App\Interfaces\FileServiceInterface;
 use App\Libraries\ApiResponse;
+use App\Libraries\Query\QueryBuilder;
 use App\Libraries\Storage\StorageManager;
 use App\Models\FileModel;
 
@@ -157,9 +158,36 @@ class FileService implements FileServiceInterface
             );
         }
 
-        $files = $this->fileModel->getByUser((int) $data['user_id']);
+        $builder = new QueryBuilder($this->fileModel);
 
-        $filesArray = array_map(function ($file) {
+        // SEGURIDAD: Siempre filtrar por user_id del usuario actual
+        $builder->filter(['user_id' => (int) $data['user_id']]);
+
+        // Aplicar filtros adicionales opcionales
+        if (!empty($data['filter']) && is_array($data['filter'])) {
+            $builder->filter($data['filter']);
+        }
+
+        // Aplicar búsqueda si se proporciona
+        if (!empty($data['search'])) {
+            $builder->search($data['search']);
+        }
+
+        // Aplicar ordenamiento (default: más recientes primero)
+        if (!empty($data['sort'])) {
+            $builder->sort($data['sort']);
+        } else {
+            $this->fileModel->orderBy('uploaded_at', 'DESC');
+        }
+
+        // Paginación
+        $page = isset($data['page']) ? max((int) $data['page'], 1) : 1;
+        $limit = isset($data['limit']) ? (int) $data['limit'] : (int) env('PAGINATION_DEFAULT_LIMIT', 20);
+
+        $result = $builder->paginate($page, $limit);
+
+        // Convertir entidades a arrays con metadata completa
+        $result['data'] = array_map(function ($file) {
             return [
                 'id' => $file->id,
                 'original_name' => $file->original_name,
@@ -170,9 +198,14 @@ class FileService implements FileServiceInterface
                 'uploaded_at' => $file->uploaded_at,
                 'is_image' => $file->isImage(),
             ];
-        }, $files);
+        }, $result['data']);
 
-        return ApiResponse::success($filesArray);
+        return ApiResponse::paginated(
+            $result['data'],
+            $result['total'],
+            $result['page'],
+            $result['perPage']
+        );
     }
 
     /**

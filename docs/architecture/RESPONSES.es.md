@@ -73,3 +73,7 @@ ApiResponse::forbidden($message = null)
 }
 ```
 
+## Excepciones a Este Contrato
+
+- Los endpoints operativos de health (`GET /health`, `GET /ping`, `GET /ready`, `GET /live`) usan un payload orientado a monitoreo y no se envuelven con `ApiResponse`.
+- Las respuestas de rate limit (`429`) siguen el contrato de error estándar y adicionalmente incluyen `retry_after` en el nivel raíz.

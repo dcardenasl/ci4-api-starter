@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
+use App\Libraries\ApiResponse;
 use CodeIgniter\API\ResponseTrait;
 use CodeIgniter\Controller;
 use CodeIgniter\HTTP\ResponseInterface;
@@ -238,16 +239,16 @@ abstract class ApiController extends Controller
 
     protected function respondNotFound(?string $message = null): ResponseInterface
     {
-        return $this->respond(['error' => $message ?? 'Not found'], 404);
+        return $this->respond(ApiResponse::notFound($message), 404);
     }
 
     protected function respondUnauthorized(?string $message = null): ResponseInterface
     {
-        return $this->respond(['error' => $message ?? 'Unauthorized'], 401);
+        return $this->respond(ApiResponse::unauthorized($message), 401);
     }
 
     protected function respondValidationError(array $errors): ResponseInterface
     {
-        return $this->respond(['errors' => $errors], 422);
+        return $this->respond(ApiResponse::validationError($errors), 422);
     }
 }

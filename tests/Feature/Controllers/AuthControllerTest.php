@@ -137,6 +137,8 @@ class AuthControllerTest extends CIUnitTestCase
 
         $json = json_decode($result->getJSON(), true);
         $this->assertEquals('error', $json['status']);
+        $this->assertArrayHasKey('errors', $json);
+        $this->assertEquals(403, $json['code']);
     }
 
     public function testLoginWithInvalidCredentialsReturnsUnauthorized(): void
@@ -151,6 +153,8 @@ class AuthControllerTest extends CIUnitTestCase
 
         $json = json_decode($result->getJSON(), true);
         $this->assertEquals('error', $json['status']);
+        $this->assertArrayHasKey('errors', $json);
+        $this->assertEquals(401, $json['code']);
     }
 
     public function testLoginWithEmptyCredentialsReturnsError(): void
@@ -162,6 +166,11 @@ class AuthControllerTest extends CIUnitTestCase
             ]);
 
         $result->assertStatus(401);
+
+        $json = json_decode($result->getJSON(), true);
+        $this->assertEquals('error', $json['status']);
+        $this->assertArrayHasKey('errors', $json);
+        $this->assertEquals(401, $json['code']);
     }
 
     // ==================== PROTECTED ENDPOINT TESTS ====================
@@ -171,6 +180,11 @@ class AuthControllerTest extends CIUnitTestCase
         $result = $this->get('/api/v1/users');
 
         $result->assertStatus(401);
+
+        $json = json_decode($result->getJSON(), true);
+        $this->assertEquals('error', $json['status']);
+        $this->assertArrayHasKey('errors', $json);
+        $this->assertEquals(401, $json['code']);
     }
 
     public function testProtectedEndpointWithValidTokenReturnsData(): void

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers\Api\V1;
 
 use App\Controllers\ApiController;
+use App\Libraries\ApiResponse;
 use CodeIgniter\HTTP\ResponseInterface;
 
 /**
@@ -25,14 +26,14 @@ class TokenController extends ApiController
     {
         $token = $this->extractToken();
         if (!$token) {
-            return $this->respond(['status' => 'error', 'message' => 'Token not found'], 400);
+            return $this->respond(ApiResponse::error('Token not found', 'Token not found', 400), 400);
         }
 
         $jwtService = \Config\Services::jwtService();
         $payload = $jwtService->decode($token);
 
         if (!$payload || !isset($payload->jti, $payload->exp)) {
-            return $this->respond(['status' => 'error', 'message' => 'Invalid token'], 400);
+            return $this->respond(ApiResponse::error('Invalid token', 'Invalid token', 400), 400);
         }
 
         $tokenRevocationService = \Config\Services::tokenRevocationService();

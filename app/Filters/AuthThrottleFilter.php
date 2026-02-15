@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filters;
 
+use App\Libraries\ApiResponse;
 use CodeIgniter\Filters\FilterInterface;
 use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
@@ -79,21 +80,21 @@ class AuthThrottleFilter implements FilterInterface
     private function rateLimitExceeded(ResponseInterface $response, int $maxAttempts, int $window): ResponseInterface
     {
         $retryAfter = $window;
+        $body = array_merge(
+            ApiResponse::error(
+                ['rate_limit' => lang('Auth.tooManyLoginAttempts', [$maxAttempts, (int) ($window / 60)])],
+                lang('Auth.rateLimitExceeded'),
+                429
+            ),
+            ['retry_after' => $retryAfter]
+        );
 
         $response->setStatusCode(429);
         $response->setHeader('Retry-After', (string) $retryAfter);
         $response->setHeader('X-RateLimit-Limit', (string) $maxAttempts);
         $response->setHeader('X-RateLimit-Remaining', '0');
         $response->setHeader('X-RateLimit-Reset', (string) (time() + $retryAfter));
-        $response->setContentType('application/json');
-        $response->setBody(json_encode([
-            'success' => false,
-            'message' => lang('Auth.rateLimitExceeded'),
-            'errors' => [
-                'rate_limit' => lang('Auth.tooManyLoginAttempts', [$maxAttempts, (int) ($window / 60)]),
-            ],
-            'retry_after' => $retryAfter,
-        ]));
+        $response->setJSON($body);
 
         return $response;
     }

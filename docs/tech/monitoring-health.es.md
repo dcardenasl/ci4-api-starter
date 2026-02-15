@@ -16,3 +16,4 @@ Endpoints:
 Notas:
 - `checkAll()` incluye base de datos, espacio en disco y carpetas writable.
 - Existen checks para cola, email y Redis, pero no se incluyen por defecto en `checkAll()`.
+- Estos endpoints son operativos/de monitoreo y deliberadamente usan un payload propio (no `ApiResponse`).

@@ -16,3 +16,4 @@ Endpoints:
 Notes:
 - `checkAll()` currently includes database, disk space, and writable folders.
 - Additional checks exist for queue, email, and Redis, but are not part of `checkAll()` by default.
+- These endpoints are operational/monitoring endpoints and intentionally use their own payload shape (not `ApiResponse`).

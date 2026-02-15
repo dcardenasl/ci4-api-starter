@@ -2,7 +2,7 @@
 
 ![PHP Version](https://img.shields.io/badge/PHP-8.2%20%7C%208.3-blue)
 ![CodeIgniter](https://img.shields.io/badge/CodeIgniter-4.6-orange)
-![Tests](https://img.shields.io/badge/tests-117%20passing-success)
+![Tests](https://img.shields.io/badge/tests-218%20passing-success)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 
 [English](README.md) | Español
@@ -19,7 +19,7 @@ Una plantilla de API REST lista para produccion con CodeIgniter 4, autenticacion
 - **Health Checks** - Endpoints listos para Kubernetes (`/health`, `/ready`, `/live`)
 - **Auditoria** - Registro automatico de cambios en datos
 - **Documentacion OpenAPI** - Swagger docs auto-generados
-- **117 Tests** - Tests unitarios, de integracion y funcionales
+- **218 Tests** - Tests unitarios, de integracion y funcionales
 
 ## Inicio Rapido
 
@@ -291,8 +291,12 @@ docker-compose up -d
 
 ## Documentacion
 
+- **ARCHITECTURE.md** - Decisiones arquitectónicas y patrones de diseño explicados
 - **CLAUDE.md** - Guia de desarrollo para asistentes de IA
+- **.claude/agents/** - Agente especializado de Claude Code para generación CRUD
 - **swagger.json** - Documentacion OpenAPI (generar con `php spark swagger:generate`)
+
+**¿Nuevo en el proyecto?** Empieza con `ARCHITECTURE.md` para entender por qué el código está estructurado así.
 
 ## Licencia
 

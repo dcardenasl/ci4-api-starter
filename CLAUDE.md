@@ -11,7 +11,7 @@ php spark serve                  # Start dev server at http://localhost:8080
 
 ### Testing
 ```bash
-# Run all tests (117 tests)
+# Run all tests (218 tests)
 vendor/bin/phpunit
 vendor/bin/phpunit --testdox    # Human-readable test output
 
@@ -389,9 +389,145 @@ THROTTLE_LIMIT=60
 THROTTLE_WINDOW=60
 ```
 
+## Architectural Exceptions
+
+**CRITICAL:** Not all controllers follow the standard ApiController pattern. These are intentional design decisions:
+
+### Infrastructure Controllers (DO NOT extend ApiController)
+
+**HealthController** and **MetricsController** are infrastructure endpoints, not business logic:
+
+```php
+// ✅ CORRECT - Health checks are simple and fast
+class HealthController extends Controller {
+    public function ping(): ResponseInterface {
+        return $this->response->setJSON(['status' => 'ok']);
+    }
+}
+```
+
+**Why they don't extend ApiController:**
+1. **Performance**: Called every 5-10 seconds by orchestrators (Kubernetes, Docker Swarm)
+2. **No authentication**: Must be publicly accessible
+3. **No business logic**: Just report system status
+4. **No data processing**: No user input to sanitize
+5. **Standard compliance**: Follow industry patterns (Spring Boot HealthIndicator, Express health checks)
+
+**Endpoints that are infrastructure, not API resources:**
+- `/health` - Full health check with all components
+- `/ping` - Lightweight availability check
+- `/ready` - Kubernetes readiness probe
+- `/live` - Kubernetes liveness probe
+- `/metrics/*` - Monitoring and observability (admin-only, but not CRUD)
+
+### OpenAPI Documentation Pattern
+
+**DO NOT add @OpenApi annotations to controllers.** This project uses **separated documentation files**:
+
+```
+app/Documentation/
+├── Auth/
+│   ├── AuthEndpoints.php
+│   ├── LoginRequest.php
+│   └── RegisterRequest.php
+├── Users/
+│   ├── UserEndpoints.php
+│   └── UserSchema.php
+└── Common/
+    ├── UnauthorizedResponse.php
+    └── ValidationErrorResponse.php
+```
+
+**Generate documentation:**
+```bash
+php spark swagger:generate  # Generates from app/Documentation/
+```
+
+**Why separated files are superior:**
+- ✅ Separation of concerns (code ≠ documentation)
+- ✅ Reusable schemas across endpoints
+- ✅ Easier to maintain and review
+- ✅ Cleaner controller code
+- ✅ Better for team collaboration
+
+### Explicit Parameters vs Auto-Collection
+
+**Both patterns are valid** depending on context:
+
+```php
+// ✅ Explicit parameters (recommended for clarity)
+public function sendResetLink(): ResponseInterface {
+    $email = $this->request->getVar('email') ?? '';
+    return $this->handleRequest('sendResetLink', ['email' => $email]);
+}
+
+// ✅ Auto-collection (recommended for standard CRUD)
+public function update($id): ResponseInterface {
+    return $this->handleRequest('update', ['id' => $id]);
+}
+```
+
+**Use explicit parameters when:**
+- Method signature is not obvious
+- Improves code readability
+- Makes testing easier
+- Parameters come from different sources (headers, query, body)
+
+**Use auto-collection when:**
+- Standard CRUD operations (index, show, store, update, destroy)
+- All parameters come from request body
+- Method signature is self-documenting
+
+### CustomAssertionsTrait Usage
+
+**DO NOT use CustomAssertionsTrait in all tests.** Only for tests that verify ApiResponse structure:
+
+```php
+// ✅ CORRECT - Service tests that return ApiResponse
+class AuthServiceTest extends CIUnitTestCase {
+    use CustomAssertionsTrait;
+
+    public function testLogin() {
+        $result = $this->service->login([...]);
+        $this->assertSuccessResponse($result);  // ✅
+    }
+}
+
+// ✅ CORRECT - Testing ApiResponse library itself
+class ApiResponseTest extends CIUnitTestCase {
+    // ❌ NO CustomAssertionsTrait - would be circular
+
+    public function testSuccess() {
+        $result = ApiResponse::success(['id' => 1]);
+        $this->assertEquals('success', $result['status']);  // ✅
+    }
+}
+
+// ✅ CORRECT - Testing validation rules
+class CustomRulesTest extends CIUnitTestCase {
+    // ❌ NO CustomAssertionsTrait - not testing API responses
+
+    public function testStrongPassword() {
+        $result = $this->validation->check($password, 'strong_password');
+        $this->assertTrue($result);  // ✅
+    }
+}
+```
+
+**Use CustomAssertionsTrait only for:**
+- Service unit tests (AuthService, UserService, FileService, etc.)
+- Service integration tests
+- Feature/Controller tests
+
+**DO NOT use for:**
+- ApiResponse library tests (circular dependency)
+- Validation rule tests
+- Helper function tests
+- Model tests (unless testing service methods)
+
 ## Common Pitfalls
 
-1. **Always extend ApiController** - Never use base Controller
+1. **Business API controllers extend ApiController** - Infrastructure endpoints (health, metrics) don't
 2. **Services return arrays** - Use `ApiResponse::*()` methods
 3. **No business logic in models** - Models are for DB only
 4. **Use query builder** - Never raw SQL

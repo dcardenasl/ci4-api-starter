@@ -2,7 +2,7 @@
 
 ![PHP Version](https://img.shields.io/badge/PHP-8.2%20%7C%208.3-blue)
 ![CodeIgniter](https://img.shields.io/badge/CodeIgniter-4.6-orange)
-![Tests](https://img.shields.io/badge/tests-117%20passing-success)
+![Tests](https://img.shields.io/badge/tests-218%20passing-success)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 
 English | [Español](README.es.md)
@@ -19,7 +19,7 @@ A production-ready REST API starter template for CodeIgniter 4 with JWT authenti
 - **Health Checks** - Kubernetes-ready endpoints (`/health`, `/ready`, `/live`)
 - **Audit Trail** - Automatic logging of data changes
 - **OpenAPI Documentation** - Auto-generated Swagger docs
-- **117 Tests** - Unit, integration, and feature tests
+- **218 Tests** - Unit, integration, and feature tests
 
 ## Quick Start
 
@@ -291,9 +291,12 @@ docker-compose up -d
 
 ## Documentation
 
+- **ARCHITECTURE.md** - Architectural decisions and design patterns explained
 - **CLAUDE.md** - Development guide for AI assistants (Claude Code)
 - **.claude/agents/** - Specialized Claude Code agent for CRUD generation
 - **swagger.json** - OpenAPI documentation (generate with `php spark swagger:generate`)
+
+**New to the project?** Start with `ARCHITECTURE.md` to understand why code is structured the way it is.
 
 ### AI-Assisted Development
 

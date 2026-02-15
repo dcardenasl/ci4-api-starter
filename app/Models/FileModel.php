@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Entities\FileEntity;
+use App\Traits\Auditable;
 use App\Traits\Filterable;
 use App\Traits\Searchable;
 use CodeIgniter\Model;
@@ -14,6 +15,7 @@ use CodeIgniter\Model;
  */
 class FileModel extends Model
 {
+    use Auditable;
     use Filterable;
     use Searchable;
     protected $table = 'files';
@@ -65,6 +67,12 @@ class FileModel extends Model
     protected array $searchableFields = ['original_name', 'mime_type'];
     protected array $filterableFields = ['user_id', 'mime_type', 'size', 'uploaded_at', 'storage_driver'];
     protected array $sortableFields = ['id', 'user_id', 'original_name', 'size', 'uploaded_at', 'mime_type'];
+
+    public function __construct()
+    {
+        parent::__construct();
+        $this->initAuditable();
+    }
 
     /**
      * Get files by user ID

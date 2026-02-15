@@ -3,12 +3,14 @@
 namespace App\Models;
 
 use App\Entities\UserEntity;
+use App\Traits\Auditable;
 use App\Traits\Filterable;
 use App\Traits\Searchable;
 use CodeIgniter\Model;
 
 class UserModel extends Model
 {
+    use Auditable;
     use Filterable;
     use Searchable;
     // Configuración de tabla
@@ -109,4 +111,10 @@ class UserModel extends Model
     protected $afterFind      = [];
     protected $beforeDelete   = [];
     protected $afterDelete    = [];
+
+    public function __construct()
+    {
+        parent::__construct();
+        $this->initAuditable();
+    }
 }

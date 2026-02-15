@@ -21,6 +21,14 @@ interface TokenRevocationServiceInterface
     public function revokeToken(string $jti, int $expiresAt): array;
 
     /**
+     * Revoke an access token from authorization header
+     *
+     * @param array $data Request data with 'authorization_header'
+     * @return array
+     */
+    public function revokeAccessToken(array $data): array;
+
+    /**
      * Check if a token is revoked
      *
      * @param string $jti Token JTI

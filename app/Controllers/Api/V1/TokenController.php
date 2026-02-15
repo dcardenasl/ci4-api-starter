@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Controllers\Api\V1;
 
 use App\Controllers\ApiController;
-use App\Libraries\ApiResponse;
 use CodeIgniter\HTTP\ResponseInterface;
 
 /**
@@ -24,22 +23,17 @@ class TokenController extends ApiController
 
     public function revoke(): ResponseInterface
     {
-        $token = $this->extractToken();
-        if (!$token) {
-            return $this->respond(ApiResponse::error('Token not found', 'Token not found', 400), 400);
-        }
-
-        $jwtService = \Config\Services::jwtService();
-        $payload = $jwtService->decode($token);
-
-        if (!$payload || !isset($payload->jti, $payload->exp)) {
-            return $this->respond(ApiResponse::error('Invalid token', 'Invalid token', 400), 400);
-        }
-
         $tokenRevocationService = \Config\Services::tokenRevocationService();
-        $result = $tokenRevocationService->revokeToken($payload->jti, (int) $payload->exp);
 
-        return $this->respond($result, 200);
+        try {
+            $result = $tokenRevocationService->revokeAccessToken([
+                'authorization_header' => $this->request->getHeaderLine('Authorization'),
+            ]);
+
+            return $this->respond($result, 200);
+        } catch (\Exception $e) {
+            return $this->handleException($e);
+        }
     }
 
     public function revokeAll(): ResponseInterface
@@ -48,15 +42,5 @@ class TokenController extends ApiController
         $result = $tokenRevocationService->revokeAllUserTokens($this->getUserId());
 
         return $this->respond($result, 200);
-    }
-
-    protected function extractToken(): ?string
-    {
-        $header = $this->request->getHeaderLine('Authorization');
-        if (empty($header)) {
-            return null;
-        }
-
-        return preg_match('/Bearer\s+(.*)$/i', $header, $matches) ? $matches[1] : null;
     }
 }

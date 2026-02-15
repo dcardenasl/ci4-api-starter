@@ -12,9 +12,14 @@ return [
     'allTokensRevoked'      => 'All refresh tokens revoked successfully',
 
     // Token revocation
-    'revocationFailed'      => 'Failed to revoke token',
-    'tokenRevokedSuccess'   => 'Token revoked successfully',
-    'allUserTokensRevoked'  => 'All user tokens revoked successfully',
+    'revocationFailed'             => 'Failed to revoke token',
+    'tokenRevokedSuccess'          => 'Token revoked successfully',
+    'allUserTokensRevoked'         => 'All user tokens revoked successfully',
+    'authorizationHeaderRequired'  => 'Authorization header is required',
+    'invalidAuthorizationFormat'   => 'Invalid Authorization header format. Expected: Bearer <token>',
+    'invalidToken'                 => 'Invalid token',
+    'tokenDecodeFailed'            => 'Token could not be decoded',
+    'missingRequiredClaims'        => 'Token missing required claims (jti, exp)',
 
     // General
     'invalidRequest'        => 'Invalid request',

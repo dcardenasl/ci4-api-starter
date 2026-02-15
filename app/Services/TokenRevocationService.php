@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Exceptions\AuthenticationException;
 use App\Exceptions\BadRequestException;
+use App\Interfaces\JwtServiceInterface;
 use App\Interfaces\TokenRevocationServiceInterface;
 use App\Libraries\ApiResponse;
 use App\Models\RefreshTokenModel;
@@ -21,6 +23,7 @@ class TokenRevocationService implements TokenRevocationServiceInterface
     public function __construct(
         protected TokenBlacklistModel $blacklistModel,
         protected RefreshTokenModel $refreshTokenModel,
+        protected JwtServiceInterface $jwtService,
         protected ?CacheInterface $cache = null
     ) {
         // Use injected cache or get from Services
@@ -50,6 +53,57 @@ class TokenRevocationService implements TokenRevocationServiceInterface
         $this->cache->save($cacheKey, 1, 300);
 
         return ApiResponse::success(null, lang('Tokens.tokenRevokedSuccess'));
+    }
+
+    /**
+     * Revoke an access token from authorization header
+     *
+     * @param array $data Request data with 'authorization_header'
+     * @return array
+     * @throws BadRequestException If header missing or invalid format
+     * @throws AuthenticationException If token invalid or missing claims
+     */
+    public function revokeAccessToken(array $data): array
+    {
+        // Validar header presente
+        if (empty($data['authorization_header'])) {
+            throw new BadRequestException(
+                lang('Tokens.invalidRequest'),
+                ['authorization' => lang('Tokens.authorizationHeaderRequired')]
+            );
+        }
+
+        $header = $data['authorization_header'];
+
+        // Parsear Bearer token
+        if (!preg_match('/Bearer\s+(.*)$/i', $header, $matches)) {
+            throw new BadRequestException(
+                lang('Tokens.invalidRequest'),
+                ['authorization' => lang('Tokens.invalidAuthorizationFormat')]
+            );
+        }
+
+        $token = $matches[1];
+
+        // Decodificar y validar JWT
+        $payload = $this->jwtService->decode($token);
+
+        if (!$payload) {
+            throw new AuthenticationException(
+                lang('Tokens.invalidToken'),
+                ['token' => lang('Tokens.tokenDecodeFailed')]
+            );
+        }
+
+        if (!isset($payload->jti) || !isset($payload->exp)) {
+            throw new AuthenticationException(
+                lang('Tokens.invalidToken'),
+                ['token' => lang('Tokens.missingRequiredClaims')]
+            );
+        }
+
+        // Revocar token agregando JTI a blacklist
+        return $this->revokeToken($payload->jti, (int) $payload->exp);
     }
 
     /**

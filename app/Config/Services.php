@@ -171,6 +171,7 @@ class Services extends BaseService
         return new \App\Services\TokenRevocationService(
             new \App\Models\TokenBlacklistModel(),
             new \App\Models\RefreshTokenModel(),
+            static::jwtService(),
             static::cache()
         );
     }

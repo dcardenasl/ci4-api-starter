@@ -14,6 +14,7 @@ use App\Libraries\ApiResponse;
 use App\Libraries\Query\QueryBuilder;
 use App\Models\PasswordResetModel;
 use App\Models\UserModel;
+use App\Traits\ValidatesRequiredFields;
 
 /**
  * User Service
@@ -23,6 +24,7 @@ use App\Models\UserModel;
  */
 class UserService implements UserServiceInterface
 {
+    use ValidatesRequiredFields;
     public function __construct(
         protected UserModel $userModel,
         protected EmailServiceInterface $emailService,
@@ -75,14 +77,9 @@ class UserService implements UserServiceInterface
      */
     public function show(array $data): array
     {
-        if (!isset($data['id'])) {
-            throw new BadRequestException(
-                'Invalid request',
-                ['id' => lang('Users.idRequired')]
-            );
-        }
+        $id = $this->validateRequiredId($data);
 
-        $user = $this->userModel->find($data['id']);
+        $user = $this->userModel->find($id);
 
         if (!$user) {
             throw new NotFoundException(lang('Users.notFound'));
@@ -163,14 +160,7 @@ class UserService implements UserServiceInterface
      */
     public function update(array $data): array
     {
-        if (!isset($data['id'])) {
-            throw new BadRequestException(
-                'Invalid request',
-                ['id' => lang('Users.idRequired')]
-            );
-        }
-
-        $id = (int) $data['id'];
+        $id = $this->validateRequiredId($data);
 
         // Verificar si el usuario existe
         if (!$this->userModel->find($id)) {
@@ -220,14 +210,7 @@ class UserService implements UserServiceInterface
      */
     public function destroy(array $data): array
     {
-        if (!isset($data['id'])) {
-            throw new BadRequestException(
-                'Invalid request',
-                ['id' => lang('Users.idRequired')]
-            );
-        }
-
-        $id = (int) $data['id'];
+        $id = $this->validateRequiredId($data);
 
         // Verificar si el usuario existe
         if (!$this->userModel->find($id)) {
@@ -263,14 +246,7 @@ class UserService implements UserServiceInterface
      */
     public function approve(array $data): array
     {
-        if (!isset($data['id'])) {
-            throw new BadRequestException(
-                'Invalid request',
-                ['id' => lang('Users.idRequired')]
-            );
-        }
-
-        $id = (int) $data['id'];
+        $id = $this->validateRequiredId($data);
         $adminId = isset($data['user_id']) ? (int) $data['user_id'] : null;
 
         $user = $this->userModel->find($id);
@@ -321,7 +297,7 @@ class UserService implements UserServiceInterface
             return;
         }
 
-        $token = bin2hex(random_bytes(32));
+        $token = generate_token();
 
         $this->passwordResetModel->where('email', $user->email)->delete();
         $this->passwordResetModel->insert([

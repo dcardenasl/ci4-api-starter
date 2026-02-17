@@ -41,7 +41,7 @@ class VerificationService implements VerificationServiceInterface
         }
 
         // Generate verification token
-        $token = bin2hex(random_bytes(32));
+        $token = generate_token();
         $expiresAt = date('Y-m-d H:i:s', strtotime('+24 hours'));
 
         // Update user with token

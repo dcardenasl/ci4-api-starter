@@ -37,7 +37,7 @@ class RefreshTokenService implements RefreshTokenServiceInterface
     public function issueRefreshToken(int $userId): string
     {
         // Generate secure random token
-        $token = bin2hex(random_bytes(32));
+        $token = generate_token();
 
         // Calculate expiry
         // Check getenv first for unit tests that use putenv(), then fall back to env() for .env files

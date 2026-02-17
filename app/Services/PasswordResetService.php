@@ -57,7 +57,7 @@ class PasswordResetService implements PasswordResetServiceInterface
         // But only send email if user exists
         if ($user) {
             // Generate reset token
-            $token = bin2hex(random_bytes(32));
+            $token = generate_token();
 
             // Delete any existing reset tokens for this email
             $this->passwordResetModel->where('email', $email)->delete();

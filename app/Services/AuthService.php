@@ -97,24 +97,48 @@ class AuthService implements AuthServiceInterface
             );
         }
 
-        if (($userEntity->status ?? null) === 'invited') {
+        $this->validateUserStatusForLogin($userEntity);
+        $this->validateEmailVerification($userEntity);
+
+        return $this->generateTokensResponse($userEntity, $user);
+    }
+
+    /**
+     * Validate user status allows login
+     *
+     * @param \App\Entities\UserEntity $user
+     * @throws AuthorizationException
+     */
+    private function validateUserStatusForLogin($user): void
+    {
+        if (($user->status ?? null) === 'invited') {
             throw new AuthorizationException(
                 'Account setup required',
                 ['status' => lang('Auth.accountSetupRequired')]
             );
         }
 
-        if (($userEntity->status ?? null) !== 'active') {
+        if (($user->status ?? null) !== 'active') {
             throw new AuthorizationException(
                 'Account pending approval',
                 ['status' => lang('Auth.accountPendingApproval')]
             );
         }
+    }
 
-        $isGoogleOAuth = ($userEntity->oauth_provider ?? null) === 'google';
+    /**
+     * Validate email verification status
+     *
+     * @param \App\Entities\UserEntity $user
+     * @throws AuthenticationException
+     */
+    private function validateEmailVerification($user): void
+    {
+        $isGoogleOAuth = ($user->oauth_provider ?? null) === 'google';
+
         if (
             is_email_verification_required()
-            && $userEntity->email_verified_at === null
+            && $user->email_verified_at === null
             && ! $isGoogleOAuth
         ) {
             throw new AuthenticationException(
@@ -122,11 +146,18 @@ class AuthService implements AuthServiceInterface
                 ['email' => lang('Auth.emailNotVerified')]
             );
         }
+    }
 
-        // Generate access token
+    /**
+     * Generate tokens and build response
+     *
+     * @param \App\Entities\UserEntity $userEntity
+     * @param array $user
+     * @return array
+     */
+    private function generateTokensResponse($userEntity, array $user): array
+    {
         $accessToken = $this->jwtService->encode((int) $user['id'], $user['role']);
-
-        // Generate refresh token
         $refreshToken = $this->refreshTokenService->issueRefreshToken((int) $user['id']);
 
         return ApiResponse::success([

@@ -2,7 +2,7 @@
 
 ![PHP Version](https://img.shields.io/badge/PHP-8.2%20%7C%208.3-blue)
 ![CodeIgniter](https://img.shields.io/badge/CodeIgniter-4.6-orange)
-![Tests](https://img.shields.io/badge/tests-218%20passing-success)
+![Tests](https://img.shields.io/badge/tests-passing-success)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 
 English | [Español](README.es.md)
@@ -19,7 +19,7 @@ A production-ready REST API starter template for CodeIgniter 4 with JWT authenti
 - **Health Checks** - Kubernetes-ready endpoints (`/health`, `/ready`, `/live`)
 - **Audit Trail** - Automatic logging of data changes
 - **OpenAPI Documentation** - Auto-generated Swagger docs
-- **218 Tests** - Unit, integration, and feature tests
+- **Comprehensive Test Suite** - Unit, integration, and feature tests
 
 ## Quick Start
 
@@ -64,6 +64,7 @@ POST /api/v1/auth/login        Login (returns tokens)
 POST /api/v1/auth/refresh      Refresh access token
 POST /api/v1/auth/forgot-password   Request password reset
 POST /api/v1/auth/reset-password    Reset password
+GET  /api/v1/auth/validate-reset-token Validate reset token
 GET  /api/v1/auth/verify-email      Verify email address (token in query)
 ```
 
@@ -76,6 +77,7 @@ Set `AUTH_REQUIRE_EMAIL_VERIFICATION` in `.env` to control whether email verific
 GET  /api/v1/auth/me           Get current user
 POST /api/v1/auth/revoke       Revoke current token
 POST /api/v1/auth/revoke-all   Revoke all user tokens
+POST /api/v1/auth/resend-verification Resend verification email
 ```
 
 ### Users (Protected)
@@ -85,6 +87,7 @@ GET    /api/v1/users/{id}      Get user by ID
 POST   /api/v1/users           Create user (admin only)
 PUT    /api/v1/users/{id}      Update user (admin only)
 DELETE /api/v1/users/{id}      Soft delete user (admin only)
+POST   /api/v1/users/{id}/approve Approve user (admin only)
 ```
 
 ### Files (Protected)
@@ -93,6 +96,18 @@ GET    /api/v1/files           List user's files
 POST   /api/v1/files/upload    Upload file
 GET    /api/v1/files/{id}      Get file details
 DELETE /api/v1/files/{id}      Delete file
+```
+
+### Metrics and Audit (Admin)
+```
+GET  /api/v1/metrics                 Get metrics overview
+GET  /api/v1/metrics/requests        Get recent request metrics
+GET  /api/v1/metrics/slow-requests   Get slow requests
+GET  /api/v1/metrics/custom/{metric} Get custom metric values
+POST /api/v1/metrics/record          Record custom metric
+GET  /api/v1/audit                   List audit logs
+GET  /api/v1/audit/{id}              Get audit log detail
+GET  /api/v1/audit/entity/{type}/{id} Get audit by entity
 ```
 
 ### Health (Public)
@@ -111,6 +126,17 @@ curl -X POST http://localhost:8080/api/v1/auth/register \
   -H "Content-Type: application/json" \
   -d '{"email":"john@example.com","first_name":"John","last_name":"Doe","password":"SecurePass123!"}'
 ```
+
+Response note: self-registration creates a `pending_approval` account. Login is available only after admin approval.
+
+**Admin creates user (invitation flow):**
+```bash
+curl -X POST http://localhost:8080/api/v1/users \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer ADMIN_ACCESS_TOKEN" \
+  -d '{"email":"invitee@example.com","first_name":"Invitee","last_name":"User","role":"user"}'
+```
+Admin does not provide a password. The system generates it internally and sends an invitation email so the user can set their own password.
 
 **Login:**
 ```bash
@@ -135,7 +161,7 @@ curl -X GET "http://localhost:8080/api/v1/users?filter[role][eq]=admin&search=jo
 
 **Local Swagger UI:**
 ```bash
-# Generate/update swagger.json
+# Generate/update OpenAPI spec
 php spark swagger:generate
 
 # Run Swagger UI with Docker
@@ -145,6 +171,7 @@ docker run --rm -p 8081:8080 \
   swaggerapi/swagger-ui
 ```
 Open `http://localhost:8081`.
+Generated file: `public/swagger.json` (served at `http://localhost:8080/swagger.json`)
 
 **Embedded Swagger UI (no Docker):**
 - File: `public/docs/index.html`
@@ -294,7 +321,7 @@ docker-compose up -d
 - **ARCHITECTURE.md** - Architectural decisions and design patterns explained
 - **CLAUDE.md** - Development guide for AI assistants (Claude Code)
 - **.claude/agents/** - Specialized Claude Code agent for CRUD generation
-- **swagger.json** - OpenAPI documentation (generate with `php spark swagger:generate`)
+- **public/swagger.json** - OpenAPI documentation (generate with `php spark swagger:generate`)
 
 **New to the project?** Start with `ARCHITECTURE.md` to understand why code is structured the way it is.
 

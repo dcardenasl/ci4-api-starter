@@ -91,7 +91,6 @@ Content-Type: application/json
   "email": "john@example.com",
   "first_name": "John",
   "last_name": "Doe",
-  "password": "SecurePass123!",
   "role": "user"
 }
 ```
@@ -149,7 +148,6 @@ protected function handleRequest(string $method, ?array $params = null)
         //     'email' => 'john@example.com',
         //     'first_name' => 'John',
         //     'last_name' => 'Doe',
-        //     'password' => 'SecurePass123!',
         //     'role' => 'user',
         //     'user_id' => 5  // From JWT
         // ]
@@ -185,15 +183,20 @@ public function store(array $data): array
         );
     }
 
-    // 2. Business rule: check email uniqueness (already in model rules)
+    // 2. Business rule: admin cannot provide password in request
 
     // 3. Transform data
+    $generatedPassword = bin2hex(random_bytes(24)) . 'Aa1!';
     $insertData = [
         'email' => $data['email'],
         'first_name' => $data['first_name'],
         'last_name' => $data['last_name'],
-        'password' => password_hash($data['password'], PASSWORD_BCRYPT),
+        'password' => password_hash($generatedPassword, PASSWORD_BCRYPT),
         'role' => $data['role'] ?? 'user',
+        'status' => 'invited',
+        'approved_at' => date('Y-m-d H:i:s'),
+        'invited_at' => date('Y-m-d H:i:s'),
+        'email_verified_at' => date('Y-m-d H:i:s'),
     ];
 
     // 4. Persist

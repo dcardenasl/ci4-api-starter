@@ -2,7 +2,7 @@
 
 ![PHP Version](https://img.shields.io/badge/PHP-8.2%20%7C%208.3-blue)
 ![CodeIgniter](https://img.shields.io/badge/CodeIgniter-4.6-orange)
-![Tests](https://img.shields.io/badge/tests-218%20passing-success)
+![Tests](https://img.shields.io/badge/tests-passing-success)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 
 [English](README.md) | Español
@@ -19,7 +19,7 @@ Una plantilla de API REST lista para produccion con CodeIgniter 4, autenticacion
 - **Health Checks** - Endpoints listos para Kubernetes (`/health`, `/ready`, `/live`)
 - **Auditoria** - Registro automatico de cambios en datos
 - **Documentacion OpenAPI** - Swagger docs auto-generados
-- **218 Tests** - Tests unitarios, de integracion y funcionales
+- **Suite de Tests Completa** - Tests unitarios, de integracion y funcionales
 
 ## Inicio Rapido
 
@@ -64,6 +64,7 @@ POST /api/v1/auth/login        Iniciar sesion (devuelve tokens)
 POST /api/v1/auth/refresh      Refrescar token de acceso
 POST /api/v1/auth/forgot-password   Solicitar reset de contrasena
 POST /api/v1/auth/reset-password    Restablecer contrasena
+GET  /api/v1/auth/validate-reset-token Validar token de reset
 GET  /api/v1/auth/verify-email      Verificar email (token en query)
 ```
 
@@ -76,6 +77,7 @@ Configura `AUTH_REQUIRE_EMAIL_VERIFICATION` en `.env` para controlar si la verif
 GET  /api/v1/auth/me           Obtener usuario actual
 POST /api/v1/auth/revoke       Revocar token actual
 POST /api/v1/auth/revoke-all   Revocar todos los tokens del usuario
+POST /api/v1/auth/resend-verification Reenviar correo de verificacion
 ```
 
 ### Usuarios (Protegido)
@@ -85,6 +87,7 @@ GET    /api/v1/users/{id}      Obtener usuario por ID
 POST   /api/v1/users           Crear usuario (solo admin)
 PUT    /api/v1/users/{id}      Actualizar usuario (solo admin)
 DELETE /api/v1/users/{id}      Eliminar usuario (solo admin)
+POST   /api/v1/users/{id}/approve Aprobar usuario (solo admin)
 ```
 
 ### Archivos (Protegido)
@@ -93,6 +96,18 @@ GET    /api/v1/files           Listar archivos del usuario
 POST   /api/v1/files/upload    Subir archivo
 GET    /api/v1/files/{id}      Obtener detalles del archivo
 DELETE /api/v1/files/{id}      Eliminar archivo
+```
+
+### Metricas y Auditoria (Admin)
+```
+GET  /api/v1/metrics                 Obtener resumen de metricas
+GET  /api/v1/metrics/requests        Obtener metricas recientes de requests
+GET  /api/v1/metrics/slow-requests   Obtener requests lentas
+GET  /api/v1/metrics/custom/{metric} Obtener valores de metrica personalizada
+POST /api/v1/metrics/record          Registrar metrica personalizada
+GET  /api/v1/audit                   Listar logs de auditoria
+GET  /api/v1/audit/{id}              Obtener detalle de log de auditoria
+GET  /api/v1/audit/entity/{type}/{id} Obtener auditoria por entidad
 ```
 
 ### Health (Publico)
@@ -111,6 +126,17 @@ curl -X POST http://localhost:8080/api/v1/auth/register \
   -H "Content-Type: application/json" \
   -d '{"email":"juan@ejemplo.com","first_name":"Juan","last_name":"Perez","password":"ContrasenaSegura123!"}'
 ```
+
+Nota de respuesta: el auto-registro crea una cuenta `pending_approval`. El login solo es posible después de la aprobación de un administrador.
+
+**Admin crea usuario (flujo de invitación):**
+```bash
+curl -X POST http://localhost:8080/api/v1/users \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer ADMIN_ACCESS_TOKEN" \
+  -d '{"email":"invitado@ejemplo.com","first_name":"Invitado","last_name":"Usuario","role":"user"}'
+```
+El admin no envía contraseña. El sistema la genera internamente y envía un correo para que el usuario defina la suya.
 
 **Iniciar sesion:**
 ```bash
@@ -135,7 +161,7 @@ curl -X GET "http://localhost:8080/api/v1/users?filter[role][eq]=admin&search=ju
 
 **Swagger UI local:**
 ```bash
-# Generar/actualizar swagger.json
+# Generar/actualizar especificacion OpenAPI
 php spark swagger:generate
 
 # Levantar Swagger UI con Docker
@@ -145,6 +171,7 @@ docker run --rm -p 8081:8080 \
   swaggerapi/swagger-ui
 ```
 Abrir `http://localhost:8081`.
+Archivo generado: `public/swagger.json` (servido en `http://localhost:8080/swagger.json`)
 
 **Swagger UI embebido (sin Docker):**
 - Archivo: `public/docs/index.html`
@@ -294,7 +321,7 @@ docker-compose up -d
 - **ARCHITECTURE.md** - Decisiones arquitectónicas y patrones de diseño explicados
 - **CLAUDE.md** - Guia de desarrollo para asistentes de IA
 - **.claude/agents/** - Agente especializado de Claude Code para generación CRUD
-- **swagger.json** - Documentacion OpenAPI (generar con `php spark swagger:generate`)
+- **public/swagger.json** - Documentacion OpenAPI (generar con `php spark swagger:generate`)
 
 **¿Nuevo en el proyecto?** Empieza con `ARCHITECTURE.md` para entender por qué el código está estructurado así.
 

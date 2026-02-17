@@ -104,7 +104,7 @@ class FileService implements FileServiceInterface
         // Save metadata to database
         $fileData = [
             'user_id' => $userId,
-            'original_name' => $file->getName(),
+            'original_name' => sanitize_filename($file->getName(), false),
             'stored_name' => $storedName,
             'mime_type' => $file->getMimeType(),
             'size' => $file->getSize(),

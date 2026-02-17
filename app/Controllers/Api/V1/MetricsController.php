@@ -8,6 +8,22 @@ use App\Models\RequestLogModel;
 use CodeIgniter\Controller;
 use CodeIgniter\HTTP\ResponseInterface;
 
+/**
+ * Metrics Controller
+ *
+ * ARCHITECTURAL DECISION: Does NOT extend ApiController
+ *
+ * Reason: Observability/monitoring endpoint, not business logic
+ * - Serves operational metrics for system monitoring and alerting
+ * - May be called frequently by monitoring tools (Prometheus, Datadog, New Relic)
+ * - Admin-only access enforced by route filters, not controller logic
+ * - Direct model access is intentional for performance
+ * - Industry standard pattern (Prometheus exporters, Datadog agents)
+ *
+ * This controller serves infrastructure/observability needs.
+ *
+ * @see CLAUDE.md "Architectural Exceptions"
+ */
 class MetricsController extends Controller
 {
     protected RequestLogModel $requestLogModel;

@@ -6,6 +6,22 @@ use App\Libraries\Monitoring\HealthChecker;
 use CodeIgniter\Controller;
 use CodeIgniter\HTTP\ResponseInterface;
 
+/**
+ * Health Check Controller
+ *
+ * ARCHITECTURAL DECISION: Does NOT extend ApiController
+ *
+ * Reason: Infrastructure endpoint requiring minimal overhead
+ * - Called every 5-10 seconds by orchestrators (Kubernetes, Docker Swarm)
+ * - No authentication or business logic needed
+ * - Must be lightweight and fast to respond
+ * - Industry standard pattern (Spring Boot Actuator, Express health checks)
+ *
+ * Direct instantiation of dependencies is intentional for performance.
+ * This controller serves infrastructure/monitoring needs, not business API requests.
+ *
+ * @see CLAUDE.md "Architectural Exceptions"
+ */
 class HealthController extends Controller
 {
     protected HealthChecker $healthChecker;

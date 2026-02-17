@@ -43,6 +43,23 @@ class Services extends BaseService
     }
 
     /**
+     * User Model
+     *
+     * Provides UserModel instance
+     *
+     * @param bool $getShared
+     * @return \App\Models\UserModel
+     */
+    public static function userModel(bool $getShared = true)
+    {
+        if ($getShared) {
+            return static::getSharedInstance('userModel');
+        }
+
+        return new \App\Models\UserModel();
+    }
+
+    /**
      * User Service
      *
      * Proporciona UserService con todas sus dependencias inyectadas
@@ -57,7 +74,7 @@ class Services extends BaseService
         }
 
         return new \App\Services\UserService(
-            new \App\Models\UserModel(),
+            static::userModel(),
             static::emailService(),
             new \App\Models\PasswordResetModel()
         );

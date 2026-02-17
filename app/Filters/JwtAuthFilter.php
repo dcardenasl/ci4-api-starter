@@ -6,7 +6,6 @@ namespace App\Filters;
 
 use App\HTTP\ApiRequest;
 use App\Libraries\ApiResponse;
-use App\Models\UserModel;
 use CodeIgniter\Filters\FilterInterface;
 use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
@@ -54,7 +53,7 @@ class JwtAuthFilter implements FilterInterface
         // Enforce email verification for non-OAuth users
         $userId = (int) ($decoded->uid ?? 0);
         if ($userId > 0) {
-            $userModel = new UserModel();
+            $userModel = service('userModel');
             $user = $userModel->find($userId);
 
             if (! $user) {

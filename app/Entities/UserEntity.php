@@ -219,6 +219,9 @@ class UserEntity extends Entity
     /**
      * Set password (hash if not already hashed)
      *
+     * This is a mutator that automatically hashes plain text passwords.
+     * If the password is already hashed (bcrypt format), it's stored as-is.
+     *
      * @param string $password Plain text or already hashed password
      * @return $this
      */
@@ -243,19 +246,15 @@ class UserEntity extends Entity
     /**
      * Hash and set a new password
      *
-     * Use this method when you explicitly want to hash a password.
+     * @deprecated Use setPassword() instead. This method delegates to setPassword().
+     * Kept for backward compatibility but will be removed in future versions.
      *
      * @param string $plainPassword Plain text password to hash
      * @return $this
      */
     public function hashAndSetPassword(string $plainPassword): self
     {
-        if (function_exists('hash_password')) {
-            $this->attributes['password'] = hash_password($plainPassword);
-        } else {
-            $this->attributes['password'] = password_hash($plainPassword, PASSWORD_BCRYPT);
-        }
-
-        return $this;
+        // Delegate to setPassword mutator to avoid code duplication
+        return $this->setPassword($plainPassword);
     }
 }

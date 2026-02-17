@@ -110,15 +110,28 @@ class CorsFilter implements FilterInterface
         foreach ($allowedOrigins as $allowed) {
             if (str_contains($allowed, '*')) {
                 $pattern = '/^' . str_replace(['*', '.'], ['.*', '\.'], $allowed) . '$/';
-                if (preg_match($pattern, $origin)) {
-                    return true;
+
+                try {
+                    if (preg_match($pattern, $origin)) {
+                        return true;
+                    }
+                } catch (\Throwable $e) {
+                    log_message('error', 'Invalid CORS wildcard pattern: ' . $e->getMessage());
+                    // Deny access on regex error for security
+                    continue;
                 }
             }
         }
 
         foreach ($allowedPatterns as $pattern) {
-            if (@preg_match('#\A' . $pattern . '\z#', $origin) === 1) {
-                return true;
+            try {
+                if (preg_match('#\A' . $pattern . '\z#', $origin) === 1) {
+                    return true;
+                }
+            } catch (\Throwable $e) {
+                log_message('error', 'Invalid CORS regex pattern: ' . $e->getMessage());
+                // Deny access on regex error for security
+                continue;
             }
         }
 

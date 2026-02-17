@@ -55,6 +55,12 @@ jobs:
       - name: Install dependencies
         run: composer install --prefer-dist --no-progress --no-interaction
 
+      - name: Run static analysis
+        run: composer phpstan
+
+      - name: Check code style
+        run: composer cs-check
+
       - name: Create .env file from example
         run: cp .env.example .env
 
@@ -139,12 +145,3 @@ jobs:
 
       - name: Run tests
         run: vendor/bin/phpunit --configuration phpunit.xml --no-coverage --testdox
-
-      - name: Check code style (optional)
-        continue-on-error: true
-        run: |
-          if [ -f "vendor/bin/php-cs-fixer" ]; then
-            vendor/bin/php-cs-fixer fix --dry-run --diff
-          else
-            echo "PHP CS Fixer not configured, skipping"
-          fi

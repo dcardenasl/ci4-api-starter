@@ -157,8 +157,6 @@ _modules/*
 .phpstan.cache
 
 # Note: composer.lock should be committed in production projects
-# Uncommented here for flexibility
-composer.lock
 
 #-------------------------
 # Docker

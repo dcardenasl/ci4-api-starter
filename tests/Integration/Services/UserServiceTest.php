@@ -51,7 +51,6 @@ class UserServiceTest extends CIUnitTestCase
             'email' => 'integration@example.com',
             'first_name' => 'Integration',
             'last_name' => 'User',
-            'password' => 'ValidPass123!',
         ]);
 
         $this->assertSuccessResponse($result);
@@ -63,21 +62,16 @@ class UserServiceTest extends CIUnitTestCase
         $this->assertEquals('integration@example.com', $user->email);
     }
 
-    public function testStoreHashesPasswordBeforeSaving(): void
+    public function testStoreGeneratesAndHashesPasswordBeforeSaving(): void
     {
-        $plainPassword = 'ValidPass123!';
-
         $result = $this->userService->store([
             'email' => 'hash@example.com',
-            'password' => $plainPassword,
         ]);
 
         $user = $this->userModel->find($result['data']['id']);
 
-        // Password should not be stored as plain text
-        $this->assertNotEquals($plainPassword, $user->password);
-        // But should verify correctly
-        $this->assertTrue(password_verify($plainPassword, $user->password));
+        $this->assertNotEmpty($user->password);
+        $this->assertStringStartsWith('$2', $user->password);
     }
 
     public function testStoreRejectsInvalidData(): void
@@ -86,7 +80,6 @@ class UserServiceTest extends CIUnitTestCase
 
         $this->userService->store([
             'email' => 'invalid',
-            'password' => 'weak',
         ]);
     }
 

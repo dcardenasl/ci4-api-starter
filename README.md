@@ -1,6 +1,6 @@
 # CodeIgniter 4 API Starter Kit
 
-![PHP Version](https://img.shields.io/badge/PHP-8.2%20%7C%208.3-blue)
+![PHP Version](https://img.shields.io/badge/PHP-8.1%20%7C%208.2%20%7C%208.3-blue)
 ![CodeIgniter](https://img.shields.io/badge/CodeIgniter-4.6-orange)
 ![Tests](https://img.shields.io/badge/tests-passing-success)
 ![License](https://img.shields.io/badge/license-MIT-blue)
@@ -311,7 +311,7 @@ docker-compose up -d
 
 ## Requirements
 
-- PHP 8.2+
+- PHP 8.1+
 - MySQL 8.0+
 - Composer 2.x
 - Extensions: mysqli, mbstring, intl, json

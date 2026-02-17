@@ -311,7 +311,7 @@ docker-compose up -d
 
 ## Requisitos
 
-- PHP 8.2+
+- PHP 8.1+
 - MySQL 8.0+
 - Composer 2.x
 - Extensiones: mysqli, mbstring, intl, json

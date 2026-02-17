@@ -36,13 +36,22 @@ class MetricsController extends Controller
         }
 
         $period = $this->request->getGet('period') ?? 'day';
+        $requestStats = $this->requestLogModel->getStats((string) $period);
 
         $data = [
-            'request_stats' => $this->requestLogModel->getStats($period),
+            'request_stats' => $requestStats,
             'slow_requests' => $this->requestLogModel->getSlowRequests(
                 (int) env('SLOW_QUERY_THRESHOLD', 1000),
                 5
             ),
+            'slo' => [
+                'availability_percent' => $requestStats['availability_percent'] ?? 100,
+                'error_rate_percent' => $requestStats['error_rate_percent'] ?? 0,
+                'p95_response_time_ms' => $requestStats['p95_response_time_ms'] ?? 0,
+                'p99_response_time_ms' => $requestStats['p99_response_time_ms'] ?? 0,
+                'p95_target_ms' => $requestStats['slo']['p95_target_ms'] ?? (int) env('SLO_API_P95_TARGET_MS', 500),
+                'p95_target_met' => $requestStats['slo']['p95_target_met'] ?? true,
+            ],
         ];
 
         return $this->response->setJSON(ApiResponse::success($data));
@@ -59,7 +68,7 @@ class MetricsController extends Controller
     {
         $period = $this->request->getGet('period') ?? 'day';
 
-        $stats = $this->requestLogModel->getStats($period);
+        $stats = $this->requestLogModel->getStats((string) $period);
 
         return $this->response->setJSON(ApiResponse::success($stats));
     }

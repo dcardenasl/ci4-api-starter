@@ -290,6 +290,9 @@ THROTTLE_WINDOW=60
 # CORS
 CORS_ALLOWED_ORIGINS=http://localhost:3000,https://app.example.com
 CORS_SUPPORTS_CREDENTIALS=false
+
+# Observability SLO
+SLO_API_P95_TARGET_MS=500
 ```
 
 ## Docker

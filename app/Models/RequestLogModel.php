@@ -28,30 +28,48 @@ class RequestLogModel extends Model
      */
     public function getStats(string $period = 'day'): array
     {
-        $since = match ($period) {
-            'hour' => date('Y-m-d H:i:s', strtotime('-1 hour')),
-            'day' => date('Y-m-d H:i:s', strtotime('-1 day')),
-            'week' => date('Y-m-d H:i:s', strtotime('-1 week')),
-            'month' => date('Y-m-d H:i:s', strtotime('-1 month')),
-            default => date('Y-m-d H:i:s', strtotime('-1 day')),
-        };
+        $since = $this->getSinceFromPeriod($period);
 
-        $totalRequests = $this->where('created_at >=', $since)->countAllResults(false);
+        $totalRequests = (int) $this->db->table($this->table)
+            ->where('created_at >=', $since)
+            ->countAllResults();
 
-        $successfulRequests = $this->where('created_at >=', $since)
+        $successfulRequests = (int) $this->db->table($this->table)
+            ->where('created_at >=', $since)
             ->where('response_code >=', 200)
             ->where('response_code <', 400)
-            ->countAllResults(false);
+            ->countAllResults();
 
-        $failedRequests = $this->where('created_at >=', $since)
+        $failedRequests = (int) $this->db->table($this->table)
+            ->where('created_at >=', $since)
             ->where('response_code >=', 400)
-            ->countAllResults(false);
+            ->countAllResults();
 
-        $avgResponseTime = $this->selectAvg('response_time')
+        $avgResponseTimeRaw = $this->db->table($this->table)
+            ->select('AVG(response_time) as avg_response_time')
             ->where('created_at >=', $since)
             ->get()
-            ->getRow()
-            ->response_time ?? 0;
+            ->getRow();
+        $avgResponseTime = $avgResponseTimeRaw ? (float) ($avgResponseTimeRaw->avg_response_time ?? 0) : 0.0;
+
+        $responseTimes = $this->db->table($this->table)
+            ->select('response_time')
+            ->where('created_at >=', $since)
+            ->orderBy('response_time', 'ASC')
+            ->get()
+            ->getResultArray();
+
+        $latencies = array_map(
+            static fn (array $row): int => (int) ($row['response_time'] ?? 0),
+            $responseTimes
+        );
+
+        $p95 = $this->percentile($latencies, 0.95);
+        $p99 = $this->percentile($latencies, 0.99);
+
+        $errorRate = $totalRequests > 0 ? ($failedRequests / $totalRequests) * 100 : 0.0;
+        $availability = $totalRequests > 0 ? ($successfulRequests / $totalRequests) * 100 : 100.0;
+        $latencyTarget = (int) env('SLO_API_P95_TARGET_MS', 500);
 
         return [
             'period' => $period,
@@ -60,6 +78,15 @@ class RequestLogModel extends Model
             'successful_requests' => $successfulRequests,
             'failed_requests' => $failedRequests,
             'avg_response_time_ms' => round($avgResponseTime, 2),
+            'p95_response_time_ms' => $p95,
+            'p99_response_time_ms' => $p99,
+            'error_rate_percent' => round($errorRate, 2),
+            'availability_percent' => round($availability, 2),
+            'status_code_breakdown' => $this->getStatusCodeBreakdown($since),
+            'slo' => [
+                'p95_target_ms' => $latencyTarget,
+                'p95_target_met' => $p95 <= $latencyTarget,
+            ],
         ];
     }
 
@@ -77,5 +104,62 @@ class RequestLogModel extends Model
             ->orderBy('response_time', 'DESC')
             ->limit($limit)
             ->find();
+    }
+
+    private function getSinceFromPeriod(string $period): string
+    {
+        return match ($period) {
+            'hour' => date('Y-m-d H:i:s', strtotime('-1 hour')),
+            'day' => date('Y-m-d H:i:s', strtotime('-1 day')),
+            'week' => date('Y-m-d H:i:s', strtotime('-1 week')),
+            'month' => date('Y-m-d H:i:s', strtotime('-1 month')),
+            default => date('Y-m-d H:i:s', strtotime('-1 day')),
+        };
+    }
+
+    /**
+     * @param array<int, int> $values
+     */
+    private function percentile(array $values, float $percentile): float
+    {
+        if ($values === []) {
+            return 0.0;
+        }
+
+        sort($values);
+        $count = count($values);
+        $index = (int) ceil($percentile * $count) - 1;
+        $index = max(0, min($index, $count - 1));
+
+        return (float) $values[$index];
+    }
+
+    /**
+     * @return array{'2xx':int,'3xx':int,'4xx':int,'5xx':int}
+     */
+    private function getStatusCodeBreakdown(string $since): array
+    {
+        return [
+            '2xx' => (int) $this->db->table($this->table)
+                ->where('created_at >=', $since)
+                ->where('response_code >=', 200)
+                ->where('response_code <', 300)
+                ->countAllResults(),
+            '3xx' => (int) $this->db->table($this->table)
+                ->where('created_at >=', $since)
+                ->where('response_code >=', 300)
+                ->where('response_code <', 400)
+                ->countAllResults(),
+            '4xx' => (int) $this->db->table($this->table)
+                ->where('created_at >=', $since)
+                ->where('response_code >=', 400)
+                ->where('response_code <', 500)
+                ->countAllResults(),
+            '5xx' => (int) $this->db->table($this->table)
+                ->where('created_at >=', $since)
+                ->where('response_code >=', 500)
+                ->where('response_code <', 600)
+                ->countAllResults(),
+        ];
     }
 }

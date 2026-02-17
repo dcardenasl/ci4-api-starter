@@ -9,6 +9,7 @@ This document explains the architectural decisions made in this project and the 
 3. [Testing Strategy](#testing-strategy)
 4. [Security Patterns](#security-patterns)
 5. [Service Layer Patterns](#service-layer-patterns)
+6. [Observability and Governance](#observability-and-governance)
 
 ---
 
@@ -596,3 +597,18 @@ ConflictException           → 409
 - **OpenAPI Separation**: Symfony API Platform, Laravel OpenAPI
 - **Testing Pyramid**: Martin Fowler's Test Pyramid
 - **Exception Handling**: Clean Architecture (Robert C. Martin)
+
+---
+
+## Observability and Governance
+
+This project tracks reliability through request-level indicators and enforces a consistent review bar in pull requests.
+
+- SLO-oriented indicators are exposed in metrics (`p95`, `p99`, error rate, availability, and status-code breakdown).
+- The p95 target is configurable with `SLO_API_P95_TARGET_MS`.
+- Pull requests use a checklist template in `.github/pull_request_template.md` to verify:
+  - quality gates (`cs-check`, `phpstan`, `phpunit`)
+  - security-sensitive changes
+  - documentation and rollout notes
+
+See the decision record at `docs/architecture/ADR-004-OBSERVABILITY-GOVERNANCE.md`.

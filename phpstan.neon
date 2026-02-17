@@ -36,7 +36,6 @@ parameters:
         - '#Call to an undefined method App\\Models\\.*::get\(\)#'
         - '#Parameter .* of method Monolog\\Logger::log\(\) expects#'
         - '#Property .* type has no value type specified in iterable type array#'
-        - '#Access to an undefined property CodeIgniter\\HTTP\\.*Request::\$userId#'
         - '#Call to an undefined method object::(getErrorString|getSize|getExtension|getName|getTempName|getMimeType)\(\)#'
         - '#Cannot call method getHumanSize\(\) on array.*\|object#'
         - '#Access to an undefined property App\\Entities\\.*Entity::#'

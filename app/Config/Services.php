@@ -2,7 +2,9 @@
 
 namespace Config;
 
+use App\HTTP\ApiRequest;
 use CodeIgniter\Config\BaseService;
+use CodeIgniter\HTTP\UserAgent;
 
 /**
  * Services Configuration file.
@@ -19,6 +21,27 @@ use CodeIgniter\Config\BaseService;
  */
 class Services extends BaseService
 {
+    /**
+     * The IncomingRequest class models an HTTP request.
+     *
+     * @return ApiRequest
+     */
+    public static function incomingrequest(?App $config = null, bool $getShared = true)
+    {
+        if ($getShared) {
+            return static::getSharedInstance('request', $config);
+        }
+
+        $config ??= config(App::class);
+
+        return new ApiRequest(
+            $config,
+            static::get('uri'),
+            'php://input',
+            new UserAgent(),
+        );
+    }
+
     /**
      * User Service
      *

@@ -2,6 +2,7 @@
 
 namespace App\Filters;
 
+use App\HTTP\ApiRequest;
 use App\Libraries\Queue\QueueManager;
 use CodeIgniter\Filters\FilterInterface;
 use CodeIgniter\HTTP\RequestInterface;
@@ -18,8 +19,9 @@ class RequestLoggingFilter implements FilterInterface
      */
     public function before(RequestInterface $request, $arguments = null)
     {
-        // Store request start time
-        $request->startTime = microtime(true);
+        if ($request instanceof ApiRequest) {
+            $request->setRequestStartTime(microtime(true));
+        }
 
         return $request;
     }
@@ -40,13 +42,15 @@ class RequestLoggingFilter implements FilterInterface
         }
 
         // Calculate response time
-        $startTime = $request->startTime ?? microtime(true);
+        $startTime = $request instanceof ApiRequest
+            ? ($request->getRequestStartTime() ?? microtime(true))
+            : microtime(true);
         $responseTime = (int) round((microtime(true) - $startTime) * 1000); // milliseconds
 
         // Get request data
         $method = $request->getMethod();
         $uri = $request->getUri()->getPath();
-        $userId = $request->userId ?? null;
+        $userId = $request instanceof ApiRequest ? $request->getAuthUserId() : null;
         $ipAddress = $request->getIPAddress();
         $userAgent = $request->getHeaderLine('User-Agent');
         $responseCode = $response->getStatusCode();

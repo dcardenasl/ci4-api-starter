@@ -2,6 +2,7 @@
 
 namespace App\Filters;
 
+use App\HTTP\ApiRequest;
 use App\Libraries\ApiResponse;
 use CodeIgniter\Filters\FilterInterface;
 use CodeIgniter\HTTP\RequestInterface;
@@ -53,11 +54,13 @@ class ThrottleFilter implements FilterInterface
         }
 
         // Store rate limit info in request for after() method
-        $request->rateLimitInfo = [
-            'limit' => $maxRequests,
-            'remaining' => max(0, $remaining),
-            'reset' => time() + $window,
-        ];
+        if ($request instanceof ApiRequest) {
+            $request->setRateLimitInfo([
+                'limit' => $maxRequests,
+                'remaining' => max(0, $remaining),
+                'reset' => time() + $window,
+            ]);
+        }
 
         return $request;
     }
@@ -73,8 +76,8 @@ class ThrottleFilter implements FilterInterface
     public function after(RequestInterface $request, ResponseInterface $response, $arguments = null)
     {
         // Set rate limit headers if they were stored in the before() method
-        if (isset($request->rateLimitInfo)) {
-            $info = $request->rateLimitInfo;
+        if ($request instanceof ApiRequest && $request->getRateLimitInfo() !== null) {
+            $info = $request->getRateLimitInfo();
             $response->setHeader('X-RateLimit-Limit', (string) $info['limit']);
             $response->setHeader('X-RateLimit-Remaining', (string) $info['remaining']);
             $response->setHeader('X-RateLimit-Reset', (string) $info['reset']);
@@ -95,7 +98,7 @@ class ThrottleFilter implements FilterInterface
         $ip = $request->getIPAddress();
 
         // If user is authenticated, include user ID in identifier
-        $userId = $request->userId ?? null;
+        $userId = $request instanceof ApiRequest ? $request->getAuthUserId() : null;
 
         if ($userId) {
             return 'rl_' . md5($ip . '_user_' . $userId);

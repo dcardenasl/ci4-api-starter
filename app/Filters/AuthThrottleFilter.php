@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filters;
 
+use App\HTTP\ApiRequest;
 use App\Libraries\ApiResponse;
 use CodeIgniter\Filters\FilterInterface;
 use CodeIgniter\HTTP\RequestInterface;
@@ -56,19 +57,21 @@ class AuthThrottleFilter implements FilterInterface
             $remaining = $maxAttempts - ($attempts + 1);
         }
 
-        $request->authRateLimitInfo = [
-            'limit' => $maxAttempts,
-            'remaining' => max(0, $remaining),
-            'reset' => time() + $window,
-        ];
+        if ($request instanceof ApiRequest) {
+            $request->setAuthRateLimitInfo([
+                'limit' => $maxAttempts,
+                'remaining' => max(0, $remaining),
+                'reset' => time() + $window,
+            ]);
+        }
 
         return $request;
     }
 
     public function after(RequestInterface $request, ResponseInterface $response, $arguments = null)
     {
-        if (isset($request->authRateLimitInfo)) {
-            $info = $request->authRateLimitInfo;
+        if ($request instanceof ApiRequest && $request->getAuthRateLimitInfo() !== null) {
+            $info = $request->getAuthRateLimitInfo();
             $response->setHeader('X-RateLimit-Limit', (string) $info['limit']);
             $response->setHeader('X-RateLimit-Remaining', (string) $info['remaining']);
             $response->setHeader('X-RateLimit-Reset', (string) $info['reset']);

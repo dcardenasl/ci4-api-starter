@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
+use App\HTTP\ApiRequest;
 use App\Libraries\ApiResponse;
 use CodeIgniter\API\ResponseTrait;
 use CodeIgniter\Controller;
@@ -220,7 +221,9 @@ abstract class ApiController extends Controller
      */
     protected function getUserId(): ?int
     {
-        return $this->request->userId ?? null;
+        return $this->request instanceof ApiRequest
+            ? $this->request->getAuthUserId()
+            : null;
     }
 
     /**
@@ -228,7 +231,9 @@ abstract class ApiController extends Controller
      */
     protected function getUserRole(): ?string
     {
-        return $this->request->userRole ?? null;
+        return $this->request instanceof ApiRequest
+            ? $this->request->getAuthUserRole()
+            : null;
     }
 
     // =========================================================================

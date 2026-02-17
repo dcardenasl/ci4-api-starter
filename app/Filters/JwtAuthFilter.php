@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filters;
 
+use App\HTTP\ApiRequest;
 use App\Libraries\ApiResponse;
 use App\Models\UserModel;
 use CodeIgniter\Filters\FilterInterface;
@@ -74,9 +75,9 @@ class JwtAuthFilter implements FilterInterface
             }
         }
 
-        // Inject user data into request
-        $request->userId = $decoded->uid;
-        $request->userRole = $decoded->role;
+        if ($request instanceof ApiRequest) {
+            $request->setAuthContext((int) $decoded->uid, (string) $decoded->role);
+        }
     }
 
     /**

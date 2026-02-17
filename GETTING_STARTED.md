@@ -13,7 +13,7 @@ This is a **production-ready REST API template** built on CodeIgniter 4 that fol
 - 📧 **Email System** - Verification, password reset, queue support
 - 📁 **File Management** - Upload/download with S3 support
 - 🔍 **Advanced Querying** - Filtering, searching, sorting, pagination
-- ✅ **117 Tests** - Comprehensive test coverage (unit, integration, feature)
+- ✅ **Comprehensive Test Suite** - Coverage across unit, integration, and feature tests
 - 📚 **OpenAPI Docs** - Auto-generated Swagger documentation
 
 ---
@@ -93,6 +93,17 @@ php spark migrate
 # 7. (Optional) Seed sample data
 php spark db:seed UserSeeder
 
+# 7.1 (Optional) Seed 1000 fake users for load/filter/search tests
+php spark db:seed UsersLoadTestSeeder
+
+# Optional .env overrides for load-test seed:
+# USERS_FAKE_COUNT = 1000
+# USERS_FAKE_BATCH_SIZE = 250
+# USERS_FAKE_RESET = true
+# USERS_FAKE_EMAIL_PREFIX = loadtest.user
+# USERS_FAKE_EMAIL_DOMAIN = example.test
+# USERS_FAKE_PASSWORD = Passw0rd!123
+
 # 8. Start development server
 php spark serve
 ```
@@ -109,14 +120,16 @@ Your API is now running at `http://localhost:8080` 🎉
 curl http://localhost:8080/health
 ```
 
-**Response:**
+**Response (example):**
 ```json
 {
-  "status": "success",
-  "data": {
-    "api": "healthy",
-    "database": "connected",
-    "version": "1.0.0"
+  "status": "healthy",
+  "timestamp": "2026-02-17 01:23:45",
+  "checks": {
+    "database": {
+      "status": "healthy",
+      "response_time_ms": 4.12
+    }
   }
 }
 ```
@@ -138,7 +151,7 @@ curl -X POST http://localhost:8080/api/v1/auth/register \
 ```json
 {
   "status": "success",
-  "message": "Registration successful",
+  "message": "Registration received. Please verify your email and wait for admin approval.",
   "data": {
     "user": {
       "id": 1,
@@ -146,9 +159,7 @@ curl -X POST http://localhost:8080/api/v1/auth/register \
       "first_name": "John",
       "last_name": "Doe",
       "role": "user"
-    },
-    "access_token": "eyJ0eXAiOiJKV1QiLCJhbGc...",
-    "refresh_token": "a3f8b9c2d4e5f6g7h8i9j0..."
+    }
   }
 }
 ```
@@ -164,7 +175,7 @@ curl -X POST http://localhost:8080/api/v1/auth/login \
   }'
 ```
 
-Save the `access_token` from the response - you'll need it for protected endpoints.
+After approval, log in to obtain `access_token` and `refresh_token` for protected endpoints.
 
 ### Access Protected Endpoint
 
@@ -654,6 +665,7 @@ php spark swagger:generate
 ```
 
 View at: `http://localhost:8080/docs/`
+Raw spec: `http://localhost:8080/swagger.json`
 
 ### 🚀 Deploy
 
@@ -690,8 +702,8 @@ See deployment guides:
 ## Getting Help
 
 - **Documentation**: [`docs/`](docs/) directory
-- **Issues**: [GitHub Issues](https://github.com/your-repo/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/your-repo/discussions)
+- **Issues**: [GitHub Issues](https://github.com/david-cardenas/ci4-api-starter/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/david-cardenas/ci4-api-starter/discussions)
 - **CodeIgniter 4 Docs**: https://codeigniter.com/user_guide/
 
 ---

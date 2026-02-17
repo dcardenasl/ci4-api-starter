@@ -66,7 +66,6 @@ class UserControllerTest extends CIUnitTestCase
             'Authorization' => "Bearer {$token}",
         ])->withBodyFormat('json')->post('/api/v1/users', [
             'email' => 'created@example.com',
-            'password' => 'ValidPass123!',
             'role' => 'user',
         ]);
 
@@ -74,6 +73,7 @@ class UserControllerTest extends CIUnitTestCase
         $createJson = json_decode($createResult->getJSON(), true);
         $createdId = $createJson['data']['id'] ?? null;
         $this->assertNotNull($createdId);
+        $this->assertEquals('invited', $createJson['data']['status'] ?? null);
 
         $updateResult = $this->withHeaders([
             'Authorization' => "Bearer {$token}",
@@ -102,10 +102,59 @@ class UserControllerTest extends CIUnitTestCase
             'Authorization' => "Bearer {$token}",
         ])->withBodyFormat('json')->post('/api/v1/users', [
             'email' => 'blocked@example.com',
-            'password' => 'ValidPass123!',
             'role' => 'user',
         ]);
 
         $result->assertStatus(403);
+    }
+
+    public function testAdminCreateUserRejectsPasswordField(): void
+    {
+        $adminEmail = 'admin-password-block@example.com';
+        $adminPassword = 'ValidPass123!';
+        $this->createUser($adminEmail, $adminPassword, 'admin');
+
+        $token = $this->loginAndGetToken($adminEmail, $adminPassword);
+
+        $result = $this->withHeaders([
+            'Authorization' => "Bearer {$token}",
+        ])->withBodyFormat('json')->post('/api/v1/users', [
+            'email' => 'blocked-password@example.com',
+            'password' => 'ValidPass123!',
+            'role' => 'user',
+        ]);
+
+        $result->assertStatus(422);
+
+        $json = json_decode($result->getJSON(), true);
+        $this->assertArrayHasKey('errors', $json);
+        $this->assertArrayHasKey('password', $json['errors']);
+    }
+
+    public function testAdminCannotApproveInvitedUser(): void
+    {
+        $adminEmail = 'admin-approve-invited@example.com';
+        $adminPassword = 'ValidPass123!';
+        $this->createUser($adminEmail, $adminPassword, 'admin');
+
+        $token = $this->loginAndGetToken($adminEmail, $adminPassword);
+
+        $createResult = $this->withHeaders([
+            'Authorization' => "Bearer {$token}",
+        ])->withBodyFormat('json')->post('/api/v1/users', [
+            'email' => 'already-invited@example.com',
+            'role' => 'user',
+        ]);
+
+        $createResult->assertStatus(201);
+        $createJson = json_decode($createResult->getJSON(), true);
+        $createdId = $createJson['data']['id'] ?? null;
+        $this->assertNotNull($createdId);
+
+        $approveResult = $this->withHeaders([
+            'Authorization' => "Bearer {$token}",
+        ])->post("/api/v1/users/{$createdId}/approve");
+
+        $approveResult->assertStatus(409);
     }
 }

@@ -141,6 +141,31 @@ class AuthControllerTest extends CIUnitTestCase
         $this->assertEquals(403, $json['code']);
     }
 
+    public function testLoginWithInvitedStatusReturnsForbidden(): void
+    {
+        $this->userModel->insert([
+            'email' => 'invited@example.com',
+            'password' => password_hash('ValidPass123!', PASSWORD_BCRYPT),
+            'role' => 'user',
+            'status' => 'invited',
+            'email_verified_at' => date('Y-m-d H:i:s'),
+            'approved_at' => date('Y-m-d H:i:s'),
+        ]);
+
+        $result = $this->withBodyFormat('json')
+            ->post('/api/v1/auth/login', [
+                'email' => 'invited@example.com',
+                'password' => 'ValidPass123!',
+            ]);
+
+        $result->assertStatus(403);
+
+        $json = json_decode($result->getJSON(), true);
+        $this->assertEquals('error', $json['status']);
+        $this->assertArrayHasKey('errors', $json);
+        $this->assertEquals(403, $json['code']);
+    }
+
     public function testLoginWithInvalidCredentialsReturnsUnauthorized(): void
     {
         $result = $this->withBodyFormat('json')

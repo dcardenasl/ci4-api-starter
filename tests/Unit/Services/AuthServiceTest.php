@@ -353,6 +353,37 @@ class AuthServiceTest extends CIUnitTestCase
         ]);
     }
 
+    public function testLoginWithTokenFailsIfInvited(): void
+    {
+        $user = $this->createUserEntity([
+            'id' => 1,
+            'email' => 'test@example.com',
+            'first_name' => 'Test',
+            'last_name' => 'User',
+            'password' => password_hash('ValidPass123!', PASSWORD_BCRYPT),
+            'role' => 'user',
+            'status' => 'invited',
+            'email_verified_at' => date('Y-m-d H:i:s'),
+        ]);
+
+        $service = $this->createServiceWithUserQuery($user);
+
+        $this->mockJwtService
+            ->expects($this->never())
+            ->method('encode');
+
+        $this->mockRefreshTokenService
+            ->expects($this->never())
+            ->method('issueRefreshToken');
+
+        $this->expectException(\App\Exceptions\AuthorizationException::class);
+
+        $service->loginWithToken([
+            'email' => 'test@example.com',
+            'password' => 'ValidPass123!',
+        ]);
+    }
+
     // ==================== REGISTER TESTS ====================
 
     public function testRegisterWithValidDataCreatesUser(): void

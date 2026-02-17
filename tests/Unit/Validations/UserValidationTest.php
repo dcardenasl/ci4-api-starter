@@ -44,15 +44,13 @@ class UserValidationTest extends CIUnitTestCase
 
     public function testGetRulesReturnsStoreRules(): void
     {
-        $rules = $this->validation->getRules('store');
+        $rules = $this->validation->getRules('store_admin');
 
         $this->assertArrayHasKey('email', $rules);
         $this->assertArrayHasKey('first_name', $rules);
         $this->assertArrayHasKey('last_name', $rules);
-        $this->assertArrayHasKey('password', $rules);
         $this->assertArrayHasKey('role', $rules);
         $this->assertStringContainsString('required', $rules['email']);
-        $this->assertStringContainsString('permit_empty', $rules['password']);
         $this->assertStringContainsString('permit_empty', $rules['role']);
         $this->assertStringContainsString('in_list[user,admin]', $rules['role']);
     }
@@ -110,12 +108,11 @@ class UserValidationTest extends CIUnitTestCase
 
     public function testGetMessagesReturnsStoreMessages(): void
     {
-        $messages = $this->validation->getMessages('store');
+        $messages = $this->validation->getMessages('store_admin');
 
         $this->assertArrayHasKey('email.required', $messages);
         $this->assertArrayHasKey('first_name.max_length', $messages);
         $this->assertArrayHasKey('last_name.max_length', $messages);
-        $this->assertArrayHasKey('password.required', $messages);
         $this->assertArrayHasKey('role.in_list', $messages);
     }
 

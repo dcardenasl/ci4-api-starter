@@ -212,11 +212,10 @@ class InputValidationServiceTest extends CIUnitTestCase
 
     public function testUserDomainValidation(): void
     {
-        $rules = $this->service->getRules('user', 'store');
+        $rules = $this->service->getRules('user', 'store_admin');
 
         $this->assertArrayHasKey('email', $rules);
-        $this->assertArrayHasKey('password', $rules);
-        $this->assertStringContainsString('strong_password', $rules['password']);
+        $this->assertArrayHasKey('role', $rules);
     }
 
     public function testFileDomainValidation(): void

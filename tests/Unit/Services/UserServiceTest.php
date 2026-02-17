@@ -27,7 +27,7 @@ class UserServiceTest extends CIUnitTestCase
     protected UserService $service;
     protected UserModel $mockUserModel;
     protected EmailServiceInterface $mockEmailService;
-    protected PasswordResetModel $mockPasswordResetModel;
+    protected PasswordResetModel $passwordResetModelStub;
 
     protected function setUp(): void
     {
@@ -35,11 +35,35 @@ class UserServiceTest extends CIUnitTestCase
 
         $this->mockUserModel = $this->createMock(UserModel::class);
         $this->mockEmailService = $this->createMock(EmailServiceInterface::class);
-        $this->mockPasswordResetModel = $this->createMock(PasswordResetModel::class);
+        $this->passwordResetModelStub = new class () extends PasswordResetModel {
+            public function __construct()
+            {
+            }
+
+            public function where($key = null, $value = null, ?bool $escape = null): static
+            {
+                return $this;
+            }
+
+            public function delete($id = null, bool $purge = false)
+            {
+                return true;
+            }
+
+            public function insert($row = null, bool $returnID = true)
+            {
+                return 1;
+            }
+        };
+
+        $this->mockEmailService
+            ->method('queueTemplate')
+            ->willReturn(1);
+
         $this->service = new UserService(
             $this->mockUserModel,
             $this->mockEmailService,
-            $this->mockPasswordResetModel
+            $this->passwordResetModelStub
         );
     }
 
@@ -100,6 +124,7 @@ class UserServiceTest extends CIUnitTestCase
             'id' => 1,
             'email' => 'new@example.com',
             'role' => 'user',
+            'status' => 'invited',
         ]);
 
         $this->mockUserModel
@@ -110,11 +135,12 @@ class UserServiceTest extends CIUnitTestCase
             'email' => 'new@example.com',
             'first_name' => 'New',
             'last_name' => 'User',
-            'password' => 'ValidPass123!',
+            'user_id' => 99,
         ]);
 
         $this->assertSuccessResponse($result);
         $this->assertEquals(1, $result['data']['id']);
+        $this->assertEquals('invited', $result['data']['status']);
     }
 
     public function testStoreWithInvalidDataThrowsValidationException(): void
@@ -127,16 +153,17 @@ class UserServiceTest extends CIUnitTestCase
         ]);
     }
 
-    public function testStoreHashesPassword(): void
+    public function testStoreGeneratesAndHashesPassword(): void
     {
         $this->mockUserModel
             ->expects($this->once())
             ->method('insert')
             ->with($this->callback(function ($data) {
-                // Password should be hashed, not plain text
+                // Password should always be generated and hashed server-side.
                 return isset($data['password'])
-                    && $data['password'] !== 'ValidPass123!'
-                    && password_verify('ValidPass123!', $data['password']);
+                    && str_starts_with($data['password'], '$2')
+                    && ($data['status'] ?? null) === 'invited'
+                    && !empty($data['email_verified_at']);
             }))
             ->willReturn(1);
 
@@ -145,7 +172,18 @@ class UserServiceTest extends CIUnitTestCase
 
         $this->service->store([
             'email' => 'new@example.com',
+            'user_id' => 99,
+        ]);
+    }
+
+    public function testStoreRejectsPasswordInputFromAdmin(): void
+    {
+        $this->expectException(ValidationException::class);
+
+        $this->service->store([
+            'email' => 'new@example.com',
             'password' => 'ValidPass123!',
+            'user_id' => 99,
         ]);
     }
 

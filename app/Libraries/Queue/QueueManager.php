@@ -107,26 +107,41 @@ class QueueManager
     protected function getNextJob(string $queue): ?object
     {
         $now = time();
+        $staleThreshold = $now - $this->config->retryAfter;
 
-        // Find next available job
-        $job = $this->db->table('jobs')
-            ->where('queue', $queue)
-            ->where('reserved_at', null)
-            ->where('available_at <=', $now)
-            ->orderBy('id', 'ASC')
-            ->get()
-            ->getRow();
+        // Attempt multiple times in case another worker reserves the same row first.
+        for ($attempt = 0; $attempt < 5; $attempt++) {
+            $job = $this->db->table('jobs')
+                ->where('queue', $queue)
+                ->where('available_at <=', $now)
+                ->groupStart()
+                    ->where('reserved_at', null)
+                    ->orWhere('reserved_at <=', $staleThreshold)
+                ->groupEnd()
+                ->orderBy('id', 'ASC')
+                ->get()
+                ->getRow();
 
-        if (! $job) {
-            return null;
+            if (! $job) {
+                return null;
+            }
+
+            // Atomic reservation: update only if still unreserved or stale.
+            $this->db->table('jobs')
+                ->where('id', $job->id)
+                ->groupStart()
+                    ->where('reserved_at', null)
+                    ->orWhere('reserved_at <=', $staleThreshold)
+                ->groupEnd()
+                ->update(['reserved_at' => $now]);
+
+            if ($this->db->affectedRows() === 1) {
+                $job->reserved_at = $now;
+                return $job;
+            }
         }
 
-        // Reserve the job
-        $this->db->table('jobs')
-            ->where('id', $job->id)
-            ->update(['reserved_at' => $now]);
-
-        return $job;
+        return null;
     }
 
     /**

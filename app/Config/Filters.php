@@ -105,7 +105,7 @@ class Filters extends BaseFilters
             'cors', // Add CORS headers to all responses
             // 'honeypot',
             'secureheaders', // Add security headers to all responses
-            'requestLogging', // Log all requests/responses
+            'requestLogging' => ['except' => ['health', 'ping', 'ready', 'live']], // Skip noisy health probes
         ],
     ];
 

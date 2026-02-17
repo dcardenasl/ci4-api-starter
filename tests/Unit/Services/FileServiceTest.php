@@ -107,11 +107,141 @@ class FileServiceTest extends CIUnitTestCase
         ]);
     }
 
-    /**
-     * Note: Full upload tests require real file system access.
-     * These are better suited for integration tests.
-     * The validation tests above cover the important error paths.
-     */
+    public function testUploadSuccessfullyStoresFileAndReturnsCreated(): void
+    {
+        // Create a real temp file so file_get_contents works
+        $tempFile = tempnam(sys_get_temp_dir(), 'upload_test_');
+        file_put_contents($tempFile, 'fake file contents');
+
+        $mockFile = $this->createMockUploadedFile([
+            'tempName' => $tempFile,
+            'name' => 'photo.jpg',
+            'extension' => 'jpg',
+            'mimeType' => 'image/jpeg',
+            'size' => 1024,
+        ]);
+
+        // Mock storage
+        $this->mockStorage
+            ->expects($this->once())
+            ->method('put')
+            ->willReturn(true);
+
+        $this->mockStorage
+            ->method('getDriverName')
+            ->willReturn('local');
+
+        $this->mockStorage
+            ->method('url')
+            ->willReturn('http://localhost/uploads/2026/02/17/photo_abc123.jpg');
+
+        // Mock FileModel with anonymous class for insert + find
+        $savedEntity = $this->createFileEntity([
+            'id' => 1,
+            'original_name' => 'photo.jpg',
+            'size' => 1024,
+            'mime_type' => 'image/jpeg',
+            'url' => 'http://localhost/uploads/2026/02/17/photo_abc123.jpg',
+            'uploaded_at' => date('Y-m-d H:i:s'),
+        ]);
+
+        $this->mockFileModel
+            ->method('insert')
+            ->willReturn(1);
+
+        $this->mockFileModel
+            ->method('find')
+            ->willReturn($savedEntity);
+
+        $result = $this->service->upload([
+            'file' => $mockFile,
+            'user_id' => 1,
+        ]);
+
+        $this->assertCreatedResponse($result);
+        $this->assertEquals('photo.jpg', $result['data']['original_name']);
+        $this->assertEquals(1024, $result['data']['size']);
+        $this->assertEquals('image/jpeg', $result['data']['mime_type']);
+
+        // Clean up temp file
+        @unlink($tempFile);
+    }
+
+    public function testUploadRollsBackStorageWhenDatabaseInsertFails(): void
+    {
+        $tempFile = tempnam(sys_get_temp_dir(), 'upload_test_');
+        file_put_contents($tempFile, 'fake file contents');
+
+        $mockFile = $this->createMockUploadedFile([
+            'tempName' => $tempFile,
+            'name' => 'doc.pdf',
+            'extension' => 'pdf',
+            'mimeType' => 'application/pdf',
+            'size' => 2048,
+        ]);
+
+        $this->mockStorage
+            ->method('put')
+            ->willReturn(true);
+
+        $this->mockStorage
+            ->method('getDriverName')
+            ->willReturn('local');
+
+        $this->mockStorage
+            ->method('url')
+            ->willReturn('http://localhost/uploads/doc.pdf');
+
+        // Storage delete should be called for rollback
+        $this->mockStorage
+            ->expects($this->once())
+            ->method('delete');
+
+        // Insert fails
+        $this->mockFileModel
+            ->method('insert')
+            ->willReturn(false);
+
+        $this->mockFileModel
+            ->method('errors')
+            ->willReturn(['file' => 'Database error']);
+
+        $this->expectException(ValidationException::class);
+
+        $this->service->upload([
+            'file' => $mockFile,
+            'user_id' => 1,
+        ]);
+
+        @unlink($tempFile);
+    }
+
+    public function testUploadFailsWhenStoragePutFails(): void
+    {
+        $tempFile = tempnam(sys_get_temp_dir(), 'upload_test_');
+        file_put_contents($tempFile, 'fake file contents');
+
+        $mockFile = $this->createMockUploadedFile([
+            'tempName' => $tempFile,
+            'name' => 'image.png',
+            'extension' => 'png',
+            'mimeType' => 'image/png',
+            'size' => 512,
+        ]);
+
+        $this->mockStorage
+            ->method('put')
+            ->willReturn(false);
+
+        $this->expectException(\RuntimeException::class);
+
+        $this->service->upload([
+            'file' => $mockFile,
+            'user_id' => 1,
+        ]);
+
+        @unlink($tempFile);
+    }
 
     // ==================== INDEX TESTS ====================
 

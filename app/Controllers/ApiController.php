@@ -116,10 +116,13 @@ abstract class ApiController extends Controller
      */
     protected function collectRequestData(?array $params = null): array
     {
+        $contentType = $this->request->header('Content-Type');
+        $isJson = $contentType && str_contains((string) $contentType, 'application/json');
+
         $data = array_merge(
             $this->request->getGet() ?? [],
             $this->request->getPost() ?? [],
-            $this->request->getRawInput(),
+            $isJson ? [] : $this->request->getRawInput(),
             $this->getJsonData(),
             $params ?? []
         );
@@ -138,6 +141,7 @@ abstract class ApiController extends Controller
     protected function getJsonData(): array
     {
         $body = $this->request->getBody();
+
         if (empty($body)) {
             return [];
         }

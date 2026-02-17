@@ -34,7 +34,10 @@ class RateLimitResponseTest extends CIUnitTestCase
             'RATE_LIMIT_WINDOW' => getenv('RATE_LIMIT_WINDOW'),
         ];
 
-        service('cache')->clean();
+        // Use a shared cache instance so state persists between feature test requests
+        $cache = \Config\Services::cache();
+        $cache->clean();
+        \Config\Services::injectMock('cache', $cache);
     }
 
     protected function tearDown(): void
@@ -42,10 +45,13 @@ class RateLimitResponseTest extends CIUnitTestCase
         foreach ($this->previousEnv as $key => $value) {
             if ($value === false) {
                 putenv($key);
+                unset($_ENV[$key], $_SERVER[$key]);
                 continue;
             }
 
             putenv("{$key}={$value}");
+            $_ENV[$key] = $value;
+            $_SERVER[$key] = $value;
         }
 
         service('cache')->clean();
@@ -56,6 +62,10 @@ class RateLimitResponseTest extends CIUnitTestCase
     {
         putenv('AUTH_RATE_LIMIT_REQUESTS=1');
         putenv('AUTH_RATE_LIMIT_WINDOW=60');
+        $_ENV['AUTH_RATE_LIMIT_REQUESTS'] = '1';
+        $_ENV['AUTH_RATE_LIMIT_WINDOW'] = '60';
+        $_SERVER['AUTH_RATE_LIMIT_REQUESTS'] = '1';
+        $_SERVER['AUTH_RATE_LIMIT_WINDOW'] = '60';
 
         $this->withBodyFormat('json')
             ->post('/api/v1/auth/login', [
@@ -86,6 +96,10 @@ class RateLimitResponseTest extends CIUnitTestCase
     {
         putenv('RATE_LIMIT_REQUESTS=1');
         putenv('RATE_LIMIT_WINDOW=60');
+        $_ENV['RATE_LIMIT_REQUESTS'] = '1';
+        $_ENV['RATE_LIMIT_WINDOW'] = '60';
+        $_SERVER['RATE_LIMIT_REQUESTS'] = '1';
+        $_SERVER['RATE_LIMIT_WINDOW'] = '60';
 
         $this->get('/api/v1/auth/validate-reset-token?token=fake-token&email=test@example.com');
 

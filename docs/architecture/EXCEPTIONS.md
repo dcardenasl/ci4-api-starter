@@ -49,3 +49,22 @@ throw new AuthorizationException('Admin access required');
 
 All exceptions are caught in `ApiController::handleException()` and automatically converted to appropriate HTTP responses with consistent JSON structure.
 
+## Error Response Format
+
+`ApiException::toArray()` returns a normalized payload:
+
+```json
+{
+  "status": "error",
+  "code": 422,
+  "message": "Validation failed",
+  "errors": {
+    "email": "Email is required"
+  }
+}
+```
+
+Notes:
+- HTTP status is sent in the response header (for example `422 Unprocessable Entity`).
+- `code` in the JSON body mirrors that HTTP status for clients that only parse payloads or logs.
+- Keep both values aligned; in this project they come from the same exception status code.

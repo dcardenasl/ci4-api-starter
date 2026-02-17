@@ -88,6 +88,53 @@ class AuditServiceTest extends CIUnitTestCase
         );
     }
 
+    public function testLogRemovesSensitiveFieldsFromAuditPayload(): void
+    {
+        $oldValues = [
+            'email' => 'old@example.com',
+            'password' => 'old-secret',
+            'profile' => [
+                'token' => 'token-old',
+                'timezone' => 'UTC',
+            ],
+        ];
+        $newValues = [
+            'email' => 'new@example.com',
+            'password' => 'new-secret',
+            'access_token' => 'jwt-token',
+            'profile' => [
+                'refresh_token' => 'refresh-token',
+                'timezone' => 'America/Mexico_City',
+            ],
+        ];
+
+        $this->mockAuditLogModel
+            ->expects($this->once())
+            ->method('insert')
+            ->with($this->callback(function ($data) {
+                $old = json_decode((string) $data['old_values'], true);
+                $new = json_decode((string) $data['new_values'], true);
+
+                return !isset($old['password'])
+                    && !isset($old['profile']['token'])
+                    && !isset($new['password'])
+                    && !isset($new['access_token'])
+                    && !isset($new['profile']['refresh_token'])
+                    && ($old['email'] ?? null) === 'old@example.com'
+                    && ($new['email'] ?? null) === 'new@example.com';
+            }));
+
+        $this->service->log(
+            'update',
+            'user',
+            1,
+            $oldValues,
+            $newValues,
+            99,
+            $this->mockRequest
+        );
+    }
+
     // ==================== LOG CREATE TESTS ====================
 
     public function testLogCreateLogsWithEmptyOldValues(): void
@@ -132,6 +179,26 @@ class AuditServiceTest extends CIUnitTestCase
             ->with($this->callback(function ($data) {
                 return $data['action'] === 'update';
             }));
+
+        $this->service->logUpdate('user', 1, $oldValues, $newValues, 99, $this->mockRequest);
+    }
+
+    public function testLogUpdateDoesNotLogWhenOnlySensitiveValuesChanged(): void
+    {
+        $oldValues = [
+            'email' => 'same@example.com',
+            'password' => 'old-secret',
+            'profile' => ['token' => 'old-token'],
+        ];
+        $newValues = [
+            'email' => 'same@example.com',
+            'password' => 'new-secret',
+            'profile' => ['token' => 'new-token'],
+        ];
+
+        $this->mockAuditLogModel
+            ->expects($this->never())
+            ->method('insert');
 
         $this->service->logUpdate('user', 1, $oldValues, $newValues, 99, $this->mockRequest);
     }

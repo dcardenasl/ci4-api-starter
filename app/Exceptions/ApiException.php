@@ -70,9 +70,10 @@ abstract class ApiException extends Exception
     public function toArray(): array
     {
         return [
-            'status' => 'error',
+            'status'  => 'error',
+            'code'    => $this->statusCode,
             'message' => $this->getMessage(),
-            'errors' => $this->errors,
+            'errors'  => $this->errors,
         ];
     }
 }

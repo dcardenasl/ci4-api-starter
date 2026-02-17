@@ -19,6 +19,27 @@ use CodeIgniter\HTTP\RequestInterface;
  */
 class AuditService implements AuditServiceInterface
 {
+    /**
+     * Sensitive keys that must never be persisted in audit payloads.
+     *
+     * @var list<string>
+     */
+    private const SENSITIVE_FIELDS = [
+        'password',
+        'password_confirmation',
+        'current_password',
+        'token',
+        'access_token',
+        'refresh_token',
+        'email_verification_token',
+        'verification_token',
+        'reset_token',
+        'reset_password_token',
+        'secret',
+        'secret_key',
+        'api_key',
+    ];
+
     public function __construct(
         protected AuditLogModel $auditLogModel
     ) {
@@ -47,14 +68,16 @@ class AuditService implements AuditServiceInterface
     ): void {
         // Use injected request or get from Services as fallback
         $request = $request ?? \Config\Services::request();
+        $sanitizedOldValues = $this->sanitizeAuditValues($oldValues);
+        $sanitizedNewValues = $this->sanitizeAuditValues($newValues);
 
         $this->auditLogModel->insert([
             'user_id' => $userId,
             'action' => $action,
             'entity_type' => $entityType,
             'entity_id' => $entityId,
-            'old_values' => !empty($oldValues) ? json_encode($oldValues) : null,
-            'new_values' => !empty($newValues) ? json_encode($newValues) : null,
+            'old_values' => !empty($sanitizedOldValues) ? json_encode($sanitizedOldValues) : null,
+            'new_values' => !empty($sanitizedNewValues) ? json_encode($sanitizedNewValues) : null,
             'ip_address' => $request->getIPAddress(),
             'user_agent' => $request->getHeaderLine('User-Agent'),
             'created_at' => date('Y-m-d H:i:s'),
@@ -100,10 +123,12 @@ class AuditService implements AuditServiceInterface
         ?int $userId = null,
         ?RequestInterface $request = null
     ): void {
-        // Only log if there are actual changes
-        $diff = array_diff_assoc($newValues, $oldValues);
-        if (!empty($diff)) {
-            $this->log('update', $entityType, $entityId, $oldValues, $newValues, $userId, $request);
+        $sanitizedOldValues = $this->sanitizeAuditValues($oldValues);
+        $sanitizedNewValues = $this->sanitizeAuditValues($newValues);
+
+        // Only log if there are actual (non-sensitive) changes.
+        if ($sanitizedNewValues !== $sanitizedOldValues) {
+            $this->log('update', $entityType, $entityId, $sanitizedOldValues, $sanitizedNewValues, $userId, $request);
         }
     }
 
@@ -153,8 +178,8 @@ class AuditService implements AuditServiceInterface
         }
 
         // Paginate
-        $page = $data['page'] ?? 1;
-        $limit = min($data['limit'] ?? 50, 100);
+        $page = max((int) ($data['page'] ?? 1), 1);
+        $limit = min(max((int) ($data['limit'] ?? 50), 1), 100);
 
         $result = $builder->paginate($page, $limit);
 
@@ -253,5 +278,31 @@ class AuditService implements AuditServiceInterface
         }, $logs);
 
         return ApiResponse::success($logsArray);
+    }
+
+    /**
+     * Recursively remove sensitive fields from audit values.
+     *
+     * @param array $values
+     * @return array
+     */
+    private function sanitizeAuditValues(array $values): array
+    {
+        $sanitized = [];
+
+        foreach ($values as $key => $value) {
+            if (is_string($key) && in_array(strtolower($key), self::SENSITIVE_FIELDS, true)) {
+                continue;
+            }
+
+            if (is_array($value)) {
+                $sanitized[$key] = $this->sanitizeAuditValues($value);
+                continue;
+            }
+
+            $sanitized[$key] = $value;
+        }
+
+        return $sanitized;
     }
 }

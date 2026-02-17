@@ -316,6 +316,47 @@ docker-compose up -d
 - Rate limiting
 - Soft deletes
 
+### Secret Rotation
+
+Rotate security secrets regularly to maintain security posture.
+
+**When to Rotate:**
+- After a security breach or suspected compromise
+- Every 90 days (recommended for JWT secrets)
+- When a developer with access leaves the team
+- Before initial production deployment
+
+**How to Rotate JWT Secret:**
+```bash
+# 1. Generate new secret (64+ characters recommended)
+openssl rand -base64 64
+
+# 2. Update .env file
+JWT_SECRET_KEY='<paste-new-secret-here>'
+
+# 3. Restart application
+# All existing tokens will be invalidated - users must login again
+```
+
+**How to Rotate Encryption Key:**
+```bash
+# 1. Generate new key
+openssl rand -hex 32
+
+# 2. Update .env file
+encryption.key=hex2bin:<paste-new-key-here>
+
+# 3. Restart application
+# Note: Existing encrypted data may become unreadable
+```
+
+**⚠️ Important Notes:**
+- Rotating JWT secret invalidates all active tokens immediately
+- Rotating encryption key may invalidate encrypted session data
+- Always test secret rotation in staging environment first
+- Keep old secrets for 24-48 hours in case of rollback needs
+- Document rotation date and reason for audit trail
+
 ## Requirements
 
 - PHP 8.1+

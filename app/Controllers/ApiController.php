@@ -200,9 +200,13 @@ abstract class ApiController extends Controller
         }
 
         // Generic exceptions
+        $message = ENVIRONMENT === 'production'
+            ? lang('Api.serverError')
+            : $e->getMessage();
+
         return $this->respond([
             'status' => 'error',
-            'message' => $e->getMessage(),
+            'message' => $message,
             'errors' => [],
         ], 500);
     }

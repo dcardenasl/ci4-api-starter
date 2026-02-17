@@ -20,20 +20,7 @@ class CorsFilter implements FilterInterface
         // Handle preflight OPTIONS request
         if ($request->getMethod() === 'OPTIONS') {
             $response = service('response');
-
-            // Get allowed origins
-            $allowedOrigins = $this->getAllowedOrigins();
-            $origin = $request->header('Origin') ? $request->header('Origin')->getValue() : '';
-
-            // Set CORS headers for preflight
-            if ($this->isOriginAllowed($origin, $allowedOrigins)) {
-                $response->setHeader('Access-Control-Allow-Origin', $origin);
-                $response->setHeader('Access-Control-Allow-Credentials', 'true');
-            }
-
-            $response->setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
-            $response->setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
-            $response->setHeader('Access-Control-Max-Age', '86400');
+            $this->applyCorsHeaders($request, $response);
             $response->setStatusCode(200);
             $response->setBody('');
 
@@ -53,72 +40,58 @@ class CorsFilter implements FilterInterface
      */
     public function after(RequestInterface $request, ResponseInterface $response, $arguments = null)
     {
-        // Get allowed origins
-        $allowedOrigins = $this->getAllowedOrigins();
-        $origin = $request->header('Origin') ? $request->header('Origin')->getValue() : '';
-
-        // Set CORS headers if origin is allowed
-        if ($this->isOriginAllowed($origin, $allowedOrigins)) {
-            $response->setHeader('Access-Control-Allow-Origin', $origin);
-            $response->setHeader('Access-Control-Allow-Credentials', 'true');
-        }
-
-        // Set other CORS headers for all requests
-        $response->setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
-        $response->setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
-        $response->setHeader('Access-Control-Max-Age', '86400');
-
+        $this->applyCorsHeaders($request, $response);
         return $response;
     }
 
     /**
-     * Get allowed origins from environment or use defaults
-     *
-     * @return array
+     * @return array{
+     *   allowedOrigins: array<int, string>,
+     *   allowedOriginsPatterns: array<int, string>,
+     *   supportsCredentials: bool,
+     *   allowedHeaders: array<int, string>,
+     *   exposedHeaders: array<int, string>,
+     *   allowedMethods: array<int, string>,
+     *   maxAge: int
+     * }
      */
-    private function getAllowedOrigins(): array
+    private function getConfig(): array
     {
-        $originsEnv = env('CORS_ALLOWED_ORIGINS', '');
+        /** @var \Config\Cors $cors */
+        $cors = config('Cors');
+        return $cors->default;
+    }
 
-        if (!empty($originsEnv)) {
-            return array_map('trim', explode(',', $originsEnv));
-        }
+    private function applyCorsHeaders(RequestInterface $request, ResponseInterface $response): void
+    {
+        $config = $this->getConfig();
+        $origin = $request->header('Origin') ? $request->header('Origin')->getValue() : '';
 
-        // In production, only allow the app's own URL if no CORS origins are explicitly configured
-        if (ENVIRONMENT === 'production') {
-            $appUrl = env('app.baseURL', '');
-            if (!empty($appUrl)) {
-                return [rtrim($appUrl, '/')];
+        if ($this->isOriginAllowed($origin, $config['allowedOrigins'], $config['allowedOriginsPatterns'])) {
+            $response->setHeader('Access-Control-Allow-Origin', $origin);
+            if ($config['supportsCredentials']) {
+                $response->setHeader('Access-Control-Allow-Credentials', 'true');
             }
-            // No origins allowed if nothing is configured in production
-            return [];
         }
 
-        // Development defaults (localhost only)
-        $defaults = [
-            'http://localhost:3000',
-            'http://localhost:8080',
-            'http://localhost:5173', // Vite default
-            'http://127.0.0.1:3000',
-            'http://127.0.0.1:8080',
-        ];
+        $response->setHeader('Access-Control-Allow-Methods', implode(', ', $config['allowedMethods']));
+        $response->setHeader('Access-Control-Allow-Headers', implode(', ', $config['allowedHeaders']));
+        $response->setHeader('Access-Control-Max-Age', (string) $config['maxAge']);
 
-        $appUrl = env('app.baseURL', '');
-        if (!empty($appUrl)) {
-            $defaults[] = rtrim($appUrl, '/');
+        if ($config['exposedHeaders'] !== []) {
+            $response->setHeader('Access-Control-Expose-Headers', implode(', ', $config['exposedHeaders']));
         }
-
-        return $defaults;
     }
 
     /**
      * Check if the origin is in the allowed list
      *
      * @param string $origin
-     * @param array $allowedOrigins
+     * @param array<int, string> $allowedOrigins
+     * @param array<int, string> $allowedPatterns
      * @return bool
      */
-    private function isOriginAllowed(string $origin, array $allowedOrigins): bool
+    private function isOriginAllowed(string $origin, array $allowedOrigins, array $allowedPatterns): bool
     {
         if (empty($origin)) {
             return false;
@@ -134,13 +107,18 @@ class CorsFilter implements FilterInterface
             return true;
         }
 
-        // Check wildcard subdomain patterns (e.g., *.example.com)
         foreach ($allowedOrigins as $allowed) {
             if (str_contains($allowed, '*')) {
                 $pattern = '/^' . str_replace(['*', '.'], ['.*', '\.'], $allowed) . '$/';
                 if (preg_match($pattern, $origin)) {
                     return true;
                 }
+            }
+        }
+
+        foreach ($allowedPatterns as $pattern) {
+            if (@preg_match('#\A' . $pattern . '\z#', $origin) === 1) {
+                return true;
             }
         }
 

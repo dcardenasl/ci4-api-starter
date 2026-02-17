@@ -8,6 +8,7 @@ use App\Interfaces\JwtServiceInterface;
 use Exception;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
+use RuntimeException;
 
 class JwtService implements JwtServiceInterface
 {
@@ -19,7 +20,16 @@ class JwtService implements JwtServiceInterface
     public function __construct()
     {
         // Check getenv first for unit tests that use putenv(), then fall back to env() for .env files
-        $this->secretKey = getenv('JWT_SECRET_KEY') ?: env('JWT_SECRET_KEY', 'your-secret-key-change-in-production');
+        $this->secretKey = trim((string) (getenv('JWT_SECRET_KEY') ?: env('JWT_SECRET_KEY', '')));
+
+        if ($this->secretKey === '') {
+            throw new RuntimeException('JWT_SECRET_KEY is required');
+        }
+
+        if (strlen($this->secretKey) < 32) {
+            throw new RuntimeException('JWT_SECRET_KEY must be at least 32 characters');
+        }
+
         $this->expirationTime = (int) (getenv('JWT_ACCESS_TOKEN_TTL') ?: env('JWT_ACCESS_TOKEN_TTL', 3600));
         $this->issuer = env('app.baseURL', 'http://localhost:8080');
     }

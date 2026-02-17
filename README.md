@@ -286,6 +286,10 @@ FILE_MAX_SIZE=10485760
 # Rate Limiting
 THROTTLE_LIMIT=60
 THROTTLE_WINDOW=60
+
+# CORS
+CORS_ALLOWED_ORIGINS=http://localhost:3000,https://app.example.com
+CORS_SUPPORTS_CREDENTIALS=false
 ```
 
 ## Docker

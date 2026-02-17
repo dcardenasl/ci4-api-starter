@@ -11,6 +11,7 @@ return [
     'tokenRevoked'            => 'Token has been revoked',
     'emailNotVerified'        => 'Email not verified',
     'accountPendingApproval'  => 'Account pending admin approval',
+    'accountSetupRequired'    => 'Account setup required. Please check your invitation email to set your password.',
     'registrationPendingApproval' => 'Registration received. Please verify your email and wait for admin approval.',
     'registrationPendingApprovalNoVerification' => 'Registration received. Please wait for admin approval.',
 

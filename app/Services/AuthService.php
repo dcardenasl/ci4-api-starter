@@ -97,6 +97,13 @@ class AuthService implements AuthServiceInterface
             );
         }
 
+        if (($userEntity->status ?? null) === 'invited') {
+            throw new AuthorizationException(
+                'Account setup required',
+                ['status' => lang('Auth.accountSetupRequired')]
+            );
+        }
+
         if (($userEntity->status ?? null) !== 'active') {
             throw new AuthorizationException(
                 'Account pending approval',

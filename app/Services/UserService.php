@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Exceptions\BadRequestException;
+use App\Exceptions\ConflictException;
 use App\Exceptions\NotFoundException;
 use App\Exceptions\ValidationException;
 use App\Interfaces\EmailServiceInterface;
@@ -95,18 +96,12 @@ class UserService implements UserServiceInterface
      */
     public function store(array $data): array
     {
-        validateOrFail($data, 'user', 'store');
+        validateOrFail($data, 'user', 'store_admin');
 
-        $passwordProvided = !empty($data['password']);
-        $sendInvite = array_key_exists('send_invite', $data)
-            ? filter_var($data['send_invite'], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE)
-            : ! $passwordProvided;
-        $sendInvite = $sendInvite ?? false;
-
-        if (! $sendInvite && ! $passwordProvided) {
+        if (array_key_exists('password', $data) && $data['password'] !== null && $data['password'] !== '') {
             throw new ValidationException(
                 lang('Api.validationFailed'),
-                ['password' => lang('Users.passwordRequired')]
+                ['password' => lang('Users.adminPasswordForbidden')]
             );
         }
 
@@ -121,24 +116,21 @@ class UserService implements UserServiceInterface
 
         $adminId = isset($data['user_id']) ? (int) $data['user_id'] : null;
         $now = date('Y-m-d H:i:s');
-
-        $passwordToHash = $data['password'] ?? null;
-        if (! $passwordToHash) {
-            $passwordToHash = bin2hex(random_bytes(24)) . 'A1!';
-        }
+        $generatedPassword = bin2hex(random_bytes(24)) . 'Aa1!';
 
         // Prepare data for insertion with hashed password
         $insertData = [
             'email'      => $data['email'] ?? null,
             'first_name' => $data['first_name'] ?? null,
             'last_name'  => $data['last_name'] ?? null,
-            'password'   => password_hash($passwordToHash, PASSWORD_BCRYPT),
+            'password'   => password_hash($generatedPassword, PASSWORD_BCRYPT),
             'role'       => $data['role'] ?? 'user',
-            'status'     => 'active',
-            'approved_at' => $adminId ? $now : null,
+            'status'     => 'invited',
+            'approved_at' => $now,
             'approved_by' => $adminId,
-            'invited_at'  => $sendInvite ? $now : null,
-            'invited_by'  => $sendInvite ? $adminId : null,
+            'invited_at'  => $now,
+            'invited_by'  => $adminId,
+            'email_verified_at' => $now,
         ];
 
         // Model maneja validación y timestamps automáticamente
@@ -153,16 +145,17 @@ class UserService implements UserServiceInterface
 
         $user = $this->userModel->find($userId);
 
-        if ($sendInvite && $user) {
-            try {
-                $this->sendInvitationEmail($user);
-            } catch (\Throwable $e) {
-                log_message('error', 'Failed to send invitation email: ' . $e->getMessage());
-            }
-            return ApiResponse::created($user->toArray(), lang('Users.invitationSent'));
+        if (! $user) {
+            throw new \RuntimeException(lang('Users.createError'));
         }
 
-        return ApiResponse::created($user->toArray());
+        try {
+            $this->sendInvitationEmail($user);
+        } catch (\Throwable $e) {
+            log_message('error', 'Failed to send invitation email: ' . $e->getMessage());
+        }
+
+        return ApiResponse::created($user->toArray(), lang('Users.invitationSent'));
     }
 
     /**
@@ -285,13 +278,25 @@ class UserService implements UserServiceInterface
             throw new NotFoundException(lang('Users.notFound'));
         }
 
-        if (($user->status ?? null) !== 'active') {
-            $this->userModel->update($id, [
-                'status' => 'active',
-                'approved_at' => date('Y-m-d H:i:s'),
-                'approved_by' => $adminId,
-            ]);
+        $status = $user->status ?? null;
+
+        if ($status === 'active') {
+            throw new ConflictException(lang('Users.alreadyApproved'));
         }
+
+        if ($status === 'invited') {
+            throw new ConflictException(lang('Users.cannotApproveInvited'));
+        }
+
+        if ($status !== 'pending_approval') {
+            throw new ConflictException(lang('Users.invalidApprovalState'));
+        }
+
+        $this->userModel->update($id, [
+            'status' => 'active',
+            'approved_at' => date('Y-m-d H:i:s'),
+            'approved_by' => $adminId,
+        ]);
 
         $user = $this->userModel->find($id);
         if ($user) {

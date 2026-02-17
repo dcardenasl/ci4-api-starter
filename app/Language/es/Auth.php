@@ -11,6 +11,7 @@ return [
     'tokenRevoked'            => 'El token ha sido revocado',
     'emailNotVerified'        => 'El correo electrónico no está verificado',
     'accountPendingApproval'  => 'La cuenta está pendiente de aprobación por un administrador',
+    'accountSetupRequired'    => 'La cuenta requiere configuración inicial. Revisa tu correo de invitación para definir tu contraseña.',
     'registrationPendingApproval' => 'Registro recibido. Verifica tu correo y espera la aprobación del administrador.',
     'registrationPendingApprovalNoVerification' => 'Registro recibido. Espera la aprobación del administrador.',
 

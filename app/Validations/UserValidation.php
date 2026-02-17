@@ -26,7 +26,17 @@ class UserValidation extends BaseValidation
                 'email'      => 'required|valid_email_idn|max_length[255]',
                 'first_name' => 'permit_empty|string|max_length[100]',
                 'last_name'  => 'permit_empty|string|max_length[100]',
-                'password'   => 'permit_empty|strong_password',
+                'password'   => 'permit_empty',
+                'role'       => 'permit_empty|in_list[user,admin]',
+                'oauth_provider' => 'permit_empty|in_list[google,github]',
+                'oauth_provider_id' => 'permit_empty|string|max_length[255]',
+                'avatar_url' => 'permit_empty|valid_url|max_length[255]',
+            ],
+
+            'store_admin' => [
+                'email'      => 'required|valid_email_idn|max_length[255]',
+                'first_name' => 'permit_empty|string|max_length[100]',
+                'last_name'  => 'permit_empty|string|max_length[100]',
                 'role'       => 'permit_empty|in_list[user,admin]',
                 'oauth_provider' => 'permit_empty|in_list[google,github]',
                 'oauth_provider_id' => 'permit_empty|string|max_length[255]',
@@ -76,7 +86,7 @@ class UserValidation extends BaseValidation
         return match ($action) {
             'index' => $this->paginationMessages(),
             'show', 'destroy' => $this->idMessages(),
-            'store' => $commonMessages,
+            'store', 'store_admin' => $commonMessages,
             'update' => $this->mergeMessages($this->idMessages(), $commonMessages),
             default => [],
         };

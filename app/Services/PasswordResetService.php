@@ -176,7 +176,7 @@ class PasswordResetService implements PasswordResetServiceInterface
         // Update password
         $updateData = ['password' => $hashedPassword];
 
-        if (! empty($user->invited_at)) {
+        if (($user->status ?? null) === 'invited') {
             $updateData['email_verified_at'] = date('Y-m-d H:i:s');
             $updateData['invited_at'] = null;
             $updateData['invited_by'] = null;

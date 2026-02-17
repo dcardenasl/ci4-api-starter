@@ -9,12 +9,16 @@ return [
     'idRequired'      => 'User ID is required',
     'emailRequired'   => 'Email is required',
     'passwordRequired' => 'Password is required',
+    'adminPasswordForbidden' => 'Administrators cannot set passwords when creating users. An invitation email will be sent.',
     'fieldRequired'   => 'At least one field (email, first name, last name, password, role) is required',
 
     // Success messages
     'deletedSuccess'  => 'User deleted successfully',
     'invitationSent'  => 'Invitation email sent successfully',
     'approvedSuccess' => 'User approved successfully',
+    'alreadyApproved' => 'User is already approved',
+    'cannotApproveInvited' => 'Invited users are already approved and must complete password setup via invitation link.',
+    'invalidApprovalState' => 'User cannot be approved from the current state.',
 
     // Error messages
     'deleteError'     => 'Error deleting user',

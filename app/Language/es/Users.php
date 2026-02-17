@@ -9,12 +9,16 @@ return [
     'idRequired'      => 'El ID del usuario es obligatorio',
     'emailRequired'   => 'El email es obligatorio',
     'passwordRequired' => 'La contraseña es obligatoria',
+    'adminPasswordForbidden' => 'Los administradores no pueden definir contraseñas al crear usuarios. Se enviará un correo de invitación.',
     'fieldRequired'   => 'Se requiere al menos un campo (email, nombre, apellido, contraseña, rol)',
 
     // Mensajes de éxito
     'deletedSuccess'  => 'Usuario eliminado correctamente',
     'invitationSent'  => 'Invitación enviada correctamente',
     'approvedSuccess' => 'Usuario aprobado correctamente',
+    'alreadyApproved' => 'El usuario ya está aprobado',
+    'cannotApproveInvited' => 'Los usuarios invitados ya están aprobados y deben completar su contraseña desde el enlace de invitación.',
+    'invalidApprovalState' => 'No se puede aprobar al usuario desde su estado actual.',
 
     // Mensajes de error
     'deleteError'     => 'Error al eliminar el usuario',

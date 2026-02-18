@@ -12,6 +12,382 @@
         }
     ],
     "paths": {
+        "/api/v1/api-keys": {
+            "get": {
+                "tags": [
+                    "API Keys"
+                ],
+                "summary": "List API keys (admin)",
+                "operationId": "455b0ffb66460e6a8f1dcd3b92365600",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Paginated list of API keys",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/ApiKey"
+                                            }
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "total": {
+                                                    "type": "integer",
+                                                    "example": 5
+                                                },
+                                                "perPage": {
+                                                    "type": "integer",
+                                                    "example": 20
+                                                },
+                                                "page": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "lastPage": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "403": {
+                        "description": "Forbidden — admin role required"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "API Keys"
+                ],
+                "summary": "Create API key (admin)",
+                "description": "Creates a new API key. The full raw key is returned only once in this response and cannot be retrieved again.",
+                "operationId": "03d47d14e8044409cfed178a2604b375",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "description": "Human-readable label",
+                                        "type": "string",
+                                        "example": "My Mobile App"
+                                    },
+                                    "rate_limit_requests": {
+                                        "description": "Global key budget per window",
+                                        "type": "integer",
+                                        "example": 600
+                                    },
+                                    "rate_limit_window": {
+                                        "description": "Window in seconds",
+                                        "type": "integer",
+                                        "example": 60
+                                    },
+                                    "user_rate_limit": {
+                                        "description": "Per-user budget per window",
+                                        "type": "integer",
+                                        "example": 60
+                                    },
+                                    "ip_rate_limit": {
+                                        "description": "Per-IP defensive limit per window",
+                                        "type": "integer",
+                                        "example": 200
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "API key created — raw key included once",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/ApiKey"
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "403": {
+                        "description": "Forbidden — admin role required"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationErrorResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/api-keys/{id}": {
+            "get": {
+                "tags": [
+                    "API Keys"
+                ],
+                "summary": "Get API key by ID (admin)",
+                "operationId": "ef9fd95e183280332c07200765406878",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "API key details",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/ApiKey"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "403": {
+                        "description": "Forbidden — admin role required"
+                    },
+                    "404": {
+                        "description": "API key not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "API Keys"
+                ],
+                "summary": "Update API key (admin)",
+                "operationId": "1dae4741401fcee38a5fb882914e88f8",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Renamed App"
+                                    },
+                                    "is_active": {
+                                        "type": "boolean",
+                                        "example": false
+                                    },
+                                    "rate_limit_requests": {
+                                        "type": "integer",
+                                        "example": 1200
+                                    },
+                                    "rate_limit_window": {
+                                        "type": "integer",
+                                        "example": 60
+                                    },
+                                    "user_rate_limit": {
+                                        "type": "integer",
+                                        "example": 120
+                                    },
+                                    "ip_rate_limit": {
+                                        "type": "integer",
+                                        "example": 400
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "API key updated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/ApiKey"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "403": {
+                        "description": "Forbidden — admin role required"
+                    },
+                    "404": {
+                        "description": "API key not found"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationErrorResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "API Keys"
+                ],
+                "summary": "Delete API key (admin)",
+                "operationId": "8e72f1059a9540d5e0c225164d5db0d2",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "API key deleted",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "403": {
+                        "description": "Forbidden — admin role required"
+                    },
+                    "404": {
+                        "description": "API key not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/v1/audit": {
             "get": {
                 "tags": [
@@ -1750,6 +2126,83 @@
     },
     "components": {
         "schemas": {
+            "ApiKey": {
+                "title": "ApiKey",
+                "description": "API key object. The raw key value is only returned once at creation.",
+                "required": [
+                    "id",
+                    "name",
+                    "key_prefix",
+                    "is_active",
+                    "rate_limit_requests",
+                    "rate_limit_window",
+                    "user_rate_limit",
+                    "ip_rate_limit",
+                    "created_at",
+                    "updated_at"
+                ],
+                "properties": {
+                    "id": {
+                        "description": "Unique API key identifier",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "name": {
+                        "description": "Human-readable label for the API key",
+                        "type": "string",
+                        "example": "My Mobile App"
+                    },
+                    "key_prefix": {
+                        "description": "First 12 characters of the raw key (safe to display)",
+                        "type": "string",
+                        "example": "apk_a3f9c2b1"
+                    },
+                    "key": {
+                        "description": "Full raw API key — only present in the creation response",
+                        "type": "string",
+                        "example": "apk_a3f9c2b1d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3",
+                        "nullable": true
+                    },
+                    "is_active": {
+                        "description": "Whether the key is currently active",
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "rate_limit_requests": {
+                        "description": "Maximum requests per window (global key budget)",
+                        "type": "integer",
+                        "example": 600
+                    },
+                    "rate_limit_window": {
+                        "description": "Rate limit window in seconds",
+                        "type": "integer",
+                        "example": 60
+                    },
+                    "user_rate_limit": {
+                        "description": "Per-user request limit within the window when JWT is present",
+                        "type": "integer",
+                        "example": 60
+                    },
+                    "ip_rate_limit": {
+                        "description": "Per-IP defensive limit within the window when no JWT is present",
+                        "type": "integer",
+                        "example": 200
+                    },
+                    "created_at": {
+                        "description": "Creation timestamp",
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-02-18T00:00:00Z"
+                    },
+                    "updated_at": {
+                        "description": "Last update timestamp",
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-02-18T00:00:00Z"
+                    }
+                },
+                "type": "object"
+            },
             "AuditLog": {
                 "title": "Audit Log",
                 "description": "Audit log entry",
@@ -2288,6 +2741,10 @@
         {
             "name": "Health",
             "description": "Health and readiness endpoints"
+        },
+        {
+            "name": "API Keys",
+            "description": "API Keys"
         }
     ]
 }

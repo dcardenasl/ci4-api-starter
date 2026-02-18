@@ -1,6 +1,6 @@
 # CodeIgniter 4 API Starter Kit
 
-![PHP Version](https://img.shields.io/badge/PHP-8.2%20%7C%208.3-blue)
+![PHP Version](https://img.shields.io/badge/PHP-8.1%20%7C%208.2%20%7C%208.3-blue)
 ![CodeIgniter](https://img.shields.io/badge/CodeIgniter-4.6-orange)
 ![Tests](https://img.shields.io/badge/tests-passing-success)
 ![License](https://img.shields.io/badge/license-MIT-blue)
@@ -316,6 +316,47 @@ docker-compose up -d
 - Limite de peticiones
 - Eliminacion suave (soft deletes)
 
+### Rotación de Secretos
+
+Rota los secretos de seguridad regularmente para mantener la postura de seguridad.
+
+**Cuándo Rotar:**
+- Después de una brecha de seguridad o sospecha de compromiso
+- Cada 90 días (recomendado para secretos JWT)
+- Cuando un desarrollador con acceso deja el equipo
+- Antes del despliegue inicial en producción
+
+**Cómo Rotar el Secreto JWT:**
+```bash
+# 1. Generar nuevo secreto (64+ caracteres recomendado)
+openssl rand -base64 64
+
+# 2. Actualizar archivo .env
+JWT_SECRET_KEY='<pegar-nuevo-secreto-aqui>'
+
+# 3. Reiniciar aplicación
+# Todos los tokens existentes serán invalidados - los usuarios deben iniciar sesión nuevamente
+```
+
+**Cómo Rotar la Clave de Encriptación:**
+```bash
+# 1. Generar nueva clave
+openssl rand -hex 32
+
+# 2. Actualizar archivo .env
+encryption.key=hex2bin:<pegar-nueva-clave-aqui>
+
+# 3. Reiniciar aplicación
+# Nota: Los datos encriptados existentes pueden volverse ilegibles
+```
+
+**⚠️ Notas Importantes:**
+- Rotar el secreto JWT invalida todos los tokens activos inmediatamente
+- Rotar la clave de encriptación puede invalidar datos de sesión encriptados
+- Siempre prueba la rotación de secretos en el entorno de staging primero
+- Mantén los secretos antiguos por 24-48 horas en caso de necesitar revertir
+- Documenta la fecha y razón de la rotación para la auditoría
+
 ## Requisitos
 
 - PHP 8.1+
@@ -326,11 +367,21 @@ docker-compose up -d
 ## Documentacion
 
 - **ARCHITECTURE.md** - Decisiones arquitectónicas y patrones de diseño explicados
-- **CLAUDE.md** - Guia de desarrollo para asistentes de IA
+- **CLAUDE.md** - Guia de desarrollo para asistentes de IA (Claude Code)
 - **.claude/agents/** - Agente especializado de Claude Code para generación CRUD
 - **public/swagger.json** - Documentacion OpenAPI (generar con `php spark swagger:generate`)
 
 **¿Nuevo en el proyecto?** Empieza con `ARCHITECTURE.md` para entender por qué el código está estructurado así.
+
+### Desarrollo Asistido por IA
+
+Esta plantilla incluye un agente especializado de [Claude Code](https://claude.ai/code) que actúa como arquitecto experto para este proyecto. Cuando usas Claude Code, el agente automáticamente te ayuda a:
+- Crear recursos CRUD completos siguiendo todos los patrones arquitectónicos
+- Generar migraciones, entidades, modelos, servicios, controladores y tests
+- Mantener consistencia con las convenciones de código existentes
+- Seguir las mejores prácticas de seguridad y testing
+
+Consulta `.claude/README.md` para detalles sobre el uso del agente.
 
 ## Licencia
 

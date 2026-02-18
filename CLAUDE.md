@@ -11,14 +11,14 @@ php spark serve                  # Start dev server at http://localhost:8080
 
 ### Testing
 ```bash
-# Run all tests (218 tests)
+# Run all tests (532 tests)
 vendor/bin/phpunit
 vendor/bin/phpunit --testdox    # Human-readable test output
 
 # Run specific test suites
-vendor/bin/phpunit tests/Unit              # Unit tests (88 tests, fast, no DB)
-vendor/bin/phpunit tests/Integration       # Integration tests (19 tests, with DB)
-vendor/bin/phpunit tests/Feature           # Feature/Controller tests (10 tests, HTTP)
+vendor/bin/phpunit tests/Unit              # Unit tests (453 tests, fast, no DB)
+vendor/bin/phpunit tests/Integration       # Integration tests (32 tests, with DB)
+vendor/bin/phpunit tests/Feature           # Feature/Controller tests (47 tests, HTTP)
 
 # Run single test method
 vendor/bin/phpunit --filter TestClassName::testMethodName
@@ -250,13 +250,13 @@ $routes->group('api/v1', ['filter' => 'jwtauth'], function($routes) {
 ### Test Structure
 ```
 tests/
-├── Unit/                    # 88 tests - No DB, mocked dependencies
+├── Unit/                    # 453 tests - No DB, mocked dependencies
 │   ├── Libraries/           # ApiResponse tests
 │   └── Services/            # Service unit tests
-├── Integration/             # 19 tests - Real DB operations
+├── Integration/             # 32 tests - Real DB operations
 │   ├── Models/              # Model tests with DB
 │   └── Services/            # Service integration tests
-└── Feature/                 # 10 tests - HTTP endpoint tests
+└── Feature/                 # 47 tests - HTTP endpoint tests
     └── Controllers/         # Full request/response cycle
 ```
 

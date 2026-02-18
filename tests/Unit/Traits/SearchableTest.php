@@ -28,6 +28,7 @@ class SearchableTest extends CIUnitTestCase
 
         putenv('SEARCH_ENABLED=true');
         putenv('SEARCH_MIN_LENGTH=3');
+        putenv('SEARCH_USE_FULLTEXT=false');  // Force LIKE for testing
 
         $this->model = new UserModel();
     }
@@ -37,6 +38,7 @@ class SearchableTest extends CIUnitTestCase
         parent::tearDown();
         putenv('SEARCH_ENABLED');
         putenv('SEARCH_MIN_LENGTH');
+        putenv('SEARCH_USE_FULLTEXT');
     }
 
     public function testSearchAddsLikeConditions(): void

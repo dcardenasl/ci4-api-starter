@@ -41,10 +41,9 @@ class SearchQueryApplier
         }
 
         // Check if search is enabled
-        if (env('SEARCH_ENABLED', 'true') !== 'true') {
+        if (!env('SEARCH_ENABLED', true)) {
             return;
         }
-
         if ($useFulltext) {
             self::applyFulltext($builder, $query, $searchableFields);
         } else {
@@ -65,11 +64,14 @@ class SearchQueryApplier
         string $query,
         array $searchableFields
     ): void {
+        // Get the actual builder instance
+        $actualBuilder = $builder instanceof Model ? $builder->builder() : $builder;
+
         $fields = implode(', ', $searchableFields);
         // Get database connection
         $db = $builder instanceof Model ? $builder->db : $builder->db();
         $escapedQuery = $db->escape($query);
-        $builder->where("MATCH($fields) AGAINST($escapedQuery IN BOOLEAN MODE)", null, false);
+        $actualBuilder->where("MATCH($fields) AGAINST($escapedQuery IN BOOLEAN MODE)", null, false);
     }
 
     /**
@@ -85,16 +87,19 @@ class SearchQueryApplier
         string $query,
         array $searchableFields
     ): void {
-        $builder->groupStart();
+        // Get the actual builder instance
+        $actualBuilder = $builder instanceof Model ? $builder->builder() : $builder;
+
+        $actualBuilder->groupStart();
 
         foreach ($searchableFields as $index => $field) {
             if ($index === 0) {
-                $builder->like($field, $query);
+                $actualBuilder->like($field, $query);
             } else {
-                $builder->orLike($field, $query);
+                $actualBuilder->orLike($field, $query);
             }
         }
 
-        $builder->groupEnd();
+        $actualBuilder->groupEnd();
     }
 }

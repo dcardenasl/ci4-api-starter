@@ -78,6 +78,69 @@ You are the original architect of this API starter template. You understand:
 - Run `php spark swagger:generate` after adding annotations
 - Follow the annotation style found in existing controllers
 
+### Internationalization (i18n) — MANDATORY
+This project **always** uses CI4's `lang()` helper for every user-facing string. **Never hardcode literal strings** in services, exceptions, or responses.
+
+**Rule**: Every message string that can reach the API consumer MUST come from a language file via `lang()`.
+
+#### Language file location & naming
+```
+app/Language/
+├── en/
+│   └── {Resource}.php     # e.g., Products.php
+└── es/
+    └── {Resource}.php     # Spanish translation (always required)
+```
+
+#### Standard keys every resource language file must contain
+```php
+// app/Language/en/Products.php
+return [
+    'notFound'      => 'Product not found',
+    'idRequired'    => 'Product ID is required',
+    'fieldRequired' => 'At least one field is required to update',
+    'deletedSuccess'=> 'Product deleted successfully',
+    'createError'   => 'Failed to create product',
+    'deleteError'   => 'Error deleting product',
+    // Add resource-specific keys as needed
+];
+```
+
+```php
+// app/Language/es/Products.php
+return [
+    'notFound'      => 'Producto no encontrado',
+    'idRequired'    => 'El ID del producto es obligatorio',
+    'fieldRequired' => 'Se requiere al menos un campo para actualizar',
+    'deletedSuccess'=> 'Producto eliminado correctamente',
+    'createError'   => 'Error al crear el producto',
+    'deleteError'   => 'Error al eliminar el producto',
+];
+```
+
+#### Usage in services
+```php
+// ✅ CORRECT — always use lang()
+throw new NotFoundException(lang('Products.notFound'));
+throw new BadRequestException(lang('Api.invalidRequest'), ['id' => lang('Products.idRequired')]);
+return ApiResponse::deleted(lang('Products.deletedSuccess'));
+return ApiResponse::success($product->toArray(), lang('Api.resourceUpdated'));
+
+// ❌ WRONG — never hardcode strings
+throw new NotFoundException('Product not found');
+return ApiResponse::deleted('Product deleted successfully');
+```
+
+#### Shared keys (already available — do NOT duplicate)
+- `lang('Api.resourceCreated')` — generic "created" success message
+- `lang('Api.resourceUpdated')` — generic "updated" success message
+- `lang('Api.resourceDeleted')` — generic "deleted" success message
+- `lang('Api.validationFailed')` — generic validation failure message
+- `lang('Api.resourceNotFound')` — generic not-found message
+- `lang('Exceptions.resourceNotFound')` — exception default messages
+
+Use resource-specific language files for domain messages (`lang('Products.notFound')`) and shared `Api.*` keys for generic CRUD success/error messages.
+
 ## Implementation Workflow
 
 When asked to create a new CRUD resource, follow this exact order:
@@ -91,17 +154,19 @@ When asked to create a new CRUD resource, follow this exact order:
    - Present a numbered list of all files to create/modify
    - Explain the data model (fields, types, relationships)
    - Define the API endpoints with HTTP methods, paths, and auth requirements
+   - **Always include both language files** (`en/` and `es/`) in the plan
    - Get user confirmation before proceeding
 
 3. **Implementation Phase** (in this order):
    a. Migration (database schema)
    b. Entity (data representation)
    c. Model (database operations, validation rules, filterable/searchable fields)
-   d. Service Interface (contract definition)
-   e. Service (business logic implementation)
-   f. Controller (HTTP layer)
-   g. Routes configuration
-   h. OpenAPI annotations
+   d. **Language files** (`app/Language/en/{Resource}.php` and `app/Language/es/{Resource}.php`)
+   e. Service Interface (contract definition)
+   f. Service (business logic implementation — uses `lang()` everywhere)
+   g. Controller (HTTP layer)
+   h. Routes configuration
+   i. OpenAPI annotations
 
 4. **Testing Phase**:
    a. Unit tests for the service
@@ -139,3 +204,7 @@ When asked to create a new CRUD resource, follow this exact order:
 - [ ] All tests pass when run with phpunit
 - [ ] OpenAPI annotations are present on controller methods
 - [ ] Code style passes: `composer cs-check`
+- [ ] **Language file `app/Language/en/{Resource}.php` created** with all required keys
+- [ ] **Language file `app/Language/es/{Resource}.php` created** with all keys translated to Spanish
+- [ ] **No hardcoded strings** in services — every message uses `lang()`
+- [ ] Shared `Api.*` and `Exceptions.*` keys are reused, not duplicated in resource files

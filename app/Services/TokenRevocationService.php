@@ -48,9 +48,11 @@ class TokenRevocationService implements TokenRevocationServiceInterface
             );
         }
 
-        // Ensure revocation is effective immediately even if a stale cache entry exists
+        // Mark as revoked in cache immediately. Use the full token TTL because a revoked
+        // token will never become valid again, so long-lived caching is safe here.
         $cacheKey = "token_revoked_{$jti}";
-        $this->cache->save($cacheKey, 1, 300);
+        $ttl      = (int) env('JWT_ACCESS_TOKEN_TTL', 3600);
+        $this->cache->save($cacheKey, 1, $ttl);
 
         return ApiResponse::success(null, lang('Tokens.tokenRevokedSuccess'));
     }
@@ -125,8 +127,16 @@ class TokenRevocationService implements TokenRevocationServiceInterface
         // Check database
         $isBlacklisted = $this->blacklistModel->isBlacklisted($jti);
 
-        // Cache result for 5 minutes
-        $this->cache->save($cacheKey, $isBlacklisted ? 1 : 0, 300);
+        if ($isBlacklisted) {
+            // Revoked tokens never become valid again — cache for the full token lifetime
+            $ttl = (int) env('JWT_ACCESS_TOKEN_TTL', 3600);
+        } else {
+            // Non-revoked tokens are cached briefly so newly revoked tokens are detected
+            // within JWT_REVOCATION_CACHE_TTL seconds (default 60)
+            $ttl = (int) env('JWT_REVOCATION_CACHE_TTL', 60);
+        }
+
+        $this->cache->save($cacheKey, $isBlacklisted ? 1 : 0, $ttl);
 
         return $isBlacklisted;
     }

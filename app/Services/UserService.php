@@ -102,15 +102,6 @@ class UserService implements UserServiceInterface
             );
         }
 
-        // Validaciones de reglas de negocio (más allá de integridad de datos)
-        $businessErrors = $this->validateBusinessRules($data);
-        if (!empty($businessErrors)) {
-            throw new ValidationException(
-                lang('Api.validationFailed'),
-                $businessErrors
-            );
-        }
-
         $adminId = isset($data['user_id']) ? (int) $data['user_id'] : null;
         $now = date('Y-m-d H:i:s');
         $generatedPassword = bin2hex(random_bytes(24)) . 'Aa1!';
@@ -223,22 +214,6 @@ class UserService implements UserServiceInterface
         }
 
         return ApiResponse::deleted(lang('Users.deletedSuccess'));
-    }
-
-    /**
-     * Validaciones de reglas de negocio específicas
-     * Separadas de las reglas de integridad del Model
-     */
-    protected function validateBusinessRules(array $data): array
-    {
-        $errors = [];
-
-        // Ejemplo: validar dominio de email permitido
-        // if (isset($data['email']) && !$this->isAllowedEmailDomain($data['email'])) {
-        //     $errors['email'] = 'Dominio de email no permitido';
-        // }
-
-        return $errors;
     }
 
     /**

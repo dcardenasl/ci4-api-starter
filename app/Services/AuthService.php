@@ -186,14 +186,6 @@ class AuthService implements AuthServiceInterface
         // Validate request input (format, required fields, password strength)
         validateOrFail($data, 'auth', 'register');
 
-        $businessErrors = $this->validateBusinessRules($data);
-        if (!empty($businessErrors)) {
-            throw new ValidationException(
-                lang('Api.validationFailed'),
-                $businessErrors
-            );
-        }
-
         $userId = $this->userModel->insert([
             'email'      => $data['email'] ?? null,
             'first_name' => $data['first_name'] ?? null,
@@ -248,24 +240,5 @@ class AuthService implements AuthServiceInterface
     public function registerWithToken(array $data): array
     {
         return $this->register($data);
-    }
-
-    /**
-     * Validaciones de reglas de negocio específicas
-     * Separadas de las reglas de integridad del Model
-     *
-     * @param array $data
-     * @return array
-     */
-    protected function validateBusinessRules(array $data): array
-    {
-        $errors = [];
-
-        // Ejemplo: validar dominio de email permitido
-        // if (isset($data['email']) && !$this->isAllowedEmailDomain($data['email'])) {
-        //     $errors['email'] = 'Dominio de email no permitido';
-        // }
-
-        return $errors;
     }
 }

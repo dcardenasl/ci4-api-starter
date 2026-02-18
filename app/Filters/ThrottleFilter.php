@@ -300,8 +300,8 @@ class ThrottleFilter implements FilterInterface
     private function unauthorizedResponse(ResponseInterface $response): ResponseInterface
     {
         $body = ApiResponse::error(
-            ['api_key' => 'The provided API key is invalid or inactive'],
-            'Unauthorized',
+            ['api_key' => lang('ApiKeys.invalidKey')],
+            lang('ApiKeys.unauthorized'),
             401
         );
 

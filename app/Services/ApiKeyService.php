@@ -80,7 +80,7 @@ class ApiKeyService implements ApiKeyServiceInterface
         $apiKey = $this->apiKeyModel->find($id);
 
         if (!$apiKey) {
-            throw new NotFoundException('API key not found');
+            throw new NotFoundException(lang('ApiKeys.notFound'));
         }
 
         return ApiResponse::success($apiKey->toArray());
@@ -96,8 +96,8 @@ class ApiKeyService implements ApiKeyServiceInterface
     {
         if (empty($data['name'])) {
             throw new ValidationException(
-                'Validation failed',
-                ['name' => 'API key name is required']
+                lang('Api.validationFailed'),
+                ['name' => lang('ApiKeys.nameRequired')]
             );
         }
 
@@ -129,15 +129,15 @@ class ApiKeyService implements ApiKeyServiceInterface
 
         if (!$newId) {
             throw new ValidationException(
-                'Validation failed',
-                $this->apiKeyModel->errors() ?: ['general' => 'Failed to create API key']
+                lang('Api.validationFailed'),
+                $this->apiKeyModel->errors() ?: ['general' => lang('ApiKeys.createError')]
             );
         }
 
         $apiKey = $this->apiKeyModel->find($newId);
 
         if (!$apiKey) {
-            throw new \RuntimeException('Failed to retrieve created API key');
+            throw new \RuntimeException(lang('ApiKeys.retrieveError'));
         }
 
         $responseData = $apiKey->toArray();
@@ -146,7 +146,7 @@ class ApiKeyService implements ApiKeyServiceInterface
 
         return ApiResponse::created(
             $responseData,
-            'API key created successfully. Store the key securely — it will not be shown again.'
+            lang('ApiKeys.createdSuccess')
         );
     }
 
@@ -160,7 +160,7 @@ class ApiKeyService implements ApiKeyServiceInterface
         $apiKey = $this->apiKeyModel->find($id);
 
         if (!$apiKey) {
-            throw new NotFoundException('API key not found');
+            throw new NotFoundException(lang('ApiKeys.notFound'));
         }
 
         $updateData = array_filter([
@@ -174,8 +174,8 @@ class ApiKeyService implements ApiKeyServiceInterface
 
         if (empty($updateData)) {
             throw new BadRequestException(
-                'Invalid request',
-                ['fields' => 'At least one field must be provided for update']
+                lang('Api.invalidRequest'),
+                ['fields' => lang('ApiKeys.fieldRequired')]
             );
         }
 
@@ -183,7 +183,7 @@ class ApiKeyService implements ApiKeyServiceInterface
 
         if (!$success) {
             throw new ValidationException(
-                'Validation failed',
+                lang('Api.validationFailed'),
                 $this->apiKeyModel->errors()
             );
         }
@@ -201,13 +201,13 @@ class ApiKeyService implements ApiKeyServiceInterface
         $id = $this->validateRequiredId($data);
 
         if (!$this->apiKeyModel->find($id)) {
-            throw new NotFoundException('API key not found');
+            throw new NotFoundException(lang('ApiKeys.notFound'));
         }
 
         if (!$this->apiKeyModel->delete($id)) {
-            throw new \RuntimeException('Failed to delete API key');
+            throw new \RuntimeException(lang('ApiKeys.deleteError'));
         }
 
-        return ApiResponse::deleted('API key deleted successfully');
+        return ApiResponse::deleted(lang('ApiKeys.deletedSuccess'));
     }
 }

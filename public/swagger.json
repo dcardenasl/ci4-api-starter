@@ -266,24 +266,14 @@
                                         },
                                         "data": {
                                             "properties": {
-                                                "access_token": {
-                                                    "type": "string"
-                                                },
-                                                "refresh_token": {
-                                                    "type": "string"
-                                                },
-                                                "expires_in": {
-                                                    "type": "integer",
-                                                    "example": 3600
-                                                },
                                                 "user": {
                                                     "$ref": "#/components/schemas/User"
-                                                },
-                                                "message": {
-                                                    "type": "string"
                                                 }
                                             },
                                             "type": "object"
+                                        },
+                                        "message": {
+                                            "type": "string"
                                         }
                                     },
                                     "type": "object"
@@ -1702,6 +1692,60 @@
                     }
                 ]
             }
+        },
+        "/api/v1/users/{id}/approve": {
+            "post": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Approve user (admin)",
+                "operationId": "712d9d2b97b18c14ff695a6642917efd",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User approved",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/User"
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "404": {
+                        "description": "User not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
         }
     },
     "components": {
@@ -1929,6 +1973,44 @@
                         "type": "string",
                         "example": "user"
                     },
+                    "status": {
+                        "description": "Account status (pending_approval, active)",
+                        "type": "string",
+                        "example": "pending_approval"
+                    },
+                    "email_verified_at": {
+                        "description": "Email verification timestamp",
+                        "type": "string",
+                        "format": "date-time",
+                        "example": null,
+                        "nullable": true
+                    },
+                    "approved_at": {
+                        "description": "Approval timestamp",
+                        "type": "string",
+                        "format": "date-time",
+                        "example": null,
+                        "nullable": true
+                    },
+                    "approved_by": {
+                        "description": "Admin user id who approved",
+                        "type": "integer",
+                        "example": null,
+                        "nullable": true
+                    },
+                    "invited_at": {
+                        "description": "Invitation timestamp",
+                        "type": "string",
+                        "format": "date-time",
+                        "example": null,
+                        "nullable": true
+                    },
+                    "invited_by": {
+                        "description": "Admin user id who invited",
+                        "type": "integer",
+                        "example": null,
+                        "nullable": true
+                    },
                     "created_at": {
                         "description": "User creation timestamp",
                         "type": "string",
@@ -2091,8 +2173,7 @@
                     "application/json": {
                         "schema": {
                             "required": [
-                                "email",
-                                "password"
+                                "email"
                             ],
                             "properties": {
                                 "first_name": {
@@ -2121,6 +2202,11 @@
                                     "type": "string",
                                     "format": "password",
                                     "example": "Password123"
+                                },
+                                "send_invite": {
+                                    "description": "Send invitation email and allow user to set password",
+                                    "type": "boolean",
+                                    "example": true
                                 }
                             },
                             "type": "object"

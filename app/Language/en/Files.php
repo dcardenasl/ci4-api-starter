@@ -18,6 +18,8 @@ return [
     'storageFailed'      => 'Failed to store file',
     'fileNotFound'       => 'File not found or access denied',
     'idRequired'         => 'File ID and User ID are required',
+    'unauthorized'       => 'You are not authorized to access this file',
+    'saveFailed'         => 'Failed to save file metadata',
 
     // Request messages
     'invalidRequest'     => 'Invalid request',

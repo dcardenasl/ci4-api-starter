@@ -10,14 +10,15 @@ return [
     'passwordReset'      => 'Tu contraseña ha sido restablecida exitosamente',
 
     // Mensajes de error
-    'emailRequired'      => 'Se requiere un correo electrónico válido',
-    'tokenRequired'      => 'Se requiere el token de restablecimiento y el correo',
-    'invalidToken'       => 'Token de restablecimiento inválido o expirado',
-    'userNotFound'       => 'Usuario no encontrado',
-    'allFieldsRequired'  => 'Todos los campos son requeridos',
-    'passwordMinLength'  => 'La contraseña debe tener al menos 8 caracteres',
-    'passwordMaxLength'  => 'La contraseña no debe exceder 128 caracteres',
-    'passwordComplexity' => 'La contraseña debe contener al menos una letra mayúscula, una minúscula, un número y un carácter especial',
+    'emailRequired'            => 'Se requiere un correo electrónico válido',
+    'tokenRequired'            => 'Se requiere el token de restablecimiento y el correo',
+    'invalidToken'             => 'Token de restablecimiento inválido o expirado',
+    'userNotFound'             => 'Usuario no encontrado',
+    'allFieldsRequired'        => 'Todos los campos son requeridos',
+    'passwordMinLength'        => 'La contraseña debe tener al menos 8 caracteres',
+    'passwordMaxLength'        => 'La contraseña no debe exceder 128 caracteres',
+    'passwordComplexity'       => 'La contraseña debe contener al menos una letra mayúscula, una minúscula, un número y un carácter especial',
+    'passwordValidationFailed' => 'La validación de la contraseña falló',
 
     // Mensajes de datos de respuesta
     'sentMessage'        => 'Enlace de restablecimiento enviado',

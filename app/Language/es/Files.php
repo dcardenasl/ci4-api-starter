@@ -18,6 +18,8 @@ return [
     'storageFailed'      => 'Error al almacenar el archivo',
     'fileNotFound'       => 'Archivo no encontrado o acceso denegado',
     'idRequired'         => 'Se requiere el ID del archivo y el ID del usuario',
+    'unauthorized'       => 'No está autorizado para acceder a este archivo',
+    'saveFailed'         => 'Error al guardar los metadatos del archivo',
 
     // Mensajes de solicitud
     'invalidRequest'     => 'Solicitud inválida',

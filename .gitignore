@@ -180,3 +180,5 @@ backup/
 #-------------------------
 # Keep documentation and agents, but ignore personal settings
 .claude/settings.local.json
+
+public/writable/tests/uploads/

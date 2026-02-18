@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Filters;
 
+use App\Entities\ApiKeyEntity;
 use App\Filters\ThrottleFilter;
 use App\HTTP\ApiRequest;
 use CodeIgniter\Cache\CacheInterface;
@@ -14,8 +15,8 @@ use Config\Services;
 /**
  * ThrottleFilter Unit Tests
  *
- * Tests general rate limiting for API endpoints.
- * Critical for preventing API abuse and DoS attacks.
+ * Tests general rate limiting for API endpoints, including the API key
+ * stratified rate limiting strategy.
  */
 class ThrottleFilterTest extends CIUnitTestCase
 {
@@ -26,7 +27,7 @@ class ThrottleFilterTest extends CIUnitTestCase
     {
         parent::setUp();
 
-        $this->filter = new ThrottleFilter();
+        $this->filter    = new ThrottleFilter();
         $this->mockCache = $this->createMock(CacheInterface::class);
 
         // Inject mocked cache into Services
@@ -40,10 +41,13 @@ class ThrottleFilterTest extends CIUnitTestCase
     }
 
     /**
-     * Helper: Create mock ApiRequest with IP address
+     * Helper: Create mock ApiRequest with IP address, optional userId, and optional X-App-Key header.
      */
-    private function createMockRequest(string $ip = '127.0.0.1', ?int $userId = null): ApiRequest
-    {
+    private function createMockRequest(
+        string $ip = '127.0.0.1',
+        ?int $userId = null,
+        ?string $appKey = null
+    ): ApiRequest {
         $request = $this->createMock(ApiRequest::class);
 
         $request->method('getIPAddress')
@@ -52,10 +56,20 @@ class ThrottleFilterTest extends CIUnitTestCase
         $request->method('getAuthUserId')
             ->willReturn($userId);
 
+        // getHeaderLine returns the X-App-Key header or empty string
+        $request->method('getHeaderLine')
+            ->willReturnCallback(function (string $header) use ($appKey) {
+                if (strtolower($header) === 'x-app-key') {
+                    return $appKey ?? '';
+                }
+                // No Authorization header by default
+                return '';
+            });
+
         return $request;
     }
 
-    // ==================== TEST CASES ====================
+    // ==================== EXISTING TESTS (no API key path) ====================
 
     public function testBeforeAllowsRequestsWithinLimit(): void
     {
@@ -204,13 +218,13 @@ class ThrottleFilterTest extends CIUnitTestCase
 
     public function testAfterSetsRateLimitHeaders(): void
     {
-        $request = $this->createMock(ApiRequest::class);
+        $request  = $this->createMock(ApiRequest::class);
         $response = new Response(new \Config\App());
 
         $rateLimitInfo = [
-            'limit' => 60,
+            'limit'     => 60,
             'remaining' => 45,
-            'reset' => time() + 60,
+            'reset'     => time() + 60,
         ];
 
         $request->method('getRateLimitInfo')
@@ -227,7 +241,7 @@ class ThrottleFilterTest extends CIUnitTestCase
 
     public function testAfterDoesNotSetHeadersWhenNoRateLimitInfo(): void
     {
-        $request = $this->createMock(ApiRequest::class);
+        $request  = $this->createMock(ApiRequest::class);
         $response = new Response(new \Config\App());
 
         $request->method('getRateLimitInfo')
@@ -242,10 +256,6 @@ class ThrottleFilterTest extends CIUnitTestCase
 
     public function testBeforeRespectsCustomEnvironmentLimits(): void
     {
-        // Environment variables need to be set before filter instantiation
-        // This test verifies the logic exists, but actual env() calls
-        // happen during filter execution and can't be easily mocked
-
         $request = $this->createMockRequest('192.168.1.1');
 
         $this->mockCache->method('get')->willReturn(null);
@@ -254,18 +264,126 @@ class ThrottleFilterTest extends CIUnitTestCase
             ->with(
                 $this->anything(),
                 1,
-                $this->greaterThan(0) // Accept any positive window
+                $this->greaterThan(0)
             );
 
         $request->expects($this->once())
             ->method('setRateLimitInfo')
             ->with($this->callback(function ($info) {
-                // Verify structure is correct (default is 60 requests)
                 return $info['limit'] > 0 && $info['remaining'] >= 0;
             }));
 
         $this->filter->before($request);
 
         $this->assertTrue(true);
+    }
+
+    // ==================== API KEY PATH TESTS ====================
+
+    public function testInvalidApiKeyReturns401(): void
+    {
+        // Provide a non-empty X-App-Key header; cache returns null (miss) and model returns null
+        $request = $this->createMockRequest('192.168.1.1', null, 'apk_invalidkeyvalue');
+
+        // Cache miss for the hash lookup
+        $this->mockCache->method('get')->willReturn(null);
+        // No save expected (we don't cache misses)
+        $this->mockCache->expects($this->never())->method('save');
+
+        // Inject a mock ApiKeyModel that returns null (key not found)
+        $mockApiKeyModel = new class () extends \App\Models\ApiKeyModel {
+            public function __construct()
+            {
+                // Skip DB constructor
+            }
+
+            public function findByHash(string $hash): ?\App\Entities\ApiKeyEntity
+            {
+                return null;
+            }
+
+            public function where($key, $value = null, ?bool $escape = null): static
+            {
+                return $this;
+            }
+
+            public function first()
+            {
+                return null;
+            }
+        };
+        Services::injectMock('apiKeyModel', $mockApiKeyModel);
+
+        $result = $this->filter->before($request);
+
+        $this->assertInstanceOf(Response::class, $result);
+        $this->assertEquals(401, $result->getStatusCode());
+
+        $body = json_decode($result->getBody(), true);
+        $this->assertEquals('error', $body['status']);
+        $this->assertEquals(401, $body['code']);
+        $this->assertArrayHasKey('api_key', $body['errors']);
+    }
+
+    public function testMissingApiKeyFallsBackToIpRateLimit(): void
+    {
+        // No X-App-Key header → should use IP rate limiting
+        $request = $this->createMockRequest('10.10.10.10', null, null);
+
+        $this->mockCache->expects($this->once())
+            ->method('get')
+            ->with($this->stringContains('rate_limit_ip_'))
+            ->willReturn(null);
+
+        $this->mockCache->expects($this->once())
+            ->method('save')
+            ->willReturn(true);
+
+        $request->expects($this->once())
+            ->method('setRateLimitInfo');
+
+        $result = $this->filter->before($request);
+
+        $this->assertInstanceOf(ApiRequest::class, $result);
+    }
+
+    public function testCachedApiKeyIsUsedWithoutDbLookup(): void
+    {
+        // Pre-populate cache with a valid key array so model is never hit
+        $entity = new ApiKeyEntity();
+        $entity->id                   = 42;
+        $entity->is_active            = true;
+        $entity->rate_limit_requests  = 600;
+        $entity->rate_limit_window    = 60;
+        $entity->user_rate_limit      = 60;
+        $entity->ip_rate_limit        = 200;
+
+        $rawKey = 'apk_cachedkeyvalue123456789012345678901234567890';
+        $hash   = hash('sha256', $rawKey);
+        $cacheKey = 'api_key_' . $hash;
+
+        // First get() call returns the cached entity array
+        // Subsequent get() calls (rate limit counters) return null (first request)
+        $callCount = 0;
+        $this->mockCache->method('get')
+            ->willReturnCallback(function (string $key) use ($cacheKey, $entity, &$callCount) {
+                if ($key === $cacheKey) {
+                    $callCount++;
+                    return $entity->toArray();
+                }
+                return null;
+            });
+
+        $this->mockCache->method('save')->willReturn(true);
+
+        $request = $this->createMockRequest('192.168.0.1', null, $rawKey);
+        $request->expects($this->once())->method('setRateLimitInfo');
+        $request->expects($this->once())->method('setAppKeyId')->with(42);
+
+        $result = $this->filter->before($request);
+
+        $this->assertInstanceOf(ApiRequest::class, $result);
+        // Cache was consulted for the api_key lookup
+        $this->assertGreaterThan(0, $callCount);
     }
 }

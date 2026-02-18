@@ -10,41 +10,90 @@ class CreateUsersTable extends Migration
     {
         $this->forge->addField([
             'id' => [
-                'type' => 'INT',
-                'constraint' => 11,
-                'unsigned' => true,
+                'type'           => 'INT',
+                'constraint'     => 11,
+                'unsigned'       => true,
                 'auto_increment' => true,
             ],
             'email' => [
-                'type' => 'VARCHAR',
-                'constraint' => '255',
-                'null' => true,
+                'type'       => 'VARCHAR',
+                'constraint' => 255,
+                'null'       => false,
+            ],
+            'first_name' => [
+                'type'       => 'VARCHAR',
+                'constraint' => 100,
+                'null'       => true,
+            ],
+            'last_name' => [
+                'type'       => 'VARCHAR',
+                'constraint' => 100,
+                'null'       => true,
+            ],
+            'oauth_provider' => [
+                'type'       => 'VARCHAR',
+                'constraint' => 50,
+                'null'       => true,
+            ],
+            'oauth_provider_id' => [
+                'type'       => 'VARCHAR',
+                'constraint' => 255,
+                'null'       => true,
+            ],
+            'avatar_url' => [
+                'type'       => 'VARCHAR',
+                'constraint' => 255,
+                'null'       => true,
+            ],
+            'password' => [
+                'type'       => 'VARCHAR',
+                'constraint' => 255,
+                'null'       => true,
+            ],
+            'role' => [
+                'type'       => 'VARCHAR',
+                'constraint' => 50,
+                'default'    => 'user',
+                'null'       => false,
             ],
             'status' => [
-                'type' => 'VARCHAR',
+                'type'       => 'VARCHAR',
                 'constraint' => 20,
-                'default' => 'pending_approval',
-                'null' => false,
+                'default'    => 'pending_approval',
+                'null'       => false,
+            ],
+            'email_verified_at' => [
+                'type' => 'DATETIME',
+                'null' => true,
+            ],
+            'email_verification_token' => [
+                'type'       => 'VARCHAR',
+                'constraint' => 64,
+                'null'       => true,
+            ],
+            'verification_token_expires' => [
+                'type' => 'DATETIME',
+                'null' => true,
             ],
             'approved_at' => [
                 'type' => 'DATETIME',
                 'null' => true,
             ],
             'approved_by' => [
-                'type' => 'INT',
+                'type'       => 'INT',
                 'constraint' => 11,
-                'unsigned' => true,
-                'null' => true,
+                'unsigned'   => true,
+                'null'       => true,
             ],
             'invited_at' => [
                 'type' => 'DATETIME',
                 'null' => true,
             ],
             'invited_by' => [
-                'type' => 'INT',
+                'type'       => 'INT',
                 'constraint' => 11,
-                'unsigned' => true,
-                'null' => true,
+                'unsigned'   => true,
+                'null'       => true,
             ],
             'created_at' => [
                 'type' => 'DATETIME',
@@ -59,10 +108,18 @@ class CreateUsersTable extends Migration
                 'null' => true,
             ],
         ]);
+
         $this->forge->addKey('id', true);
-        $this->forge->addForeignKey('approved_by', 'users', 'id', 'SET NULL', 'CASCADE');
-        $this->forge->addForeignKey('invited_by', 'users', 'id', 'SET NULL', 'CASCADE');
+        $this->forge->addUniqueKey('email');
+        $this->forge->addUniqueKey('email_verification_token');
         $this->forge->createTable('users');
+
+        // Add FULLTEXT index for search functionality
+        try {
+            $this->db->query('ALTER TABLE users ADD FULLTEXT KEY idx_search (email, first_name, last_name)');
+        } catch (\Throwable $e) {
+            // Ignore if engine doesn't support FULLTEXT (like in tests with SQLite)
+        }
     }
 
     public function down()

@@ -309,4 +309,40 @@ class Services extends BaseService
 
         return new \App\Services\InputValidationService();
     }
+
+    /**
+     * API Key Model
+     *
+     * Provides ApiKeyModel instance
+     *
+     * @param bool $getShared
+     * @return \App\Models\ApiKeyModel
+     */
+    public static function apiKeyModel(bool $getShared = true)
+    {
+        if ($getShared) {
+            return static::getSharedInstance('apiKeyModel');
+        }
+
+        return new \App\Models\ApiKeyModel();
+    }
+
+    /**
+     * API Key Service
+     *
+     * Provides ApiKeyService with all dependencies injected
+     *
+     * @param bool $getShared
+     * @return \App\Services\ApiKeyService
+     */
+    public static function apiKeyService(bool $getShared = true)
+    {
+        if ($getShared) {
+            return static::getSharedInstance('apiKeyService');
+        }
+
+        return new \App\Services\ApiKeyService(
+            static::apiKeyModel()
+        );
+    }
 }

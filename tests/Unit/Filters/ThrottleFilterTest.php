@@ -134,7 +134,7 @@ class ThrottleFilterTest extends CIUnitTestCase
 
         $this->mockCache->expects($this->once())
             ->method('get')
-            ->with($this->stringContains('rl_'))
+            ->with($this->stringContains('rate_limit_ip_'))
             ->willReturn(null);
 
         $this->mockCache->expects($this->once())
@@ -146,20 +146,21 @@ class ThrottleFilterTest extends CIUnitTestCase
 
         $this->filter->before($request);
 
-        // Test passes if cache key contains identifier based on IP
+        // Test passes if cache key contains IP-based identifier
         $this->assertTrue(true);
     }
 
-    public function testBeforeUsesIPPlusUserIdForAuthenticatedRequests(): void
+    public function testBeforeEnforcesBothIpAndUserLimitsForAuthenticatedRequests(): void
     {
         $request = $this->createMockRequest('192.168.1.1', 123);
 
-        $this->mockCache->expects($this->once())
+        // Expects two get() calls: one for IP key, one for user key
+        $this->mockCache->expects($this->exactly(2))
             ->method('get')
-            ->with($this->stringContains('rl_'))
             ->willReturn(null);
 
-        $this->mockCache->expects($this->once())
+        // Expects two save() calls: one for IP key, one for user key
+        $this->mockCache->expects($this->exactly(2))
             ->method('save')
             ->willReturn(true);
 
@@ -168,7 +169,7 @@ class ThrottleFilterTest extends CIUnitTestCase
 
         $this->filter->before($request);
 
-        // Authenticated users get separate rate limit bucket
+        // Authenticated requests apply both IP and user-based limits independently
         $this->assertTrue(true);
     }
 

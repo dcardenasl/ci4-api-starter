@@ -4,6 +4,7 @@ namespace App\Filters;
 
 use App\HTTP\ApiRequest;
 use App\Libraries\ApiResponse;
+use CodeIgniter\Cache\CacheInterface;
 use CodeIgniter\Filters\FilterInterface;
 use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
@@ -12,7 +13,12 @@ use Config\Services;
 class ThrottleFilter implements FilterInterface
 {
     /**
-     * Rate limit requests by IP address and JWT token
+     * Rate limit requests by IP address and user ID (if authenticated).
+     *
+     * Two independent limits are enforced:
+     * - IP-based: applies to all requests from this IP (prevents unauthenticated abuse)
+     * - User-based: applies to all requests from this user regardless of IP
+     *   (prevents bypass via VPN/proxy rotation by authenticated users)
      *
      * @param RequestInterface $request
      * @param array|null $arguments
@@ -23,46 +29,67 @@ class ThrottleFilter implements FilterInterface
         $cache = Services::cache();
         $response = service('response');
 
-        // Get rate limit configuration
-        $maxRequests = (int) env('RATE_LIMIT_REQUESTS', 60);
-        $window = (int) env('RATE_LIMIT_WINDOW', 60); // in seconds
+        $ipLimit   = (int) env('RATE_LIMIT_REQUESTS', 60);
+        $userLimit = (int) env('RATE_LIMIT_USER_REQUESTS', 100);
+        $window    = (int) env('RATE_LIMIT_WINDOW', 60);
 
-        // Get identifier (IP + user ID if authenticated)
-        $identifier = $this->getIdentifier($request);
+        $ip     = $request->getIPAddress();
+        $userId = $request instanceof ApiRequest ? $request->getAuthUserId() : null;
 
-        // Cache key for this identifier
-        $cacheKey = 'rate_limit_' . $identifier;
+        // IP-based rate limit (always applied)
+        $ipKey       = 'rate_limit_ip_' . md5($ip);
+        $ipRemaining = $this->checkRateLimit($cache, $ipKey, $ipLimit, $window);
 
-        // Get current request count
-        $requests = $cache->get($cacheKey);
-
-        if ($requests === null) {
-            // First request in this window
-            $cache->save($cacheKey, 1, $window);
-            $remaining = $maxRequests - 1;
-        } else {
-            $requests = (int) $requests;
-
-            if ($requests >= $maxRequests) {
-                // Rate limit exceeded
-                return $this->rateLimitExceeded($response, $maxRequests, $window);
-            }
-
-            // Increment request count
-            $cache->save($cacheKey, $requests + 1, $window);
-            $remaining = $maxRequests - ($requests + 1);
+        if ($ipRemaining === false) {
+            return $this->rateLimitExceeded($response, $ipLimit, $window);
         }
 
-        // Store rate limit info in request for after() method
+        // User-based rate limit (only when authenticated)
+        if ($userId !== null) {
+            $userKey       = 'rate_limit_user_' . $userId;
+            $userRemaining = $this->checkRateLimit($cache, $userKey, $userLimit, $window);
+
+            if ($userRemaining === false) {
+                return $this->rateLimitExceeded($response, $userLimit, $window);
+            }
+        }
+
+        // Store rate limit info in request for after() method (reports IP limit)
         if ($request instanceof ApiRequest) {
             $request->setRateLimitInfo([
-                'limit' => $maxRequests,
-                'remaining' => max(0, $remaining),
-                'reset' => time() + $window,
+                'limit'     => $ipLimit,
+                'remaining' => max(0, $ipRemaining),
+                'reset'     => time() + $window,
             ]);
         }
 
         return $request;
+    }
+
+    /**
+     * Check and increment rate limit counter for a given cache key.
+     *
+     * @return int|false Remaining requests if allowed, false if limit exceeded
+     */
+    private function checkRateLimit(CacheInterface $cache, string $key, int $limit, int $window): int|false
+    {
+        $requests = $cache->get($key);
+
+        if ($requests === null) {
+            $cache->save($key, 1, $window);
+
+            return $limit - 1;
+        }
+
+        $requests = (int) $requests;
+
+        if ($requests >= $limit) {
+            return false;
+        }
+
+        $cache->save($key, $requests + 1, $window);
+
+        return $limit - ($requests + 1);
     }
 
     /**
@@ -84,27 +111,6 @@ class ThrottleFilter implements FilterInterface
         }
 
         return $response;
-    }
-
-    /**
-     * Get unique identifier for rate limiting
-     * Uses IP address + user ID (if authenticated)
-     *
-     * @param RequestInterface $request
-     * @return string
-     */
-    private function getIdentifier(RequestInterface $request): string
-    {
-        $ip = $request->getIPAddress();
-
-        // If user is authenticated, include user ID in identifier
-        $userId = $request instanceof ApiRequest ? $request->getAuthUserId() : null;
-
-        if ($userId) {
-            return 'rl_' . md5($ip . '_user_' . $userId);
-        }
-
-        return 'rl_' . md5($ip . '_guest');
     }
 
     /**

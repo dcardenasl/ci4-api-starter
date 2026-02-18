@@ -18,6 +18,8 @@ class ApiRequest extends IncomingRequest
     private ?array $rateLimitInfo = null;
     /** @var array{limit:int,remaining:int,reset:int}|null */
     private ?array $authRateLimitInfo = null;
+    /** ID of the resolved API key (set by ThrottleFilter when X-App-Key is valid) */
+    private ?int $appKeyId = null;
 
     public function __construct(App $config, URI $uri, $body = 'php://input', ?UserAgent $userAgent = null)
     {
@@ -80,5 +82,15 @@ class ApiRequest extends IncomingRequest
     public function getAuthRateLimitInfo(): ?array
     {
         return $this->authRateLimitInfo;
+    }
+
+    public function setAppKeyId(?int $id): void
+    {
+        $this->appKeyId = $id;
+    }
+
+    public function getAppKeyId(): ?int
+    {
+        return $this->appKeyId;
     }
 }

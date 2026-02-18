@@ -1,0 +1,18 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Controllers\Api\V1;
+
+use App\Controllers\ApiController;
+
+/**
+ * API Key Controller
+ *
+ * Admin-only CRUD endpoints for managing API keys with stratified rate limiting.
+ * All write operations require the 'admin' role (enforced via roleauth filter in routes).
+ */
+class ApiKeyController extends ApiController
+{
+    protected string $serviceName = 'apiKeyService';
+}

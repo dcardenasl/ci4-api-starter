@@ -81,6 +81,13 @@ $routes->group('api/v1', ['namespace' => 'App\Controllers\Api\V1', 'filter' => '
             $routes->delete('users/(:num)', 'UserController::delete/$1');
             $routes->post('users/(:num)/approve', 'UserController::approve/$1');
 
+            // API key management (admin only)
+            $routes->get('api-keys', 'ApiKeyController::index');
+            $routes->post('api-keys', 'ApiKeyController::create');
+            $routes->get('api-keys/(:num)', 'ApiKeyController::show/$1');
+            $routes->put('api-keys/(:num)', 'ApiKeyController::update/$1');
+            $routes->delete('api-keys/(:num)', 'ApiKeyController::delete/$1');
+
             // Metrics endpoints (admin only)
             $routes->get('metrics', 'MetricsController::index');
             $routes->get('metrics/requests', 'MetricsController::requests');

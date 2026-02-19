@@ -11,14 +11,14 @@ php spark serve                  # Start dev server at http://localhost:8080
 
 ### Testing
 ```bash
-# Run all tests (532 tests)
+# Run all tests (574 tests)
 vendor/bin/phpunit
 vendor/bin/phpunit --testdox    # Human-readable test output
 
 # Run specific test suites
-vendor/bin/phpunit tests/Unit              # Unit tests (453 tests, fast, no DB)
-vendor/bin/phpunit tests/Integration       # Integration tests (32 tests, with DB)
-vendor/bin/phpunit tests/Feature           # Feature/Controller tests (47 tests, HTTP)
+vendor/bin/phpunit tests/Unit              # Unit tests (470 tests, fast, no DB)
+vendor/bin/phpunit tests/Integration       # Integration tests (44 tests, with DB)
+vendor/bin/phpunit tests/Feature           # Feature/Controller tests (60 tests, HTTP)
 
 # Run single test method
 vendor/bin/phpunit --filter TestClassName::testMethodName

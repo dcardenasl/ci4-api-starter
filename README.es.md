@@ -98,6 +98,15 @@ GET    /api/v1/files/{id}      Obtener detalles del archivo
 DELETE /api/v1/files/{id}      Eliminar archivo
 ```
 
+### API Keys (Admin)
+```
+GET    /api/v1/api-keys           Listar API keys
+GET    /api/v1/api-keys/{id}      Obtener detalle de API key
+POST   /api/v1/api-keys           Crear API key
+PUT    /api/v1/api-keys/{id}      Actualizar API key
+DELETE /api/v1/api-keys/{id}      Eliminar API key
+```
+
 ### Metricas y Auditoria (Admin)
 ```
 GET  /api/v1/metrics                 Obtener resumen de metricas

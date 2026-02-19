@@ -98,6 +98,15 @@ GET    /api/v1/files/{id}      Get file details
 DELETE /api/v1/files/{id}      Delete file
 ```
 
+### API Keys (Admin)
+```
+GET    /api/v1/api-keys           List API keys
+GET    /api/v1/api-keys/{id}      Get API key details
+POST   /api/v1/api-keys           Create API key
+PUT    /api/v1/api-keys/{id}      Update API key
+DELETE /api/v1/api-keys/{id}      Delete API key
+```
+
 ### Metrics and Audit (Admin)
 ```
 GET  /api/v1/metrics                 Get metrics overview

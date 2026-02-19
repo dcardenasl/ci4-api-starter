@@ -237,7 +237,7 @@ tests/
     └── Controllers/         # End-to-end controller tests
 ```
 
-#### Unit Tests (218 tests)
+#### Unit Tests (470 tests)
 
 **Characteristics:**
 - No database

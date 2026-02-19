@@ -14,6 +14,7 @@ use App\Libraries\ApiResponse;
 use App\Libraries\Query\QueryBuilder;
 use App\Models\PasswordResetModel;
 use App\Models\UserModel;
+use App\Traits\ResolvesWebAppLinks;
 use App\Traits\ValidatesRequiredFields;
 
 /**
@@ -24,6 +25,7 @@ use App\Traits\ValidatesRequiredFields;
  */
 class UserService implements UserServiceInterface
 {
+    use ResolvesWebAppLinks;
     use ValidatesRequiredFields;
     public function __construct(
         protected UserModel $userModel,
@@ -138,7 +140,10 @@ class UserService implements UserServiceInterface
         }
 
         try {
-            $this->sendInvitationEmail($user);
+            $this->sendInvitationEmail(
+                $user,
+                isset($data['client_base_url']) ? (string) $data['client_base_url'] : null
+            );
         } catch (\Throwable $e) {
             log_message('error', 'Failed to send invitation email: ' . $e->getMessage());
         }
@@ -266,7 +271,7 @@ class UserService implements UserServiceInterface
      * @param object $user
      * @return void
      */
-    protected function sendInvitationEmail(object $user): void
+    protected function sendInvitationEmail(object $user, ?string $clientBaseUrl = null): void
     {
         if (empty($user->email)) {
             return;
@@ -281,8 +286,7 @@ class UserService implements UserServiceInterface
             'created_at' => date('Y-m-d H:i:s'),
         ]);
 
-        $baseUrl = rtrim(env('app.baseURL', base_url()), '/');
-        $resetLink = "{$baseUrl}/api/v1/auth/reset-password?token={$token}&email=" . urlencode($user->email);
+        $resetLink = $this->buildResetPasswordUrl($token, (string) $user->email, $clientBaseUrl);
 
         $displayName = method_exists($user, 'getDisplayName') ? $user->getDisplayName() : 'User';
 

@@ -36,6 +36,14 @@ class PasswordResetServiceTest extends CIUnitTestCase
         $this->mockEmailService = $this->createMock(EmailServiceInterface::class);
     }
 
+    protected function tearDown(): void
+    {
+        putenv('WEBAPP_BASE_URL');
+        putenv('WEBAPP_ALLOWED_BASE_URLS');
+
+        parent::tearDown();
+    }
+
     /**
      * Create service with mocked user model
      */
@@ -131,6 +139,7 @@ class PasswordResetServiceTest extends CIUnitTestCase
                 'test@example.com',
                 $this->callback(function ($data) {
                     return isset($data['reset_link'])
+                        && str_contains($data['reset_link'], '/reset-password?token=')
                         && str_contains($data['reset_link'], 'token=');
                 })
             );
@@ -138,6 +147,36 @@ class PasswordResetServiceTest extends CIUnitTestCase
         $result = $service->sendResetLink(['email' => 'test@example.com']);
 
         $this->assertSuccessResponse($result);
+    }
+
+    public function testSendResetLinkUsesAllowedClientBaseUrl(): void
+    {
+        putenv('WEBAPP_BASE_URL=https://fallback.example.com');
+        putenv('WEBAPP_ALLOWED_BASE_URLS=https://fallback.example.com,https://admin.example.com');
+
+        $user = $this->createUserEntity([
+            'id' => 1,
+            'email' => 'test@example.com',
+            'status' => 'active',
+        ]);
+
+        $service = $this->createServiceWithUser($user);
+
+        $this->mockEmailService->expects($this->once())
+            ->method('queueTemplate')
+            ->with(
+                'password-reset',
+                'test@example.com',
+                $this->callback(function ($data) {
+                    return isset($data['reset_link'])
+                        && str_starts_with($data['reset_link'], 'https://admin.example.com/reset-password');
+                })
+            );
+
+        $service->sendResetLink([
+            'email' => 'test@example.com',
+            'client_base_url' => 'https://admin.example.com',
+        ]);
     }
 
     public function testSendResetLinkPreventsEmailEnumeration(): void

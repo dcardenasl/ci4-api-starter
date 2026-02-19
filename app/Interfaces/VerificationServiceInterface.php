@@ -17,7 +17,7 @@ interface VerificationServiceInterface
      * @param int $userId
      * @return array<string, mixed>
      */
-    public function sendVerificationEmail(int $userId): array;
+    public function sendVerificationEmail(int $userId, array $data = []): array;
 
     /**
      * Verify email with token

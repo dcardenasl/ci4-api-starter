@@ -12,9 +12,12 @@ use App\Interfaces\PasswordResetServiceInterface;
 use App\Libraries\ApiResponse;
 use App\Models\PasswordResetModel;
 use App\Models\UserModel;
+use App\Traits\ResolvesWebAppLinks;
 
 class PasswordResetService implements PasswordResetServiceInterface
 {
+    use ResolvesWebAppLinks;
+
     public function __construct(
         protected UserModel $userModel,
         protected PasswordResetModel $passwordResetModel,
@@ -70,8 +73,8 @@ class PasswordResetService implements PasswordResetServiceInterface
             ]);
 
             // Build reset link
-            $baseUrl = rtrim(env('app.baseURL', base_url()), '/');
-            $resetLink = "{$baseUrl}/api/v1/auth/reset-password?token={$token}&email=" . urlencode($email);
+            $clientBaseUrl = isset($data['client_base_url']) ? (string) $data['client_base_url'] : null;
+            $resetLink = $this->buildResetPasswordUrl($token, $email, $clientBaseUrl);
 
             // Queue password reset email
             $this->emailService->queueTemplate('password-reset', $email, [

@@ -16,6 +16,13 @@ use OpenApi\Attributes as OA;
             required: ['email'],
             properties: [
                 new OA\Property(property: 'email', type: 'string', format: 'email'),
+                new OA\Property(
+                    property: 'client_base_url',
+                    type: 'string',
+                    format: 'uri',
+                    description: 'Optional client app base URL used to build reset link',
+                    example: 'https://admin.example.com'
+                ),
             ]
         )
     ),

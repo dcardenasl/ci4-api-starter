@@ -720,6 +720,12 @@
                                     "email": {
                                         "type": "string",
                                         "format": "email"
+                                    },
+                                    "client_base_url": {
+                                        "description": "Optional client app base URL used to build reset link",
+                                        "type": "string",
+                                        "format": "uri",
+                                        "example": "https://admin.example.com"
                                     }
                                 },
                                 "type": "object"
@@ -1108,6 +1114,24 @@
                 ],
                 "summary": "Resend verification email",
                 "operationId": "d5a90d02b38dbd87a577c2f4e8fc1154",
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "client_base_url": {
+                                        "description": "Optional client app base URL used to build verification link",
+                                        "type": "string",
+                                        "format": "uri",
+                                        "example": "https://admin.example.com"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
                 "responses": {
                     "200": {
                         "description": "Verification email sent",
@@ -2223,7 +2247,7 @@
                     },
                     "entity_type": {
                         "type": "string",
-                        "example": "user"
+                        "example": "users"
                     },
                     "entity_id": {
                         "type": "integer",
@@ -2612,6 +2636,12 @@
                                     "type": "string",
                                     "format": "password",
                                     "example": "Password123"
+                                },
+                                "client_base_url": {
+                                    "description": "Optional client app base URL used to build verification/reset links",
+                                    "type": "string",
+                                    "format": "uri",
+                                    "example": "https://admin.example.com"
                                 }
                             },
                             "type": "object"
@@ -2660,6 +2690,12 @@
                                     "description": "Send invitation email and allow user to set password",
                                     "type": "boolean",
                                     "example": true
+                                },
+                                "client_base_url": {
+                                    "description": "Optional client app base URL used to build invitation/reset links",
+                                    "type": "string",
+                                    "format": "uri",
+                                    "example": "https://admin.example.com"
                                 }
                             },
                             "type": "object"

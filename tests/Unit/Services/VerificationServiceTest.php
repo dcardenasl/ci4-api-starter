@@ -33,6 +33,14 @@ class VerificationServiceTest extends CIUnitTestCase
         $this->mockEmailService = $this->createMock(EmailServiceInterface::class);
     }
 
+    protected function tearDown(): void
+    {
+        putenv('WEBAPP_BASE_URL');
+        putenv('WEBAPP_ALLOWED_BASE_URLS');
+
+        parent::tearDown();
+    }
+
     /**
      * Create service with mocked user model
      */
@@ -118,6 +126,7 @@ class VerificationServiceTest extends CIUnitTestCase
                 'test@example.com',
                 $this->callback(function ($data) {
                     return isset($data['verification_link'])
+                        && str_contains($data['verification_link'], '/verify-email?token=')
                         && str_contains($data['verification_link'], 'token=');
                 })
             );
@@ -125,6 +134,37 @@ class VerificationServiceTest extends CIUnitTestCase
         $result = $service->sendVerificationEmail(1);
 
         $this->assertSuccessResponse($result);
+    }
+
+    public function testSendVerificationEmailUsesAllowedClientBaseUrl(): void
+    {
+        putenv('WEBAPP_BASE_URL=https://fallback.example.com');
+        putenv('WEBAPP_ALLOWED_BASE_URLS=https://fallback.example.com,https://admin.example.com');
+
+        $user = $this->createUserEntity([
+            'id' => 1,
+            'email' => 'test@example.com',
+            'first_name' => 'Test',
+            'last_name' => 'User',
+            'email_verified_at' => null,
+        ]);
+
+        $service = $this->createServiceWithUser($user);
+
+        $this->mockEmailService->expects($this->once())
+            ->method('queueTemplate')
+            ->with(
+                'verification',
+                'test@example.com',
+                $this->callback(function ($data) {
+                    return isset($data['verification_link'])
+                        && str_starts_with($data['verification_link'], 'https://admin.example.com/verify-email');
+                })
+            );
+
+        $service->sendVerificationEmail(1, [
+            'client_base_url' => 'https://admin.example.com',
+        ]);
     }
 
     public function testSendVerificationEmailThrowsForAlreadyVerified(): void

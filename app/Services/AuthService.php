@@ -208,7 +208,9 @@ class AuthService implements AuthServiceInterface
 
         // Send verification email (don't fail registration if email fails)
         try {
-            $this->verificationService->sendVerificationEmail((int) $userId);
+            $this->verificationService->sendVerificationEmail((int) $userId, [
+                'client_base_url' => $data['client_base_url'] ?? null,
+            ]);
         } catch (\Throwable $e) {
             // Log error but don't fail registration
             log_message('error', 'Failed to send verification email: ' . $e->getMessage());

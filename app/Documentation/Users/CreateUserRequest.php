@@ -57,6 +57,13 @@ use OpenApi\Attributes as OA;
                 description: 'Send invitation email and allow user to set password',
                 example: true
             ),
+            new OA\Property(
+                property: 'client_base_url',
+                type: 'string',
+                format: 'uri',
+                description: 'Optional client app base URL used to build invitation/reset links',
+                example: 'https://admin.example.com'
+            ),
         ]
     )
 )]

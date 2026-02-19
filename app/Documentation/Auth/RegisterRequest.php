@@ -45,6 +45,13 @@ use OpenApi\Attributes as OA;
                 description: 'Password - Minimum 8 characters, must contain uppercase, lowercase, and number',
                 example: 'Password123'
             ),
+            new OA\Property(
+                property: 'client_base_url',
+                type: 'string',
+                format: 'uri',
+                description: 'Optional client app base URL used to build verification/reset links',
+                example: 'https://admin.example.com'
+            ),
         ]
     )
 )]

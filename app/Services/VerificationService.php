@@ -11,10 +11,13 @@ use App\Interfaces\EmailServiceInterface;
 use App\Interfaces\VerificationServiceInterface;
 use App\Libraries\ApiResponse;
 use App\Models\UserModel;
+use App\Traits\ResolvesWebAppLinks;
 use CodeIgniter\I18n\Time;
 
 class VerificationService implements VerificationServiceInterface
 {
+    use ResolvesWebAppLinks;
+
     public function __construct(
         protected UserModel $userModel,
         protected EmailServiceInterface $emailService
@@ -27,7 +30,7 @@ class VerificationService implements VerificationServiceInterface
      * @param int $userId
      * @return array<string, mixed>
      */
-    public function sendVerificationEmail(int $userId): array
+    public function sendVerificationEmail(int $userId, array $data = []): array
     {
         $user = $this->userModel->find($userId);
 
@@ -51,8 +54,8 @@ class VerificationService implements VerificationServiceInterface
         ]);
 
         // Build verification link
-        $baseUrl = rtrim(env('app.baseURL', base_url()), '/');
-        $verificationLink = "{$baseUrl}/api/v1/auth/verify-email?token={$token}";
+        $clientBaseUrl = isset($data['client_base_url']) ? (string) $data['client_base_url'] : null;
+        $verificationLink = $this->buildVerificationUrl($token, $clientBaseUrl);
 
         // Queue verification email
         $displayName = 'User';
@@ -149,6 +152,6 @@ class VerificationService implements VerificationServiceInterface
         }
 
         // Send new verification email
-        return $this->sendVerificationEmail($userId);
+        return $this->sendVerificationEmail($userId, $data);
     }
 }

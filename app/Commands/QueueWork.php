@@ -49,10 +49,11 @@ class QueueWork extends BaseCommand
      * @var array<string, string>
      */
     protected $options = [
-        '--queue' => 'The queue to process (default: default)',
-        '--once' => 'Process a single job and exit',
-        '--sleep' => 'Seconds to sleep between iterations (default: 3)',
-        '--max-jobs' => 'Maximum number of jobs to process (0 = unlimited)',
+        '--queue'     => 'The queue to process (default: default)',
+        '--once'      => 'Process a single job and exit',
+        '--sleep'     => 'Seconds to sleep between iterations (default: 3)',
+        '--max-jobs'  => 'Maximum number of jobs to process (0 = unlimited)',
+        '--job-delay' => 'Seconds to wait between each processed job (default: 0)',
     ];
 
     /**
@@ -63,10 +64,15 @@ class QueueWork extends BaseCommand
      */
     public function run(array $params)
     {
-        $queue = CLI::getOption('queue') ?? 'default';
-        $once = CLI::getOption('once') !== null;
-        $sleep = (int) (CLI::getOption('sleep') ?? 3);
-        $maxJobs = (int) (CLI::getOption('max-jobs') ?? 0);
+        // CI4's CLI parser does not support --option=value format; it stores
+        // the entire "option=value" string as the key. We resolve both formats:
+        // --queue logs  (space, parsed natively)
+        // --queue=logs  (equals, parsed manually)
+        $queue    = $this->resolveOption('queue', 'default');
+        $once     = CLI::getOption('once') !== null || $this->resolveOption('once') !== null;
+        $sleep    = (int) $this->resolveOption('sleep', '3');
+        $maxJobs  = (int) $this->resolveOption('max-jobs', '0');
+        $jobDelay = (int) $this->resolveOption('job-delay', '0');
 
         $queueManager = new QueueManager();
         $processedJobs = 0;
@@ -75,8 +81,8 @@ class QueueWork extends BaseCommand
 
         if ($once) {
             CLI::write('Processing single job...', 'yellow');
-            $queueManager->process($queue);
-            CLI::write('Job processed', 'green');
+            $processed = $queueManager->process($queue);
+            CLI::write($processed ? 'Job processed' : 'No pending jobs found', $processed ? 'green' : 'yellow');
             return;
         }
 
@@ -103,6 +109,10 @@ class QueueWork extends BaseCommand
                         date('Y-m-d H:i:s'),
                         $processedJobs
                     ), 'green');
+
+                    if ($jobDelay > 0) {
+                        sleep($jobDelay);
+                    }
 
                     // Check if we've reached max jobs
                     if ($maxJobs > 0 && $processedJobs >= $maxJobs) {
@@ -137,5 +147,34 @@ class QueueWork extends BaseCommand
         }
 
         CLI::write('Queue worker stopped', 'green');
+    }
+
+    /**
+     * Resolve a CLI option supporting both formats:
+     *   --option value   (CI4 native)
+     *   --option=value   (not supported by CI4's CLI parser natively)
+     *
+     * @param string $name    Option name (without --)
+     * @param string|null $default
+     * @return string|null
+     */
+    private function resolveOption(string $name, ?string $default = null): ?string
+    {
+        $value = CLI::getOption($name);
+
+        if ($value === null || $value === true) {
+            // CI4 stores "--name=value" as the key "name=value" with a null value.
+            foreach (CLI::getOptions() as $key => $val) {
+                if (str_starts_with($key, "{$name}=")) {
+                    return substr($key, strlen($name) + 1);
+                }
+            }
+        }
+
+        if ($value === true) {
+            return null;
+        }
+
+        return $value ?? $default;
     }
 }

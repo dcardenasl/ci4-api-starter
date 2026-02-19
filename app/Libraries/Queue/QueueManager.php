@@ -85,17 +85,19 @@ class QueueManager
      * Process jobs from the queue
      *
      * @param string $queue Queue name
-     * @return void
+     * @return bool True if a job was processed, false if no job was found
      */
-    public function process(string $queue = 'default'): void
+    public function process(string $queue = 'default'): bool
     {
         $job = $this->getNextJob($queue);
 
         if (! $job) {
-            return;
+            return false;
         }
 
         $this->processJob($job);
+
+        return true;
     }
 
     /**

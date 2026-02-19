@@ -90,6 +90,35 @@ class UserControllerTest extends CIUnitTestCase
         $deleteResult->assertStatus(200);
     }
 
+    public function testAdminCreateUserIsLoggedInAudit(): void
+    {
+        $adminEmail = 'admin-audit-users@example.com';
+        $adminPassword = 'ValidPass123!';
+        $this->createUser($adminEmail, $adminPassword, 'admin');
+
+        $token = $this->loginAndGetToken($adminEmail, $adminPassword);
+
+        $createResult = $this->withHeaders([
+            'Authorization' => "Bearer {$token}",
+        ])->withBodyFormat('json')->post('/api/v1/users', [
+            'email' => 'audit-created@example.com',
+            'role' => 'user',
+        ]);
+
+        $createResult->assertStatus(201);
+        $createJson = json_decode($createResult->getJSON(), true);
+        $createdId = (int) ($createJson['data']['id'] ?? 0);
+        $this->assertGreaterThan(0, $createdId);
+
+        $auditCount = $this->db->table('audit_logs')
+            ->where('entity_type', 'users')
+            ->where('entity_id', $createdId)
+            ->where('action', 'create')
+            ->countAllResults();
+
+        $this->assertGreaterThan(0, $auditCount);
+    }
+
     public function testNonAdminCannotCreateUser(): void
     {
         $email = 'non-admin@example.com';

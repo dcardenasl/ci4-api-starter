@@ -47,7 +47,7 @@ class AuditServiceTest extends CIUnitTestCase
             ->method('insert')
             ->with($this->callback(function ($data) {
                 return $data['action'] === 'create'
-                    && $data['entity_type'] === 'user'
+                    && $data['entity_type'] === 'users'
                     && $data['entity_id'] === 1
                     && $data['user_id'] === 99
                     && $data['ip_address'] === '127.0.0.1';
@@ -55,7 +55,7 @@ class AuditServiceTest extends CIUnitTestCase
 
         $this->service->log(
             'create',
-            'user',
+            'users',
             1,
             [],
             ['email' => 'newuser@example.com'],
@@ -79,7 +79,7 @@ class AuditServiceTest extends CIUnitTestCase
 
         $this->service->log(
             'update',
-            'user',
+            'users',
             1,
             $oldValues,
             $newValues,
@@ -126,7 +126,7 @@ class AuditServiceTest extends CIUnitTestCase
 
         $this->service->log(
             'update',
-            'user',
+            'users',
             1,
             $oldValues,
             $newValues,
@@ -150,7 +150,7 @@ class AuditServiceTest extends CIUnitTestCase
                     && $data['new_values'] === json_encode($newData);
             }));
 
-        $this->service->logCreate('user', 1, $newData, 99, $this->mockRequest);
+        $this->service->logCreate('users', 1, $newData, 99, $this->mockRequest);
     }
 
     // ==================== LOG UPDATE TESTS ====================
@@ -165,7 +165,7 @@ class AuditServiceTest extends CIUnitTestCase
             ->expects($this->never())
             ->method('insert');
 
-        $this->service->logUpdate('user', 1, $oldValues, $newValues, 99, $this->mockRequest);
+        $this->service->logUpdate('users', 1, $oldValues, $newValues, 99, $this->mockRequest);
     }
 
     public function testLogUpdateLogsWhenValuesAreDifferent(): void
@@ -180,7 +180,7 @@ class AuditServiceTest extends CIUnitTestCase
                 return $data['action'] === 'update';
             }));
 
-        $this->service->logUpdate('user', 1, $oldValues, $newValues, 99, $this->mockRequest);
+        $this->service->logUpdate('users', 1, $oldValues, $newValues, 99, $this->mockRequest);
     }
 
     public function testLogUpdateDoesNotLogWhenOnlySensitiveValuesChanged(): void
@@ -200,7 +200,7 @@ class AuditServiceTest extends CIUnitTestCase
             ->expects($this->never())
             ->method('insert');
 
-        $this->service->logUpdate('user', 1, $oldValues, $newValues, 99, $this->mockRequest);
+        $this->service->logUpdate('users', 1, $oldValues, $newValues, 99, $this->mockRequest);
     }
 
     // ==================== LOG DELETE TESTS ====================
@@ -218,7 +218,7 @@ class AuditServiceTest extends CIUnitTestCase
                     && $data['new_values'] === null;
             }));
 
-        $this->service->logDelete('user', 1, $oldData, 99, $this->mockRequest);
+        $this->service->logDelete('users', 1, $oldData, 99, $this->mockRequest);
     }
 
     // ==================== SHOW TESTS ====================
@@ -229,7 +229,7 @@ class AuditServiceTest extends CIUnitTestCase
             'id' => 1,
             'user_id' => 99,
             'action' => 'create',
-            'entity_type' => 'user',
+            'entity_type' => 'users',
             'entity_id' => 1,
             'old_values' => null,
             'new_values' => '{"first_name":"Test"}',
@@ -278,7 +278,7 @@ class AuditServiceTest extends CIUnitTestCase
                 'id' => 1,
                 'user_id' => 99,
                 'action' => 'create',
-                'entity_type' => 'user',
+                'entity_type' => 'users',
                 'entity_id' => 5,
                 'old_values' => null,
                 'new_values' => '{"test":"data"}',
@@ -290,7 +290,7 @@ class AuditServiceTest extends CIUnitTestCase
                 'id' => 2,
                 'user_id' => 99,
                 'action' => 'update',
-                'entity_type' => 'user',
+                'entity_type' => 'users',
                 'entity_id' => 5,
                 'old_values' => '{"old":"value"}',
                 'new_values' => '{"new":"value"}',
@@ -303,11 +303,11 @@ class AuditServiceTest extends CIUnitTestCase
         $this->mockAuditLogModel
             ->expects($this->once())
             ->method('getByEntity')
-            ->with('user', 5)
+            ->with('users', 5)
             ->willReturn($logs);
 
         $result = $this->service->byEntity([
-            'entity_type' => 'user',
+            'entity_type' => 'users',
             'entity_id' => 5,
         ]);
 
@@ -315,11 +315,28 @@ class AuditServiceTest extends CIUnitTestCase
         $this->assertCount(2, $result['data']);
     }
 
+    public function testByEntityNormalizesSingularEntityType(): void
+    {
+        $this->mockAuditLogModel
+            ->expects($this->once())
+            ->method('getByEntity')
+            ->with('users', 5)
+            ->willReturn([]);
+
+        $result = $this->service->byEntity([
+            'entity_type' => 'user',
+            'entity_id' => 5,
+        ]);
+
+        $this->assertSuccessResponse($result);
+        $this->assertSame([], $result['data']);
+    }
+
     public function testByEntityWithMissingParamsThrowsException(): void
     {
         $this->expectException(BadRequestException::class);
 
-        $this->service->byEntity(['entity_type' => 'user']);
+        $this->service->byEntity(['entity_type' => 'users']);
     }
 
     // ==================== HELPER METHODS ====================

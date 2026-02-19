@@ -68,9 +68,30 @@ class AuditControllerTest extends CIUnitTestCase
 
         $entityResult = $this->withHeaders([
             'Authorization' => "Bearer {$token}",
+        ])->get("/api/v1/audit/entity/users/{$adminId}");
+
+        $entityResult->assertStatus(200);
+    }
+
+    public function testAuditByEntityAcceptsSingularAlias(): void
+    {
+        $email = 'audit-admin-alias@example.com';
+        $password = 'ValidPass123!';
+        $adminId = $this->createUser($email, $password, 'admin');
+
+        $this->createAuditLog($adminId);
+
+        $token = $this->loginAndGetToken($email, $password);
+
+        $entityResult = $this->withHeaders([
+            'Authorization' => "Bearer {$token}",
         ])->get("/api/v1/audit/entity/user/{$adminId}");
 
         $entityResult->assertStatus(200);
+
+        $json = json_decode($entityResult->getJSON(), true);
+        $this->assertEquals('success', $json['status'] ?? null);
+        $this->assertNotEmpty($json['data'] ?? []);
     }
 
     private function createAuditLog(int $userId): int
@@ -78,7 +99,7 @@ class AuditControllerTest extends CIUnitTestCase
         return (int) $this->auditLogModel->insert([
             'user_id' => $userId,
             'action' => 'create',
-            'entity_type' => 'user',
+            'entity_type' => 'users',
             'entity_id' => $userId,
             'old_values' => null,
             'new_values' => json_encode(['email' => 'audit@example.com']),

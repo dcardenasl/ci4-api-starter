@@ -141,7 +141,11 @@ Detailed flow diagrams explaining how specific features work:
 
 | Flow | Description | Files |
 |------|-------------|-------|
-| [FILE-UPLOAD-FLOW.md](flows/FILE-UPLOAD-FLOW.md) / [.es.md](flows/FILE-UPLOAD-FLOW.es.md) | File upload/download system flow | 2.3KB |
+| [FILE-UPLOAD-FLOW.md](flows/FILE-UPLOAD-FLOW.md) / [.es.md](flows/FILE-UPLOAD-FLOW.es.md) | File upload/download system flow | 2 |
+| [AUTH-LOGIN-FLOW.md](flows/AUTH-LOGIN-FLOW.md) / [.es.md](flows/AUTH-LOGIN-FLOW.es.md) | Full authentication with JWT token generation | 2 |
+| [REGISTER-APPROVAL-FLOW.md](flows/REGISTER-APPROVAL-FLOW.md) / [.es.md](flows/REGISTER-APPROVAL-FLOW.es.md) | Self-registration + admin approval state machine | 2 |
+| [PASSWORD-RESET-FLOW.md](flows/PASSWORD-RESET-FLOW.md) / [.es.md](flows/PASSWORD-RESET-FLOW.es.md) | 3-step password reset with frontend redirect | 2 |
+| [EMAIL-VERIFICATION-FLOW.md](flows/EMAIL-VERIFICATION-FLOW.md) / [.es.md](flows/EMAIL-VERIFICATION-FLOW.es.md) | Email verification with allowlisted frontend links | 2 |
 
 Flow diagrams include:
 - Sequence diagrams showing request/response
@@ -257,7 +261,7 @@ When adding new features:
 | AI Agent Docs | 1 | ~600 | Optimized quick reference (EN only) |
 | Architecture Docs | 28 | ~5,400 | Topic-based learning (EN + ES) |
 | Feature Docs | 31 | ~15K | Detailed feature docs (EN + ES) |
-| Flow Diagrams | 2 | ~2.3K | Sequence diagrams (EN + ES) |
+| Flow Diagrams | 10 | ~2.3K+ | Sequence diagrams (EN + ES) |
 | Feature Plans | 1 | ~5.4K | Implementation plans |
 | Playbooks | 2 | ~8K | Implementation checklists (EN + ES) |
 
@@ -275,6 +279,10 @@ When adding new features:
 | **Understand architecture** | [`architecture/OVERVIEW.md`](architecture/OVERVIEW.md) |
 | **Add a CRUD resource** | [`architecture/EXTENSION_GUIDE.md`](architecture/EXTENSION_GUIDE.md) |
 | **Understand file upload** | [`flows/FILE-UPLOAD-FLOW.md`](flows/FILE-UPLOAD-FLOW.md) |
+| **Understand authentication** | [`flows/AUTH-LOGIN-FLOW.md`](flows/AUTH-LOGIN-FLOW.md) |
+| **Understand registration & approval** | [`flows/REGISTER-APPROVAL-FLOW.md`](flows/REGISTER-APPROVAL-FLOW.md) |
+| **Understand password reset** | [`flows/PASSWORD-RESET-FLOW.md`](flows/PASSWORD-RESET-FLOW.md) |
+| **Understand email verification** | [`flows/EMAIL-VERIFICATION-FLOW.md`](flows/EMAIL-VERIFICATION-FLOW.md) |
 | **Plan a new feature** | [`architecture/EXTENSION_GUIDE.md`](architecture/EXTENSION_GUIDE.md) |
 | **Quick lookup (AI)** | [`AGENT_QUICK_REFERENCE.md`](AGENT_QUICK_REFERENCE.md) |
 | **Feature-specific docs** | [`tech/`](tech/) directory |

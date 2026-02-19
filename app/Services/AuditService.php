@@ -38,6 +38,24 @@ class AuditService implements AuditServiceInterface
         'secret',
         'secret_key',
         'api_key',
+        'key_hash',
+    ];
+
+    /**
+     * Entity aliases accepted by API filters/endpoints.
+     *
+     * @var array<string, string>
+     */
+    private const ENTITY_TYPE_ALIASES = [
+        'user' => 'users',
+        'users' => 'users',
+        'file' => 'files',
+        'files' => 'files',
+        'api-key' => 'api_keys',
+        'api_key' => 'api_keys',
+        'apikey' => 'api_keys',
+        'api-keys' => 'api_keys',
+        'api_keys' => 'api_keys',
     ];
 
     public function __construct(
@@ -162,6 +180,15 @@ class AuditService implements AuditServiceInterface
     {
         $builder = new QueryBuilder($this->auditLogModel);
 
+        if (
+            isset($data['filter'])
+            && is_array($data['filter'])
+            && isset($data['filter']['entity_type'])
+            && is_string($data['filter']['entity_type'])
+        ) {
+            $data['filter']['entity_type'] = $this->normalizeEntityType($data['filter']['entity_type']);
+        }
+
         // Apply filters
         if (!empty($data['filter'])) {
             $builder->filter($data['filter']);
@@ -257,8 +284,10 @@ class AuditService implements AuditServiceInterface
             );
         }
 
+        $entityType = $this->normalizeEntityType((string) $data['entity_type']);
+
         $logs = $this->auditLogModel->getByEntity(
-            $data['entity_type'],
+            $entityType,
             (int) $data['entity_id']
         );
 
@@ -278,6 +307,13 @@ class AuditService implements AuditServiceInterface
         }, $logs);
 
         return ApiResponse::success($logsArray);
+    }
+
+    private function normalizeEntityType(string $entityType): string
+    {
+        $normalized = strtolower(trim($entityType));
+
+        return self::ENTITY_TYPE_ALIASES[$normalized] ?? $normalized;
     }
 
     /**

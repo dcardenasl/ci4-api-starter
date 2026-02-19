@@ -17,7 +17,7 @@ use OpenApi\Attributes as OA;
         new OA\Property(property: 'id', type: 'integer', example: 10),
         new OA\Property(property: 'user_id', type: 'integer', nullable: true, example: 1),
         new OA\Property(property: 'action', type: 'string', example: 'update'),
-        new OA\Property(property: 'entity_type', type: 'string', example: 'user'),
+        new OA\Property(property: 'entity_type', type: 'string', example: 'users'),
         new OA\Property(property: 'entity_id', type: 'integer', nullable: true, example: 5),
         new OA\Property(property: 'old_values', type: 'object', nullable: true),
         new OA\Property(property: 'new_values', type: 'object', nullable: true),

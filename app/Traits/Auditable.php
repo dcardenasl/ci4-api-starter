@@ -2,6 +2,7 @@
 
 namespace App\Traits;
 
+use App\HTTP\ApiRequest;
 use App\Services\AuditService;
 
 /**
@@ -205,9 +206,8 @@ trait Auditable
     {
         $request = \Config\Services::request();
 
-        // Check if userId is set by JwtAuthFilter
-        if (property_exists($request, 'userId')) {
-            return (int) $request->userId;
+        if ($request instanceof ApiRequest) {
+            return $request->getAuthUserId();
         }
 
         return null;

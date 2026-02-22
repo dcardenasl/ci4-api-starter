@@ -34,8 +34,8 @@ $routes->group('', ['namespace' => 'App\Controllers\Api\V1'], function ($routes)
     $routes->get('live', 'HealthController::live');
 });
 
-// API v1 Routes with rate limiting
-$routes->group('api/v1', ['namespace' => 'App\Controllers\Api\V1', 'filter' => 'throttle'], function ($routes) {
+// API v1 Routes
+$routes->group('api/v1', ['namespace' => 'App\Controllers\Api\V1'], function ($routes) {
     // Public authentication routes (with stricter auth-specific rate limiting)
     $routes->group('', ['filter' => 'authThrottle'], function ($routes) {
         $routes->post('auth/login', 'AuthController::login');
@@ -48,57 +48,61 @@ $routes->group('api/v1', ['namespace' => 'App\Controllers\Api\V1', 'filter' => '
     });
 
     // Email verification routes (public, standard rate limiting)
-    $routes->get('auth/verify-email', 'VerificationController::verify');
-    $routes->post('auth/verify-email', 'VerificationController::verify');
-    $routes->get('auth/validate-reset-token', 'PasswordResetController::validateToken');
+    $routes->group('', ['filter' => 'throttle'], function ($routes) {
+        $routes->get('auth/verify-email', 'VerificationController::verify');
+        $routes->post('auth/verify-email', 'VerificationController::verify');
+        $routes->get('auth/validate-reset-token', 'PasswordResetController::validateToken');
+    });
 
     // Protected routes (require JWT authentication)
-    $routes->group('', ['filter' => 'jwtauth'], function ($routes) {
-        // Auth routes
-        $routes->get('auth/me', 'AuthController::me');
+    $routes->group('', ['filter' => 'throttle'], function ($routes) {
+        $routes->group('', ['filter' => 'jwtauth'], function ($routes) {
+            // Auth routes
+            $routes->get('auth/me', 'AuthController::me');
 
-        // Email verification (protected)
-        $routes->post('auth/resend-verification', 'VerificationController::resend');
+            // Email verification (protected)
+            $routes->post('auth/resend-verification', 'VerificationController::resend');
 
-        // Token revocation routes (protected)
-        $routes->post('auth/revoke', 'TokenController::revoke');
-        $routes->post('auth/revoke-all', 'TokenController::revokeAll');
+            // Token revocation routes (protected)
+            $routes->post('auth/revoke', 'TokenController::revoke');
+            $routes->post('auth/revoke-all', 'TokenController::revokeAll');
 
-        // User routes - read-only for all authenticated users
-        $routes->get('users', 'UserController::index');
-        $routes->get('users/(:num)', 'UserController::show/$1');
+            // User routes - read-only for all authenticated users
+            $routes->get('users', 'UserController::index');
+            $routes->get('users/(:num)', 'UserController::show/$1');
 
-        // File routes - all authenticated users
-        $routes->get('files', 'FileController::index');
-        $routes->post('files/upload', 'FileController::upload');
-        $routes->get('files/(:num)', 'FileController::show/$1');
-        $routes->delete('files/(:num)', 'FileController::delete/$1');
+            // File routes - all authenticated users
+            $routes->get('files', 'FileController::index');
+            $routes->post('files/upload', 'FileController::upload');
+            $routes->get('files/(:num)', 'FileController::show/$1');
+            $routes->delete('files/(:num)', 'FileController::delete/$1');
 
-        // User routes - admin only (create, update, delete)
-        $routes->group('', ['filter' => 'roleauth:admin'], function ($routes) {
-            $routes->post('users', 'UserController::create');
-            $routes->put('users/(:num)', 'UserController::update/$1');
-            $routes->delete('users/(:num)', 'UserController::delete/$1');
-            $routes->post('users/(:num)/approve', 'UserController::approve/$1');
+            // User routes - admin only (create, update, delete)
+            $routes->group('', ['filter' => 'roleauth:admin'], function ($routes) {
+                $routes->post('users', 'UserController::create');
+                $routes->put('users/(:num)', 'UserController::update/$1');
+                $routes->delete('users/(:num)', 'UserController::delete/$1');
+                $routes->post('users/(:num)/approve', 'UserController::approve/$1');
 
-            // API key management (admin only)
-            $routes->get('api-keys', 'ApiKeyController::index');
-            $routes->post('api-keys', 'ApiKeyController::create');
-            $routes->get('api-keys/(:num)', 'ApiKeyController::show/$1');
-            $routes->put('api-keys/(:num)', 'ApiKeyController::update/$1');
-            $routes->delete('api-keys/(:num)', 'ApiKeyController::delete/$1');
+                // API key management (admin only)
+                $routes->get('api-keys', 'ApiKeyController::index');
+                $routes->post('api-keys', 'ApiKeyController::create');
+                $routes->get('api-keys/(:num)', 'ApiKeyController::show/$1');
+                $routes->put('api-keys/(:num)', 'ApiKeyController::update/$1');
+                $routes->delete('api-keys/(:num)', 'ApiKeyController::delete/$1');
 
-            // Metrics endpoints (admin only)
-            $routes->get('metrics', 'MetricsController::index');
-            $routes->get('metrics/requests', 'MetricsController::requests');
-            $routes->get('metrics/slow-requests', 'MetricsController::slowRequests');
-            $routes->get('metrics/custom/(:segment)', 'MetricsController::custom/$1');
-            $routes->post('metrics/record', 'MetricsController::record');
+                // Metrics endpoints (admin only)
+                $routes->get('metrics', 'MetricsController::index');
+                $routes->get('metrics/requests', 'MetricsController::requests');
+                $routes->get('metrics/slow-requests', 'MetricsController::slowRequests');
+                $routes->get('metrics/custom/(:segment)', 'MetricsController::custom/$1');
+                $routes->post('metrics/record', 'MetricsController::record');
 
-            // Audit endpoints (admin only)
-            $routes->get('audit', 'AuditController::index');
-            $routes->get('audit/(:num)', 'AuditController::show/$1');
-            $routes->get('audit/entity/(:segment)/(:num)', 'AuditController::byEntity/$1/$2');
+                // Audit endpoints (admin only)
+                $routes->get('audit', 'AuditController::index');
+                $routes->get('audit/(:num)', 'AuditController::show/$1');
+                $routes->get('audit/entity/(:segment)/(:num)', 'AuditController::byEntity/$1/$2');
+            });
         });
     });
 });

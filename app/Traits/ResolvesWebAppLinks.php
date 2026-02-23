@@ -47,7 +47,7 @@ trait ResolvesWebAppLinks
 
     protected function resolveFallbackBaseUrl(): string
     {
-        $configured = trim((string) env('WEBAPP_BASE_URL', ''));
+        $configured = $this->resolveRuntimeEnvValue('WEBAPP_BASE_URL');
         if ($configured !== '') {
             $normalized = $this->normalizeBaseUrl($configured);
             if ($normalized !== null) {
@@ -66,7 +66,7 @@ trait ResolvesWebAppLinks
      */
     protected function resolveAllowedBaseUrls(string $fallback): array
     {
-        $raw = trim((string) env('WEBAPP_ALLOWED_BASE_URLS', ''));
+        $raw = $this->resolveRuntimeEnvValue('WEBAPP_ALLOWED_BASE_URLS');
         $values = $raw === '' ? [] : explode(',', $raw);
 
         $allowed = [];
@@ -126,5 +126,15 @@ trait ResolvesWebAppLinks
         }
 
         return "{$scheme}://{$host}{$port}{$path}";
+    }
+
+    private function resolveRuntimeEnvValue(string $key): string
+    {
+        $runtime = getenv($key);
+        if (is_string($runtime)) {
+            return trim($runtime);
+        }
+
+        return trim((string) env($key, ''));
     }
 }

@@ -130,6 +130,7 @@ class RoleAuthorizationFilterTest extends CIUnitTestCase
     {
         // Test the hierarchical role system explicitly
         $adminRequest = $this->createMockRequest('admin');
+        $superadminRequest = $this->createMockRequest('superadmin');
         $userRequest = $this->createMockRequest('user');
 
         // Admin (10) can access user routes (0)
@@ -137,6 +138,12 @@ class RoleAuthorizationFilterTest extends CIUnitTestCase
 
         // Admin (10) can access admin routes (10)
         $this->assertNull($this->filter->before($adminRequest, ['admin']));
+
+        // Superadmin (100) can access admin routes (10)
+        $this->assertNull($this->filter->before($superadminRequest, ['admin']));
+
+        // Superadmin (100) can access superadmin routes (100)
+        $this->assertNull($this->filter->before($superadminRequest, ['superadmin']));
 
         // User (0) can access user routes (0)
         $this->assertNull($this->filter->before($userRequest, ['user']));

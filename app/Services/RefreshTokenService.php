@@ -6,13 +6,13 @@ namespace App\Services;
 
 use App\Exceptions\AuthenticationException;
 use App\Exceptions\AuthorizationException;
-use App\Exceptions\BadRequestException;
 use App\Exceptions\NotFoundException;
 use App\Interfaces\JwtServiceInterface;
 use App\Interfaces\RefreshTokenServiceInterface;
 use App\Libraries\ApiResponse;
 use App\Models\RefreshTokenModel;
 use App\Models\UserModel;
+use App\Traits\ValidatesRequiredFields;
 
 /**
  * Refresh Token Service
@@ -21,11 +21,15 @@ use App\Models\UserModel;
  */
 class RefreshTokenService implements RefreshTokenServiceInterface
 {
+    use ValidatesRequiredFields;
+
     public function __construct(
         protected RefreshTokenModel $refreshTokenModel,
         protected JwtServiceInterface $jwtService,
-        protected UserModel $userModel
+        protected UserModel $userModel,
+        protected ?UserAccessPolicyService $userAccessPolicy = null
     ) {
+        $this->userAccessPolicy ??= \Config\Services::userAccessPolicyService();
     }
 
     /**
@@ -66,12 +70,9 @@ class RefreshTokenService implements RefreshTokenServiceInterface
      */
     public function refreshAccessToken(array $data): array
     {
-        if (empty($data['refresh_token'])) {
-            throw new BadRequestException(
-                lang('Tokens.invalidRequest'),
-                ['refresh_token' => lang('Tokens.refreshTokenRequired')]
-            );
-        }
+        $this->validateRequiredFields($data, [
+            'refresh_token' => lang('Tokens.refreshTokenRequired'),
+        ], lang('Tokens.invalidRequest'));
 
         $refreshToken = $data['refresh_token'];
         $db = \Config\Database::connect();
@@ -114,25 +115,11 @@ class RefreshTokenService implements RefreshTokenServiceInterface
             throw new AuthenticationException(lang('Tokens.userNotFound'));
         }
 
-        if (($user->status ?? null) !== 'active') {
+        try {
+            $this->userAccessPolicy->assertCanAuthenticate($user);
+        } catch (AuthenticationException | AuthorizationException $e) {
             $db->transRollback();
-            throw new AuthorizationException(
-                'Account pending approval',
-                ['status' => lang('Auth.accountPendingApproval')]
-            );
-        }
-
-        $isGoogleOAuth = ($user->oauth_provider ?? null) === 'google';
-        if (
-            is_email_verification_required()
-            && $user->email_verified_at === null
-            && ! $isGoogleOAuth
-        ) {
-            $db->transRollback();
-            throw new AuthenticationException(
-                'Email not verified',
-                ['email' => lang('Auth.emailNotVerified')]
-            );
+            throw $e;
         }
 
         $accessToken = $this->jwtService->encode((int) $user->id, $user->role);
@@ -155,12 +142,9 @@ class RefreshTokenService implements RefreshTokenServiceInterface
      */
     public function revoke(array $data): array
     {
-        if (empty($data['refresh_token'])) {
-            throw new BadRequestException(
-                lang('Tokens.invalidRequest'),
-                ['refresh_token' => lang('Tokens.refreshTokenRequired')]
-            );
-        }
+        $this->validateRequiredFields($data, [
+            'refresh_token' => lang('Tokens.refreshTokenRequired'),
+        ], lang('Tokens.invalidRequest'));
 
         $revoked = $this->refreshTokenModel->revokeToken($data['refresh_token']);
 

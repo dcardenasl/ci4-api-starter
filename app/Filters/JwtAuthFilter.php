@@ -6,6 +6,7 @@ namespace App\Filters;
 
 use App\HTTP\ApiRequest;
 use App\Libraries\ApiResponse;
+use App\Services\UserAccessPolicyService;
 use CodeIgniter\Filters\FilterInterface;
 use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
@@ -17,6 +18,8 @@ class JwtAuthFilter implements FilterInterface
     {
         // Use service container instead of direct instantiation
         $jwtService = Services::jwtService();
+        $bearerTokenService = Services::bearerTokenService();
+        $userAccessPolicy = Services::userAccessPolicyService();
 
         $authHeader = $request->getHeaderLine('Authorization');
 
@@ -24,11 +27,10 @@ class JwtAuthFilter implements FilterInterface
             return $this->unauthorized(lang('Auth.headerMissing'));
         }
 
-        if (!preg_match('/Bearer\s+(.*)$/i', $authHeader, $matches)) {
+        $token = $bearerTokenService->extractFromHeader($authHeader);
+        if ($token === null) {
             return $this->unauthorized(lang('Auth.invalidFormat'));
         }
-
-        $token = $matches[1];
 
         // Decode token once (optimization - prevents double decoding)
         $decoded = $jwtService->decode($token);
@@ -60,17 +62,9 @@ class JwtAuthFilter implements FilterInterface
                 return $this->unauthorized(lang('Auth.invalidToken'));
             }
 
-            if (($user->status ?? null) !== 'active') {
-                return $this->forbidden(lang('Auth.accountPendingApproval'));
-            }
-
-            $isGoogleOAuth = ($user->oauth_provider ?? null) === 'google';
-            if (
-                is_email_verification_required()
-                && $user->email_verified_at === null
-                && ! $isGoogleOAuth
-            ) {
-                return $this->unauthorized(lang('Auth.emailNotVerified'));
+            $policyViolation = $this->checkAccessPolicyViolation($userAccessPolicy, $user);
+            if ($policyViolation !== null) {
+                return $policyViolation;
             }
         }
 
@@ -103,6 +97,28 @@ class JwtAuthFilter implements FilterInterface
         return Services::response()
             ->setJSON(ApiResponse::forbidden($message))
             ->setStatusCode(403);
+    }
+
+    private function checkAccessPolicyViolation(UserAccessPolicyService $policy, object $user): ?ResponseInterface
+    {
+        try {
+            $policy->assertCanAuthenticate($user);
+            return null;
+        } catch (\App\Exceptions\AuthorizationException $e) {
+            return $this->forbidden($this->resolveExceptionMessage($e));
+        } catch (\App\Exceptions\AuthenticationException $e) {
+            return $this->unauthorized($this->resolveExceptionMessage($e));
+        }
+    }
+
+    private function resolveExceptionMessage(\App\Exceptions\ApiException $e): string
+    {
+        $errors = $e->getErrors();
+        $firstError = reset($errors);
+
+        return is_string($firstError) && $firstError !== ''
+            ? $firstError
+            : $e->getMessage();
     }
 
     public function after(RequestInterface $request, ResponseInterface $response, $arguments = null)

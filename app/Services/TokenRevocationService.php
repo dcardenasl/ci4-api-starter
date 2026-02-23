@@ -11,6 +11,7 @@ use App\Interfaces\TokenRevocationServiceInterface;
 use App\Libraries\ApiResponse;
 use App\Models\RefreshTokenModel;
 use App\Models\TokenBlacklistModel;
+use App\Traits\ValidatesRequiredFields;
 use CodeIgniter\Cache\CacheInterface;
 
 /**
@@ -20,14 +21,18 @@ use CodeIgniter\Cache\CacheInterface;
  */
 class TokenRevocationService implements TokenRevocationServiceInterface
 {
+    use ValidatesRequiredFields;
+
     public function __construct(
         protected TokenBlacklistModel $blacklistModel,
         protected RefreshTokenModel $refreshTokenModel,
         protected JwtServiceInterface $jwtService,
-        protected ?CacheInterface $cache = null
+        protected ?CacheInterface $cache = null,
+        protected ?BearerTokenService $bearerTokenService = null
     ) {
         // Use injected cache or get from Services
         $this->cache = $cache ?? \Config\Services::cache();
+        $this->bearerTokenService ??= \Config\Services::bearerTokenService();
     }
 
     /**
@@ -67,25 +72,17 @@ class TokenRevocationService implements TokenRevocationServiceInterface
      */
     public function revokeAccessToken(array $data): array
     {
-        // Validar header presente
-        if (empty($data['authorization_header'])) {
+        $this->validateRequiredFields($data, [
+            'authorization_header' => lang('Tokens.authorizationHeaderRequired'),
+        ], lang('Tokens.invalidRequest'));
+
+        $token = $this->bearerTokenService->extractFromHeader((string) $data['authorization_header']);
+        if ($token === null) {
             throw new BadRequestException(
                 lang('Tokens.invalidRequest'),
-                ['authorization' => lang('Tokens.authorizationHeaderRequired')]
+                ['authorization_header' => lang('Tokens.invalidAuthorizationFormat')]
             );
         }
-
-        $header = $data['authorization_header'];
-
-        // Parsear Bearer token
-        if (!preg_match('/Bearer\s+(.*)$/i', $header, $matches)) {
-            throw new BadRequestException(
-                lang('Tokens.invalidRequest'),
-                ['authorization' => lang('Tokens.invalidAuthorizationFormat')]
-            );
-        }
-
-        $token = $matches[1];
 
         // Decodificar y validar JWT
         $payload = $this->jwtService->decode($token);

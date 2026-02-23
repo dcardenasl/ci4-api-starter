@@ -98,8 +98,43 @@ class Services extends BaseService
             new \App\Models\UserModel(),
             static::jwtService(),
             static::refreshTokenService(),
-            static::verificationService()
+            static::verificationService(),
+            static::userAccessPolicyService()
         );
+    }
+
+    /**
+     * User Access Policy Service
+     *
+     * Centralizes account-state checks for authentication flows.
+     *
+     * @param bool $getShared
+     * @return \App\Services\UserAccessPolicyService
+     */
+    public static function userAccessPolicyService(bool $getShared = true)
+    {
+        if ($getShared) {
+            return static::getSharedInstance('userAccessPolicyService');
+        }
+
+        return new \App\Services\UserAccessPolicyService();
+    }
+
+    /**
+     * Bearer Token Service
+     *
+     * Shared helper to parse Authorization Bearer tokens.
+     *
+     * @param bool $getShared
+     * @return \App\Services\BearerTokenService
+     */
+    public static function bearerTokenService(bool $getShared = true)
+    {
+        if ($getShared) {
+            return static::getSharedInstance('bearerTokenService');
+        }
+
+        return new \App\Services\BearerTokenService();
     }
 
     /**
@@ -190,7 +225,8 @@ class Services extends BaseService
         return new \App\Services\PasswordResetService(
             new \App\Models\UserModel(),
             new \App\Models\PasswordResetModel(),
-            static::emailService()
+            static::emailService(),
+            static::refreshTokenService()
         );
     }
 
@@ -212,7 +248,8 @@ class Services extends BaseService
             new \App\Models\TokenBlacklistModel(),
             new \App\Models\RefreshTokenModel(),
             static::jwtService(),
-            static::cache()
+            static::cache(),
+            static::bearerTokenService()
         );
     }
 
@@ -233,7 +270,8 @@ class Services extends BaseService
         return new \App\Services\RefreshTokenService(
             new \App\Models\RefreshTokenModel(),
             static::jwtService(),
-            new \App\Models\UserModel()
+            new \App\Models\UserModel(),
+            static::userAccessPolicyService()
         );
     }
 

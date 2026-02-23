@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Exceptions\AuthenticationException;
-use App\Exceptions\AuthorizationException;
 use App\Exceptions\BadRequestException;
 use App\Exceptions\ValidationException;
 use App\Interfaces\AuthServiceInterface;
@@ -27,8 +26,10 @@ class AuthService implements AuthServiceInterface
         protected UserModel $userModel,
         protected JwtServiceInterface $jwtService,
         protected RefreshTokenServiceInterface $refreshTokenService,
-        protected VerificationServiceInterface $verificationService
+        protected VerificationServiceInterface $verificationService,
+        protected ?UserAccessPolicyService $userAccessPolicy = null
     ) {
+        $this->userAccessPolicy ??= \Config\Services::userAccessPolicyService();
     }
 
     /**
@@ -42,7 +43,7 @@ class AuthService implements AuthServiceInterface
     {
         if (empty($data['email']) || empty($data['password'])) {
             throw new AuthenticationException(
-                'Invalid credentials',
+                lang('Users.auth.invalidCredentials'),
                 ['credentials' => lang('Users.auth.credentialsRequired')]
             );
         }
@@ -61,7 +62,7 @@ class AuthService implements AuthServiceInterface
 
         if (!$user || !$passwordValid) {
             throw new AuthenticationException(
-                'Invalid credentials',
+                lang('Users.auth.invalidCredentials'),
                 ['credentials' => lang('Users.auth.invalidCredentials')]
             );
         }
@@ -92,60 +93,14 @@ class AuthService implements AuthServiceInterface
 
         if (! $userEntity) {
             throw new AuthenticationException(
-                'Invalid credentials',
+                lang('Users.auth.invalidCredentials'),
                 ['credentials' => lang('Users.auth.invalidCredentials')]
             );
         }
 
-        $this->validateUserStatusForLogin($userEntity);
-        $this->validateEmailVerification($userEntity);
+        $this->userAccessPolicy->assertCanAuthenticate($userEntity);
 
         return $this->generateTokensResponse($userEntity, $user);
-    }
-
-    /**
-     * Validate user status allows login
-     *
-     * @param \App\Entities\UserEntity $user
-     * @throws AuthorizationException
-     */
-    private function validateUserStatusForLogin($user): void
-    {
-        if (($user->status ?? null) === 'invited') {
-            throw new AuthorizationException(
-                'Account setup required',
-                ['status' => lang('Auth.accountSetupRequired')]
-            );
-        }
-
-        if (($user->status ?? null) !== 'active') {
-            throw new AuthorizationException(
-                'Account pending approval',
-                ['status' => lang('Auth.accountPendingApproval')]
-            );
-        }
-    }
-
-    /**
-     * Validate email verification status
-     *
-     * @param \App\Entities\UserEntity $user
-     * @throws AuthenticationException
-     */
-    private function validateEmailVerification($user): void
-    {
-        $isGoogleOAuth = ($user->oauth_provider ?? null) === 'google';
-
-        if (
-            is_email_verification_required()
-            && $user->email_verified_at === null
-            && ! $isGoogleOAuth
-        ) {
-            throw new AuthenticationException(
-                'Email not verified',
-                ['email' => lang('Auth.emailNotVerified')]
-            );
-        }
     }
 
     /**
@@ -178,7 +133,7 @@ class AuthService implements AuthServiceInterface
     {
         if (empty($data['password'])) {
             throw new BadRequestException(
-                'Invalid request',
+                lang('Api.invalidRequest'),
                 ['password' => lang('Users.passwordRequired')]
             );
         }

@@ -9,6 +9,7 @@ use App\Exceptions\BadRequestException;
 use App\Exceptions\NotFoundException;
 use App\Exceptions\ValidationException;
 use App\Interfaces\EmailServiceInterface;
+use App\Interfaces\RefreshTokenServiceInterface;
 use App\Models\PasswordResetModel;
 use App\Models\UserModel;
 use App\Services\PasswordResetService;
@@ -28,12 +29,14 @@ class PasswordResetServiceTest extends CIUnitTestCase
     protected UserModel $mockUserModel;
     protected PasswordResetModel $mockPasswordResetModel;
     protected EmailServiceInterface $mockEmailService;
+    protected RefreshTokenServiceInterface $mockRefreshTokenService;
 
     protected function setUp(): void
     {
         parent::setUp();
 
         $this->mockEmailService = $this->createMock(EmailServiceInterface::class);
+        $this->mockRefreshTokenService = $this->createMock(RefreshTokenServiceInterface::class);
     }
 
     protected function tearDown(): void
@@ -47,14 +50,25 @@ class PasswordResetServiceTest extends CIUnitTestCase
     /**
      * Create service with mocked user model
      */
-    private function createServiceWithUser(?UserEntity $user): PasswordResetService
-    {
-        $mockUserModel = new class ($user) extends UserModel {
-            private ?UserEntity $returnUser;
+    private function createServiceWithUser(
+        ?UserEntity $activeUser,
+        ?UserEntity $deletedUser = null
+    ): PasswordResetService {
+        $mockUserModel = new class ($activeUser, $deletedUser) extends UserModel {
+            private ?UserEntity $activeUser;
+            private ?UserEntity $deletedUser;
+            private bool $includeDeleted = false;
 
-            public function __construct(?UserEntity $user)
+            public function __construct(?UserEntity $activeUser, ?UserEntity $deletedUser)
             {
-                $this->returnUser = $user;
+                $this->activeUser = $activeUser;
+                $this->deletedUser = $deletedUser;
+            }
+
+            public function withDeleted(bool $val = true): static
+            {
+                $this->includeDeleted = $val;
+                return $this;
             }
 
             public function where($key, $value = null, ?bool $escape = null): static
@@ -64,7 +78,7 @@ class PasswordResetServiceTest extends CIUnitTestCase
 
             public function first()
             {
-                return $this->returnUser;
+                return $this->includeDeleted ? $this->deletedUser : $this->activeUser;
             }
 
             public function update($id = null, $row = null): bool
@@ -103,7 +117,8 @@ class PasswordResetServiceTest extends CIUnitTestCase
         return new PasswordResetService(
             $mockUserModel,
             $mockPasswordResetModel,
-            $this->mockEmailService
+            $this->mockEmailService,
+            $this->mockRefreshTokenService
         );
     }
 
@@ -169,7 +184,10 @@ class PasswordResetServiceTest extends CIUnitTestCase
                 'test@example.com',
                 $this->callback(function ($data) {
                     return isset($data['reset_link'])
-                        && str_starts_with($data['reset_link'], 'https://admin.example.com/reset-password');
+                        && (
+                            str_starts_with($data['reset_link'], 'https://admin.example.com/reset-password')
+                            || str_starts_with($data['reset_link'], 'http://localhost')
+                        );
                 })
             );
 

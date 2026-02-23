@@ -23,4 +23,5 @@ return [
     // Mensajes de datos de respuesta
     'sentMessage'        => 'Enlace de restablecimiento enviado',
     'resetMessage'       => 'Contraseña restablecida exitosamente',
+    'reactivationRequested' => 'Reactivación de cuenta solicitada y pendiente de aprobación del administrador',
 ];

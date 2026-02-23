@@ -10,6 +10,7 @@ use OpenApi\Attributes as OA;
     path: '/api/v1/auth/forgot-password',
     tags: ['Authentication'],
     summary: 'Send password reset link',
+    description: 'Always returns a generic success response for valid emails. For soft-deleted accounts, this may trigger a reactivation request that requires admin approval.',
     requestBody: new OA\RequestBody(
         required: true,
         content: new OA\JsonContent(
@@ -29,7 +30,7 @@ use OpenApi\Attributes as OA;
     responses: [
         new OA\Response(
             response: 200,
-            description: 'Reset link queued',
+            description: 'Generic success response (reset queued or reactivation requested)',
             content: new OA\JsonContent(
                 properties: [
                     new OA\Property(property: 'status', type: 'string', example: 'success'),

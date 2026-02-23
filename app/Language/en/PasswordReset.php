@@ -23,4 +23,5 @@ return [
     // Response data messages
     'sentMessage'        => 'Password reset link sent',
     'resetMessage'       => 'Password reset successfully',
+    'reactivationRequested' => 'Account reactivation requested and pending admin approval',
 ];

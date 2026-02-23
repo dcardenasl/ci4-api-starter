@@ -9,6 +9,7 @@ use App\Exceptions\NotFoundException;
 use App\Exceptions\ValidationException;
 use App\Interfaces\EmailServiceInterface;
 use App\Interfaces\PasswordResetServiceInterface;
+use App\Interfaces\RefreshTokenServiceInterface;
 use App\Libraries\ApiResponse;
 use App\Models\PasswordResetModel;
 use App\Models\UserModel;
@@ -21,7 +22,8 @@ class PasswordResetService implements PasswordResetServiceInterface
     public function __construct(
         protected UserModel $userModel,
         protected PasswordResetModel $passwordResetModel,
-        protected EmailServiceInterface $emailService
+        protected EmailServiceInterface $emailService,
+        protected RefreshTokenServiceInterface $refreshTokenService
     ) {
     }
 
@@ -53,11 +55,11 @@ class PasswordResetService implements PasswordResetServiceInterface
             );
         }
 
-        // Find user by email
+        // Find active (non-deleted) user by email
         $user = $this->userModel->where('email', $email)->first();
 
         // Always return success to prevent email enumeration
-        // But only send email if user exists
+        // But only send email if user exists and is not deleted
         if ($user) {
             // Generate reset token
             $token = generate_token();
@@ -82,6 +84,16 @@ class PasswordResetService implements PasswordResetServiceInterface
                 'reset_link' => $resetLink,
                 'expires_in' => '60 minutes',
             ]);
+        } else {
+            // Check soft-deleted users and request reactivation (without exposing existence)
+            $deletedUser = $this->userModel
+                ->withDeleted()
+                ->where('email', $email)
+                ->first();
+
+            if ($deletedUser && ($deletedUser->deleted_at ?? null) !== null) {
+                $this->reactivateDeletedUserForApproval($deletedUser, $email);
+            }
         }
 
         // Always return success message (security best practice)
@@ -89,6 +101,55 @@ class PasswordResetService implements PasswordResetServiceInterface
             ['message' => lang('PasswordReset.sentMessage')],
             lang('PasswordReset.linkSent')
         );
+    }
+
+    /**
+     * Reactivate a soft-deleted user and mark account pending admin approval.
+     * Public API response stays generic to avoid email enumeration.
+     *
+     * @param object $user
+     * @param string $email
+     * @return void
+     */
+    private function reactivateDeletedUserForApproval(object $user, string $email): void
+    {
+        $db = \Config\Database::connect();
+
+        try {
+            $db->transStart();
+
+            $db->table('users')
+                ->where('id', (int) $user->id)
+                ->update([
+                    'deleted_at' => null,
+                    'status' => 'pending_approval',
+                    'approved_at' => null,
+                    'approved_by' => null,
+                    'updated_at' => date('Y-m-d H:i:s'),
+                ]);
+
+            $this->refreshTokenService->revokeAllUserTokens((int) $user->id);
+
+            // Remove stale reset tokens so account flow restarts cleanly.
+            $this->passwordResetModel->where('email', $email)->delete();
+
+            $db->transComplete();
+
+            if ($db->transStatus() === false) {
+                log_message('error', 'Failed to reactivate deleted user account. Email: ' . $email);
+                return;
+            }
+
+            log_message('info', lang('PasswordReset.reactivationRequested') . '. user_id: ' . $user->id);
+        } catch (\Throwable $e) {
+            log_message(
+                'error',
+                'Error processing deleted user reactivation. Email: '
+                . $email
+                . '. Error: '
+                . $e->getMessage()
+            );
+        }
     }
 
     /**

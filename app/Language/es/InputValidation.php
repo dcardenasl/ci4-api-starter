@@ -38,7 +38,7 @@ return [
         'newPasswordRequired'    => 'La nueva contraseña es obligatoria',
 
         // Rol
-        'roleInvalid'            => 'El rol debe ser user o admin',
+        'roleInvalid'            => 'El rol debe ser user, admin o superadmin',
 
         // OAuth
         'oauthProviderInvalid'     => 'El proveedor OAuth no es compatible',

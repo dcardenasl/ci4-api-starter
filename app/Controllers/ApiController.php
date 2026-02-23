@@ -132,6 +132,9 @@ abstract class ApiController extends Controller
         if ($userId = $this->getUserId()) {
             $data['user_id'] = $userId;
         }
+        if ($userRole = $this->getUserRole()) {
+            $data['user_role'] = $userRole;
+        }
 
         return $this->sanitizeInput($data);
     }

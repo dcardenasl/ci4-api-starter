@@ -38,7 +38,7 @@ return [
         'newPasswordRequired'    => 'New password is required',
 
         // Role
-        'roleInvalid'            => 'Role must be either user or admin',
+        'roleInvalid'            => 'Role must be either user, admin, or superadmin',
 
         // OAuth
         'oauthProviderInvalid'   => 'OAuth provider is not supported',

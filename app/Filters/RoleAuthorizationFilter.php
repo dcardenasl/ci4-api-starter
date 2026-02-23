@@ -23,8 +23,9 @@ class RoleAuthorizationFilter implements FilterInterface
      * Role hierarchy (higher number = more permissions)
      */
     private const ROLE_HIERARCHY = [
-        'user'  => 0,
-        'admin' => 10,
+        'user'       => 0,
+        'admin'      => 10,
+        'superadmin' => 100,
     ];
 
     /**

@@ -19,6 +19,8 @@ return [
     'alreadyApproved' => 'El usuario ya está aprobado',
     'cannotApproveInvited' => 'Los usuarios invitados ya están aprobados y deben completar su contraseña desde el enlace de invitación.',
     'invalidApprovalState' => 'No se puede aprobar al usuario desde su estado actual.',
+    'adminCannotManagePrivileged' => 'Los administradores solo pueden gestionar usuarios con rol user.',
+    'adminCannotAssignPrivilegedRole' => 'Los administradores no pueden asignar roles admin o superadmin.',
 
     // Mensajes de error
     'deleteError'     => 'Error al eliminar el usuario',

@@ -19,6 +19,8 @@ return [
     'alreadyApproved' => 'User is already approved',
     'cannotApproveInvited' => 'Invited users are already approved and must complete password setup via invitation link.',
     'invalidApprovalState' => 'User cannot be approved from the current state.',
+    'adminCannotManagePrivileged' => 'Admins can only manage users with role user.',
+    'adminCannotAssignPrivilegedRole' => 'Admins cannot assign admin or superadmin roles.',
 
     // Error messages
     'deleteError'     => 'Error deleting user',

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Exceptions\AuthorizationException;
 use App\Exceptions\BadRequestException;
 use App\Exceptions\ConflictException;
 use App\Exceptions\NotFoundException;
@@ -42,6 +43,7 @@ class UserService implements UserServiceInterface
     public function index(array $data): array
     {
         $builder = new QueryBuilder($this->userModel);
+        $this->userModel->where('role !=', 'superadmin');
 
         $this->applyQueryOptions($builder, $data);
 
@@ -86,6 +88,10 @@ class UserService implements UserServiceInterface
     public function store(array $data): array
     {
         validateOrFail($data, 'user', 'store_admin');
+        $actorRole = (string) ($data['user_role'] ?? '');
+        $requestedRole = (string) ($data['role'] ?? 'user');
+
+        $this->assertAdminCanAssignRole($actorRole, $requestedRole);
 
         if (array_key_exists('password', $data) && $data['password'] !== null && $data['password'] !== '') {
             throw new ValidationException(
@@ -147,10 +153,21 @@ class UserService implements UserServiceInterface
     public function update(array $data): array
     {
         $id = $this->validateRequiredId($data);
+        $actorRole = (string) ($data['user_role'] ?? '');
+        $actorId = isset($data['user_id']) ? (int) $data['user_id'] : null;
 
         // Verificar si el usuario existe
-        if (!$this->userModel->find($id)) {
+        $targetUser = $this->userModel->find($id);
+        if (!$targetUser) {
             throw new NotFoundException(lang('Users.notFound'));
+        }
+
+        $targetRole = (string) ($targetUser->role ?? 'user');
+        $this->assertAdminCanManageTarget($actorRole, $actorId, $id, $targetRole);
+
+        if (array_key_exists('role', $data)) {
+            $requestedRole = (string) $data['role'];
+            $this->assertAdminCanChangeRole($actorRole, $targetRole, $requestedRole);
         }
 
         // Regla de negocio: al menos un campo requerido
@@ -197,10 +214,17 @@ class UserService implements UserServiceInterface
     public function destroy(array $data): array
     {
         $id = $this->validateRequiredId($data);
+        $actorRole = (string) ($data['user_role'] ?? '');
 
         // Verificar si el usuario existe
-        if (!$this->userModel->find($id)) {
+        $targetUser = $this->userModel->find($id);
+        if (!$targetUser) {
             throw new NotFoundException(lang('Users.notFound'));
+        }
+        $targetRole = (string) ($targetUser->role ?? 'user');
+
+        if ($actorRole === 'admin' && $targetRole !== 'user') {
+            throw new AuthorizationException(lang('Users.adminCannotManagePrivileged'));
         }
 
         // Realiza soft delete (gracias a useSoftDeletes = true)
@@ -286,5 +310,41 @@ class UserService implements UserServiceInterface
             'reset_link' => $resetLink,
             'expires_in' => '60 minutes',
         ]);
+    }
+
+    private function assertAdminCanAssignRole(string $actorRole, string $requestedRole): void
+    {
+        if (
+            $actorRole === 'admin'
+            && in_array($requestedRole, ['admin', 'superadmin'], true)
+        ) {
+            throw new AuthorizationException(lang('Users.adminCannotAssignPrivilegedRole'));
+        }
+    }
+
+    private function assertAdminCanManageTarget(string $actorRole, ?int $actorId, int $targetId, string $targetRole): void
+    {
+        if (
+            $actorRole === 'admin'
+            && in_array($targetRole, ['admin', 'superadmin'], true)
+            && ($actorId === null || $targetId !== $actorId)
+        ) {
+            throw new AuthorizationException(lang('Users.adminCannotManagePrivileged'));
+        }
+    }
+
+    private function assertAdminCanChangeRole(string $actorRole, string $currentRole, string $requestedRole): void
+    {
+        if ($actorRole !== 'admin') {
+            return;
+        }
+
+        if ($requestedRole === 'superadmin') {
+            throw new AuthorizationException(lang('Users.adminCannotAssignPrivilegedRole'));
+        }
+
+        if ($requestedRole === 'admin' && $currentRole !== 'admin') {
+            throw new AuthorizationException(lang('Users.adminCannotAssignPrivilegedRole'));
+        }
     }
 }

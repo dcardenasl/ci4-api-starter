@@ -47,7 +47,7 @@ class MetricsController extends Controller
         // Check if metrics are enabled
         if (! env('METRICS_ENABLED', true)) {
             return $this->response->setJSON(
-                ApiResponse::error([], 'Metrics are disabled', 503)
+                ApiResponse::error([], lang('Metrics.disabled'), 503)
             )->setStatusCode(503);
         }
 
@@ -149,14 +149,14 @@ class MetricsController extends Controller
 
         if (empty($name)) {
             return $this->response->setJSON(
-                ApiResponse::validationError(['name' => 'Metric name is required'])
+                ApiResponse::validationError(['name' => lang('Metrics.nameRequired')])
             )->setStatusCode(422);
         }
 
         $this->metricModel->record($name, (float) $value, $tags);
 
         return $this->response->setJSON(
-            ApiResponse::success(['message' => 'Metric recorded successfully'])
+            ApiResponse::success(['message' => lang('Metrics.recordedSuccessfully')])
         )->setStatusCode(201);
     }
 }

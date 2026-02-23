@@ -25,7 +25,7 @@ class VerificationController extends ApiController
         $userId = $this->getUserId();
 
         if (!$userId) {
-            return $this->respondUnauthorized('Authentication required');
+            return $this->respondUnauthorized(lang('Auth.authRequired'));
         }
 
         return $this->handleRequest('resendVerification', [

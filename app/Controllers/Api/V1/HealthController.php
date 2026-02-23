@@ -46,7 +46,7 @@ class HealthController extends Controller
         if (! env('MONITORING_ENABLED', true)) {
             return $this->response->setJSON([
                 'status' => 'disabled',
-                'message' => 'Monitoring is disabled',
+                'message' => lang('Health.monitoringDisabled'),
             ])->setStatusCode(503);
         }
 

@@ -11,6 +11,7 @@ use App\Interfaces\ApiKeyServiceInterface;
 use App\Libraries\ApiResponse;
 use App\Libraries\Query\QueryBuilder;
 use App\Models\ApiKeyModel;
+use App\Traits\AppliesQueryOptions;
 use App\Traits\ValidatesRequiredFields;
 
 /**
@@ -26,6 +27,7 @@ use App\Traits\ValidatesRequiredFields;
  */
 class ApiKeyService implements ApiKeyServiceInterface
 {
+    use AppliesQueryOptions;
     use ValidatesRequiredFields;
 
     public function __construct(
@@ -40,20 +42,12 @@ class ApiKeyService implements ApiKeyServiceInterface
     {
         $builder = new QueryBuilder($this->apiKeyModel);
 
-        if (!empty($data['filter']) && is_array($data['filter'])) {
-            $builder->filter($data['filter']);
-        }
+        $this->applyQueryOptions($builder, $data);
 
-        if (!empty($data['search'])) {
-            $builder->search($data['search']);
-        }
-
-        if (!empty($data['sort'])) {
-            $builder->sort($data['sort']);
-        }
-
-        $page  = isset($data['page']) ? max((int) $data['page'], 1) : 1;
-        $limit = isset($data['limit']) ? (int) $data['limit'] : (int) env('PAGINATION_DEFAULT_LIMIT', 20);
+        [$page, $limit] = $this->resolvePagination(
+            $data,
+            (int) env('PAGINATION_DEFAULT_LIMIT', 20)
+        );
 
         $result = $builder->paginate($page, $limit);
 

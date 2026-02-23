@@ -14,6 +14,7 @@ use App\Libraries\ApiResponse;
 use App\Libraries\Query\QueryBuilder;
 use App\Models\PasswordResetModel;
 use App\Models\UserModel;
+use App\Traits\AppliesQueryOptions;
 use App\Traits\ResolvesWebAppLinks;
 use App\Traits\ValidatesRequiredFields;
 
@@ -25,6 +26,7 @@ use App\Traits\ValidatesRequiredFields;
  */
 class UserService implements UserServiceInterface
 {
+    use AppliesQueryOptions;
     use ResolvesWebAppLinks;
     use ValidatesRequiredFields;
     public function __construct(
@@ -41,24 +43,12 @@ class UserService implements UserServiceInterface
     {
         $builder = new QueryBuilder($this->userModel);
 
-        // Apply filters if provided
-        if (!empty($data['filter']) && is_array($data['filter'])) {
-            $builder->filter($data['filter']);
-        }
+        $this->applyQueryOptions($builder, $data);
 
-        // Apply search if provided
-        if (!empty($data['search'])) {
-            $builder->search($data['search']);
-        }
-
-        // Apply sorting if provided
-        if (!empty($data['sort'])) {
-            $builder->sort($data['sort']);
-        }
-
-        // Get pagination parameters
-        $page = isset($data['page']) ? max((int) $data['page'], 1) : 1;
-        $limit = isset($data['limit']) ? (int) $data['limit'] : (int) env('PAGINATION_DEFAULT_LIMIT', 20);
+        [$page, $limit] = $this->resolvePagination(
+            $data,
+            (int) env('PAGINATION_DEFAULT_LIMIT', 20)
+        );
 
         // Paginate results
         $result = $builder->paginate($page, $limit);

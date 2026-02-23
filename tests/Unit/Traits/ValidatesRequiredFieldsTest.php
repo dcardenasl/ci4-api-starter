@@ -32,6 +32,11 @@ class ValidatesRequiredFieldsTest extends CIUnitTestCase
             {
                 return $this->validateRequiredField($data, $field, $langKey);
             }
+
+            public function testValidateFields(array $data, array $fieldErrors, string $message = 'Invalid request'): void
+            {
+                $this->validateRequiredFields($data, $fieldErrors, $message);
+            }
         };
     }
 
@@ -125,7 +130,36 @@ class ValidatesRequiredFieldsTest extends CIUnitTestCase
         } catch (BadRequestException $e) {
             $errors = $e->getErrors();
             $this->assertArrayHasKey('custom_field', $errors);
-            $this->assertEquals('custom_field is required', $errors['custom_field']);
+            $this->assertEquals(lang('Api.fieldRequired', ['custom_field']), $errors['custom_field']);
         }
+    }
+
+    public function testValidateRequiredFieldsThrowsWithAllMissingFields(): void
+    {
+        try {
+            $this->testClass->testValidateFields([], [
+                'email' => 'Email is required',
+                'password' => 'Password is required',
+            ], 'Validation failed');
+            $this->fail('Expected BadRequestException was not thrown');
+        } catch (BadRequestException $e) {
+            $errors = $e->getErrors();
+            $this->assertArrayHasKey('email', $errors);
+            $this->assertArrayHasKey('password', $errors);
+            $this->assertEquals('Validation failed', $e->getMessage());
+        }
+    }
+
+    public function testValidateRequiredFieldsPassesWhenAllFieldsArePresent(): void
+    {
+        $this->testClass->testValidateFields([
+            'email' => 'test@example.com',
+            'password' => 'secret123',
+        ], [
+            'email' => 'Email is required',
+            'password' => 'Password is required',
+        ]);
+
+        $this->assertTrue(true);
     }
 }

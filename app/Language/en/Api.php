@@ -18,6 +18,7 @@ return [
     'forbidden'        => 'Forbidden',
     'serverError'      => 'Internal server error',
     'invalidRequest'   => 'Invalid request',
+    'fieldRequired'    => '{0} is required',
     'databaseError'    => 'A database error occurred',
 
     // Log messages

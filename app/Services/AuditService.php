@@ -10,6 +10,8 @@ use App\Interfaces\AuditServiceInterface;
 use App\Libraries\ApiResponse;
 use App\Libraries\Query\QueryBuilder;
 use App\Models\AuditLogModel;
+use App\Traits\AppliesQueryOptions;
+use App\Traits\ValidatesRequiredFields;
 use CodeIgniter\HTTP\RequestInterface;
 
 /**
@@ -19,6 +21,9 @@ use CodeIgniter\HTTP\RequestInterface;
  */
 class AuditService implements AuditServiceInterface
 {
+    use AppliesQueryOptions;
+    use ValidatesRequiredFields;
+
     /**
      * Sensitive keys that must never be persisted in audit payloads.
      *
@@ -189,24 +194,9 @@ class AuditService implements AuditServiceInterface
             $data['filter']['entity_type'] = $this->normalizeEntityType($data['filter']['entity_type']);
         }
 
-        // Apply filters
-        if (!empty($data['filter'])) {
-            $builder->filter($data['filter']);
-        }
+        $this->applyQueryOptions($builder, $data);
 
-        // Apply search
-        if (!empty($data['search'])) {
-            $builder->search($data['search']);
-        }
-
-        // Apply sorting
-        if (!empty($data['sort'])) {
-            $builder->sort($data['sort']);
-        }
-
-        // Paginate
-        $page = max((int) ($data['page'] ?? 1), 1);
-        $limit = min(max((int) ($data['limit'] ?? 50), 1), 100);
+        [$page, $limit] = $this->resolvePagination($data, 50, 100);
 
         $result = $builder->paginate($page, $limit);
 
@@ -242,12 +232,9 @@ class AuditService implements AuditServiceInterface
      */
     public function show(array $data): array
     {
-        if (empty($data['id'])) {
-            throw new BadRequestException(
-                lang('Api.invalidRequest'),
-                ['id' => lang('Audit.idRequired')]
-            );
-        }
+        $this->validateRequiredFields($data, [
+            'id' => lang('Audit.idRequired'),
+        ], lang('Api.invalidRequest'));
 
         $log = $this->auditLogModel->find($data['id']);
 

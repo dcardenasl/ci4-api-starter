@@ -13,6 +13,8 @@ use App\Libraries\ApiResponse;
 use App\Libraries\Query\QueryBuilder;
 use App\Libraries\Storage\StorageManager;
 use App\Models\FileModel;
+use App\Traits\AppliesQueryOptions;
+use App\Traits\ValidatesRequiredFields;
 
 /**
  * File Service
@@ -21,6 +23,9 @@ use App\Models\FileModel;
  */
 class FileService implements FileServiceInterface
 {
+    use AppliesQueryOptions;
+    use ValidatesRequiredFields;
+
     public function __construct(
         protected FileModel $fileModel,
         protected StorageManager $storage
@@ -35,20 +40,10 @@ class FileService implements FileServiceInterface
      */
     public function upload(array $data): array
     {
-        // Validate required fields
-        $errors = [];
-
-        if (empty($data['file'])) {
-            $errors['file'] = lang('Files.fileRequired');
-        }
-
-        if (empty($data['user_id'])) {
-            $errors['user_id'] = lang('Files.userIdRequired');
-        }
-
-        if (!empty($errors)) {
-            throw new BadRequestException(lang('Files.invalidRequest'), $errors);
-        }
+        $this->validateRequiredFields($data, [
+            'file' => lang('Files.fileRequired'),
+            'user_id' => lang('Files.userIdRequired'),
+        ], lang('Files.invalidRequest'));
 
         $file = $data['file'];
         $userId = (int) $data['user_id'];
@@ -151,38 +146,23 @@ class FileService implements FileServiceInterface
      */
     public function index(array $data): array
     {
-        if (empty($data['user_id'])) {
-            throw new BadRequestException(
-                lang('Files.invalidRequest'),
-                ['user_id' => lang('Files.userIdRequired')]
-            );
-        }
+        $this->validateRequiredFields($data, [
+            'user_id' => lang('Files.userIdRequired'),
+        ], lang('Files.invalidRequest'));
 
         $builder = new QueryBuilder($this->fileModel);
 
         // SEGURIDAD: Siempre filtrar por user_id del usuario actual
         $builder->filter(['user_id' => (int) $data['user_id']]);
 
-        // Aplicar filtros adicionales opcionales
-        if (!empty($data['filter']) && is_array($data['filter'])) {
-            $builder->filter($data['filter']);
-        }
-
-        // Aplicar búsqueda si se proporciona
-        if (!empty($data['search'])) {
-            $builder->search($data['search']);
-        }
-
-        // Aplicar ordenamiento (default: más recientes primero)
-        if (!empty($data['sort'])) {
-            $builder->sort($data['sort']);
-        } else {
+        $this->applyQueryOptions($builder, $data, function (): void {
             $this->fileModel->orderBy('uploaded_at', 'DESC');
-        }
+        });
 
-        // Paginación
-        $page = isset($data['page']) ? max((int) $data['page'], 1) : 1;
-        $limit = isset($data['limit']) ? (int) $data['limit'] : (int) env('PAGINATION_DEFAULT_LIMIT', 20);
+        [$page, $limit] = $this->resolvePagination(
+            $data,
+            (int) env('PAGINATION_DEFAULT_LIMIT', 20)
+        );
 
         $result = $builder->paginate($page, $limit);
 
@@ -216,19 +196,10 @@ class FileService implements FileServiceInterface
      */
     public function download(array $data): array
     {
-        $errors = [];
-
-        if (empty($data['id'])) {
-            $errors['id'] = lang('Files.idRequired');
-        }
-
-        if (empty($data['user_id'])) {
-            $errors['user_id'] = lang('Files.userIdRequired');
-        }
-
-        if (!empty($errors)) {
-            throw new BadRequestException(lang('Files.invalidRequest'), $errors);
-        }
+        $this->validateRequiredFields($data, [
+            'id' => lang('Files.idRequired'),
+            'user_id' => lang('Files.userIdRequired'),
+        ], lang('Files.invalidRequest'));
 
         // First check if file exists
         $file = $this->fileModel->find((int) $data['id']);
@@ -260,19 +231,10 @@ class FileService implements FileServiceInterface
      */
     public function delete(array $data): array
     {
-        $errors = [];
-
-        if (empty($data['id'])) {
-            $errors['id'] = lang('Files.idRequired');
-        }
-
-        if (empty($data['user_id'])) {
-            $errors['user_id'] = lang('Files.userIdRequired');
-        }
-
-        if (!empty($errors)) {
-            throw new BadRequestException(lang('Files.invalidRequest'), $errors);
-        }
+        $this->validateRequiredFields($data, [
+            'id' => lang('Files.idRequired'),
+            'user_id' => lang('Files.userIdRequired'),
+        ], lang('Files.invalidRequest'));
 
         // First check if file exists
         $file = $this->fileModel->find((int) $data['id']);

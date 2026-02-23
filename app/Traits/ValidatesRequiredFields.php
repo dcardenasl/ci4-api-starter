@@ -25,7 +25,7 @@ trait ValidatesRequiredFields
     {
         if (!isset($data['id']) || $data['id'] === null || $data['id'] === '') {
             throw new BadRequestException(
-                'Invalid request',
+                lang('Api.invalidRequest'),
                 ['id' => lang('Users.idRequired')]
             );
         }
@@ -45,14 +45,41 @@ trait ValidatesRequiredFields
     protected function validateRequiredField(array $data, string $field, ?string $langKey = null): mixed
     {
         if (!isset($data[$field]) || $data[$field] === null || $data[$field] === '') {
-            $errorMessage = $langKey ? lang($langKey) : "{$field} is required";
+            $errorMessage = $langKey ? lang($langKey) : lang('Api.fieldRequired', [$field]);
 
             throw new BadRequestException(
-                'Invalid request',
+                lang('Api.invalidRequest'),
                 [$field => $errorMessage]
             );
         }
 
         return $data[$field];
+    }
+
+    /**
+     * Validate multiple required fields and throw a single exception with field-level errors.
+     *
+     * @param array<string, mixed> $data
+     * @param array<string, string> $fieldErrors [field => errorMessage]
+     * @param string $requestMessage
+     * @throws BadRequestException
+     */
+    protected function validateRequiredFields(array $data, array $fieldErrors, string $requestMessage = 'Invalid request'): void
+    {
+        $errors = [];
+
+        foreach ($fieldErrors as $field => $errorMessage) {
+            if (!isset($data[$field]) || $data[$field] === null || $data[$field] === '') {
+                $errors[$field] = $errorMessage;
+            }
+        }
+
+        if ($errors !== []) {
+            $message = $requestMessage === 'Invalid request'
+                ? lang('Api.invalidRequest')
+                : $requestMessage;
+
+            throw new BadRequestException($message, $errors);
+        }
     }
 }

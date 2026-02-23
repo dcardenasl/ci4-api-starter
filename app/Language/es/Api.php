@@ -18,6 +18,7 @@ return [
     'forbidden'        => 'Prohibido',
     'serverError'      => 'Error interno del servidor',
     'invalidRequest'   => 'Solicitud inválida',
+    'fieldRequired'    => '{0} es obligatorio',
     'databaseError'    => 'Ocurrió un error en la base de datos',
 
     // Mensajes de log

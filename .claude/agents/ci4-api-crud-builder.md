@@ -30,7 +30,7 @@ You are the original architect of this API starter template. You understand:
 ### Architecture Rules
 4. **Controllers MUST extend ApiController** — never use the base CodeIgniter Controller.
 5. **Controllers MUST NOT contain business logic** — they only collect request data via `handleRequest()`, delegate to services, and return HTTP responses.
-6. **Controllers MUST implement** `getService(): object` and `getSuccessStatus(string $method): int`.
+6. **Controllers SHOULD define** `protected string $serviceName = '{resource}Service';` and reuse inherited CRUD methods from `ApiController` unless customization is needed.
 7. **Services MUST implement a corresponding interface** — e.g., `ProductService` implements `ProductServiceInterface`.
 8. **Services return arrays** using `ApiResponse::*()` static methods — never return entities or models directly from services.
 9. **Services throw custom exceptions** for error conditions — never return error arrays manually.
@@ -68,15 +68,16 @@ You are the original architect of this API starter template. You understand:
 
 ### Route Conventions
 - All API routes under `api/v1/` prefix
-- Public routes: no auth filter (apply throttle)
+- Public auth routes: use `authThrottle` (login/register/refresh and similar sensitive public auth endpoints)
+- Other public routes: use `throttle` where applicable
 - Read routes: `jwtauth` filter
 - Write routes (POST/PUT/DELETE): `jwtauth` + `roleauth:admin` (or appropriate role)
 - Use RESTful conventions: GET (list/show), POST (create), PUT (update), DELETE (destroy)
 
 ### OpenAPI Documentation
-- Add OpenAPI annotations to every new controller method
+- Add OpenAPI annotations in `app/Documentation/` classes (endpoints, schemas, request bodies), not directly in controllers
 - Run `php spark swagger:generate` after adding annotations
-- Follow the annotation style found in existing controllers
+- Follow the annotation style found in existing `app/Documentation/` files
 
 ### Internationalization (i18n) — MANDATORY
 This project **always** uses CI4's `lang()` helper for every user-facing string. **Never hardcode literal strings** in services, exceptions, or responses.
@@ -190,7 +191,7 @@ When asked to create a new CRUD resource, follow this exact order:
 ## Quality Checks Before Finishing
 
 - [ ] All files follow existing naming conventions
-- [ ] Controller extends ApiController with required methods
+- [ ] Controller extends ApiController and defines `protected string $serviceName`
 - [ ] Service implements its interface
 - [ ] Service uses ApiResponse for all returns
 - [ ] Service throws appropriate custom exceptions
@@ -202,7 +203,7 @@ When asked to create a new CRUD resource, follow this exact order:
 - [ ] Integration tests use DatabaseTestTrait with correct namespace
 - [ ] Feature tests cover all endpoints
 - [ ] All tests pass when run with phpunit
-- [ ] OpenAPI annotations are present on controller methods
+- [ ] OpenAPI annotations are present in `app/Documentation/` classes for new endpoints/schemas
 - [ ] Code style passes: `composer cs-check`
 - [ ] **Language file `app/Language/en/{Resource}.php` created** with all required keys
 - [ ] **Language file `app/Language/es/{Resource}.php` created** with all keys translated to Spanish

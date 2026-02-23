@@ -11,17 +11,20 @@ php spark serve                  # Start dev server at http://localhost:8080
 
 ### Testing
 ```bash
-# Run all tests (574 tests)
+# Run all tests
 vendor/bin/phpunit
 vendor/bin/phpunit --testdox    # Human-readable test output
 
 # Run specific test suites
-vendor/bin/phpunit tests/Unit              # Unit tests (470 tests, fast, no DB)
-vendor/bin/phpunit tests/Integration       # Integration tests (44 tests, with DB)
-vendor/bin/phpunit tests/Feature           # Feature/Controller tests (60 tests, HTTP)
+vendor/bin/phpunit tests/Unit              # Unit tests (fast, no DB)
+vendor/bin/phpunit tests/Integration       # Integration tests (with DB)
+vendor/bin/phpunit tests/Feature           # Feature/Controller tests (HTTP)
 
 # Run single test method
 vendor/bin/phpunit --filter TestClassName::testMethodName
+
+# Current test count (dynamic)
+vendor/bin/phpunit --list-tests | rg -c "::"
 
 # Composer aliases
 composer test                   # Run all tests
@@ -42,8 +45,8 @@ php spark make:migration CreateTableName  # Create new migration
 
 ### OpenAPI Documentation
 ```bash
-php spark swagger:generate      # Generate swagger.json from annotations
-# View at: http://localhost:8080/swagger.json
+php spark swagger:generate      # Generate public/swagger.json from app/Documentation/
+# View at: http://localhost:8080/swagger.json (served from public/swagger.json)
 ```
 
 ### Other Utilities
@@ -108,10 +111,9 @@ Base controller that all API controllers extend:
 - `handleException($e)` - Central exception handling
 - Input sanitization (XSS prevention)
 
-**Child controllers must implement:**
+**Child controllers typically only define:**
 ```php
-protected function getService(): object;
-protected function getSuccessStatus(string $method): int;
+protected string $serviceName = 'resourceService';
 ```
 
 #### ApiResponse (`app/Libraries/ApiResponse.php`)
@@ -153,8 +155,9 @@ throw new ConflictException('Already exists');           // 409
 
 | Route Pattern | Filter | Description |
 |---------------|--------|-------------|
-| `/api/v1/auth/login` | throttle | Public auth |
-| `/api/v1/auth/register` | throttle | Public registration |
+| `/api/v1/auth/login` | authThrottle | Public auth |
+| `/api/v1/auth/register` | authThrottle | Public registration |
+| `/api/v1/auth/refresh` | authThrottle | Public token refresh |
 | `/api/v1/users` | jwtauth | Protected read |
 | `/api/v1/users` (POST/PUT/DELETE) | jwtauth, roleauth:admin | Admin only |
 | `/health`, `/ping` | none | Health checks |
@@ -250,13 +253,13 @@ $routes->group('api/v1', ['filter' => 'jwtauth'], function($routes) {
 ### Test Structure
 ```
 tests/
-├── Unit/                    # 453 tests - No DB, mocked dependencies
+├── Unit/                    # No DB, mocked dependencies
 │   ├── Libraries/           # ApiResponse tests
 │   └── Services/            # Service unit tests
-├── Integration/             # 32 tests - Real DB operations
+├── Integration/             # Real DB operations
 │   ├── Models/              # Model tests with DB
 │   └── Services/            # Service integration tests
-└── Feature/                 # 47 tests - HTTP endpoint tests
+└── Feature/                 # HTTP endpoint tests
     └── Controllers/         # Full request/response cycle
 ```
 

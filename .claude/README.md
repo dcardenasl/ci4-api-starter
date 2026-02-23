@@ -40,12 +40,15 @@ The agent will:
 2. **Plan** the implementation (migration, entity, model, service, controller, tests)
 3. **Implement** following exact architectural patterns
 4. **Test** with Unit, Integration, and Feature tests
-5. **Document** with OpenAPI annotations
+5. **Document** with OpenAPI annotations in `app/Documentation/`
 
 ## What's included
 
 - `agents/ci4-api-crud-builder.md` - The agent definition with all rules and patterns
 - `settings.local.json` - Your personal Claude Code settings (gitignored)
+
+Security note:
+- Never hardcode JWTs, API keys, or secrets in `settings.local.json`; use environment variables at runtime.
 
 ## How it works
 

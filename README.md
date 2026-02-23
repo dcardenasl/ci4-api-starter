@@ -14,7 +14,7 @@ A production-ready REST API starter template for CodeIgniter 4 with JWT authenti
 - **JWT Authentication** - Access tokens, refresh tokens, and revocation
 - **Role-Based Access** - Admin and user roles with middleware protection
 - **Email System** - Verification, password reset, queue support
-- **File Management** - Upload/download with cloud storage support (S3)
+- **File Management** - Upload/download with local and S3 storage drivers
 - **Advanced Querying** - Pagination, filtering, searching, sorting
 - **Health Checks** - Kubernetes-ready endpoints (`/health`, `/ready`, `/live`)
 - **Audit Trail** - Automatic logging of data changes
@@ -66,6 +66,7 @@ POST /api/v1/auth/forgot-password   Request password reset
 POST /api/v1/auth/reset-password    Reset password
 GET  /api/v1/auth/validate-reset-token Validate reset token
 GET  /api/v1/auth/verify-email      Verify email address (token in query)
+POST /api/v1/auth/verify-email      Verify email address (token in body/form)
 ```
 
 ### Email Verification (Optional)
@@ -82,7 +83,7 @@ POST /api/v1/auth/resend-verification Resend verification email
 
 ### Users (Protected)
 ```
-GET    /api/v1/users           List users (paginated, filterable)
+GET    /api/v1/users           List users (paginated, filterable; any authenticated user)
 GET    /api/v1/users/{id}      Get user by ID
 POST   /api/v1/users           Create user (admin only)
 PUT    /api/v1/users/{id}      Update user (admin only)
@@ -94,7 +95,7 @@ POST   /api/v1/users/{id}/approve Approve user (admin only)
 ```
 GET    /api/v1/files           List user's files
 POST   /api/v1/files/upload    Upload file
-GET    /api/v1/files/{id}      Get file details
+GET    /api/v1/files/{id}      Download file (local) or return metadata/URL (S3)
 DELETE /api/v1/files/{id}      Delete file
 ```
 
@@ -152,6 +153,13 @@ Admin does not provide a password. The system generates it internally and sends 
 curl -X POST http://localhost:8080/api/v1/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"john@example.com","password":"SecurePass123!"}'
+```
+
+**Refresh token:**
+```bash
+curl -X POST http://localhost:8080/api/v1/auth/refresh \
+  -H "Content-Type: application/json" \
+  -d '{"refresh_token":"YOUR_REFRESH_TOKEN"}'
 ```
 
 **Use protected endpoint:**
@@ -289,12 +297,22 @@ EMAIL_FROM_ADDRESS=noreply@example.com
 EMAIL_SMTP_HOST=smtp.example.com
 
 # File Storage
-STORAGE_DRIVER=local
+FILE_STORAGE_DRIVER=local
 FILE_MAX_SIZE=10485760
+FILE_UPLOAD_PATH=writable/uploads/
 
 # Rate Limiting
-THROTTLE_LIMIT=60
-THROTTLE_WINDOW=60
+RATE_LIMIT_REQUESTS=60
+RATE_LIMIT_USER_REQUESTS=100
+RATE_LIMIT_WINDOW=60
+AUTH_RATE_LIMIT_REQUESTS=5
+AUTH_RATE_LIMIT_WINDOW=900
+
+# API Key defaults
+API_KEY_RATE_LIMIT_DEFAULT=600
+API_KEY_USER_RATE_LIMIT_DEFAULT=60
+API_KEY_IP_RATE_LIMIT_DEFAULT=200
+API_KEY_WINDOW_DEFAULT=60
 
 # CORS
 CORS_ALLOWED_ORIGINS=http://localhost:3000,https://app.example.com

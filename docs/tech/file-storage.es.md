@@ -18,3 +18,6 @@ Variables de entorno:
 Notas:
 - El storage local usa `writable/uploads/`.
 - S3 usa Flysystem y los valores AWS en `.env`.
+- Comportamiento de `GET /api/v1/files/{id}`:
+  - Driver local: el controlador devuelve descarga binaria.
+  - Driver S3: la API devuelve JSON con metadata y URL/path.

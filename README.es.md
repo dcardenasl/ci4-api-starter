@@ -14,7 +14,7 @@ Una plantilla de API REST lista para produccion con CodeIgniter 4, autenticacion
 - **Autenticacion JWT** - Tokens de acceso, tokens de refresco y revocacion
 - **Control de Acceso por Roles** - Roles admin y user con proteccion por middleware
 - **Sistema de Email** - Verificacion, restablecimiento de contrasena, soporte de colas
-- **Gestion de Archivos** - Subida/descarga con soporte de almacenamiento en la nube (S3)
+- **Gestion de Archivos** - Subida/descarga con drivers local y S3
 - **Consultas Avanzadas** - Paginacion, filtrado, busqueda, ordenamiento
 - **Health Checks** - Endpoints listos para Kubernetes (`/health`, `/ready`, `/live`)
 - **Auditoria** - Registro automatico de cambios en datos
@@ -66,6 +66,7 @@ POST /api/v1/auth/forgot-password   Solicitar reset de contrasena
 POST /api/v1/auth/reset-password    Restablecer contrasena
 GET  /api/v1/auth/validate-reset-token Validar token de reset
 GET  /api/v1/auth/verify-email      Verificar email (token en query)
+POST /api/v1/auth/verify-email      Verificar email (token en body/form)
 ```
 
 ### Verificacion de correo (Opcional)
@@ -82,7 +83,7 @@ POST /api/v1/auth/resend-verification Reenviar correo de verificacion
 
 ### Usuarios (Protegido)
 ```
-GET    /api/v1/users           Listar usuarios (paginado, filtrable)
+GET    /api/v1/users           Listar usuarios (paginado, filtrable; cualquier usuario autenticado)
 GET    /api/v1/users/{id}      Obtener usuario por ID
 POST   /api/v1/users           Crear usuario (solo admin)
 PUT    /api/v1/users/{id}      Actualizar usuario (solo admin)
@@ -94,7 +95,7 @@ POST   /api/v1/users/{id}/approve Aprobar usuario (solo admin)
 ```
 GET    /api/v1/files           Listar archivos del usuario
 POST   /api/v1/files/upload    Subir archivo
-GET    /api/v1/files/{id}      Obtener detalles del archivo
+GET    /api/v1/files/{id}      Descargar archivo (local) o devolver metadata/URL (S3)
 DELETE /api/v1/files/{id}      Eliminar archivo
 ```
 
@@ -152,6 +153,13 @@ El admin no envía contraseña. El sistema la genera internamente y envía un co
 curl -X POST http://localhost:8080/api/v1/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"juan@ejemplo.com","password":"ContrasenaSegura123!"}'
+```
+
+**Refrescar token:**
+```bash
+curl -X POST http://localhost:8080/api/v1/auth/refresh \
+  -H "Content-Type: application/json" \
+  -d '{"refresh_token":"TU_REFRESH_TOKEN"}'
 ```
 
 **Usar endpoint protegido:**
@@ -289,12 +297,22 @@ EMAIL_FROM_ADDRESS=noreply@ejemplo.com
 EMAIL_SMTP_HOST=smtp.ejemplo.com
 
 # Almacenamiento de archivos
-STORAGE_DRIVER=local
+FILE_STORAGE_DRIVER=local
 FILE_MAX_SIZE=10485760
+FILE_UPLOAD_PATH=writable/uploads/
 
 # Limite de peticiones
-THROTTLE_LIMIT=60
-THROTTLE_WINDOW=60
+RATE_LIMIT_REQUESTS=60
+RATE_LIMIT_USER_REQUESTS=100
+RATE_LIMIT_WINDOW=60
+AUTH_RATE_LIMIT_REQUESTS=5
+AUTH_RATE_LIMIT_WINDOW=900
+
+# Valores por defecto para API Keys
+API_KEY_RATE_LIMIT_DEFAULT=600
+API_KEY_USER_RATE_LIMIT_DEFAULT=60
+API_KEY_IP_RATE_LIMIT_DEFAULT=200
+API_KEY_WINDOW_DEFAULT=60
 
 # CORS
 CORS_ALLOWED_ORIGINS=http://localhost:3000,https://app.example.com

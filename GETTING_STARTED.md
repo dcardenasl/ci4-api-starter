@@ -57,7 +57,7 @@ HTTP Response (JSON)
 ## Quick Setup (5 Minutes)
 
 ### Prerequisites
-- PHP 8.2+ with extensions: mysqli, mbstring, intl, json
+- PHP 8.1+ with extensions: mysqli, mbstring, intl, json
 - MySQL 8.0+
 - Composer 2.x
 
@@ -177,12 +177,34 @@ curl -X POST http://localhost:8080/api/v1/auth/login \
 
 After approval, log in to obtain `access_token` and `refresh_token` for protected endpoints.
 
+### Refresh Access Token
+
+```bash
+curl -X POST http://localhost:8080/api/v1/auth/refresh \
+  -H "Content-Type: application/json" \
+  -d '{
+    "refresh_token": "YOUR_REFRESH_TOKEN"
+  }'
+```
+
 ### Access Protected Endpoint
 
 ```bash
 curl -X GET http://localhost:8080/api/v1/users \
   -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
 ```
+
+---
+
+## Account Status and Auth Flow (Important)
+
+- Self-registration (`POST /api/v1/auth/register`) creates users with `status = pending_approval`.
+- Admin-created users (`POST /api/v1/users`) are created as `invited` and receive an invitation email to set password.
+- Login and refresh only work for users with `status = active`.
+- Email verification is enforced when `AUTH_REQUIRE_EMAIL_VERIFICATION = true`.
+- Email verification endpoint accepts both:
+  - `GET /api/v1/auth/verify-email?token=...`
+  - `POST /api/v1/auth/verify-email` with `token` in body/form.
 
 ---
 

@@ -90,8 +90,8 @@ php spark key:generate
 # 6. Run migrations
 php spark migrate
 
-# 7. (Optional) Seed sample data
-php spark db:seed UserSeeder
+# 7. Bootstrap first superadmin (required once)
+php spark users:bootstrap-superadmin --email superadmin@example.com --password 'StrongPass123!' --first-name Super --last-name Admin
 
 # 7.1 (Optional) Seed 1000 fake users for load/filter/search tests
 php spark db:seed UsersLoadTestSeeder

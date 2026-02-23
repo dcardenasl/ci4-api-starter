@@ -39,7 +39,8 @@ Test database configuration is in `phpunit.xml` (uses `ci4_test` database).
 php spark migrate               # Run migrations
 php spark migrate:rollback      # Rollback last migration
 php spark migrate:refresh       # Rollback all + re-run migrations
-php spark db:seed UserSeeder    # Run specific seeder
+php spark db:seed UsersLoadTestSeeder  # Seed load-test users
+php spark users:bootstrap-superadmin --email superadmin@example.com --password 'StrongPass123!'  # Bootstrap first superadmin
 php spark make:migration CreateTableName  # Create new migration
 ```
 

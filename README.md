@@ -12,7 +12,7 @@ A production-ready REST API starter template for CodeIgniter 4 with JWT authenti
 ## Features
 
 - **JWT Authentication** - Access tokens, refresh tokens, and revocation
-- **Role-Based Access** - Admin and user roles with middleware protection
+- **Role-Based Access** - User, admin, and superadmin roles with middleware protection
 - **Email System** - Verification, password reset, queue support
 - **File Management** - Upload/download with local and S3 storage drivers
 - **Advanced Querying** - Pagination, filtering, searching, sorting
@@ -51,6 +51,9 @@ php spark key:generate   # Shows encryption key
 # Setup database (configure .env first)
 php spark migrate
 
+# Bootstrap first superadmin (run once)
+php spark users:bootstrap-superadmin --email superadmin@example.com --password 'StrongPass123!' --first-name Super --last-name Admin
+
 # Start server
 php spark serve
 ```
@@ -85,11 +88,12 @@ POST /api/v1/auth/resend-verification Resend verification email
 ```
 GET    /api/v1/users           List users (paginated, filterable; any authenticated user)
 GET    /api/v1/users/{id}      Get user by ID
-POST   /api/v1/users           Create user (admin only)
-PUT    /api/v1/users/{id}      Update user (admin only)
-DELETE /api/v1/users/{id}      Soft delete user (admin only)
+POST   /api/v1/users           Create user (admin/superadmin with role restrictions)
+PUT    /api/v1/users/{id}      Update user (admin/superadmin with role restrictions)
+DELETE /api/v1/users/{id}      Soft delete user (admin/superadmin with role restrictions)
 POST   /api/v1/users/{id}/approve Approve user (admin only)
 ```
+Note: `admin` can manage only `user` accounts. `superadmin` can manage privileged roles. `superadmin` accounts are hidden from `/api/v1/users` listings.
 
 ### Files (Protected)
 ```

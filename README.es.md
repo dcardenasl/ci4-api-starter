@@ -12,7 +12,7 @@ Una plantilla de API REST lista para produccion con CodeIgniter 4, autenticacion
 ## Caracteristicas
 
 - **Autenticacion JWT** - Tokens de acceso, tokens de refresco y revocacion
-- **Control de Acceso por Roles** - Roles admin y user con proteccion por middleware
+- **Control de Acceso por Roles** - Roles user, admin y superadmin con proteccion por middleware
 - **Sistema de Email** - Verificacion, restablecimiento de contrasena, soporte de colas
 - **Gestion de Archivos** - Subida/descarga con drivers local y S3
 - **Consultas Avanzadas** - Paginacion, filtrado, busqueda, ordenamiento
@@ -51,6 +51,9 @@ php spark key:generate   # Muestra la clave de encriptacion
 # Configurar base de datos (configura .env primero)
 php spark migrate
 
+# Crear el primer superadmin (ejecutar una sola vez)
+php spark users:bootstrap-superadmin --email superadmin@ejemplo.com --password 'ContrasenaFuerte123!' --first-name Super --last-name Admin
+
 # Iniciar servidor
 php spark serve
 ```
@@ -85,11 +88,12 @@ POST /api/v1/auth/resend-verification Reenviar correo de verificacion
 ```
 GET    /api/v1/users           Listar usuarios (paginado, filtrable; cualquier usuario autenticado)
 GET    /api/v1/users/{id}      Obtener usuario por ID
-POST   /api/v1/users           Crear usuario (solo admin)
-PUT    /api/v1/users/{id}      Actualizar usuario (solo admin)
-DELETE /api/v1/users/{id}      Eliminar usuario (solo admin)
+POST   /api/v1/users           Crear usuario (admin/superadmin con restricciones)
+PUT    /api/v1/users/{id}      Actualizar usuario (admin/superadmin con restricciones)
+DELETE /api/v1/users/{id}      Eliminar usuario (admin/superadmin con restricciones)
 POST   /api/v1/users/{id}/approve Aprobar usuario (solo admin)
 ```
+Nota: `admin` solo puede gestionar cuentas con rol `user`. `superadmin` puede gestionar roles privilegiados. Las cuentas `superadmin` no aparecen en listados de `/api/v1/users`.
 
 ### Archivos (Protegido)
 ```

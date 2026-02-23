@@ -10,7 +10,7 @@ This checklist must be completed before deploying the application to production.
 - [ ] `JWT_SECRET_KEY` is unique and at least 64 characters (not example value)
 - [ ] `encryption.key` is unique (not example value from .env.example)
 - [ ] Database credentials changed from defaults (`root:root`)
-- [ ] `ADMIN_SEED_PASSWORD` changed from example value
+- [ ] First superadmin account has been created with `php spark users:bootstrap-superadmin`
 
 ## Security Settings
 

@@ -10,6 +10,7 @@ use OpenApi\Attributes as OA;
     path: '/api/v1/users',
     tags: ['Users'],
     summary: 'List users',
+    description: 'Lists users except accounts with role superadmin.',
     security: [['bearerAuth' => []]],
     parameters: [
         new OA\Parameter(
@@ -94,7 +95,8 @@ use OpenApi\Attributes as OA;
 #[OA\Post(
     path: '/api/v1/users',
     tags: ['Users'],
-    summary: 'Create user (admin)',
+    summary: 'Create user (admin/superadmin)',
+    description: 'Admins can create only role=user. Creating admin/superadmin requires superadmin.',
     security: [['bearerAuth' => []]],
     requestBody: new OA\RequestBody(
         ref: '#/components/requestBodies/CreateUserRequest'
@@ -112,13 +114,15 @@ use OpenApi\Attributes as OA;
             )
         ),
         new OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse'),
+        new OA\Response(response: 403, description: 'Forbidden — insufficient role permissions'),
         new OA\Response(response: 422, ref: '#/components/responses/ValidationErrorResponse'),
     ]
 )]
 #[OA\Put(
     path: '/api/v1/users/{id}',
     tags: ['Users'],
-    summary: 'Update user (admin)',
+    summary: 'Update user (admin/superadmin)',
+    description: 'Admins can only update users with role=user and cannot promote to admin/superadmin.',
     security: [['bearerAuth' => []]],
     parameters: [
         new OA\Parameter(
@@ -144,6 +148,7 @@ use OpenApi\Attributes as OA;
             )
         ),
         new OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse'),
+        new OA\Response(response: 403, description: 'Forbidden — insufficient role permissions'),
         new OA\Response(response: 404, description: 'User not found'),
         new OA\Response(response: 422, ref: '#/components/responses/ValidationErrorResponse'),
     ]
@@ -181,7 +186,8 @@ use OpenApi\Attributes as OA;
 #[OA\Delete(
     path: '/api/v1/users/{id}',
     tags: ['Users'],
-    summary: 'Delete user (admin)',
+    summary: 'Delete user (admin/superadmin)',
+    description: 'Admins can delete only users with role=user.',
     security: [['bearerAuth' => []]],
     parameters: [
         new OA\Parameter(
@@ -204,6 +210,7 @@ use OpenApi\Attributes as OA;
             )
         ),
         new OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse'),
+        new OA\Response(response: 403, description: 'Forbidden — insufficient role permissions'),
         new OA\Response(response: 404, description: 'User not found'),
     ]
 )]

@@ -47,7 +47,7 @@ use OpenApi\Attributes as OA;
             new OA\Property(
                 property: 'role',
                 type: 'string',
-                description: 'Updated role',
+                description: 'Updated role (user, admin, superadmin)',
                 example: 'user'
             ),
         ]

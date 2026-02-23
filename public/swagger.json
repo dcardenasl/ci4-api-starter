@@ -707,6 +707,7 @@
                     "Authentication"
                 ],
                 "summary": "Send password reset link",
+                "description": "Always returns a generic success response for valid emails. For soft-deleted accounts, this may trigger a reactivation request that requires admin approval.",
                 "operationId": "19c04fe755ee9d6901b8d3b85b293141",
                 "requestBody": {
                     "required": true,
@@ -735,7 +736,7 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Reset link queued",
+                        "description": "Generic success response (reset queued or reactivation requested)",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -1804,6 +1805,7 @@
                     "Users"
                 ],
                 "summary": "List users",
+                "description": "Lists users except accounts with role superadmin.",
                 "operationId": "bb16d86dd4253aeb9142d6f70fd5dcaa",
                 "parameters": [
                     {
@@ -1899,7 +1901,8 @@
                 "tags": [
                     "Users"
                 ],
-                "summary": "Create user (admin)",
+                "summary": "Create user (admin/superadmin)",
+                "description": "Admins can create only role=user. Creating admin/superadmin requires superadmin.",
                 "operationId": "462c00c3a4c6ef2fc9646c721e9f22d7",
                 "requestBody": {
                     "$ref": "#/components/requestBodies/CreateUserRequest"
@@ -1926,6 +1929,9 @@
                     },
                     "401": {
                         "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "403": {
+                        "description": "Forbidden — insufficient role permissions"
                     },
                     "422": {
                         "$ref": "#/components/responses/ValidationErrorResponse"
@@ -1992,7 +1998,8 @@
                 "tags": [
                     "Users"
                 ],
-                "summary": "Update user (admin)",
+                "summary": "Update user (admin/superadmin)",
+                "description": "Admins can only update users with role=user and cannot promote to admin/superadmin.",
                 "operationId": "8f5d3d5fba6849d4bc22555d2fae4786",
                 "parameters": [
                     {
@@ -2030,6 +2037,9 @@
                     "401": {
                         "$ref": "#/components/responses/UnauthorizedResponse"
                     },
+                    "403": {
+                        "description": "Forbidden — insufficient role permissions"
+                    },
                     "404": {
                         "description": "User not found"
                     },
@@ -2047,7 +2057,8 @@
                 "tags": [
                     "Users"
                 ],
-                "summary": "Delete user (admin)",
+                "summary": "Delete user (admin/superadmin)",
+                "description": "Admins can delete only users with role=user.",
                 "operationId": "5a802bd6daed8d9b1b4890ffd96f8c60",
                 "parameters": [
                     {
@@ -2081,6 +2092,9 @@
                     },
                     "401": {
                         "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "403": {
+                        "description": "Forbidden — insufficient role permissions"
                     },
                     "404": {
                         "description": "User not found"
@@ -2446,7 +2460,7 @@
                         "nullable": true
                     },
                     "role": {
-                        "description": "User role (user, admin, etc.)",
+                        "description": "User role (user, admin, superadmin)",
                         "type": "string",
                         "example": "user"
                     },
@@ -2676,7 +2690,7 @@
                                     "example": "newuser@example.com"
                                 },
                                 "role": {
-                                    "description": "User role",
+                                    "description": "User role (user, admin, superadmin)",
                                     "type": "string",
                                     "example": "user"
                                 },
@@ -2733,7 +2747,7 @@
                                     "example": "NewPassword123"
                                 },
                                 "role": {
-                                    "description": "Updated role",
+                                    "description": "Updated role (user, admin, superadmin)",
                                     "type": "string",
                                     "example": "user"
                                 }

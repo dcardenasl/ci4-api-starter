@@ -9,7 +9,7 @@ use OpenApi\Attributes as OA;
 /**
  * Create User Request Body
  *
- * Request schema for creating a new user via the admin endpoint.
+ * Request schema for creating a new user via the admin/superadmin endpoint.
  * Requires email; password optional when sending invitation.
  */
 #[OA\RequestBody(
@@ -41,7 +41,7 @@ use OpenApi\Attributes as OA;
             new OA\Property(
                 property: 'role',
                 type: 'string',
-                description: 'User role',
+                description: 'User role (user, admin, superadmin)',
                 example: 'user'
             ),
             new OA\Property(

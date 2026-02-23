@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Filters;
 
+use App\Entities\ApiKeyEntity;
 use App\Filters\AuthThrottleFilter;
 use App\HTTP\ApiRequest;
+use App\Models\ApiKeyModel;
 use CodeIgniter\Cache\CacheInterface;
 use CodeIgniter\HTTP\Response;
 use CodeIgniter\Test\CIUnitTestCase;
@@ -41,12 +43,31 @@ class AuthThrottleFilterTest extends CIUnitTestCase
     /**
      * Helper: Create mock ApiRequest with IP address
      */
-    private function createMockRequest(string $ip = '127.0.0.1'): ApiRequest
-    {
+    private function createMockRequest(
+        string $ip = '127.0.0.1',
+        ?string $appKey = null,
+        ?string $authorization = null
+    ): ApiRequest {
         $request = $this->createMock(ApiRequest::class);
 
         $request->method('getIPAddress')
             ->willReturn($ip);
+
+        $request->method('getHeaderLine')
+            ->willReturnCallback(function (string $header) use ($appKey, $authorization): string {
+                if (strtolower($header) === 'x-app-key') {
+                    return $appKey ?? '';
+                }
+
+                if (strtolower($header) === 'authorization') {
+                    return $authorization ?? '';
+                }
+
+                return '';
+            });
+
+        $request->method('getAuthUserId')
+            ->willReturn(null);
 
         return $request;
     }
@@ -275,5 +296,80 @@ class AuthThrottleFilterTest extends CIUnitTestCase
         $this->filter->before($request);
 
         $this->assertTrue(true);
+    }
+
+    public function testBeforeWithInvalidApiKeyReturnsUnauthorized(): void
+    {
+        $request = $this->createMockRequest('192.168.1.1', 'invalid-key');
+        $apiKeyModel = $this->createMock(ApiKeyModel::class);
+
+        Services::injectMock('apiKeyModel', $apiKeyModel);
+
+        $this->mockCache->expects($this->once())
+            ->method('get')
+            ->with($this->stringStartsWith('api_key_'))
+            ->willReturn(null);
+
+        $apiKeyModel->expects($this->once())
+            ->method('findByHash')
+            ->willReturn(null);
+
+        $this->mockCache->expects($this->never())
+            ->method('save');
+
+        $request->expects($this->never())
+            ->method('setAuthRateLimitInfo');
+
+        $result = $this->filter->before($request);
+
+        $this->assertInstanceOf(Response::class, $result);
+        $this->assertSame(401, $result->getStatusCode());
+        $body = json_decode($result->getBody(), true);
+        $this->assertEquals('error', $body['status']);
+        $this->assertArrayHasKey('api_key', $body['errors']);
+    }
+
+    public function testBeforeWithValidApiKeyUsesApiKeyLimits(): void
+    {
+        $request = $this->createMockRequest('192.168.1.1', 'valid-key');
+        $apiKeyModel = $this->createMock(ApiKeyModel::class);
+        $apiKey = new ApiKeyEntity([
+            'id' => 10,
+            'name' => 'Auth Client',
+            'key_prefix' => 'auth',
+            'key_hash' => hash('sha256', 'valid-key'),
+            'is_active' => 1,
+            'rate_limit_requests' => 100,
+            'rate_limit_window' => 60,
+            'user_rate_limit' => 50,
+            'ip_rate_limit' => 20,
+        ]);
+
+        Services::injectMock('apiKeyModel', $apiKeyModel);
+
+        $this->mockCache->method('get')
+            ->willReturnCallback(static fn (string $key): ?int => str_starts_with($key, 'api_key_10') ? null : null);
+
+        $this->mockCache->expects($this->exactly(3))
+            ->method('save')
+            ->willReturn(true);
+
+        $apiKeyModel->expects($this->once())
+            ->method('findByHash')
+            ->willReturn($apiKey);
+
+        $request->expects($this->once())
+            ->method('setAuthRateLimitInfo')
+            ->with($this->callback(function (array $info): bool {
+                return $info['limit'] === 100 && $info['remaining'] === 99;
+            }));
+
+        $request->expects($this->once())
+            ->method('setAppKeyId')
+            ->with(10);
+
+        $result = $this->filter->before($request);
+
+        $this->assertInstanceOf(ApiRequest::class, $result);
     }
 }

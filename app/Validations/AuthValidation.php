@@ -22,6 +22,11 @@ class AuthValidation extends BaseValidation
                 'password' => 'required|string',
             ],
 
+            'google_login' => [
+                'id_token' => 'required|string|max_length[4096]',
+                'client_base_url' => 'permit_empty|valid_url|max_length[255]',
+            ],
+
             'register' => [
                 'email'      => 'required|valid_email_idn|max_length[255]',
                 'first_name' => 'permit_empty|string|max_length[100]',
@@ -74,6 +79,13 @@ class AuthValidation extends BaseValidation
                 'email.valid_email_idn' => lang('InputValidation.common.emailInvalid'),
                 'email.max_length'      => lang('InputValidation.common.emailMaxLength'),
                 'password.required'   => lang('InputValidation.common.passwordRequired'),
+            ],
+
+            'google_login' => [
+                'id_token.required' => lang('InputValidation.auth.idTokenRequired'),
+                'id_token.max_length' => lang('InputValidation.auth.idTokenInvalid'),
+                'client_base_url.valid_url' => lang('InputValidation.auth.clientBaseUrlInvalid'),
+                'client_base_url.max_length' => lang('InputValidation.auth.clientBaseUrlInvalid'),
             ],
 
             'register' => [

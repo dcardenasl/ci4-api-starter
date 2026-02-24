@@ -99,8 +99,27 @@ class Services extends BaseService
             static::jwtService(),
             static::refreshTokenService(),
             static::verificationService(),
-            static::userAccessPolicyService()
+            static::userAccessPolicyService(),
+            static::googleIdentityService(),
+            static::emailService()
         );
+    }
+
+    /**
+     * Google Identity Service
+     *
+     * Verifies Google ID tokens and normalized claims.
+     *
+     * @param bool $getShared
+     * @return \App\Services\GoogleIdentityService
+     */
+    public static function googleIdentityService(bool $getShared = true)
+    {
+        if ($getShared) {
+            return static::getSharedInstance('googleIdentityService');
+        }
+
+        return new \App\Services\GoogleIdentityService();
     }
 
     /**

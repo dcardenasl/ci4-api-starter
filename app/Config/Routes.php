@@ -39,6 +39,7 @@ $routes->group('api/v1', function ($routes) {
     // Public authentication routes (with stricter auth-specific rate limiting)
     $routes->group('', ['filter' => 'authThrottle'], function ($routes) {
         $routes->post('auth/login', '\App\Controllers\Api\V1\Auth\AuthController::login');
+        $routes->post('auth/google-login', '\App\Controllers\Api\V1\Auth\AuthController::googleLogin');
         $routes->post('auth/register', '\App\Controllers\Api\V1\Identity\RegistrationController::register');
         $routes->post('auth/refresh', '\App\Controllers\Api\V1\Auth\TokenController::refresh');
 

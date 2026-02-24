@@ -21,15 +21,25 @@ class AuthController extends ApiController
 
     public function me(): ResponseInterface
     {
-        $userId = $this->getUserId();
+        return $this->handleRequest('me');
+    }
 
-        if (!$userId) {
-            return $this->respondUnauthorized(lang('Users.auth.notAuthenticated'));
+    public function googleLogin(): ResponseInterface
+    {
+        return $this->handleRequest('loginWithGoogleToken');
+    }
+
+    protected function resolveSuccessStatus(string $method, array $result): int
+    {
+        if ($method === 'loginWithGoogleToken') {
+            $pendingStatus = $result['data']['user']['status'] ?? null;
+            $hasAccessToken = isset($result['data']['access_token']);
+
+            if ($pendingStatus === 'pending_approval' && ! $hasAccessToken) {
+                return 202;
+            }
         }
 
-        $userService = \Config\Services::userService();
-        $result = $userService->show(['id' => $userId]);
-
-        return $this->respond($result, 200);
+        return parent::resolveSuccessStatus($method, $result);
     }
 }

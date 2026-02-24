@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Controllers;
 
+use App\Interfaces\EmailServiceInterface;
+use App\Interfaces\GoogleIdentityServiceInterface;
 use App\Models\UserModel;
 use CodeIgniter\Test\CIUnitTestCase;
 use CodeIgniter\Test\DatabaseTestTrait;
@@ -31,6 +33,18 @@ class AuthControllerTest extends CIUnitTestCase
     {
         parent::setUp();
         $this->userModel = new UserModel();
+
+        \Config\Services::resetSingle('googleIdentityService');
+        \Config\Services::resetSingle('emailService');
+        \Config\Services::resetSingle('authService');
+    }
+
+    protected function tearDown(): void
+    {
+        \Config\Services::resetSingle('googleIdentityService');
+        \Config\Services::resetSingle('emailService');
+        \Config\Services::resetSingle('authService');
+        parent::tearDown();
     }
 
     // ==================== REGISTER ENDPOINT TESTS ====================
@@ -226,6 +240,218 @@ class AuthControllerTest extends CIUnitTestCase
         $this->assertEquals(401, $json['code']);
     }
 
+    public function testGoogleLoginWithExistingActiveUserReturnsTokens(): void
+    {
+        $userId = $this->userModel->insert([
+            'email' => 'google-active@example.com',
+            'password' => password_hash('ValidPass123!', PASSWORD_BCRYPT),
+            'role' => 'user',
+            'status' => 'active',
+            'email_verified_at' => null,
+        ]);
+
+        $this->injectGoogleIdentityMock([
+            'provider' => 'google',
+            'provider_id' => 'google-sub-active',
+            'email' => 'google-active@example.com',
+            'first_name' => 'Google',
+            'last_name' => 'User',
+            'avatar_url' => 'https://example.com/avatar.png',
+            'claims' => [],
+        ]);
+        $this->injectEmailServiceMock();
+
+        $result = $this->withBodyFormat('json')
+            ->post('/api/v1/auth/google-login', [
+                'id_token' => 'google.id.token',
+            ]);
+
+        $result->assertStatus(200);
+
+        $json = json_decode($result->getJSON(), true);
+        $this->assertEquals('success', $json['status']);
+        $this->assertArrayHasKey('access_token', $json['data']);
+        $this->assertArrayHasKey('refresh_token', $json['data']);
+
+        $updatedUser = $this->userModel->find($userId);
+        $this->assertEquals('google', $updatedUser->oauth_provider);
+        $this->assertEquals('google-sub-active', $updatedUser->oauth_provider_id);
+        $this->assertNotNull($updatedUser->email_verified_at);
+    }
+
+    public function testGoogleLoginReturns403ForPendingApprovalUser(): void
+    {
+        $this->userModel->insert([
+            'email' => 'google-pending@example.com',
+            'password' => password_hash('ValidPass123!', PASSWORD_BCRYPT),
+            'role' => 'user',
+            'status' => 'pending_approval',
+            'email_verified_at' => date('Y-m-d H:i:s'),
+        ]);
+
+        $this->injectGoogleIdentityMock([
+            'provider' => 'google',
+            'provider_id' => 'google-sub-pending',
+            'email' => 'google-pending@example.com',
+            'first_name' => 'Pending',
+            'last_name' => 'User',
+            'avatar_url' => null,
+            'claims' => [],
+        ]);
+        $this->injectEmailServiceMock();
+
+        $result = $this->withBodyFormat('json')
+            ->post('/api/v1/auth/google-login', [
+                'id_token' => 'google.id.token',
+            ]);
+
+        $result->assertStatus(403);
+    }
+
+    public function testGoogleLoginCreatesPendingUserAndReturns202WhenEmailDoesNotExist(): void
+    {
+        $this->injectGoogleIdentityMock([
+            'provider' => 'google',
+            'provider_id' => 'google-sub-new',
+            'email' => 'google-new@example.com',
+            'first_name' => 'New',
+            'last_name' => 'Google',
+            'avatar_url' => 'https://example.com/new.png',
+            'claims' => [],
+        ]);
+        $this->injectEmailServiceMock();
+
+        $result = $this->withBodyFormat('json')
+            ->post('/api/v1/auth/google-login', [
+                'id_token' => 'google.id.token',
+            ]);
+
+        $result->assertStatus(202);
+
+        $json = json_decode($result->getJSON(), true);
+        $this->assertEquals('success', $json['status']);
+        $this->assertArrayNotHasKey('access_token', $json['data']);
+        $this->assertEquals('pending_approval', $json['data']['user']['status']);
+
+        $created = $this->userModel->where('email', 'google-new@example.com')->first();
+        $this->assertNotNull($created);
+        $this->assertEquals('pending_approval', $created->status);
+        $this->assertEquals('google', $created->oauth_provider);
+        $this->assertEquals('google-sub-new', $created->oauth_provider_id);
+        $this->assertNull($created->password);
+    }
+
+    public function testGoogleLoginConvertsInvitedUserToActiveAndReturnsTokens(): void
+    {
+        $userId = $this->userModel->insert([
+            'email' => 'google-invited@example.com',
+            'password' => password_hash('ValidPass123!', PASSWORD_BCRYPT),
+            'role' => 'user',
+            'status' => 'invited',
+            'approved_at' => date('Y-m-d H:i:s'),
+            'approved_by' => 1,
+            'invited_at' => date('Y-m-d H:i:s'),
+            'invited_by' => 1,
+            'email_verified_at' => null,
+        ]);
+
+        $this->injectGoogleIdentityMock([
+            'provider' => 'google',
+            'provider_id' => 'google-sub-invited',
+            'email' => 'google-invited@example.com',
+            'first_name' => 'Invited',
+            'last_name' => 'Google',
+            'avatar_url' => null,
+            'claims' => [],
+        ]);
+        $this->injectEmailServiceMock();
+
+        $result = $this->withBodyFormat('json')
+            ->post('/api/v1/auth/google-login', [
+                'id_token' => 'google.id.token',
+            ]);
+
+        $result->assertStatus(200);
+        $json = json_decode($result->getJSON(), true);
+        $this->assertArrayHasKey('access_token', $json['data']);
+
+        $updated = $this->userModel->find($userId);
+        $this->assertEquals('active', $updated->status);
+        $this->assertNull($updated->invited_at);
+        $this->assertNull($updated->invited_by);
+    }
+
+    public function testGoogleLoginReactivatesSoftDeletedUserAsPendingApproval(): void
+    {
+        $userId = $this->userModel->insert([
+            'email' => 'google-deleted@example.com',
+            'password' => password_hash('ValidPass123!', PASSWORD_BCRYPT),
+            'role' => 'user',
+            'status' => 'active',
+            'approved_at' => date('Y-m-d H:i:s'),
+            'approved_by' => 1,
+        ]);
+
+        $this->userModel->delete($userId);
+
+        $this->injectGoogleIdentityMock([
+            'provider' => 'google',
+            'provider_id' => 'google-sub-deleted',
+            'email' => 'google-deleted@example.com',
+            'first_name' => 'Deleted',
+            'last_name' => 'Google',
+            'avatar_url' => null,
+            'claims' => [],
+        ]);
+        $this->injectEmailServiceMock();
+
+        $result = $this->withBodyFormat('json')
+            ->post('/api/v1/auth/google-login', [
+                'id_token' => 'google.id.token',
+            ]);
+
+        $result->assertStatus(202);
+
+        $reactivated = $this->userModel->find($userId);
+        $this->assertNotNull($reactivated);
+        $this->assertEquals('pending_approval', $reactivated->status);
+        $this->assertNull($reactivated->deleted_at);
+        $this->assertNull($reactivated->approved_at);
+        $this->assertEquals('google', $reactivated->oauth_provider);
+        $this->assertEquals('google-sub-deleted', $reactivated->oauth_provider_id);
+    }
+
+    public function testGoogleLoginReturns409ForDifferentOauthProvider(): void
+    {
+        $this->userModel->insert([
+            'email' => 'google-conflict@example.com',
+            'password' => password_hash('ValidPass123!', PASSWORD_BCRYPT),
+            'role' => 'user',
+            'status' => 'active',
+            'email_verified_at' => date('Y-m-d H:i:s'),
+            'oauth_provider' => 'github',
+            'oauth_provider_id' => 'github-sub-1',
+        ]);
+
+        $this->injectGoogleIdentityMock([
+            'provider' => 'google',
+            'provider_id' => 'google-sub-conflict',
+            'email' => 'google-conflict@example.com',
+            'first_name' => 'Conflict',
+            'last_name' => 'User',
+            'avatar_url' => null,
+            'claims' => [],
+        ]);
+        $this->injectEmailServiceMock();
+
+        $result = $this->withBodyFormat('json')
+            ->post('/api/v1/auth/google-login', [
+                'id_token' => 'google.id.token',
+            ]);
+
+        $result->assertStatus(409);
+    }
+
     // ==================== PROTECTED ENDPOINT TESTS ====================
 
     public function testProtectedEndpointWithoutTokenReturnsUnauthorized(): void
@@ -355,5 +581,30 @@ class AuthControllerTest extends CIUnitTestCase
         $result = $this->get('/ping');
 
         $result->assertStatus(200);
+    }
+
+    /**
+     * @param array<string, mixed> $identity
+     */
+    private function injectGoogleIdentityMock(array $identity): void
+    {
+        $googleIdentityService = $this->createMock(GoogleIdentityServiceInterface::class);
+        $googleIdentityService
+            ->method('verifyIdToken')
+            ->willReturn($identity);
+
+        \Config\Services::injectMock('googleIdentityService', $googleIdentityService);
+        \Config\Services::resetSingle('authService');
+    }
+
+    private function injectEmailServiceMock(): void
+    {
+        $emailService = $this->createMock(EmailServiceInterface::class);
+        $emailService
+            ->method('queueTemplate')
+            ->willReturn(1);
+
+        \Config\Services::injectMock('emailService', $emailService);
+        \Config\Services::resetSingle('authService');
     }
 }

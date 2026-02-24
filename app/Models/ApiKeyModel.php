@@ -45,50 +45,50 @@ class ApiKeyModel extends Model
         'name' => [
             'rules'  => 'required|string|max_length[100]',
             'errors' => [
-                'required'   => 'API key name is required',
-                'max_length' => 'Name cannot exceed {param} characters',
+                'required'   => 'InputValidation.apiKey.nameRequired',
+                'max_length' => 'InputValidation.apiKey.nameMaxLength',
             ],
         ],
         'key_prefix' => [
             'rules'  => 'required|string|max_length[12]',
             'errors' => [
-                'required'   => 'Key prefix is required',
-                'max_length' => 'Key prefix cannot exceed {param} characters',
+                'required'   => 'InputValidation.apiKey.keyPrefixRequired',
+                'max_length' => 'InputValidation.apiKey.keyPrefixMaxLength',
             ],
         ],
         'key_hash' => [
             'rules'  => 'required|string|max_length[64]',
             'errors' => [
-                'required'   => 'Key hash is required',
-                'max_length' => 'Key hash cannot exceed {param} characters',
+                'required'   => 'InputValidation.apiKey.keyHashRequired',
+                'max_length' => 'InputValidation.apiKey.keyHashMaxLength',
             ],
         ],
         'rate_limit_requests' => [
             'rules'  => 'permit_empty|integer|greater_than[0]',
             'errors' => [
-                'integer'      => 'rate_limit_requests must be an integer',
-                'greater_than' => 'rate_limit_requests must be greater than 0',
+                'integer'      => 'InputValidation.apiKey.rateLimitRequestsInteger',
+                'greater_than' => 'InputValidation.apiKey.rateLimitRequestsGreaterThan',
             ],
         ],
         'rate_limit_window' => [
             'rules'  => 'permit_empty|integer|greater_than[0]',
             'errors' => [
-                'integer'      => 'rate_limit_window must be an integer',
-                'greater_than' => 'rate_limit_window must be greater than 0',
+                'integer'      => 'InputValidation.apiKey.rateLimitWindowInteger',
+                'greater_than' => 'InputValidation.apiKey.rateLimitWindowGreaterThan',
             ],
         ],
         'user_rate_limit' => [
             'rules'  => 'permit_empty|integer|greater_than[0]',
             'errors' => [
-                'integer'      => 'user_rate_limit must be an integer',
-                'greater_than' => 'user_rate_limit must be greater than 0',
+                'integer'      => 'InputValidation.apiKey.userRateLimitInteger',
+                'greater_than' => 'InputValidation.apiKey.userRateLimitGreaterThan',
             ],
         ],
         'ip_rate_limit' => [
             'rules'  => 'permit_empty|integer|greater_than[0]',
             'errors' => [
-                'integer'      => 'ip_rate_limit must be an integer',
-                'greater_than' => 'ip_rate_limit must be greater than 0',
+                'integer'      => 'InputValidation.apiKey.ipRateLimitInteger',
+                'greater_than' => 'InputValidation.apiKey.ipRateLimitGreaterThan',
             ],
         ],
     ];

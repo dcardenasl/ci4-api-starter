@@ -18,19 +18,22 @@ trait ValidatesRequiredFields
      * Validate and extract required ID from data array
      *
      * @param array $data Request data
+     * @param string $field Field name to validate (default: id)
+     * @param string|null $label Optional field label for localized message
      * @return int Validated ID
      * @throws BadRequestException If ID is missing or empty
      */
-    protected function validateRequiredId(array $data): int
+    protected function validateRequiredId(array $data, string $field = 'id', ?string $label = null): int
     {
-        if (!isset($data['id']) || $data['id'] === null || $data['id'] === '') {
+        if (!isset($data[$field]) || $data[$field] === null || $data[$field] === '') {
+            $fieldLabel = $label ?: ucfirst(str_replace('_', ' ', $field));
             throw new BadRequestException(
                 lang('Api.invalidRequest'),
-                ['id' => lang('Users.idRequired')]
+                [$field => lang('InputValidation.common.idRequired', [$fieldLabel])]
             );
         }
 
-        return (int) $data['id'];
+        return (int) $data[$field];
     }
 
     /**
@@ -64,7 +67,7 @@ trait ValidatesRequiredFields
      * @param string $requestMessage
      * @throws BadRequestException
      */
-    protected function validateRequiredFields(array $data, array $fieldErrors, string $requestMessage = 'Invalid request'): void
+    protected function validateRequiredFields(array $data, array $fieldErrors, string $requestMessage = ''): void
     {
         $errors = [];
 
@@ -75,9 +78,9 @@ trait ValidatesRequiredFields
         }
 
         if ($errors !== []) {
-            $message = $requestMessage === 'Invalid request'
-                ? lang('Api.invalidRequest')
-                : $requestMessage;
+            $message = $requestMessage !== ''
+                ? $requestMessage
+                : lang('Api.invalidRequest');
 
             throw new BadRequestException($message, $errors);
         }

@@ -10,7 +10,6 @@ return [
 
     // Error messages
     'fileRequired'       => 'File is required',
-    'userIdRequired'     => 'User ID is required',
     'invalidFileObject'  => 'Invalid file object',
     'uploadFailed'       => 'File upload failed: {0}',
     'fileTooLarge'       => 'File size exceeds maximum allowed size',
@@ -20,6 +19,11 @@ return [
     'idRequired'         => 'File ID and User ID are required',
     'unauthorized'       => 'You are not authorized to access this file',
     'saveFailed'         => 'Failed to save file metadata',
+    'validation' => [
+        'userId' => [
+            'integer' => 'User ID must be an integer',
+        ],
+    ],
 
     // Request messages
     'invalidRequest'     => 'Invalid request',

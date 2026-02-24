@@ -31,6 +31,7 @@ return [
         'emailRequired'          => 'El email es obligatorio',
         'emailInvalid'           => 'Proporcione una dirección de email válida',
         'emailMaxLength'         => 'El email no puede exceder 255 caracteres',
+        'emailAlreadyRegistered' => 'Este email ya está registrado',
 
         // Contraseña
         'passwordRequired'       => 'La contraseña es obligatoria',
@@ -47,6 +48,7 @@ return [
         'avatarUrlMaxLength'       => 'La URL del avatar no puede exceder 255 caracteres',
 
         // ID de usuario
+        'userIdMustBeInteger'    => 'El ID de usuario debe ser un entero',
         'userIdMustBePositive'   => 'El ID de usuario debe ser un entero positivo',
         'userIdRequired'         => 'El ID de usuario es obligatorio',
     ],
@@ -82,6 +84,26 @@ return [
     'token' => [
         'refreshTokenRequired'   => 'El token de actualización es obligatorio',
         'refreshTokenInvalid'    => 'Formato de token de actualización inválido',
+    ],
+
+    // ========================================
+    // Dominio API Key
+    // ========================================
+    'apiKey' => [
+        'nameRequired'                => 'El nombre de la clave de API es obligatorio',
+        'nameMaxLength'               => 'El nombre no puede exceder {0} caracteres',
+        'keyPrefixRequired'           => 'El prefijo de la clave es obligatorio',
+        'keyPrefixMaxLength'          => 'El prefijo de la clave no puede exceder {0} caracteres',
+        'keyHashRequired'             => 'El hash de la clave es obligatorio',
+        'keyHashMaxLength'            => 'El hash de la clave no puede exceder {0} caracteres',
+        'rateLimitRequestsInteger'    => 'El límite de solicitudes debe ser un entero',
+        'rateLimitRequestsGreaterThan' => 'El límite de solicitudes debe ser mayor que 0',
+        'rateLimitWindowInteger'      => 'La ventana de límite debe ser un entero',
+        'rateLimitWindowGreaterThan'  => 'La ventana de límite debe ser mayor que 0',
+        'userRateLimitInteger'        => 'El límite por usuario debe ser un entero',
+        'userRateLimitGreaterThan'    => 'El límite por usuario debe ser mayor que 0',
+        'ipRateLimitInteger'          => 'El límite por IP debe ser un entero',
+        'ipRateLimitGreaterThan'      => 'El límite por IP debe ser mayor que 0',
     ],
 
     // ========================================

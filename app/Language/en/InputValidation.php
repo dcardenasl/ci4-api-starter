@@ -31,6 +31,7 @@ return [
         'emailRequired'          => 'Email is required',
         'emailInvalid'           => 'Please provide a valid email address',
         'emailMaxLength'         => 'Email cannot exceed 255 characters',
+        'emailAlreadyRegistered' => 'This email is already registered',
 
         // Password
         'passwordRequired'       => 'Password is required',
@@ -47,6 +48,7 @@ return [
         'avatarUrlMaxLength'     => 'Avatar URL cannot exceed 255 characters',
 
         // User ID
+        'userIdMustBeInteger'    => 'User ID must be an integer',
         'userIdMustBePositive'   => 'User ID must be a positive integer',
         'userIdRequired'         => 'User ID is required',
     ],
@@ -82,6 +84,26 @@ return [
     'token' => [
         'refreshTokenRequired'   => 'Refresh token is required',
         'refreshTokenInvalid'    => 'Invalid refresh token format',
+    ],
+
+    // ========================================
+    // API Key Domain
+    // ========================================
+    'apiKey' => [
+        'nameRequired'                => 'API key name is required',
+        'nameMaxLength'               => 'Name cannot exceed {0} characters',
+        'keyPrefixRequired'           => 'Key prefix is required',
+        'keyPrefixMaxLength'          => 'Key prefix cannot exceed {0} characters',
+        'keyHashRequired'             => 'Key hash is required',
+        'keyHashMaxLength'            => 'Key hash cannot exceed {0} characters',
+        'rateLimitRequestsInteger'    => 'Rate limit requests must be an integer',
+        'rateLimitRequestsGreaterThan' => 'Rate limit requests must be greater than 0',
+        'rateLimitWindowInteger'      => 'Rate limit window must be an integer',
+        'rateLimitWindowGreaterThan'  => 'Rate limit window must be greater than 0',
+        'userRateLimitInteger'        => 'User rate limit must be an integer',
+        'userRateLimitGreaterThan'    => 'User rate limit must be greater than 0',
+        'ipRateLimitInteger'          => 'IP rate limit must be an integer',
+        'ipRateLimitGreaterThan'      => 'IP rate limit must be greater than 0',
     ],
 
     // ========================================

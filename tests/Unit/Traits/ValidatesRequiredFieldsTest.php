@@ -33,7 +33,7 @@ class ValidatesRequiredFieldsTest extends CIUnitTestCase
                 return $this->validateRequiredField($data, $field, $langKey);
             }
 
-            public function testValidateFields(array $data, array $fieldErrors, string $message = 'Invalid request'): void
+            public function testValidateFields(array $data, array $fieldErrors, string $message = ''): void
             {
                 $this->validateRequiredFields($data, $fieldErrors, $message);
             }
@@ -52,9 +52,14 @@ class ValidatesRequiredFieldsTest extends CIUnitTestCase
 
     public function testValidateRequiredIdThrowsExceptionForMissingId(): void
     {
-        $this->expectException(BadRequestException::class);
-
-        $this->testClass->testValidateId([]);
+        try {
+            $this->testClass->testValidateId([]);
+            $this->fail('Expected BadRequestException was not thrown');
+        } catch (BadRequestException $e) {
+            $errors = $e->getErrors();
+            $this->assertArrayHasKey('id', $errors);
+            $this->assertEquals(lang('InputValidation.common.idRequired', ['Id']), $errors['id']);
+        }
     }
 
     public function testValidateRequiredIdThrowsExceptionForNullId(): void
@@ -147,6 +152,18 @@ class ValidatesRequiredFieldsTest extends CIUnitTestCase
             $this->assertArrayHasKey('email', $errors);
             $this->assertArrayHasKey('password', $errors);
             $this->assertEquals('Validation failed', $e->getMessage());
+        }
+    }
+
+    public function testValidateRequiredFieldsUsesLocalizedDefaultRequestMessage(): void
+    {
+        try {
+            $this->testClass->testValidateFields([], [
+                'email' => 'Email is required',
+            ]);
+            $this->fail('Expected BadRequestException was not thrown');
+        } catch (BadRequestException $e) {
+            $this->assertEquals(lang('Api.invalidRequest'), $e->getMessage());
         }
     }
 

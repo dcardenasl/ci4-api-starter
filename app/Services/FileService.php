@@ -42,7 +42,7 @@ class FileService implements FileServiceInterface
     {
         $this->validateRequiredFields($data, [
             'file' => lang('Files.fileRequired'),
-            'user_id' => lang('Files.userIdRequired'),
+            'user_id' => lang('InputValidation.common.userIdRequired'),
         ], lang('Files.invalidRequest'));
 
         $file = $data['file'];
@@ -147,7 +147,7 @@ class FileService implements FileServiceInterface
     public function index(array $data): array
     {
         $this->validateRequiredFields($data, [
-            'user_id' => lang('Files.userIdRequired'),
+            'user_id' => lang('InputValidation.common.userIdRequired'),
         ], lang('Files.invalidRequest'));
 
         $builder = new QueryBuilder($this->fileModel);
@@ -198,7 +198,7 @@ class FileService implements FileServiceInterface
     {
         $this->validateRequiredFields($data, [
             'id' => lang('Files.idRequired'),
-            'user_id' => lang('Files.userIdRequired'),
+            'user_id' => lang('InputValidation.common.userIdRequired'),
         ], lang('Files.invalidRequest'));
 
         // First check if file exists
@@ -233,7 +233,7 @@ class FileService implements FileServiceInterface
     {
         $this->validateRequiredFields($data, [
             'id' => lang('Files.idRequired'),
-            'user_id' => lang('Files.userIdRequired'),
+            'user_id' => lang('InputValidation.common.userIdRequired'),
         ], lang('Files.invalidRequest'));
 
         // First check if file exists

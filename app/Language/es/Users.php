@@ -26,26 +26,6 @@ return [
     'deleteError'     => 'Error al eliminar el usuario',
     'createError'     => 'Error al crear el usuario',
 
-    // Mensajes de validación
-    'validation' => [
-        'email' => [
-            'required'    => 'El email es obligatorio',
-            'valid'       => 'Debe proporcionar un email válido',
-            'unique'      => 'Este email ya está registrado',
-        ],
-        'first_name' => [
-            'maxLength' => 'El nombre no puede exceder {0} caracteres',
-        ],
-        'last_name' => [
-            'maxLength' => 'El apellido no puede exceder {0} caracteres',
-        ],
-        'password' => [
-            'required'   => 'La contraseña es obligatoria',
-            'minLength'  => 'La contraseña debe tener al menos {0} caracteres',
-            'complexity' => 'La contraseña debe contener al menos una mayúscula, una minúscula y un número',
-        ],
-    ],
-
     // Autenticación
     'auth' => [
         'invalidCredentials' => 'Credenciales inválidas',

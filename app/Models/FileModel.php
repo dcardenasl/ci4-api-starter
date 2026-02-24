@@ -55,8 +55,8 @@ class FileModel extends Model
 
     protected $validationMessages = [
         'user_id' => [
-            'required' => 'User ID is required',
-            'integer' => 'User ID must be an integer',
+            'required' => 'InputValidation.common.userIdRequired',
+            'integer' => 'InputValidation.common.userIdMustBeInteger',
         ],
     ];
 

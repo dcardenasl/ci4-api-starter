@@ -10,7 +10,6 @@ return [
 
     // Mensajes de error
     'fileRequired'       => 'El archivo es requerido',
-    'userIdRequired'     => 'El ID de usuario es requerido',
     'invalidFileObject'  => 'Objeto de archivo inválido',
     'uploadFailed'       => 'Error al subir el archivo: {0}',
     'fileTooLarge'       => 'El tamaño del archivo excede el máximo permitido',
@@ -20,6 +19,11 @@ return [
     'idRequired'         => 'Se requiere el ID del archivo y el ID del usuario',
     'unauthorized'       => 'No está autorizado para acceder a este archivo',
     'saveFailed'         => 'Error al guardar los metadatos del archivo',
+    'validation' => [
+        'userId' => [
+            'integer' => 'El ID de usuario debe ser un entero',
+        ],
+    ],
 
     // Mensajes de solicitud
     'invalidRequest'     => 'Solicitud inválida',

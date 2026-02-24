@@ -135,13 +135,22 @@ class InputValidationService implements InputValidationServiceInterface
      */
     public function validateOrFail(array $data, string $domain, string $action): void
     {
-        $rules = $this->getRules($domain, $action);
-
-        if (empty($rules)) {
-            return;
+        $validator = $this->getValidator($domain);
+        if ($validator === null) {
+            throw new \InvalidArgumentException(
+                lang('InputValidation.common.unknownValidationDomain', [$domain])
+            );
         }
 
-        $messages = $this->getMessages($domain, $action);
+        $rules = $validator->getRules($action);
+
+        if (empty($rules)) {
+            throw new \InvalidArgumentException(
+                lang('InputValidation.common.unknownValidationAction', [$action, $domain])
+            );
+        }
+
+        $messages = $validator->getMessages($action);
         $errors = $this->validate($data, $rules, $messages);
 
         if (!empty($errors)) {

@@ -51,6 +51,10 @@ return [
         'userIdMustBeInteger'    => 'El ID de usuario debe ser un entero',
         'userIdMustBePositive'   => 'El ID de usuario debe ser un entero positivo',
         'userIdRequired'         => 'El ID de usuario es obligatorio',
+
+        // Configuración de validación
+        'unknownValidationDomain' => 'El dominio de validación "{0}" no está registrado',
+        'unknownValidationAction' => 'La acción de validación "{0}" no está definida para el dominio "{1}"',
     ],
 
     // ========================================

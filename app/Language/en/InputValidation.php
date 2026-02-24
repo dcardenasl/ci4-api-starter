@@ -51,6 +51,10 @@ return [
         'userIdMustBeInteger'    => 'User ID must be an integer',
         'userIdMustBePositive'   => 'User ID must be a positive integer',
         'userIdRequired'         => 'User ID is required',
+
+        // Validation configuration
+        'unknownValidationDomain' => 'Validation domain "{0}" is not registered',
+        'unknownValidationAction' => 'Validation action "{0}" is not defined for domain "{1}"',
     ],
 
     // ========================================

@@ -140,12 +140,10 @@ class InputValidationServiceTest extends CIUnitTestCase
         $this->service->validateOrFail($data, 'auth', 'login');
     }
 
-    public function testValidateOrFailDoesNothingForEmptyRules(): void
+    public function testValidateOrFailThrowsExceptionForUnknownAction(): void
     {
-        // Should not throw exception for unknown action (empty rules)
+        $this->expectException(\InvalidArgumentException::class);
         $this->service->validateOrFail(['anything' => 'value'], 'auth', 'nonexistent');
-
-        $this->assertTrue(true); // Reached here without exception
     }
 
     // ==================== get() ====================

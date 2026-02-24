@@ -16,14 +16,9 @@ return [
     'invalidFileType'    => 'Tipo de archivo no permitido',
     'storageFailed'      => 'Error al almacenar el archivo',
     'fileNotFound'       => 'Archivo no encontrado o acceso denegado',
-    'idRequired'         => 'Se requiere el ID del archivo y el ID del usuario',
+    'idRequired'         => 'El ID del archivo es obligatorio',
     'unauthorized'       => 'No está autorizado para acceder a este archivo',
     'saveFailed'         => 'Error al guardar los metadatos del archivo',
-    'validation' => [
-        'userId' => [
-            'integer' => 'El ID de usuario debe ser un entero',
-        ],
-    ],
 
     // Mensajes de solicitud
     'invalidRequest'     => 'Solicitud inválida',

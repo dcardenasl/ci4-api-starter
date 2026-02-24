@@ -11,7 +11,6 @@ use App\Libraries\ApiResponse;
 use App\Libraries\Query\QueryBuilder;
 use App\Models\AuditLogModel;
 use App\Traits\AppliesQueryOptions;
-use App\Traits\ValidatesRequiredFields;
 use CodeIgniter\HTTP\RequestInterface;
 
 /**
@@ -22,7 +21,6 @@ use CodeIgniter\HTTP\RequestInterface;
 class AuditService implements AuditServiceInterface
 {
     use AppliesQueryOptions;
-    use ValidatesRequiredFields;
 
     /**
      * Sensitive keys that must never be persisted in audit payloads.
@@ -183,6 +181,8 @@ class AuditService implements AuditServiceInterface
      */
     public function index(array $data): array
     {
+        $this->validateInputOrBadRequest($data, 'index');
+
         $builder = new QueryBuilder($this->auditLogModel);
 
         if (
@@ -232,9 +232,7 @@ class AuditService implements AuditServiceInterface
      */
     public function show(array $data): array
     {
-        $this->validateRequiredFields($data, [
-            'id' => lang('Audit.idRequired'),
-        ], lang('Api.invalidRequest'));
+        $this->validateInputOrBadRequest($data, 'show');
 
         $log = $this->auditLogModel->find($data['id']);
 
@@ -264,12 +262,7 @@ class AuditService implements AuditServiceInterface
      */
     public function byEntity(array $data): array
     {
-        if (empty($data['entity_type']) || empty($data['entity_id'])) {
-            throw new BadRequestException(
-                lang('Api.invalidRequest'),
-                ['entity' => lang('Audit.entityRequired')]
-            );
-        }
+        $this->validateInputOrBadRequest($data, 'by_entity');
 
         $entityType = $this->normalizeEntityType((string) $data['entity_type']);
 
@@ -301,6 +294,16 @@ class AuditService implements AuditServiceInterface
         $normalized = strtolower(trim($entityType));
 
         return self::ENTITY_TYPE_ALIASES[$normalized] ?? $normalized;
+    }
+
+    private function validateInputOrBadRequest(array $data, string $action): void
+    {
+        $validation = getValidationRules('audit', $action);
+        $errors = validateInputs($data, $validation['rules'], $validation['messages']);
+
+        if ($errors !== []) {
+            throw new BadRequestException(lang('Api.invalidRequest'), $errors);
+        }
     }
 
     /**

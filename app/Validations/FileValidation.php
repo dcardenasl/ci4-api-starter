@@ -17,15 +17,31 @@ class FileValidation extends BaseValidation
     public function getRules(string $action): array
     {
         return match ($action) {
-            'index' => $this->paginationRules(),
+            'index' => $this->mergeRules(
+                $this->paginationRules(),
+                [
+                    'user_id' => 'required|is_natural_no_zero',
+                ]
+            ),
 
-            'show' => $this->idRules(),
+            'show' => $this->mergeRules(
+                $this->idRules(),
+                [
+                    'user_id' => 'required|is_natural_no_zero',
+                ]
+            ),
 
             'upload' => [
-                'file' => 'uploaded[file]|max_size[file,10240]',
+                'user_id' => 'required|is_natural_no_zero',
+                'file' => 'required',
             ],
 
-            'delete' => $this->idRules(),
+            'delete' => $this->mergeRules(
+                $this->idRules(),
+                [
+                    'user_id' => 'required|is_natural_no_zero',
+                ]
+            ),
 
             default => [],
         };
@@ -37,13 +53,26 @@ class FileValidation extends BaseValidation
     public function getMessages(string $action): array
     {
         return match ($action) {
-            'index' => $this->paginationMessages(),
+            'index' => $this->mergeMessages(
+                $this->paginationMessages(),
+                [
+                    'user_id.required'           => lang('InputValidation.common.userIdRequired'),
+                    'user_id.is_natural_no_zero' => lang('InputValidation.common.userIdMustBePositive'),
+                ]
+            ),
 
-            'show', 'delete' => $this->idMessages(),
+            'show', 'delete' => $this->mergeMessages(
+                $this->idMessages(),
+                [
+                    'user_id.required'           => lang('InputValidation.common.userIdRequired'),
+                    'user_id.is_natural_no_zero' => lang('InputValidation.common.userIdMustBePositive'),
+                ]
+            ),
 
             'upload' => [
-                'file.uploaded' => lang('InputValidation.file.noFileUploaded'),
-                'file.max_size' => lang('InputValidation.file.fileTooLarge'),
+                'user_id.required' => lang('InputValidation.common.userIdRequired'),
+                'user_id.is_natural_no_zero' => lang('InputValidation.common.userIdMustBePositive'),
+                'file.required' => lang('InputValidation.file.noFileUploaded'),
             ],
 
             default => [],

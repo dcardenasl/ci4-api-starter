@@ -16,14 +16,9 @@ return [
     'invalidFileType'    => 'File type not allowed',
     'storageFailed'      => 'Failed to store file',
     'fileNotFound'       => 'File not found or access denied',
-    'idRequired'         => 'File ID and User ID are required',
+    'idRequired'         => 'File ID is required',
     'unauthorized'       => 'You are not authorized to access this file',
     'saveFailed'         => 'Failed to save file metadata',
-    'validation' => [
-        'userId' => [
-            'integer' => 'User ID must be an integer',
-        ],
-    ],
 
     // Request messages
     'invalidRequest'     => 'Invalid request',

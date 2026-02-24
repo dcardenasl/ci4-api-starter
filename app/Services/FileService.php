@@ -14,7 +14,6 @@ use App\Libraries\Query\QueryBuilder;
 use App\Libraries\Storage\StorageManager;
 use App\Models\FileModel;
 use App\Traits\AppliesQueryOptions;
-use App\Traits\ValidatesRequiredFields;
 
 /**
  * File Service
@@ -24,7 +23,6 @@ use App\Traits\ValidatesRequiredFields;
 class FileService implements FileServiceInterface
 {
     use AppliesQueryOptions;
-    use ValidatesRequiredFields;
 
     public function __construct(
         protected FileModel $fileModel,
@@ -40,10 +38,7 @@ class FileService implements FileServiceInterface
      */
     public function upload(array $data): array
     {
-        $this->validateRequiredFields($data, [
-            'file' => lang('Files.fileRequired'),
-            'user_id' => lang('InputValidation.common.userIdRequired'),
-        ], lang('Files.invalidRequest'));
+        $this->validateInputOrBadRequest($data, 'upload');
 
         $file = $data['file'];
         $userId = (int) $data['user_id'];
@@ -146,9 +141,7 @@ class FileService implements FileServiceInterface
      */
     public function index(array $data): array
     {
-        $this->validateRequiredFields($data, [
-            'user_id' => lang('InputValidation.common.userIdRequired'),
-        ], lang('Files.invalidRequest'));
+        $this->validateInputOrBadRequest($data, 'index');
 
         $builder = new QueryBuilder($this->fileModel);
 
@@ -196,10 +189,7 @@ class FileService implements FileServiceInterface
      */
     public function download(array $data): array
     {
-        $this->validateRequiredFields($data, [
-            'id' => lang('Files.idRequired'),
-            'user_id' => lang('InputValidation.common.userIdRequired'),
-        ], lang('Files.invalidRequest'));
+        $this->validateInputOrBadRequest($data, 'show');
 
         // First check if file exists
         $file = $this->fileModel->find((int) $data['id']);
@@ -231,10 +221,7 @@ class FileService implements FileServiceInterface
      */
     public function delete(array $data): array
     {
-        $this->validateRequiredFields($data, [
-            'id' => lang('Files.idRequired'),
-            'user_id' => lang('InputValidation.common.userIdRequired'),
-        ], lang('Files.invalidRequest'));
+        $this->validateInputOrBadRequest($data, 'delete');
 
         // First check if file exists
         $file = $this->fileModel->find((int) $data['id']);
@@ -269,6 +256,16 @@ class FileService implements FileServiceInterface
     public function destroy(array $data): array
     {
         return $this->delete($data);
+    }
+
+    private function validateInputOrBadRequest(array $data, string $action): void
+    {
+        $validation = getValidationRules('file', $action);
+        $errors = validateInputs($data, $validation['rules'], $validation['messages']);
+
+        if ($errors !== []) {
+            throw new BadRequestException(lang('Files.invalidRequest'), $errors);
+        }
     }
 
     /**

@@ -32,6 +32,19 @@
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
+        .button {
+            display: inline-block;
+            padding: 12px 30px;
+            background-color: #3498db;
+            color: #ffffff !important;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 20px 0;
+            font-weight: bold;
+        }
+        .button:hover {
+            background-color: #2c80b4;
+        }
         .footer {
             text-align: center;
             margin-top: 30px;
@@ -49,6 +62,17 @@
         <div class="content">
             <h2><?= lang('Email.accountApproved.greeting', [esc($display_name ?? 'User')]) ?></h2>
             <p><?= lang('Email.accountApproved.intro') ?></p>
+
+            <?php if (! empty($login_link ?? null)): ?>
+                <div style="text-align: center;">
+                    <a href="<?= esc((string) $login_link) ?>" class="button"><?= lang('Email.accountApproved.buttonText') ?></a>
+                </div>
+
+                <p><?= lang('Email.accountApproved.linkIntro') ?></p>
+                <p style="word-break: break-all; color: #3498db;">
+                    <?= esc((string) $login_link) ?>
+                </p>
+            <?php endif; ?>
         </div>
 
         <div class="footer">

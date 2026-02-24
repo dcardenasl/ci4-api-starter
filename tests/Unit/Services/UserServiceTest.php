@@ -294,6 +294,60 @@ class UserServiceTest extends CIUnitTestCase
         $this->service->destroy(['id' => 999]);
     }
 
+    // ==================== APPROVE TESTS ====================
+
+    public function testApproveQueuesAccountApprovedEmailWithLoginLink(): void
+    {
+        $pendingUser = $this->createUserEntity([
+            'id' => 10,
+            'email' => 'pending@example.com',
+            'first_name' => 'Pending',
+            'last_name' => 'User',
+            'status' => 'pending_approval',
+        ]);
+
+        $approvedUser = $this->createUserEntity([
+            'id' => 10,
+            'email' => 'pending@example.com',
+            'first_name' => 'Pending',
+            'last_name' => 'User',
+            'status' => 'active',
+        ]);
+
+        $this->mockUserModel
+            ->expects($this->exactly(2))
+            ->method('find')
+            ->with(10)
+            ->willReturnOnConsecutiveCalls($pendingUser, $approvedUser);
+
+        $this->mockUserModel
+            ->expects($this->once())
+            ->method('update')
+            ->with(10, $this->callback(function ($data) {
+                return isset($data['status']) && $data['status'] === 'active';
+            }))
+            ->willReturn(true);
+
+        $this->mockEmailService
+            ->expects($this->once())
+            ->method('queueTemplate')
+            ->with(
+                'account-approved',
+                'pending@example.com',
+                $this->callback(function ($data) {
+                    return isset($data['subject'], $data['display_name'], $data['login_link'])
+                        && is_string($data['login_link'])
+                        && str_contains($data['login_link'], '/login');
+                })
+            )
+            ->willReturn(1);
+
+        $result = $this->service->approve(['id' => 10, 'user_id' => 1]);
+
+        $this->assertSuccessResponse($result);
+        $this->assertEquals('active', $result['data']['status']);
+    }
+
     // ==================== HELPER METHODS ====================
 
     private function createUserEntity(array $data): UserEntity

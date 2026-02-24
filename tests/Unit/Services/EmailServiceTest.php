@@ -240,6 +240,11 @@ class EmailServiceTest extends CIUnitTestCase
             ->with(
                 $this->anything(),
                 $this->callback(function ($data) use ($templateData) {
+                    if (! isset($data['data']['locale']) || ! is_string($data['data']['locale'])) {
+                        return false;
+                    }
+
+                    unset($data['data']['locale']);
                     return $data['data'] === $templateData;
                 }),
                 $this->anything()
@@ -253,5 +258,32 @@ class EmailServiceTest extends CIUnitTestCase
         );
 
         $this->assertEquals(999, $jobId);
+    }
+
+    public function testQueueTemplateKeepsProvidedLocale(): void
+    {
+        $templateData = [
+            'name' => 'Juan',
+            'locale' => 'es',
+        ];
+
+        $this->mockQueueManager->expects($this->once())
+            ->method('push')
+            ->with(
+                $this->anything(),
+                $this->callback(function ($data) {
+                    return isset($data['data']['locale']) && $data['data']['locale'] === 'es';
+                }),
+                $this->anything()
+            )
+            ->willReturn(1001);
+
+        $jobId = $this->service->queueTemplate(
+            'verification',
+            'juan@example.com',
+            $templateData
+        );
+
+        $this->assertEquals(1001, $jobId);
     }
 }

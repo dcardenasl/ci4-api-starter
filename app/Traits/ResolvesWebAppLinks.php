@@ -20,6 +20,13 @@ trait ResolvesWebAppLinks
         return "{$baseUrl}/reset-password?token={$token}&email=" . urlencode($email);
     }
 
+    protected function buildLoginUrl(?string $clientBaseUrl = null): string
+    {
+        $baseUrl = $this->resolveClientBaseUrl($clientBaseUrl);
+
+        return "{$baseUrl}/login";
+    }
+
     protected function resolveClientBaseUrl(?string $candidate): string
     {
         $fallback = $this->resolveFallbackBaseUrl();

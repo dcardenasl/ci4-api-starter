@@ -179,7 +179,7 @@ class UserService implements UserServiceInterface
             empty($data['role'])
         ) {
             throw new BadRequestException(
-                'Invalid request',
+                lang('Api.invalidRequest'),
                 ['fields' => lang('Users.fieldRequired')]
             );
         }
@@ -270,9 +270,11 @@ class UserService implements UserServiceInterface
 
         $user = $this->userModel->find($id);
         if ($user) {
+            $clientBaseUrl = isset($data['client_base_url']) ? (string) $data['client_base_url'] : null;
             $this->emailService->queueTemplate('account-approved', $user->email, [
                 'subject' => lang('Email.accountApproved.subject'),
                 'display_name' => method_exists($user, 'getDisplayName') ? $user->getDisplayName() : 'User',
+                'login_link' => $this->buildLoginUrl($clientBaseUrl),
             ]);
         }
 

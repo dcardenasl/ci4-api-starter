@@ -53,6 +53,8 @@ return [
         'title'       => 'Account Approved',
         'greeting'    => 'Hello, {0}!',
         'intro'       => 'Your account has been approved. You can now sign in.',
+        'buttonText'  => 'Go to Login',
+        'linkIntro'   => 'Or copy and paste this link into your browser:',
         'autoMessage' => 'This is an automated message, please do not reply.',
         'copyright'   => 'All rights reserved.',
     ],

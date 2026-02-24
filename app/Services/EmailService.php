@@ -145,7 +145,19 @@ class EmailService implements EmailServiceInterface
      */
     public function sendTemplate(string $template, string $to, array $data): bool
     {
+        $request = service('request');
+        $language = service('language');
+        $previousLocale = $language->getLocale();
+        $targetLocale = isset($data['locale']) && is_string($data['locale']) ? $data['locale'] : null;
+
         try {
+            if ($targetLocale !== null && $targetLocale !== '') {
+                $language->setLocale($targetLocale);
+                if (method_exists($request, 'setLocale')) {
+                    $request->setLocale($targetLocale);
+                }
+            }
+
             $viewPath = "emails/{$template}";
             $message = view($viewPath, $data);
 
@@ -156,6 +168,11 @@ class EmailService implements EmailServiceInterface
         } catch (Throwable $e) {
             log_message('error', "Failed to send template email: " . $e->getMessage());
             return false;
+        } finally {
+            $language->setLocale($previousLocale);
+            if (method_exists($request, 'setLocale')) {
+                $request->setLocale($previousLocale);
+            }
         }
     }
 
@@ -169,6 +186,13 @@ class EmailService implements EmailServiceInterface
      */
     public function queueTemplate(string $template, string $to, array $data): int
     {
+        if (! isset($data['locale']) || ! is_string($data['locale']) || $data['locale'] === '') {
+            $language = service('language');
+            $data['locale'] = method_exists(service('request'), 'getLocale')
+                ? service('request')->getLocale()
+                : $language->getLocale();
+        }
+
         return $this->queueManager->push(
             SendTemplateEmailJob::class,
             [

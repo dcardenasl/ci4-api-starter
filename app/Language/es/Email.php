@@ -53,6 +53,8 @@ return [
         'title'       => 'Cuenta Aprobada',
         'greeting'    => '¡Hola, {0}!',
         'intro'       => 'Tu cuenta ha sido aprobada. Ya puedes iniciar sesión.',
+        'buttonText'  => 'Ir al Login',
+        'linkIntro'   => 'O copia y pega este enlace en tu navegador:',
         'autoMessage' => 'Este es un mensaje automático, por favor no respondas.',
         'copyright'   => 'Todos los derechos reservados.',
     ],

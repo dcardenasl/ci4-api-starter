@@ -45,12 +45,12 @@ class HealthChecker
             return [
                 'status' => 'healthy',
                 'response_time_ms' => $responseTime,
-                'message' => 'Database connection successful',
+                'message' => lang('Health.databaseConnectionSuccessful'),
             ];
         } catch (\Throwable $e) {
             return [
                 'status' => 'unhealthy',
-                'message' => 'Database connection failed: ' . $e->getMessage(),
+                'message' => lang('Health.databaseConnectionFailed', [$e->getMessage()]),
             ];
         }
     }
@@ -65,7 +65,7 @@ class HealthChecker
         if (! extension_loaded('redis')) {
             return [
                 'status' => 'unavailable',
-                'message' => 'Redis extension not loaded',
+                'message' => lang('Health.redisExtensionNotLoaded'),
             ];
         }
 
@@ -81,7 +81,7 @@ class HealthChecker
             if (! $connected) {
                 return [
                     'status' => 'unhealthy',
-                    'message' => 'Could not connect to Redis',
+                    'message' => lang('Health.redisConnectionFailed'),
                 ];
             }
 
@@ -93,12 +93,12 @@ class HealthChecker
             return [
                 'status' => 'healthy',
                 'response_time_ms' => $responseTime,
-                'message' => 'Redis connection successful',
+                'message' => lang('Health.redisConnectionSuccessful'),
             ];
         } catch (\Throwable $e) {
             return [
                 'status' => 'unhealthy',
-                'message' => 'Redis check failed: ' . $e->getMessage(),
+                'message' => lang('Health.redisCheckFailed', [$e->getMessage()]),
             ];
         }
     }
@@ -116,7 +116,7 @@ class HealthChecker
         if (empty($host)) {
             return [
                 'status' => 'unconfigured',
-                'message' => 'Email SMTP host not configured',
+                'message' => lang('Health.emailSmtpNotConfigured'),
             ];
         }
 
@@ -124,7 +124,7 @@ class HealthChecker
             'status' => 'configured',
             'provider' => $provider,
             'host' => $host,
-            'message' => 'Email service configured',
+            'message' => lang('Health.emailServiceConfigured'),
         ];
     }
 
@@ -140,7 +140,7 @@ class HealthChecker
             if (! $this->db->tableExists('jobs')) {
                 return [
                     'status' => 'unhealthy',
-                    'message' => 'Jobs table does not exist',
+                    'message' => lang('Health.jobsTableMissing'),
                 ];
             }
 
@@ -161,12 +161,12 @@ class HealthChecker
                 'pending_jobs' => $pending,
                 'processing_jobs' => $processing,
                 'failed_jobs' => $failed,
-                'message' => 'Queue system operational',
+                'message' => lang('Health.queueOperational'),
             ];
         } catch (\Throwable $e) {
             return [
                 'status' => 'unhealthy',
-                'message' => 'Queue check failed: ' . $e->getMessage(),
+                'message' => lang('Health.queueCheckFailed', [$e->getMessage()]),
             ];
         }
     }
@@ -185,7 +185,7 @@ class HealthChecker
         if ($freeSpace === false || $totalSpace === false) {
             return [
                 'status' => 'unknown',
-                'message' => 'Could not check disk space',
+                'message' => lang('Health.diskCheckFailed'),
             ];
         }
 
@@ -204,7 +204,7 @@ class HealthChecker
             'free_space_mb' => round($freeSpace / 1024 / 1024, 2),
             'total_space_mb' => round($totalSpace / 1024 / 1024, 2),
             'used_percentage' => $usedPercentage,
-            'message' => "Disk usage: {$usedPercentage}%",
+            'message' => lang('Health.diskUsage', [$usedPercentage]),
         ];
     }
 
@@ -233,14 +233,14 @@ class HealthChecker
         if (empty($nonWritable)) {
             return [
                 'status' => 'healthy',
-                'message' => 'All writable folders are accessible',
+                'message' => lang('Health.writableFoldersAccessible'),
             ];
         }
 
         return [
             'status' => 'unhealthy',
             'non_writable' => $nonWritable,
-            'message' => 'Some folders are not writable',
+            'message' => lang('Health.writableFoldersNotAccessible'),
         ];
     }
 

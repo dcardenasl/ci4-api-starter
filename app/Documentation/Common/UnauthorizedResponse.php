@@ -26,8 +26,8 @@ use OpenApi\Attributes as OA;
             new OA\Property(
                 property: 'message',
                 type: 'string',
-                description: 'Error message',
-                example: 'Unauthorized'
+                description: 'Error message (localized by Accept-Language)',
+                example: 'Unauthorized / No autorizado'
             ),
             new OA\Property(
                 property: 'errors',

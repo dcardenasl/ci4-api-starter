@@ -2538,9 +2538,9 @@
                                     "example": "error"
                                 },
                                 "message": {
-                                    "description": "Error message",
+                                    "description": "Error message (localized by Accept-Language)",
                                     "type": "string",
-                                    "example": "Unauthorized"
+                                    "example": "Unauthorized / No autorizado"
                                 },
                                 "errors": {
                                     "description": "Error details",
@@ -2565,15 +2565,15 @@
                                     "example": "error"
                                 },
                                 "message": {
-                                    "description": "Main error message",
+                                    "description": "Main error message (localized by Accept-Language)",
                                     "type": "string",
-                                    "example": "Validation failed"
+                                    "example": "Validation failed / Validacion fallida"
                                 },
                                 "errors": {
-                                    "description": "Field-specific error messages",
+                                    "description": "Field-specific error messages (localized by Accept-Language)",
                                     "type": "object",
                                     "example": {
-                                        "email": "This email is already registered"
+                                        "email": "Localized validation message"
                                     }
                                 },
                                 "code": {

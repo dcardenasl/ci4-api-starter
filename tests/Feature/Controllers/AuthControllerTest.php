@@ -90,6 +90,34 @@ class AuthControllerTest extends CIUnitTestCase
         $this->assertEquals('error', $json['status']);
     }
 
+    public function testRegisterWithDuplicateEmailReturnsSpanishValidationMessage(): void
+    {
+        service('language')->setLocale('es');
+        service('request')->setLocale('es');
+
+        $this->userModel->insert([
+            'email' => 'existing-es@example.com',
+            'password' => password_hash('ValidPass123!', PASSWORD_BCRYPT),
+            'role' => 'user',
+        ]);
+
+        $result = $this->withHeaders([
+            'Accept-Language' => 'es',
+        ])->withBodyFormat('json')
+            ->post('/api/v1/auth/register', [
+                'email' => 'existing-es@example.com',
+                'password' => 'ValidPass123!',
+            ]);
+
+        $result->assertStatus(422);
+
+        $json = json_decode($result->getJSON(), true);
+        $this->assertEquals('error', $json['status']);
+        $this->assertArrayHasKey('errors', $json);
+        $this->assertArrayHasKey('email', $json['errors']);
+        $this->assertEquals('Este email ya está registrado', $json['errors']['email']);
+    }
+
     // ==================== LOGIN ENDPOINT TESTS ====================
 
     public function testLoginWithValidCredentialsReturnsTokens(): void
@@ -297,6 +325,29 @@ class AuthControllerTest extends CIUnitTestCase
         // Health returns 200 if all services OK, 503 if some fail
         // In test environment, some services may not be available
         $this->assertTrue(in_array($result->response()->getStatusCode(), [200, 503], true));
+    }
+
+    public function testHealthEndpointRespectsSpanishLocaleForCheckMessages(): void
+    {
+        service('language')->setLocale('es');
+        service('request')->setLocale('es');
+
+        $result = $this->withHeaders([
+            'Accept-Language' => 'es',
+        ])->get('/health');
+
+        $this->assertTrue(in_array($result->response()->getStatusCode(), [200, 503], true));
+
+        $json = json_decode($result->getJSON(), true);
+        $this->assertArrayHasKey('checks', $json);
+        $this->assertArrayHasKey('database', $json['checks']);
+        $this->assertArrayHasKey('message', $json['checks']['database']);
+
+        $message = $json['checks']['database']['message'];
+        $this->assertTrue(
+            str_contains($message, 'Conexión a la base de datos exitosa')
+            || str_contains($message, 'Error de conexión a la base de datos:')
+        );
     }
 
     public function testPingEndpointReturnsOk(): void

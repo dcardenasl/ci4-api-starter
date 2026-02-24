@@ -12,7 +12,7 @@ use CodeIgniter\HTTP\ResponseInterface;
  */
 class TokenController extends ApiController
 {
-    protected string $serviceName = 'refreshTokenService';
+    protected string $serviceName = 'authTokenService';
 
     public function refresh(): ResponseInterface
     {
@@ -23,24 +23,13 @@ class TokenController extends ApiController
 
     public function revoke(): ResponseInterface
     {
-        $tokenRevocationService = \Config\Services::tokenRevocationService();
-
-        try {
-            $result = $tokenRevocationService->revokeAccessToken([
-                'authorization_header' => $this->request->getHeaderLine('Authorization'),
-            ]);
-
-            return $this->respond($result, 200);
-        } catch (\Exception $e) {
-            return $this->handleException($e);
-        }
+        return $this->handleRequest('revoke', [
+            'authorization_header' => $this->request->getHeaderLine('Authorization'),
+        ]);
     }
 
     public function revokeAll(): ResponseInterface
     {
-        $tokenRevocationService = \Config\Services::tokenRevocationService();
-        $result = $tokenRevocationService->revokeAllUserTokens($this->getUserId());
-
-        return $this->respond($result, 200);
+        return $this->handleRequest('revokeAll');
     }
 }

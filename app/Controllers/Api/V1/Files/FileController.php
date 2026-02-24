@@ -23,20 +23,24 @@ class FileController extends ApiController
 
     public function show($id = null): ResponseInterface
     {
-        $result = $this->getService()->download([
-            'id'      => $id,
-            'user_id' => $this->getUserId(),
-        ]);
+        try {
+            $result = $this->getService()->download([
+                'id'      => $id,
+                'user_id' => $this->getUserId(),
+            ]);
 
-        // For local storage, send file for download
-        if ($result['status'] === 'success' && $result['data']['storage_driver'] === 'local') {
-            $filePath = FCPATH . env('FILE_UPLOAD_PATH', 'writable/uploads/') . $result['data']['path'];
+            // For local storage, send file for download
+            if ($result['status'] === 'success' && $result['data']['storage_driver'] === 'local') {
+                $filePath = FCPATH . env('FILE_UPLOAD_PATH', 'writable/uploads/') . $result['data']['path'];
 
-            if (file_exists($filePath)) {
-                return $this->response->download($filePath, null)->setFileName($result['data']['original_name']);
+                if (file_exists($filePath)) {
+                    return $this->response->download($filePath, null)->setFileName($result['data']['original_name']);
+                }
             }
-        }
 
-        return $this->respond($result, $result['status'] === 'success' ? 200 : 404);
+            return $this->respond($result, $result['status'] === 'success' ? 200 : 404);
+        } catch (\Exception $e) {
+            return $this->handleException($e);
+        }
     }
 }

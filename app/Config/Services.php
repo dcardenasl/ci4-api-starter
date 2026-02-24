@@ -276,6 +276,26 @@ class Services extends BaseService
     }
 
     /**
+     * Auth Token Service
+     *
+     * Facade for refresh + revoke token operations used by TokenController.
+     *
+     * @param bool $getShared
+     * @return \App\Services\AuthTokenService
+     */
+    public static function authTokenService(bool $getShared = true)
+    {
+        if ($getShared) {
+            return static::getSharedInstance('authTokenService');
+        }
+
+        return new \App\Services\AuthTokenService(
+            static::refreshTokenService(),
+            static::tokenRevocationService()
+        );
+    }
+
+    /**
      * File Service
      *
      * Provides file upload, download, and deletion with storage abstraction

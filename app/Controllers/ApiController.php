@@ -177,7 +177,15 @@ abstract class ApiController extends Controller
     {
         return isset($result['errors'])
             ? ResponseInterface::HTTP_BAD_REQUEST
-            : $this->getSuccessStatus($method);
+            : $this->resolveSuccessStatus($method, $result);
+    }
+
+    /**
+     * Resolve success HTTP status code based on method and response payload.
+     */
+    protected function resolveSuccessStatus(string $method, array $result): int
+    {
+        return $this->getSuccessStatus($method);
     }
 
     /**

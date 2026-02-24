@@ -22,6 +22,9 @@ class RefreshTokenServiceTest extends CIUnitTestCase
 {
     use CustomAssertionsTrait;
 
+    private const VALID_REFRESH_TOKEN = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+    private const UNKNOWN_REFRESH_TOKEN = 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb';
+
     protected RefreshTokenService $service;
     protected RefreshTokenModel $mockRefreshTokenModel;
     protected JwtServiceInterface $mockJwtService;
@@ -98,10 +101,10 @@ class RefreshTokenServiceTest extends CIUnitTestCase
         $this->mockRefreshTokenModel
             ->expects($this->once())
             ->method('revokeToken')
-            ->with('valid-token')
+            ->with(self::VALID_REFRESH_TOKEN)
             ->willReturn(true);
 
-        $result = $this->service->revoke(['refresh_token' => 'valid-token']);
+        $result = $this->service->revoke(['refresh_token' => self::VALID_REFRESH_TOKEN]);
 
         $this->assertSuccessResponse($result);
     }
@@ -114,7 +117,7 @@ class RefreshTokenServiceTest extends CIUnitTestCase
 
         $this->expectException(NotFoundException::class);
 
-        $this->service->revoke(['refresh_token' => 'non-existent-token']);
+        $this->service->revoke(['refresh_token' => self::UNKNOWN_REFRESH_TOKEN]);
     }
 
     // ==================== REVOKE ALL USER TOKENS TESTS ====================

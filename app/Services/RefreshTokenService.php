@@ -6,13 +6,13 @@ namespace App\Services;
 
 use App\Exceptions\AuthenticationException;
 use App\Exceptions\AuthorizationException;
+use App\Exceptions\BadRequestException;
 use App\Exceptions\NotFoundException;
 use App\Interfaces\JwtServiceInterface;
 use App\Interfaces\RefreshTokenServiceInterface;
 use App\Libraries\ApiResponse;
 use App\Models\RefreshTokenModel;
 use App\Models\UserModel;
-use App\Traits\ValidatesRequiredFields;
 
 /**
  * Refresh Token Service
@@ -21,8 +21,6 @@ use App\Traits\ValidatesRequiredFields;
  */
 class RefreshTokenService implements RefreshTokenServiceInterface
 {
-    use ValidatesRequiredFields;
-
     public function __construct(
         protected RefreshTokenModel $refreshTokenModel,
         protected JwtServiceInterface $jwtService,
@@ -70,9 +68,7 @@ class RefreshTokenService implements RefreshTokenServiceInterface
      */
     public function refreshAccessToken(array $data): array
     {
-        $this->validateRequiredFields($data, [
-            'refresh_token' => lang('Tokens.refreshTokenRequired'),
-        ], lang('Tokens.invalidRequest'));
+        $this->validateInputOrBadRequest($data, 'refresh');
 
         $refreshToken = $data['refresh_token'];
         $db = \Config\Database::connect();
@@ -142,9 +138,7 @@ class RefreshTokenService implements RefreshTokenServiceInterface
      */
     public function revoke(array $data): array
     {
-        $this->validateRequiredFields($data, [
-            'refresh_token' => lang('Tokens.refreshTokenRequired'),
-        ], lang('Tokens.invalidRequest'));
+        $this->validateInputOrBadRequest($data, 'revoke');
 
         $revoked = $this->refreshTokenModel->revokeToken($data['refresh_token']);
 
@@ -166,5 +160,15 @@ class RefreshTokenService implements RefreshTokenServiceInterface
         $this->refreshTokenModel->revokeAllUserTokens($userId);
 
         return ApiResponse::success([], lang('Tokens.allTokensRevoked'));
+    }
+
+    private function validateInputOrBadRequest(array $data, string $action): void
+    {
+        $validation = getValidationRules('token', $action);
+        $errors = validateInputs($data, $validation['rules'], $validation['messages']);
+
+        if ($errors !== []) {
+            throw new BadRequestException(lang('Tokens.invalidRequest'), $errors);
+        }
     }
 }

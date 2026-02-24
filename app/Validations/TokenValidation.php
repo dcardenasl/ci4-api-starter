@@ -18,11 +18,11 @@ class TokenValidation extends BaseValidation
     {
         return match ($action) {
             'refresh' => [
-                'refresh_token' => 'required|string|min_length[10]',
+                'refresh_token' => 'required|valid_token[64]',
             ],
 
             'revoke' => [
-                'refresh_token' => 'required|string|min_length[10]',
+                'refresh_token' => 'required|valid_token[64]',
             ],
 
             'revoke_all' => [
@@ -41,7 +41,7 @@ class TokenValidation extends BaseValidation
         return match ($action) {
             'refresh', 'revoke' => [
                 'refresh_token.required'   => lang('InputValidation.token.refreshTokenRequired'),
-                'refresh_token.min_length' => lang('InputValidation.token.refreshTokenInvalid'),
+                'refresh_token.valid_token' => lang('InputValidation.token.refreshTokenInvalid'),
             ],
 
             'revoke_all' => [

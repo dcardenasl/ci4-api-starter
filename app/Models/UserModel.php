@@ -53,42 +53,11 @@ class UserModel extends Model
     // Reglas de validación (integridad de datos)
     protected $validationRules = [
         'email' => [
-            'rules'  => 'required|valid_email_idn|max_length[255]|is_unique[users.email,id,{id}]',
+            'rules'  => 'permit_empty|valid_email_idn|max_length[255]|is_unique[users.email,id,{id}]',
             'errors' => [
-                'required' => 'InputValidation.common.emailRequired',
                 'valid_email_idn' => 'InputValidation.common.emailInvalid',
+                'max_length' => 'InputValidation.common.emailMaxLength',
                 'is_unique' => 'InputValidation.common.emailAlreadyRegistered',
-            ],
-        ],
-        'first_name' => [
-            'rules'  => 'permit_empty|string|max_length[100]',
-            'errors' => [
-                'max_length' => 'InputValidation.common.firstNameMaxLength',
-            ],
-        ],
-        'last_name' => [
-            'rules'  => 'permit_empty|string|max_length[100]',
-            'errors' => [
-                'max_length' => 'InputValidation.common.lastNameMaxLength',
-            ],
-        ],
-        'oauth_provider' => [
-            'rules'  => 'permit_empty|in_list[google,github]',
-            'errors' => [
-                'in_list' => 'InputValidation.common.oauthProviderInvalid',
-            ],
-        ],
-        'oauth_provider_id' => [
-            'rules'  => 'permit_empty|string|max_length[255]',
-            'errors' => [
-                'max_length' => 'InputValidation.common.oauthProviderIdMaxLength',
-            ],
-        ],
-        'avatar_url' => [
-            'rules'  => 'permit_empty|valid_url|max_length[255]',
-            'errors' => [
-                'valid_url' => 'InputValidation.common.avatarUrlInvalid',
-                'max_length' => 'InputValidation.common.avatarUrlMaxLength',
             ],
         ],
     ];

@@ -153,6 +153,7 @@ class UserService implements UserServiceInterface
     public function update(array $data): array
     {
         $id = $this->validateRequiredId($data);
+        validateOrFail($data, 'user', 'update');
         $actorRole = (string) ($data['user_role'] ?? '');
         $actorId = isset($data['user_id']) ? (int) $data['user_id'] : null;
 

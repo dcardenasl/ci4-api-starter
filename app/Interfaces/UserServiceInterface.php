@@ -10,7 +10,7 @@ namespace App\Interfaces;
  * Defines the contract for user CRUD operations.
  * Authentication methods have been moved to AuthServiceInterface.
  */
-interface UserServiceInterface
+interface UserServiceInterface extends CrudServiceContract
 {
     /**
      * Get all users
@@ -18,40 +18,6 @@ interface UserServiceInterface
      * @param array $data Request data
      * @return array Result with list of users
      */
-    public function index(array $data): array;
-
-    /**
-     * Get a specific user by ID
-     *
-     * @param array $data Request data containing 'id'
-     * @return array Result with user data or errors
-     */
-    public function show(array $data): array;
-
-    /**
-     * Create a new user
-     *
-     * @param array $data User data (email, names)
-     * @return array Result with created user data or errors
-     */
-    public function store(array $data): array;
-
-    /**
-     * Update an existing user
-     *
-     * @param array $data User data including 'id'
-     * @return array Result with updated user data or errors
-     */
-    public function update(array $data): array;
-
-    /**
-     * Delete a user (soft delete)
-     *
-     * @param array $data Request data containing 'id'
-     * @return array Result with success message or errors
-     */
-    public function destroy(array $data): array;
-
     /**
      * Approve a pending user
      *

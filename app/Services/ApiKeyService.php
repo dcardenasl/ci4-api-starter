@@ -12,7 +12,6 @@ use App\Libraries\ApiResponse;
 use App\Libraries\Query\QueryBuilder;
 use App\Models\ApiKeyModel;
 use App\Traits\AppliesQueryOptions;
-use App\Traits\ValidatesRequiredFields;
 
 /**
  * API Key Service
@@ -25,10 +24,9 @@ use App\Traits\ValidatesRequiredFields;
  *   - key_hash: SHA-256 of raw key (stored for lookup)
  *   - The raw key is returned ONCE at creation time and never stored.
  */
-class ApiKeyService implements ApiKeyServiceInterface
+class ApiKeyService extends BaseCrudService implements ApiKeyServiceInterface
 {
     use AppliesQueryOptions;
-    use ValidatesRequiredFields;
 
     public function __construct(
         protected ApiKeyModel $apiKeyModel
@@ -69,7 +67,7 @@ class ApiKeyService implements ApiKeyServiceInterface
      */
     public function show(array $data): array
     {
-        $id = $this->validateRequiredId($data);
+        $id = $this->requireId($data);
 
         $apiKey = $this->apiKeyModel->find($id);
 
@@ -149,7 +147,7 @@ class ApiKeyService implements ApiKeyServiceInterface
      */
     public function update(array $data): array
     {
-        $id = $this->validateRequiredId($data);
+        $id = $this->requireId($data);
 
         $apiKey = $this->apiKeyModel->find($id);
 
@@ -192,7 +190,7 @@ class ApiKeyService implements ApiKeyServiceInterface
      */
     public function destroy(array $data): array
     {
-        $id = $this->validateRequiredId($data);
+        $id = $this->requireId($data);
 
         if (!$this->apiKeyModel->find($id)) {
             throw new NotFoundException(lang('ApiKeys.notFound'));

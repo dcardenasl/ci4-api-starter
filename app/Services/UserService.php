@@ -17,7 +17,6 @@ use App\Models\PasswordResetModel;
 use App\Models\UserModel;
 use App\Traits\AppliesQueryOptions;
 use App\Traits\ResolvesWebAppLinks;
-use App\Traits\ValidatesRequiredFields;
 
 /**
  * User Service
@@ -25,11 +24,10 @@ use App\Traits\ValidatesRequiredFields;
  * Handles CRUD operations for users.
  * Authentication methods have been moved to AuthService.
  */
-class UserService implements UserServiceInterface
+class UserService extends BaseCrudService implements UserServiceInterface
 {
     use AppliesQueryOptions;
     use ResolvesWebAppLinks;
-    use ValidatesRequiredFields;
     public function __construct(
         protected UserModel $userModel,
         protected EmailServiceInterface $emailService,
@@ -71,7 +69,7 @@ class UserService implements UserServiceInterface
      */
     public function show(array $data): array
     {
-        $id = $this->validateRequiredId($data);
+        $id = $this->requireId($data);
 
         $user = $this->userModel->find($id);
 
@@ -152,7 +150,7 @@ class UserService implements UserServiceInterface
      */
     public function update(array $data): array
     {
-        $id = $this->validateRequiredId($data);
+        $id = $this->requireId($data);
         validateOrFail($data, 'user', 'update');
         $actorRole = (string) ($data['user_role'] ?? '');
         $actorId = isset($data['user_id']) ? (int) $data['user_id'] : null;
@@ -214,7 +212,7 @@ class UserService implements UserServiceInterface
      */
     public function destroy(array $data): array
     {
-        $id = $this->validateRequiredId($data);
+        $id = $this->requireId($data);
         $actorRole = (string) ($data['user_role'] ?? '');
 
         // Verificar si el usuario existe
@@ -241,7 +239,7 @@ class UserService implements UserServiceInterface
      */
     public function approve(array $data): array
     {
-        $id = $this->validateRequiredId($data);
+        $id = $this->requireId($data);
         $adminId = isset($data['user_id']) ? (int) $data['user_id'] : null;
 
         $user = $this->userModel->find($id);

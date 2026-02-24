@@ -77,6 +77,63 @@ HTTP Response (JSON)
 
 ---
 
+## Controller Invariants (Mandatory)
+
+These rules are mandatory for API controllers extending `ApiController`.
+
+1. Use `handleRequest()` for JSON endpoints.
+2. Do not duplicate `collectRequestData()`, `sanitizeInput()`, `try/catch`, or direct service invocation in each method.
+3. For success status that depends on payload (e.g. `200` vs `202`), override `resolveSuccessStatus($method, $result)` in the controller.
+4. Keep business decisions in services, HTTP transport decisions in controllers.
+5. Use `handleException()` for consistent error mapping.
+
+### Correct pattern for dynamic status
+
+```php
+// Controller
+public function googleLogin(): ResponseInterface
+{
+    return $this->handleRequest('loginWithGoogleToken');
+}
+
+protected function resolveSuccessStatus(string $method, array $result): int
+{
+    if ($method === 'loginWithGoogleToken') {
+        $pending = ($result['data']['user']['status'] ?? null) === 'pending_approval';
+        $hasToken = isset($result['data']['access_token']);
+        if ($pending && ! $hasToken) {
+            return 202;
+        }
+    }
+
+    return parent::resolveSuccessStatus($method, $result);
+}
+```
+
+### Anti-pattern (do not do this)
+
+```php
+// ❌ Re-implementing handleRequest pipeline in each controller method
+public function someAction(): ResponseInterface
+{
+    try {
+        $data = $this->collectRequestData();
+        $result = $this->getService()->someMethod($data);
+        return $this->respond($result, 200);
+    } catch (Exception $e) {
+        return $this->handleException($e);
+    }
+}
+```
+
+### Explicit exceptions
+
+The only accepted exceptions are:
+- Endpoints that must return non-JSON transport responses (file download/stream).
+- Infrastructure controllers intentionally not extending `ApiController` (e.g. metrics/observability).
+
+---
+
 ## Example: Create User (POST /api/v1/users)
 
 ### Request

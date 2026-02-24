@@ -30,6 +30,17 @@
 - Follow route filters from `app/Config/Routes.php`: auth public endpoints use `authThrottle`; protected endpoints use `jwtauth`; admin writes use `roleauth:admin`.
 - Register new services in `app/Config/Services.php` using `{resource}Service` naming.
 
+### Controller Architecture Invariants (Do Not Break)
+- API controllers must use `handleRequest()` for standard JSON endpoints. Do not re-implement request collection, sanitize, try/catch, and service delegation in each action.
+- If an endpoint needs dynamic success status (example: `200` vs `202` based on payload), use `ApiController::resolveSuccessStatus()` override in the concrete controller. Do not bypass `handleRequest()` for this.
+- Keep HTTP concerns in controllers and business rules in services:
+  - Controllers choose HTTP status and transport behavior.
+  - Services return `ApiResponse` payloads and throw domain exceptions.
+- Use `handleException()` for exception mapping in controllers. Avoid ad-hoc per-method exception responses.
+- Allowed exceptions to the `handleRequest()` pattern:
+  - Non-JSON transport responses (e.g., file download/stream).
+  - Infra/observability controllers intentionally not extending `ApiController` (e.g., metrics), as documented.
+
 ## Testing Guidelines
 - Framework: PHPUnit (`phpunit.xml`).
 - `tests/Unit` are fast and do not require a database; `tests/Integration` and `tests/Feature` require the test DB (`ci4_test`).

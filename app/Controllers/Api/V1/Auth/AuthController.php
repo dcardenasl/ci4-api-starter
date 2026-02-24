@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Controllers\Api\V1;
+namespace App\Controllers\Api\V1\Auth;
 
 use App\Controllers\ApiController;
 use CodeIgniter\HTTP\ResponseInterface;
@@ -14,18 +14,9 @@ class AuthController extends ApiController
 {
     protected string $serviceName = 'authService';
 
-    protected array $statusCodes = [
-        'register' => 201,
-    ];
-
     public function login(): ResponseInterface
     {
         return $this->handleRequest('loginWithToken');
-    }
-
-    public function register(): ResponseInterface
-    {
-        return $this->handleRequest('register');
     }
 
     public function me(): ResponseInterface

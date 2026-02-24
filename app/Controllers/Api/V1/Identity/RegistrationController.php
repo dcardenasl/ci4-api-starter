@@ -1,0 +1,25 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Controllers\Api\V1\Identity;
+
+use App\Controllers\ApiController;
+use CodeIgniter\HTTP\ResponseInterface;
+
+/**
+ * Registration Controller
+ */
+class RegistrationController extends ApiController
+{
+    protected string $serviceName = 'authService';
+
+    protected array $statusCodes = [
+        'register' => 201,
+    ];
+
+    public function register(): ResponseInterface
+    {
+        return $this->handleRequest('register');
+    }
+}

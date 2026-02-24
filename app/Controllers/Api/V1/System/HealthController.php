@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Controllers\Api\V1;
+namespace App\Controllers\Api\V1\System;
 
 use App\Libraries\Monitoring\HealthChecker;
 use CodeIgniter\Controller;

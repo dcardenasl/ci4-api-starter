@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Controllers\Api\V1;
+namespace App\Controllers\Api\V1\Identity;
 
 use App\Controllers\ApiController;
 use CodeIgniter\HTTP\ResponseInterface;

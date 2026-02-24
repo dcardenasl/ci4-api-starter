@@ -82,7 +82,7 @@ Llamado por el frontend cuando carga la pagina de restablecimiento, antes de mos
 ### Paso a paso
 
 1. El frontend envia el token y el correo desde los parametros de la URL.
-2. `PasswordResetService::validateToken()` requiere tanto `token` como `email` (`BadRequestException` si falta alguno).
+2. `PasswordResetService::validateToken()` valida `token` y `email` mediante `validateOrFail($data, 'auth', 'password_reset_validate_token')`. Campos faltantes/invalidos → `ValidationException` (422).
 3. Limpia tokens expirados de la base de datos (`passwordResetModel->cleanExpired(60)`).
 4. Verifica si el token es valido y pertenece al correo (`isValidToken(email, token, 60)`).
 5. Invalido o expirado → `NotFoundException` (404).
@@ -103,9 +103,9 @@ sequenceDiagram
     Controller->>ApiCtrl: handleRequest('validateToken')
     ApiCtrl->>PwdSvc: validateToken({token, email})
 
-    alt Falta token o correo
-        PwdSvc-->>ApiCtrl: throw BadRequestException (400)
-        ApiCtrl-->>Frontend: 400 {status: error, message: Token y correo requeridos}
+    alt Faltan o son invalidos token/correo
+        PwdSvc-->>ApiCtrl: throw ValidationException (422)
+        ApiCtrl-->>Frontend: 422 {status: error, errors: {...}}
     end
 
     PwdSvc->>DB: DELETE password_resets expirados (cleanExpired(60))
@@ -132,8 +132,8 @@ Llamado por el frontend cuando el usuario envia el formulario de restablecimient
 ### Paso a paso
 
 1. El cliente envia `token`, `email` y `password`.
-2. `PasswordResetService::resetPassword()` valida que los tres campos esten presentes (`BadRequestException` si falta alguno).
-3. Valida la fuerza de la contrasena:
+2. `PasswordResetService::resetPassword()` valida `token`, `email` y `password` mediante `validateOrFail($data, 'auth', 'password_reset')`.
+3. La politica de contrasena se aplica con la regla `strong_password`:
    - Minimo 8 caracteres.
    - Maximo 128 caracteres.
    - Debe contener mayuscula, minuscula, digito y caracter especial.
@@ -161,9 +161,9 @@ sequenceDiagram
     ApiCtrl->>ApiCtrl: collectRequestData() + sanitizeInput()
     ApiCtrl->>PwdSvc: resetPassword(data)
 
-    alt Falta token, correo o contrasena
-        PwdSvc-->>ApiCtrl: throw BadRequestException (400)
-        ApiCtrl-->>Cliente: 400 {status: error, message: Todos los campos son requeridos}
+    alt Faltan o son invalidos token/correo/contrasena
+        PwdSvc-->>ApiCtrl: throw ValidationException (422)
+        ApiCtrl-->>Cliente: 422 {status: error, errors: {...}}
     end
 
     PwdSvc->>PwdSvc: Validar fuerza de contrasena (longitud, complejidad)
@@ -242,9 +242,9 @@ WEBAPP_ALLOWED_BASE_URLS=http://localhost:8081,https://miapp.com
 | Condicion | Excepcion | HTTP | Notas |
 |-----------|-----------|------|-------|
 | Formato de correo invalido | `ValidationException` | 422 | Paso 1 — validacion de correo |
-| Falta token o correo (paso de validacion) | `BadRequestException` | 400 | Paso 2 |
+| Faltan o son invalidos token/correo (paso de validacion) | `ValidationException` | 422 | Paso 2 |
 | Token no encontrado o expirado (validacion) | `NotFoundException` | 404 | Paso 2 |
-| Falta token, correo o contrasena (restablecimiento) | `BadRequestException` | 400 | Paso 3 |
+| Faltan o son invalidos token/correo/contrasena (restablecimiento) | `ValidationException` | 422 | Paso 3 |
 | Contrasena debil | `ValidationException` | 422 | Paso 3 |
 | Token no encontrado o expirado (restablecimiento) | `NotFoundException` | 404 | Paso 3 |
 | Usuario no encontrado por correo (restablecimiento) | `NotFoundException` | 404 | Paso 3 |

@@ -86,6 +86,7 @@ use OpenApi\Attributes as OA;
                 type: 'object'
             )
         ),
+        new OA\Response(response: 422, ref: '#/components/responses/ValidationErrorResponse'),
         new OA\Response(response: 404, description: 'Invalid token'),
     ]
 )]

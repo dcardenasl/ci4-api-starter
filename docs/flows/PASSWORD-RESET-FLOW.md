@@ -82,7 +82,7 @@ Called by the frontend when the reset page loads, before showing the form, to co
 ### Step-by-step
 
 1. Frontend sends the token and email from the URL query string.
-2. `PasswordResetService::validateToken()` requires both `token` and `email` (`BadRequestException` if missing).
+2. `PasswordResetService::validateToken()` validates `token` and `email` through `validateOrFail($data, 'auth', 'password_reset_validate_token')`. Missing/invalid fields → `ValidationException` (422).
 3. Cleans expired tokens from the database (`passwordResetModel->cleanExpired(60)`).
 4. Checks whether the token is valid and belongs to the email (`isValidToken(email, token, 60)`).
 5. Invalid or expired → `NotFoundException` (404).
@@ -103,9 +103,9 @@ sequenceDiagram
     Controller->>ApiCtrl: handleRequest('validateToken')
     ApiCtrl->>PwdSvc: validateToken({token, email})
 
-    alt Missing token or email
-        PwdSvc-->>ApiCtrl: throw BadRequestException (400)
-        ApiCtrl-->>Frontend: 400 {status: error, message: Token and email required}
+    alt Missing/invalid token or email
+        PwdSvc-->>ApiCtrl: throw ValidationException (422)
+        ApiCtrl-->>Frontend: 422 {status: error, errors: {...}}
     end
 
     PwdSvc->>DB: DELETE expired password_resets (cleanExpired(60))
@@ -132,8 +132,8 @@ Called by the frontend when the user submits the reset form.
 ### Step-by-step
 
 1. Client sends `token`, `email`, and `password`.
-2. `PasswordResetService::resetPassword()` validates all three fields are present (`BadRequestException` if any is missing).
-3. Validates password strength:
+2. `PasswordResetService::resetPassword()` validates `token`, `email`, and `password` through `validateOrFail($data, 'auth', 'password_reset')`.
+3. Password policy is enforced by `strong_password` validation rule:
    - Minimum 8 characters.
    - Maximum 128 characters.
    - Must contain uppercase, lowercase, digit, and special character.
@@ -161,9 +161,9 @@ sequenceDiagram
     ApiCtrl->>ApiCtrl: collectRequestData() + sanitizeInput()
     ApiCtrl->>PwdSvc: resetPassword(data)
 
-    alt Missing token, email, or password
-        PwdSvc-->>ApiCtrl: throw BadRequestException (400)
-        ApiCtrl-->>Client: 400 {status: error, message: All fields required}
+    alt Missing/invalid token, email, or password
+        PwdSvc-->>ApiCtrl: throw ValidationException (422)
+        ApiCtrl-->>Client: 422 {status: error, errors: {...}}
     end
 
     PwdSvc->>PwdSvc: Validate password strength (length, complexity)
@@ -242,9 +242,9 @@ WEBAPP_ALLOWED_BASE_URLS=http://localhost:8081,https://myapp.com
 | Condition | Exception | HTTP | Notes |
 |-----------|-----------|------|-------|
 | Invalid email format | `ValidationException` | 422 | Step 1 — email validation |
-| Missing token or email (validate step) | `BadRequestException` | 400 | Step 2 |
+| Missing/invalid token or email (validate step) | `ValidationException` | 422 | Step 2 |
 | Token not found or expired (validate) | `NotFoundException` | 404 | Step 2 |
-| Missing token, email, or password (reset step) | `BadRequestException` | 400 | Step 3 |
+| Missing/invalid token, email, or password (reset step) | `ValidationException` | 422 | Step 3 |
 | Weak password | `ValidationException` | 422 | Step 3 |
 | Token not found or expired (reset) | `NotFoundException` | 404 | Step 3 |
 | User not found by email (reset) | `NotFoundException` | 404 | Step 3 |

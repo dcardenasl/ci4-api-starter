@@ -176,9 +176,12 @@ class PasswordResetControllerTest extends CIUnitTestCase
         $this->assertTrue($json['data']['valid']);
     }
 
-    public function testValidateTokenReturns400ForInvalidToken(): void
+    public function testValidateTokenReturns404ForInvalidToken(): void
     {
-        $result = $this->get('/api/v1/auth/validate-reset-token?token=invalid&email=test@example.com');
+        $invalidButWellFormedToken = str_repeat('b', 64);
+        $result = $this->get(
+            "/api/v1/auth/validate-reset-token?token={$invalidButWellFormedToken}&email=test@example.com"
+        );
 
         $result->assertStatus(404);
 

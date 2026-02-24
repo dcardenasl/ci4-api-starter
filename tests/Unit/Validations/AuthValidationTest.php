@@ -64,6 +64,29 @@ class AuthValidationTest extends CIUnitTestCase
         $this->assertStringContainsString('strong_password', $rules['password']);
     }
 
+    public function testGetRulesReturnsPasswordResetValidateTokenRules(): void
+    {
+        $rules = $this->validation->getRules('password_reset_validate_token');
+
+        $this->assertArrayHasKey('token', $rules);
+        $this->assertArrayHasKey('email', $rules);
+        $this->assertStringContainsString('required', $rules['token']);
+        $this->assertStringContainsString('valid_token', $rules['token']);
+        $this->assertStringContainsString('valid_email_idn', $rules['email']);
+    }
+
+    public function testGetRulesReturnsPasswordResetRules(): void
+    {
+        $rules = $this->validation->getRules('password_reset');
+
+        $this->assertArrayHasKey('token', $rules);
+        $this->assertArrayHasKey('email', $rules);
+        $this->assertArrayHasKey('password', $rules);
+        $this->assertStringContainsString('required', $rules['token']);
+        $this->assertStringContainsString('valid_token', $rules['token']);
+        $this->assertStringContainsString('strong_password', $rules['password']);
+    }
+
     public function testGetRulesReturnsVerifyEmailRules(): void
     {
         $rules = $this->validation->getRules('verify_email');
@@ -106,6 +129,17 @@ class AuthValidationTest extends CIUnitTestCase
         $this->assertArrayHasKey('password.strong_password', $messages);
     }
 
+    public function testGetMessagesReturnsPasswordResetMessages(): void
+    {
+        $messages = $this->validation->getMessages('password_reset');
+
+        $this->assertArrayHasKey('token.required', $messages);
+        $this->assertArrayHasKey('token.valid_token', $messages);
+        $this->assertArrayHasKey('email.required', $messages);
+        $this->assertArrayHasKey('password.required', $messages);
+        $this->assertArrayHasKey('password.strong_password', $messages);
+    }
+
     public function testGetReturnsRulesAndMessages(): void
     {
         $result = $this->validation->get('login');
@@ -121,6 +155,8 @@ class AuthValidationTest extends CIUnitTestCase
         $this->assertTrue($this->validation->hasAction('login'));
         $this->assertTrue($this->validation->hasAction('register'));
         $this->assertTrue($this->validation->hasAction('forgot_password'));
+        $this->assertTrue($this->validation->hasAction('password_reset_validate_token'));
+        $this->assertTrue($this->validation->hasAction('password_reset'));
     }
 
     public function testHasActionReturnsFalseForUnknownAction(): void

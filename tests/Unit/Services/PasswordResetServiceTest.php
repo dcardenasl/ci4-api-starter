@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Tests\Unit\Services;
 
 use App\Entities\UserEntity;
-use App\Exceptions\BadRequestException;
 use App\Exceptions\NotFoundException;
 use App\Exceptions\ValidationException;
 use App\Interfaces\EmailServiceInterface;
@@ -24,6 +23,9 @@ use Tests\Support\Traits\CustomAssertionsTrait;
 class PasswordResetServiceTest extends CIUnitTestCase
 {
     use CustomAssertionsTrait;
+
+    private const VALID_RESET_TOKEN = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+    private const UNKNOWN_RESET_TOKEN = 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb';
 
     protected PasswordResetService $service;
     protected UserModel $mockUserModel;
@@ -54,6 +56,8 @@ class PasswordResetServiceTest extends CIUnitTestCase
         ?UserEntity $activeUser,
         ?UserEntity $deletedUser = null
     ): PasswordResetService {
+        $validToken = self::VALID_RESET_TOKEN;
+
         $mockUserModel = new class ($activeUser, $deletedUser) extends UserModel {
             private ?UserEntity $activeUser;
             private ?UserEntity $deletedUser;
@@ -87,7 +91,14 @@ class PasswordResetServiceTest extends CIUnitTestCase
             }
         };
 
-        $mockPasswordResetModel = new class () extends PasswordResetModel {
+        $mockPasswordResetModel = new class ($validToken) extends PasswordResetModel {
+            private string $validToken;
+
+            public function __construct(string $validToken)
+            {
+                $this->validToken = $validToken;
+            }
+
             public function where($key, $value = null, ?bool $escape = null): static
             {
                 return $this;
@@ -110,7 +121,7 @@ class PasswordResetServiceTest extends CIUnitTestCase
 
             public function isValidToken(string $email, string $token, int $expiryMinutes = 60): bool
             {
-                return $token === 'valid-token-123';
+                return $token === $this->validToken;
             }
         };
 
@@ -237,7 +248,7 @@ class PasswordResetServiceTest extends CIUnitTestCase
 
         $result = $service->validateToken([
             'email' => 'test@example.com',
-            'token' => 'valid-token-123',
+            'token' => self::VALID_RESET_TOKEN,
         ]);
 
         $this->assertSuccessResponse($result);
@@ -252,7 +263,7 @@ class PasswordResetServiceTest extends CIUnitTestCase
 
         $service->validateToken([
             'email' => 'test@example.com',
-            'token' => 'invalid-token',
+            'token' => self::UNKNOWN_RESET_TOKEN,
         ]);
     }
 
@@ -260,7 +271,7 @@ class PasswordResetServiceTest extends CIUnitTestCase
     {
         $service = $this->createServiceWithUser(null);
 
-        $this->expectException(BadRequestException::class);
+        $this->expectException(ValidationException::class);
 
         $service->validateToken([
             'email' => 'test@example.com',
@@ -272,11 +283,11 @@ class PasswordResetServiceTest extends CIUnitTestCase
     {
         $service = $this->createServiceWithUser(null);
 
-        $this->expectException(BadRequestException::class);
+        $this->expectException(ValidationException::class);
 
         $service->validateToken([
             'email' => '',
-            'token' => 'some-token',
+            'token' => self::VALID_RESET_TOKEN,
         ]);
     }
 
@@ -294,7 +305,7 @@ class PasswordResetServiceTest extends CIUnitTestCase
 
         $result = $service->resetPassword([
             'email' => 'test@example.com',
-            'token' => 'valid-token-123',
+            'token' => self::VALID_RESET_TOKEN,
             'password' => 'NewSecure123!',
         ]);
 
@@ -314,7 +325,7 @@ class PasswordResetServiceTest extends CIUnitTestCase
 
         $service->resetPassword([
             'email' => 'test@example.com',
-            'token' => 'valid-token-123',
+            'token' => self::VALID_RESET_TOKEN,
             'password' => 'weak',
         ]);
     }
@@ -329,7 +340,7 @@ class PasswordResetServiceTest extends CIUnitTestCase
 
         $service->resetPassword([
             'email' => 'test@example.com',
-            'token' => 'valid-token-123',
+            'token' => self::VALID_RESET_TOKEN,
             'password' => 'Short1!',
         ]);
     }
@@ -344,7 +355,7 @@ class PasswordResetServiceTest extends CIUnitTestCase
 
         $service->resetPassword([
             'email' => 'test@example.com',
-            'token' => 'valid-token-123',
+            'token' => self::VALID_RESET_TOKEN,
             'password' => str_repeat('A1!', 50), // 150 chars
         ]);
     }
@@ -359,7 +370,7 @@ class PasswordResetServiceTest extends CIUnitTestCase
 
         $service->resetPassword([
             'email' => 'test@example.com',
-            'token' => 'invalid-token',
+            'token' => self::UNKNOWN_RESET_TOKEN,
             'password' => 'ValidPassword123!',
         ]);
     }
@@ -378,7 +389,7 @@ class PasswordResetServiceTest extends CIUnitTestCase
 
         $result = $service->resetPassword([
             'email' => 'invited@example.com',
-            'token' => 'valid-token-123',
+            'token' => self::VALID_RESET_TOKEN,
             'password' => 'NewPassword123!',
         ]);
 
@@ -390,11 +401,11 @@ class PasswordResetServiceTest extends CIUnitTestCase
     {
         $service = $this->createServiceWithUser(null);
 
-        $this->expectException(BadRequestException::class);
+        $this->expectException(ValidationException::class);
 
         $service->resetPassword([
             'email' => 'test@example.com',
-            'token' => 'valid-token-123',
+            'token' => self::VALID_RESET_TOKEN,
             // Missing password
         ]);
     }

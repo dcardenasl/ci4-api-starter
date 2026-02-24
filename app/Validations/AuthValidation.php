@@ -33,6 +33,17 @@ class AuthValidation extends BaseValidation
                 'email' => 'required|valid_email_idn|max_length[255]',
             ],
 
+            'password_reset_validate_token' => [
+                'token' => 'required|valid_token[64]',
+                'email' => 'required|valid_email_idn|max_length[255]',
+            ],
+
+            'password_reset' => [
+                'token'    => 'required|valid_token[64]',
+                'email'    => 'required|valid_email_idn|max_length[255]',
+                'password' => 'required|strong_password',
+            ],
+
             'reset_password' => [
                 'token'    => 'required|valid_token[64]',
                 'email'    => 'required|valid_email_idn|max_length[255]',
@@ -78,6 +89,25 @@ class AuthValidation extends BaseValidation
             'forgot_password' => [
                 'email.required'        => lang('InputValidation.common.emailRequired'),
                 'email.valid_email_idn' => lang('InputValidation.common.emailInvalid'),
+                'email.max_length'      => lang('InputValidation.common.emailMaxLength'),
+            ],
+
+            'password_reset_validate_token' => [
+                'token.required'         => lang('InputValidation.auth.resetTokenRequired'),
+                'token.valid_token'      => lang('InputValidation.auth.resetTokenInvalid'),
+                'email.required'         => lang('InputValidation.common.emailRequired'),
+                'email.valid_email_idn'  => lang('InputValidation.common.emailInvalid'),
+                'email.max_length'       => lang('InputValidation.common.emailMaxLength'),
+            ],
+
+            'password_reset' => [
+                'token.required'           => lang('InputValidation.auth.resetTokenRequired'),
+                'token.valid_token'        => lang('InputValidation.auth.resetTokenInvalid'),
+                'email.required'           => lang('InputValidation.common.emailRequired'),
+                'email.valid_email_idn'    => lang('InputValidation.common.emailInvalid'),
+                'email.max_length'         => lang('InputValidation.common.emailMaxLength'),
+                'password.required'        => lang('InputValidation.common.newPasswordRequired'),
+                'password.strong_password' => lang('InputValidation.common.passwordStrength'),
             ],
 
             'reset_password' => [
@@ -85,6 +115,7 @@ class AuthValidation extends BaseValidation
                 'token.valid_token'        => lang('InputValidation.auth.resetTokenInvalid'),
                 'email.required'           => lang('InputValidation.common.emailRequired'),
                 'email.valid_email_idn'    => lang('InputValidation.common.emailInvalid'),
+                'email.max_length'         => lang('InputValidation.common.emailMaxLength'),
                 'password.required'        => lang('InputValidation.common.newPasswordRequired'),
                 'password.strong_password' => lang('InputValidation.common.passwordStrength'),
             ],

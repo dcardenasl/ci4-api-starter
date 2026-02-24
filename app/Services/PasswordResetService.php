@@ -4,9 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Exceptions\BadRequestException;
 use App\Exceptions\NotFoundException;
-use App\Exceptions\ValidationException;
 use App\Interfaces\EmailServiceInterface;
 use App\Interfaces\PasswordResetServiceInterface;
 use App\Interfaces\RefreshTokenServiceInterface;
@@ -35,25 +33,8 @@ class PasswordResetService implements PasswordResetServiceInterface
      */
     public function sendResetLink(array $data): array
     {
-        $email = $data['email'] ?? '';
-        // Validate email (support international domain names)
-        // Try converting IDN to ASCII for validation
-        $emailToValidate = $email;
-        if (strpos($email, '@') !== false) {
-            [$localPart, $domain] = explode('@', $email, 2);
-            // Convert international domain to punycode for validation
-            $asciiDomain = idn_to_ascii($domain, IDNA_DEFAULT, INTL_IDNA_VARIANT_UTS46);
-            if ($asciiDomain !== false) {
-                $emailToValidate = $localPart . '@' . $asciiDomain;
-            }
-        }
-
-        if (empty($email) || ! filter_var($emailToValidate, FILTER_VALIDATE_EMAIL)) {
-            throw new ValidationException(
-                lang('PasswordReset.emailRequired'),
-                ['email' => lang('PasswordReset.emailRequired')]
-            );
-        }
+        validateOrFail($data, 'auth', 'forgot_password');
+        $email = (string) ($data['email'] ?? '');
 
         // Find active (non-deleted) user by email
         $user = $this->userModel->where('email', $email)->first();
@@ -160,15 +141,9 @@ class PasswordResetService implements PasswordResetServiceInterface
      */
     public function validateToken(array $data): array
     {
-        $token = $data['token'] ?? '';
-        $email = $data['email'] ?? '';
-
-        if (empty($token) || empty($email)) {
-            throw new BadRequestException(
-                lang('PasswordReset.tokenRequired'),
-                ['token' => lang('PasswordReset.tokenRequired')]
-            );
-        }
+        validateOrFail($data, 'auth', 'password_reset_validate_token');
+        $token = (string) ($data['token'] ?? '');
+        $email = (string) ($data['email'] ?? '');
 
         // Clean expired tokens
         $this->passwordResetModel->cleanExpired(60);
@@ -189,35 +164,10 @@ class PasswordResetService implements PasswordResetServiceInterface
      */
     public function resetPassword(array $data): array
     {
-        $token = $data['token'] ?? '';
-        $email = $data['email'] ?? '';
-        $newPassword = $data['password'] ?? '';
-
-        // Validate inputs
-        if (empty($token) || empty($email) || empty($newPassword)) {
-            throw new BadRequestException(
-                lang('PasswordReset.allFieldsRequired'),
-                ['password' => lang('PasswordReset.allFieldsRequired')]
-            );
-        }
-
-        // Validate password strength
-        $passwordErrors = [];
-
-        if (strlen($newPassword) < 8) {
-            $passwordErrors['password'] = lang('PasswordReset.passwordMinLength');
-        } elseif (strlen($newPassword) > 128) {
-            $passwordErrors['password'] = lang('PasswordReset.passwordMaxLength');
-        } elseif (!preg_match('/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).+$/', $newPassword)) {
-            $passwordErrors['password'] = lang('PasswordReset.passwordComplexity');
-        }
-
-        if (!empty($passwordErrors)) {
-            throw new ValidationException(
-                lang('PasswordReset.passwordValidationFailed'),
-                $passwordErrors
-            );
-        }
+        validateOrFail($data, 'auth', 'password_reset');
+        $token = (string) ($data['token'] ?? '');
+        $email = (string) ($data['email'] ?? '');
+        $newPassword = (string) ($data['password'] ?? '');
 
         // Clean expired tokens
         $this->passwordResetModel->cleanExpired(60);

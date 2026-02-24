@@ -14,6 +14,14 @@ return [
     'accountSetupRequired'    => 'La cuenta requiere configuración inicial. Revisa tu correo de invitación para definir tu contraseña.',
     'registrationPendingApproval' => 'Registro recibido. Verifica tu correo y espera la aprobación del administrador.',
     'registrationPendingApprovalNoVerification' => 'Registro recibido. Espera la aprobación del administrador.',
+    'googleTokenRequired'     => 'El token de Google es obligatorio',
+    'googleInvalidToken'      => 'Token de Google inválido',
+    'googleEmailNotVerified'  => 'El email de la cuenta de Google no está verificado',
+    'googleProviderMismatch'  => 'Este email está vinculado a otro proveedor de acceso',
+    'googleProviderIdentityMismatch' => 'La identidad de Google no coincide con la cuenta vinculada',
+    'googleRegistrationPendingApproval' => 'Inicio de sesión con Google recibido. Tu cuenta está pendiente de aprobación por un administrador.',
+    'googleClientNotConfigured' => 'La autenticación con Google no está configurada',
+    'googleLibraryUnavailable' => 'La librería de autenticación de Google no está disponible',
 
     // Mensajes de autenticación
     'authRequired'            => 'Autenticación requerida',

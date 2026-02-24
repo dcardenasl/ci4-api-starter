@@ -40,6 +40,7 @@ return [
         'title'       => 'Invitación de Cuenta',
         'greeting'    => '¡Hola, {0}!',
         'intro'       => 'Un administrador creó una cuenta para ti. Por favor establece tu contraseña para activar el acceso.',
+        'googleOption' => 'También puedes iniciar sesión directamente con Google usando este mismo correo.',
         'buttonText'  => 'Establecer Contraseña',
         'linkIntro'   => 'O copia y pega este enlace en tu navegador:',
         'expiration'  => 'Este enlace expira en {0}',
@@ -55,6 +56,17 @@ return [
         'intro'       => 'Tu cuenta ha sido aprobada. Ya puedes iniciar sesión.',
         'buttonText'  => 'Ir al Login',
         'linkIntro'   => 'O copia y pega este enlace en tu navegador:',
+        'autoMessage' => 'Este es un mensaje automático, por favor no respondas.',
+        'copyright'   => 'Todos los derechos reservados.',
+    ],
+
+    // Correo de Google pendiente de aprobación
+    'pendingApprovalGoogle' => [
+        'subject'     => 'Tu cuenta está pendiente de aprobación',
+        'title'       => 'Cuenta Pendiente de Aprobación',
+        'greeting'    => '¡Hola, {0}!',
+        'intro'       => 'Recibimos tu inicio de sesión con Google. Tu cuenta está pendiente de aprobación por un administrador.',
+        'nextStep'    => 'Recibirás otro correo en cuanto tu cuenta sea aprobada.',
         'autoMessage' => 'Este es un mensaje automático, por favor no respondas.',
         'copyright'   => 'Todos los derechos reservados.',
     ],

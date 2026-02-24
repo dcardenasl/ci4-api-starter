@@ -40,6 +40,7 @@ return [
         'title'       => 'Your Account Invitation',
         'greeting'    => 'Hello, {0}!',
         'intro'       => 'An administrator created an account for you. Please set your password to activate access.',
+        'googleOption' => 'You can also sign in directly with Google using this same email address.',
         'buttonText'  => 'Set Password',
         'linkIntro'   => 'Or copy and paste this link into your browser:',
         'expiration'  => 'This link expires in {0}',
@@ -55,6 +56,17 @@ return [
         'intro'       => 'Your account has been approved. You can now sign in.',
         'buttonText'  => 'Go to Login',
         'linkIntro'   => 'Or copy and paste this link into your browser:',
+        'autoMessage' => 'This is an automated message, please do not reply.',
+        'copyright'   => 'All rights reserved.',
+    ],
+
+    // Google login pending approval
+    'pendingApprovalGoogle' => [
+        'subject'     => 'Your account is pending admin approval',
+        'title'       => 'Account Pending Approval',
+        'greeting'    => 'Hello, {0}!',
+        'intro'       => 'We received your Google sign-in. Your account is pending approval by an administrator.',
+        'nextStep'    => 'You will receive another email as soon as your account is approved.',
         'autoMessage' => 'This is an automated message, please do not reply.',
         'copyright'   => 'All rights reserved.',
     ],

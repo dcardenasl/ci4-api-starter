@@ -14,6 +14,14 @@ return [
     'accountSetupRequired'    => 'Account setup required. Please check your invitation email to set your password.',
     'registrationPendingApproval' => 'Registration received. Please verify your email and wait for admin approval.',
     'registrationPendingApprovalNoVerification' => 'Registration received. Please wait for admin approval.',
+    'googleTokenRequired'     => 'Google token is required',
+    'googleInvalidToken'      => 'Invalid Google token',
+    'googleEmailNotVerified'  => 'Google account email is not verified',
+    'googleProviderMismatch'  => 'This email is linked to a different login provider',
+    'googleProviderIdentityMismatch' => 'Google identity does not match the linked account',
+    'googleRegistrationPendingApproval' => 'Google sign-in received. Your account is pending admin approval.',
+    'googleClientNotConfigured' => 'Google authentication is not configured',
+    'googleLibraryUnavailable' => 'Google authentication library is unavailable',
 
     // Authentication messages
     'authRequired'            => 'Authentication required',

@@ -63,6 +63,9 @@ return [
     'auth' => [
         // Login
         'emailRequired'          => 'El email es obligatorio',
+        'idTokenRequired'        => 'El token de Google es obligatorio',
+        'idTokenInvalid'         => 'El token de Google es inválido',
+        'clientBaseUrlInvalid'   => 'La URL base del cliente debe ser válida',
 
         // Token
         'resetTokenRequired'      => 'El token de restablecimiento es obligatorio',

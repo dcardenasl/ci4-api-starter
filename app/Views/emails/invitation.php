@@ -69,6 +69,7 @@
             <h2><?= lang('Email.invitation.greeting', [esc($display_name ?? 'User')]) ?></h2>
 
             <p><?= lang('Email.invitation.intro') ?></p>
+            <p><?= lang('Email.invitation.googleOption') ?></p>
 
             <div style="text-align: center;">
                 <a href="<?= esc($reset_link) ?>" class="button"><?= lang('Email.invitation.buttonText') ?></a>

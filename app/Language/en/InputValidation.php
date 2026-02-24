@@ -63,6 +63,9 @@ return [
     'auth' => [
         // Login
         'emailRequired'          => 'Email is required',
+        'idTokenRequired'        => 'Google ID token is required',
+        'idTokenInvalid'         => 'Google ID token is invalid',
+        'clientBaseUrlInvalid'   => 'Client base URL must be a valid URL',
 
         // Token
         'resetTokenRequired'      => 'Reset token is required',

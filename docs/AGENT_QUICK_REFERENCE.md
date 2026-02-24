@@ -58,6 +58,13 @@ HTTP Request
 
 When creating a new resource (e.g., "Product"), follow this exact order:
 
+### Step 0: Scaffold First (Required)
+```bash
+php spark make:crud Product --domain Catalog --route products
+```
+- Use this command as the default entrypoint for new CRUD resources.
+- Only skip it if the user explicitly requests manual file creation.
+
 ### Step 1: Migration
 ```bash
 php spark make:migration CreateProductsTable
@@ -181,7 +188,7 @@ public static function productService(bool $getShared = true)
 
 ### Step 7: Controller
 ```php
-// app/Controllers/Api/V1/ProductController.php
+// app/Controllers/Api/V1/Catalog/ProductController.php
 class ProductController extends ApiController
 {
     protected string $serviceName = 'productService';
@@ -200,14 +207,14 @@ class ProductController extends ApiController
 // app/Config/Routes.php
 $routes->group('api/v1', ['filter' => 'jwtauth'], function ($routes) {
     // Public read
-    $routes->get('products', 'Api\V1\ProductController::index');
-    $routes->get('products/(:num)', 'Api\V1\ProductController::show/$1');
+    $routes->get('products', 'App\Controllers\Api\V1\Catalog\ProductController::index');
+    $routes->get('products/(:num)', 'App\Controllers\Api\V1\Catalog\ProductController::show/$1');
 
     // Admin only
     $routes->group('', ['filter' => 'roleauth:admin'], function ($routes) {
-        $routes->post('products', 'Api\V1\ProductController::create');
-        $routes->put('products/(:num)', 'Api\V1\ProductController::update/$1');
-        $routes->delete('products/(:num)', 'Api\V1\ProductController::delete/$1');
+        $routes->post('products', 'App\Controllers\Api\V1\Catalog\ProductController::create');
+        $routes->put('products/(:num)', 'App\Controllers\Api\V1\Catalog\ProductController::update/$1');
+        $routes->delete('products/(:num)', 'App\Controllers\Api\V1\Catalog\ProductController::delete/$1');
     });
 });
 ```
@@ -558,10 +565,10 @@ vendor/bin/phpunit tests/Feature      # HTTP tests
 | Model | `app/Models/` | `{Name}Model.php` | `ProductModel.php` |
 | Service Interface | `app/Interfaces/` | `{Name}ServiceInterface.php` | `ProductServiceInterface.php` |
 | Service | `app/Services/` | `{Name}Service.php` | `ProductService.php` |
-| Controller | `app/Controllers/Api/V1/` | `{Name}Controller.php` | `ProductController.php` |
+| Controller | `app/Controllers/Api/V1/{Domain}/` | `{Name}Controller.php` | `Catalog/ProductController.php` |
 | Unit Test | `tests/Unit/Services/` | `{Name}ServiceTest.php` | `ProductServiceTest.php` |
 | Integration Test | `tests/Integration/Models/` | `{Name}ModelTest.php` | `ProductModelTest.php` |
-| Feature Test | `tests/Feature/Controllers/` | `{Name}ControllerTest.php` | `ProductControllerTest.php` |
+| Feature Test | `tests/Feature/Controllers/{Domain}/` | `{Name}ControllerTest.php` | `Catalog/ProductControllerTest.php` |
 | Language File | `app/Language/{lang}/` | `{Name}.php` | `Products.php` |
 
 ---

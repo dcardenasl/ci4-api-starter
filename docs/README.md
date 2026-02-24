@@ -21,7 +21,7 @@ A hands-on tutorial (~30 minutes) that walks you through:
 
 ---
 
-## 🤖 For AI Agents (Claude Code)
+## 🤖 For AI Agents (Claude Code / OpenAI Codex)
 
 ### **[AGENT_QUICK_REFERENCE.md](AGENT_QUICK_REFERENCE.md)**
 **Primary reference for AI agents creating CRUD resources**
@@ -39,6 +39,7 @@ Condensed guide (~600 lines) optimized for AI context usage:
 - File naming conventions
 
 **When to use:** AI agents implementing new resources should read this FIRST before writing any code.
+**CRUD rule:** Start with `php spark make:crud ...` before manual CRUD file creation.
 
 **Optimization:** 75% smaller than reading full architecture docs (600 vs 2,400 lines).
 
@@ -218,9 +219,10 @@ Postman collections for API testing:
 3. Reference: AGENT_QUICK_REFERENCE.md (quick lookup)
 ```
 
-### For AI Agents (Claude Code)
+### For AI Agents (Claude Code / OpenAI Codex)
 ```
 Read: AGENT_QUICK_REFERENCE.md (optimized for AI context)
+Rule: use php spark make:crud first for new CRUD resources
 ```
 
 ### For Specific Features

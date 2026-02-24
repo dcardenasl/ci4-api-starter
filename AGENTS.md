@@ -10,6 +10,7 @@
 - `composer install` installs PHP dependencies.
 - `php spark serve` runs the dev server at `http://localhost:8080`.
 - `php spark migrate` applies database migrations.
+- `php spark make:crud {Resource} --domain {Domain} --route {slug}` scaffolds new CRUD resources (default path for new CRUD work).
 - `vendor/bin/phpunit` runs the full test suite; add `--testdox` for readable output.
 - `composer cs-check` runs PHP-CS-Fixer in dry-run mode; `composer cs-fix` applies fixes.
 - `composer phpstan` runs static analysis.
@@ -22,6 +23,7 @@
 - Prefer descriptive, verb-based test names (e.g., `testLoginWithValidCredentialsReturnsUserData`).
 
 ## Agent Critical Rules
+- For any new CRUD resource, use `php spark make:crud` first. Do not handcraft the initial CRUD skeleton unless the user explicitly requests manual creation.
 - Keep controllers thin: for standard CRUD, define `protected string $serviceName` and delegate to inherited `ApiController` CRUD methods.
 - Place OpenAPI docs in `app/Documentation/`; do not add OpenAPI annotations directly in controllers.
 - Use `lang()` for user-facing messages and keep parity in `app/Language/en/` and `app/Language/es/`.

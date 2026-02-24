@@ -209,7 +209,7 @@ Archivo generado: `public/swagger.json` (servido en `http://localhost:8080/swagg
 app/
 ├── Controllers/
 │   ├── ApiController.php          # Controlador base
-│   └── Api/V1/                    # Controladores API v1
+│   └── Api/V1/                    # Controladores API v1 agrupados por dominio (Auth, Identity, Users, Files, Admin, System)
 ├── Services/                      # Logica de negocio
 ├── Interfaces/                    # Interfaces de servicios
 ├── Models/                        # Modelos de base de datos

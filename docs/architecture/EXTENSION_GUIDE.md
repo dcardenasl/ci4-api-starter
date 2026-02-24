@@ -11,10 +11,20 @@ Complete step-by-step process:
 4. **Create interface** - `app/Interfaces/ProductServiceInterface.php`
 5. **Create service** - `app/Services/ProductService.php`
 6. **Register service** - Add to `app/Config/Services.php`
-7. **Create controller** - `app/Controllers/Api/V1/ProductController.php`
+7. **Create controller** - `app/Controllers/Api/V1/{Domain}/ProductController.php`
 8. **Add routes** - Update `app/Config/Routes.php`
 9. **Add language files** - `app/Language/{lang}/Products.php`
 10. **Write tests** - Unit, Integration, Feature tests
+
+## Scaffold Command (Recommended)
+
+Use the internal generator to create a domain-aligned CRUD skeleton:
+
+```bash
+php spark make:crud Product --domain Catalog --route products
+```
+
+The command generates entity, model, interface, service, controller, validation, i18n files, OpenAPI placeholders, and tests.
 
 ## Quick Start
 
@@ -48,4 +58,3 @@ class PaymentRequiredException extends ApiException
     protected int $statusCode = 402;
 }
 ```
-

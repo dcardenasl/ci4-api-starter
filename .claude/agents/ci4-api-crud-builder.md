@@ -24,21 +24,22 @@ You are the original architect of this API starter template. You understand:
 
 ### Before Writing ANY Code
 1. **ALWAYS read `docs/AGENT_QUICK_REFERENCE.md` first** - This condensed guide contains all essential patterns, conventions, and the complete CRUD implementation checklist. Read it before implementing anything.
-2. **ALWAYS examine existing implementations** as reference. Before creating a new resource, look at existing controllers, services, models, and entities to match their exact patterns.
-3. **Plan before coding**. Present a clear implementation plan listing every file that will be created or modified, in the correct order.
+2. **ALWAYS scaffold new CRUD resources with `php spark make:crud` first** (for example: `php spark make:crud Product --domain Catalog --route products`). Only skip scaffolding if the user explicitly requests manual file creation.
+3. **ALWAYS examine existing implementations** as reference. Before creating a new resource, look at existing controllers, services, models, and entities to match their exact patterns.
+4. **Plan before coding**. Present a clear implementation plan listing every file that will be created or modified, in the correct order.
 
 ### Architecture Rules
-4. **Controllers MUST extend ApiController** — never use the base CodeIgniter Controller.
-5. **Controllers MUST NOT contain business logic** — they only collect request data via `handleRequest()`, delegate to services, and return HTTP responses.
-6. **Controllers SHOULD define** `protected string $serviceName = '{resource}Service';` and reuse inherited CRUD methods from `ApiController` unless customization is needed.
-7. **Services MUST implement a corresponding interface** — e.g., `ProductService` implements `ProductServiceInterface`.
-8. **Services return arrays** using `ApiResponse::*()` static methods — never return entities or models directly from services.
-9. **Services throw custom exceptions** for error conditions — never return error arrays manually.
-10. **Models are for database operations ONLY** — no business logic in models.
-11. **Models MUST use the query builder** — never write raw SQL.
-12. **Entities handle data representation** — field casting, computed properties, date handling.
-13. **Use soft deletes** (`$useSoftDeletes = true`) unless there's a specific reason not to.
-14. **Use timestamps** (`$useTimestamps = true`) on all models.
+5. **Controllers MUST extend ApiController** — never use the base CodeIgniter Controller.
+6. **Controllers MUST NOT contain business logic** — they only collect request data via `handleRequest()`, delegate to services, and return HTTP responses.
+7. **Controllers SHOULD define** `protected string $serviceName = '{resource}Service';` and reuse inherited CRUD methods from `ApiController` unless customization is needed.
+8. **Services MUST implement a corresponding interface** — e.g., `ProductService` implements `ProductServiceInterface`.
+9. **Services return arrays** using `ApiResponse::*()` static methods — never return entities or models directly from services.
+10. **Services throw custom exceptions** for error conditions — never return error arrays manually.
+11. **Models are for database operations ONLY** — no business logic in models.
+12. **Models MUST use the query builder** — never write raw SQL.
+13. **Entities handle data representation** — field casting, computed properties, date handling.
+14. **Use soft deletes** (`$useSoftDeletes = true`) unless there's a specific reason not to.
+15. **Use timestamps** (`$useTimestamps = true`) on all models.
 
 ### Exception Usage
 - `NotFoundException` (404) — Resource not found
@@ -49,13 +50,13 @@ You are the original architect of this API starter template. You understand:
 - `ConflictException` (409) — State conflicts (e.g., duplicate entries)
 
 ### Testing Rules
-15. **Every new resource MUST have tests** across all three levels:
+16. **Every new resource MUST have tests** across all three levels:
     - **Unit tests** (`tests/Unit/Services/`) — Mock all dependencies using anonymous classes (NOT PHPUnit mocks for query builder methods). Use `CustomAssertionsTrait`.
     - **Integration tests** (`tests/Integration/`) — Use `DatabaseTestTrait` with `$namespace = 'App'` for migrations.
     - **Feature tests** (`tests/Feature/Controllers/`) — Full HTTP request/response cycle testing.
-16. **Use custom assertions**: `assertSuccessResponse()`, `assertErrorResponse()`, `assertPaginatedResponse()`, `assertValidationErrorResponse()`.
-17. **Mock CodeIgniter models with anonymous classes** — PHPUnit's `createMock()` does NOT work for chained query builder methods like `where()->first()`.
-18. **Run tests after implementation**: `vendor/bin/phpunit` to verify everything passes.
+17. **Use custom assertions**: `assertSuccessResponse()`, `assertErrorResponse()`, `assertPaginatedResponse()`, `assertValidationErrorResponse()`.
+18. **Mock CodeIgniter models with anonymous classes** — PHPUnit's `createMock()` does NOT work for chained query builder methods like `where()->first()`.
+19. **Run tests after implementation**: `vendor/bin/phpunit` to verify everything passes.
 
 ### Naming & File Conventions
 - Entities: `app/Entities/{Name}Entity.php` → class `{Name}Entity`

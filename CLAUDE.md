@@ -41,6 +41,7 @@ php spark migrate:rollback      # Rollback last migration
 php spark migrate:refresh       # Rollback all + re-run migrations
 php spark db:seed UsersLoadTestSeeder  # Seed load-test users
 php spark users:bootstrap-superadmin --email superadmin@example.com --password 'StrongPass123!'  # Bootstrap first superadmin
+php spark make:crud Product --domain Catalog --route products  # Scaffold new CRUD resource (default)
 php spark make:migration CreateTableName  # Create new migration
 ```
 
@@ -164,6 +165,16 @@ throw new ConflictException('Already exists');           // 409
 | `/health`, `/ping` | none | Health checks |
 
 ## Adding New Resources
+
+### Mandatory First Step (AI Agents)
+
+For **all new CRUD resources**, use the scaffold command first:
+
+```bash
+php spark make:crud Product --domain Catalog --route products
+```
+
+Do not handcraft the initial CRUD skeleton unless the user explicitly asks for manual creation.
 
 ### 1. Create Migration
 ```bash

@@ -37,10 +37,11 @@ The agent automatically activates when you ask Claude Code to:
 
 The agent will:
 1. **Research** existing patterns in your codebase
-2. **Plan** the implementation (migration, entity, model, service, controller, tests)
-3. **Implement** following exact architectural patterns
-4. **Test** with Unit, Integration, and Feature tests
-5. **Document** with OpenAPI annotations in `app/Documentation/`
+2. **Scaffold first** with `php spark make:crud ...` for new CRUD resources
+3. **Plan** the implementation (migration, entity, model, service, controller, tests)
+4. **Implement** following exact architectural patterns
+5. **Test** with Unit, Integration, and Feature tests
+6. **Document** with OpenAPI annotations in `app/Documentation/`
 
 ## What's included
 

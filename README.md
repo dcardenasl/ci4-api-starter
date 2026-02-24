@@ -209,7 +209,7 @@ Generated file: `public/swagger.json` (served at `http://localhost:8080/swagger.
 app/
 ├── Controllers/
 │   ├── ApiController.php          # Base controller
-│   └── Api/V1/                    # API v1 controllers
+│   └── Api/V1/                    # API v1 controllers grouped by domain (Auth, Identity, Users, Files, Admin, System)
 ├── Services/                      # Business logic
 ├── Interfaces/                    # Service interfaces
 ├── Models/                        # Database models

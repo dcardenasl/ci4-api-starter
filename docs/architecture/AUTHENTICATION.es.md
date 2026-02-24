@@ -51,4 +51,9 @@ curl -X POST /api/v1/auth/revoke \
   -H "Authorization: Bearer ACCESS_TOKEN"
 ```
 
+## Validacion de Refresh Token
+
+- `POST /api/v1/auth/refresh` y `POST /api/v1/auth/revoke` validan `refresh_token` con `valid_token[64]`.
+- Un formato invalido del token se trata como error de validacion del request antes de la logica de negocio.
+
 **Ver `../ARCHITECTURE.md` sección 15 para implementación completa de JWT.**

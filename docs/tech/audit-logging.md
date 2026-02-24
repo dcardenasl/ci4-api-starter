@@ -10,3 +10,4 @@ Key files:
 Notes:
 - Records are stored in the `audit_logs` table.
 - API endpoints are defined under `app/Controllers/Api/V1/AuditController.php`.
+- Input validation for audit actions (`index`, `show`, `by_entity`) is centralized and consumed by `AuditService`.

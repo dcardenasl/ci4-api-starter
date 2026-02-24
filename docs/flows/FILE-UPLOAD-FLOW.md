@@ -15,7 +15,7 @@
 - Max size via `FILE_MAX_SIZE` (default 10MB).
 - Allowed extension via `FILE_ALLOWED_TYPES` (default `jpg,jpeg,png,gif,pdf`).
 
-Note: CI4 rules exist in `app/Validations/FileValidation.php` (uploaded/max_size). They are used by the validation service when `validateOrFail` is invoked, but `FileService` does not call it currently.
+Note: Request-shape validation is centralized through `app/Validations/FileValidation.php` using `getValidationRules('file', <action>) + validateInputs(...)` inside `FileService`. Runtime checks (`isValid()`, max size, allowed extension list) are still enforced in the service.
 
 ## Storage and drivers
 - Driver via `FILE_STORAGE_DRIVER` (`local` or `s3`).

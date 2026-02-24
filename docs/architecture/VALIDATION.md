@@ -1,66 +1,61 @@
 # Validation System
 
+This project uses a layered validation strategy with a strict domain/action contract.
 
-## Three Levels of Validation
+## Validation Layers
 
-```
-1. Input Validation (app/Validations/)
-   ↓
-2. Model Validation (Model::$validationRules)
-   ↓
-3. Business Rules (Service methods)
-```
+1. Input validation (`app/Validations/*Validation.php`)
+2. Model validation (`Model::$validationRules`)
+3. Business rules (service logic)
 
-## 1. Input Validation
+Each layer has a different responsibility:
+- Input validation: request shape, format, constraints.
+- Model validation: DB integrity and persistence-level constraints.
+- Business rules: domain decisions (ownership, state transitions, side effects).
 
-```php
-// app/Validations/ProductValidation.php
-class ProductValidation extends BaseValidation
-{
-    public function getRules(string $action): array
-    {
-        return match ($action) {
-            'store' => [
-                'name'  => 'required|max_length[255]',
-                'price' => 'required|numeric|greater_than[0]',
-            ],
-            default => [],
-        };
-    }
-}
-```
+## Domain/Action Contract
 
-## 2. Model Validation
+Validation is grouped by domain (for example: `auth`, `user`, `file`, `token`, `audit`) and action (`login`, `update`, `upload`, etc.).
+
+Main helpers:
 
 ```php
-// app/Models/ProductModel.php
-protected $validationRules = [
-    'name' => [
-        'rules'  => 'required|max_length[255]|is_unique[products.name]',
-        'errors' => ['required' => 'Name is required'],
-    ],
-];
+validateOrFail($data, 'auth', 'login');
+$validation = getValidationRules('file', 'upload');
+$errors = validateInputs($data, $validation['rules'], $validation['messages']);
 ```
 
-## 3. Business Rule Validation
+Important behavior:
+- `validateOrFail()` now fails fast if the domain is not registered.
+- `validateOrFail()` now fails fast if the action is unknown for a valid domain.
+- Unknown domain/action raises `InvalidArgumentException` (configuration/programming error).
+- Invalid user input raises `ValidationException` (HTTP 422).
 
-```php
-// In service
-if ($this->isProductNameTaken($data['name'])) {
-    throw new ValidationException('Name already exists', [
-        'name' => 'Product name is already in use'
-    ]);
-}
-```
+## How Services Apply Validation
 
-## Common Validation Rules
+Two patterns are intentionally used:
 
-- `required` - Field must be present
-- `permit_empty` - Allow null/empty
+1. `validateOrFail(...)` for direct 422 flow.
+2. `getValidationRules(...) + validateInputs(...)` when service maps errors to `BadRequestException` with custom message context.
+
+Recent examples in the codebase:
+- Password reset uses `validateOrFail($data, 'auth', ...)`.
+- User update uses `validateOrFail($data, 'user', 'update')`.
+- File/audit/token services consume centralized rule sets via helpers.
+
+## Model Validation Notes
+
+Model rules should avoid conflicting with partial update semantics.
+
+Example:
+- `UserModel` email rule uses `permit_empty|valid_email_idn|max_length[255]|is_unique[...]`.
+- Required fields for update must be enforced at input-validation level (`user:update`), not by forcing model-required for all writes.
+
+## Common Rules Used
+
+- `required`, `permit_empty`
+- `is_natural_no_zero`
+- `valid_email_idn`
+- `valid_token[64]`
+- `strong_password`
 - `max_length[N]`, `min_length[N]`
-- `is_unique[table.field]`
-- `valid_email`
-- `numeric`, `integer`
-- `greater_than[N]`, `less_than[N]`
-- `regex_match[pattern]`
-

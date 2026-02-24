@@ -10,3 +10,4 @@ Archivos clave:
 Notas:
 - Los registros se guardan en `audit_logs`.
 - Los endpoints estan en `app/Controllers/Api/V1/AuditController.php`.
+- La validacion de entrada para acciones de auditoria (`index`, `show`, `by_entity`) esta centralizada y la consume `AuditService`.

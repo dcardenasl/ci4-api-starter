@@ -1,66 +1,61 @@
-# Sistema de Validación
+# Sistema de Validacion
 
+Este proyecto usa una estrategia de validacion por capas con un contrato estricto dominio/accion.
 
-## Tres Niveles de Validación
+## Capas de Validacion
 
-```
-1. Validación de Entrada (app/Validations/)
-   ↓
-2. Validación de Modelo (Model::$validationRules)
-   ↓
-3. Reglas de Negocio (métodos Service)
-```
+1. Validacion de entrada (`app/Validations/*Validation.php`)
+2. Validacion de modelo (`Model::$validationRules`)
+3. Reglas de negocio (logica de servicios)
 
-## 1. Validación de Entrada
+Cada capa tiene una responsabilidad distinta:
+- Validacion de entrada: forma del request, formato y restricciones.
+- Validacion de modelo: integridad de persistencia/DB.
+- Reglas de negocio: decisiones de dominio (propiedad, estados, efectos secundarios).
 
-```php
-// app/Validations/ProductValidation.php
-class ProductValidation extends BaseValidation
-{
-    public function getRules(string $action): array
-    {
-        return match ($action) {
-            'store' => [
-                'name'  => 'required|max_length[255]',
-                'price' => 'required|numeric|greater_than[0]',
-            ],
-            default => [],
-        };
-    }
-}
-```
+## Contrato Dominio/Accion
 
-## 2. Validación de Modelo
+La validacion se organiza por dominio (por ejemplo: `auth`, `user`, `file`, `token`, `audit`) y accion (`login`, `update`, `upload`, etc.).
+
+Helpers principales:
 
 ```php
-// app/Models/ProductModel.php
-protected $validationRules = [
-    'name' => [
-        'rules'  => 'required|max_length[255]|is_unique[products.name]',
-        'errors' => ['required' => 'Name is required'],
-    ],
-];
+validateOrFail($data, 'auth', 'login');
+$validation = getValidationRules('file', 'upload');
+$errors = validateInputs($data, $validation['rules'], $validation['messages']);
 ```
 
-## 3. Validación de Reglas de Negocio
+Comportamiento importante:
+- `validateOrFail()` ahora falla rapido si el dominio no esta registrado.
+- `validateOrFail()` ahora falla rapido si la accion no existe para un dominio valido.
+- Dominio/accion desconocidos lanzan `InvalidArgumentException` (error de configuracion/programacion).
+- Input invalido del usuario lanza `ValidationException` (HTTP 422).
 
-```php
-// En service
-if ($this->isProductNameTaken($data['name'])) {
-    throw new ValidationException('Name already exists', [
-        'name' => 'Product name is already in use'
-    ]);
-}
-```
+## Como se Aplica en Servicios
 
-## Reglas de Validación Comunes
+Se usan intencionalmente dos patrones:
 
-- `required` - El campo debe estar presente
-- `permit_empty` - Permitir null/vacío
+1. `validateOrFail(...)` para flujo directo de 422.
+2. `getValidationRules(...) + validateInputs(...)` cuando el servicio mapea errores a `BadRequestException` con contexto propio.
+
+Ejemplos recientes en el codigo:
+- Password reset usa `validateOrFail($data, 'auth', ...)`.
+- User update usa `validateOrFail($data, 'user', 'update')`.
+- Servicios de file/audit/token consumen reglas centralizadas via helpers.
+
+## Notas de Validacion de Modelo
+
+Las reglas del modelo deben evitar conflictos con updates parciales.
+
+Ejemplo:
+- La regla de email en `UserModel` usa `permit_empty|valid_email_idn|max_length[255]|is_unique[...]`.
+- Campos requeridos para update deben forzarse en validacion de entrada (`user:update`), no como `required` global del modelo.
+
+## Reglas Comunes en Uso
+
+- `required`, `permit_empty`
+- `is_natural_no_zero`
+- `valid_email_idn`
+- `valid_token[64]`
+- `strong_password`
 - `max_length[N]`, `min_length[N]`
-- `is_unique[table.field]`
-- `valid_email`
-- `numeric`, `integer`
-- `greater_than[N]`, `less_than[N]`
-- `regex_match[pattern]`
-

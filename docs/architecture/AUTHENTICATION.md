@@ -51,3 +51,7 @@ curl -X POST /api/v1/auth/revoke \
   -H "Authorization: Bearer ACCESS_TOKEN"
 ```
 
+## Refresh Token Validation
+
+- `POST /api/v1/auth/refresh` and `POST /api/v1/auth/revoke` validate `refresh_token` with `valid_token[64]`.
+- Invalid token format is treated as request validation error before business logic.

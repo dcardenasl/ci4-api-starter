@@ -18,6 +18,7 @@ Environment variables:
 Notes:
 - Local storage defaults to `writable/uploads/`.
 - S3 uses Flysystem and the AWS config values from `.env`.
+- Input validation for file actions (`upload`, `index`, `show`, `delete`) is centralized in `FileValidation` and consumed from `FileService`.
 - `GET /api/v1/files/{id}` behavior:
   - Local driver: controller returns binary download response.
   - S3 driver: API returns JSON metadata including URL/path.

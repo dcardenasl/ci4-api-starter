@@ -148,7 +148,10 @@ class ProductService implements ProductServiceInterface
     public function show(array $data): array
     {
         if (!isset($data['id'])) {
-            throw new BadRequestException('ID required');
+            throw new BadRequestException(
+                lang('Api.invalidRequest'),
+                ['id' => lang('InputValidation.common.idRequired', ['Id'])]
+            );
         }
 
         $product = $this->productModel->find($data['id']);
@@ -228,6 +231,20 @@ return [
 ];
 ```
 
+Add model/input validation messages in `InputValidation` (not in resource file):
+
+```php
+// app/Language/en/InputValidation.php
+'product' => [
+    'nameRequired' => 'Product name is required',
+];
+
+// app/Language/es/InputValidation.php
+'product' => [
+    'nameRequired' => 'El nombre del producto es obligatorio',
+];
+```
+
 ### Step 10: Tests
 Create three test levels:
 
@@ -250,6 +267,12 @@ class ProductServiceTest extends CIUnitTestCase
     }
 }
 ```
+
+### Step 11: i18n Enforcement
+```bash
+composer i18n-check
+```
+This is required before opening a PR.
 
 **Integration Test** (`tests/Integration/Models/ProductModelTest.php`):
 ```php

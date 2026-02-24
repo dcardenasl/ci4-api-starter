@@ -43,9 +43,11 @@
         "phpstan": "phpstan analyse --memory-limit=512M",
         "cs-fix": "php-cs-fixer fix",
         "cs-check": "php-cs-fixer fix --dry-run --diff",
+        "i18n-check": "php scripts/i18n-check.php",
         "quality": [
             "@cs-check",
             "@phpstan",
+            "@i18n-check",
             "@test"
         ]
     },

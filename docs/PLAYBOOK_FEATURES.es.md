@@ -18,7 +18,7 @@ Esta guía estandariza cómo diseñar e implementar nuevas funcionalidades en es
 1. Validación en 2 niveles: input (dominio) + modelo (integridad).
 1. Seguridad por defecto: JWT + roles + ownership cuando aplique.
 1. Respuestas consistentes con `ApiResponse`.
-1. i18n: mensajes en `en` y `es`.
+1. i18n: mensajes en `en` y `es` con paridad estricta de claves y reglas por capa.
 
 ---
 
@@ -57,6 +57,7 @@ Esta guía estandariza cómo diseñar e implementar nuevas funcionalidades en es
 1. Crear `XValidation` con reglas por acción (`store`, `update`).
 1. Registrar en `InputValidationService`.
 1. Agregar mensajes a `app/Language/en` y `app/Language/es`.
+1. En Models, los mensajes de validación deben usar solo `InputValidation.*`.
 
 **5. Servicios**
 1. Implementar CRUD con reglas de negocio.
@@ -88,6 +89,7 @@ Esta guía estandariza cómo diseñar e implementar nuevas funcionalidades en es
 
 1. Actualizar `README.md` y `README.es.md`.
 1. Documentar filtros/params soportados.
+1. Ejecutar `composer i18n-check` (obligatorio).
 
 ---
 

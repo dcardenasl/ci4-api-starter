@@ -15,7 +15,7 @@ Standardize how new features are designed and implemented in this CI4 API. Focus
 1. Two-level validation: input (domain) + model (integrity).
 1. Security by default: JWT + roles + ownership when needed.
 1. Consistent responses with `ApiResponse`.
-1. i18n: messages in `en` and `es`.
+1. i18n: messages in `en` and `es` with strict key parity and layer rules.
 
 ---
 
@@ -53,6 +53,7 @@ Standardize how new features are designed and implemented in this CI4 API. Focus
 1. Create `XValidation` rules per action (`store`, `update`).
 1. Register in `InputValidationService`.
 1. Add messages in `app/Language/en` and `app/Language/es`.
+1. In Models, validation messages must reference `InputValidation.*` only.
 
 5. **Services**
 1. Implement CRUD + business rules.
@@ -82,6 +83,7 @@ Standardize how new features are designed and implemented in this CI4 API. Focus
 10. **Repo Docs**
 1. Update `README.md` and `README.es.md`.
 1. Document supported filters/params.
+1. Run `composer i18n-check` (required).
 
 ---
 

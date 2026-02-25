@@ -117,23 +117,44 @@ abstract class ApiController extends Controller
      */
     protected function collectRequestData(?array $params = null): array
     {
-        $contentType = $this->request->header('Content-Type');
-        $isJson = $contentType && str_contains((string) $contentType, 'application/json');
+        $contentType = (string) $this->request->header('Content-Type');
+        $isJson = str_contains($contentType, 'application/json');
 
+        // Start with basic sources
         $data = array_merge(
             $this->request->getGet() ?? [],
-            $this->request->getPost() ?? [],
-            $isJson ? [] : $this->request->getRawInput(),
-            $this->getJsonData(),
-            $params ?? []
+            $this->request->getPost() ?? []
         );
 
-        // Add authenticated user ID if available
-        if ($userId = $this->getUserId()) {
-            $data['user_id'] = $userId;
+        // Merge files
+        $files = $this->request->getFiles();
+        if (!empty($files)) {
+            $data = array_merge($data, $files);
         }
-        if ($userRole = $this->getUserRole()) {
-            $data['user_role'] = $userRole;
+
+        // Merge JSON or Raw Input
+        if ($isJson) {
+            $jsonData = $this->getJsonData();
+            $data = array_merge($data, $jsonData);
+        } else {
+            // For multipart or other types, try to get raw input if POST/FILES are empty
+            $rawInput = $this->request->getRawInput();
+            if (!empty($rawInput)) {
+                $data = array_merge($data, $rawInput);
+            }
+        }
+
+        // Add authenticated user ID and role if available
+        if ($authUserId = $this->getUserId()) {
+            $data['user_id'] = $authUserId;
+        }
+        if ($authUserRole = $this->getUserRole()) {
+            $data['user_role'] = $authUserRole;
+        }
+
+        // Merge explicit params (highest priority)
+        if ($params !== null) {
+            $data = array_merge($data, $params);
         }
 
         return $this->sanitizeInput($data);
@@ -150,7 +171,7 @@ abstract class ApiController extends Controller
             return [];
         }
 
-        $json = json_decode($body, true);
+        $json = json_decode((string)$body, true);
         return (json_last_error() === JSON_ERROR_NONE && is_array($json)) ? $json : [];
     }
 
@@ -160,7 +181,14 @@ abstract class ApiController extends Controller
     protected function sanitizeInput(array $data): array
     {
         return array_map(function ($value) {
+            if ($value instanceof \CodeIgniter\HTTP\Files\UploadedFile) {
+                return $value;
+            }
             if (is_string($value)) {
+                // Skip heavy sanitization for very long strings (base64/files)
+                if (strlen($value) > 2048) {
+                    return trim($value);
+                }
                 return strip_tags(trim($value));
             }
             if (is_array($value)) {

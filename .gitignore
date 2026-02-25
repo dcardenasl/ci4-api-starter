@@ -182,3 +182,5 @@ backup/
 .claude/settings.local.json
 
 public/writable/tests/uploads/
+
+public/writable/uploads/

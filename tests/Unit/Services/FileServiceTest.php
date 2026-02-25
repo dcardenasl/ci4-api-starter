@@ -52,7 +52,7 @@ class FileServiceTest extends CIUnitTestCase
     {
         $mockFile = $this->createMockUploadedFile();
 
-        $this->expectException(BadRequestException::class);
+        $this->expectException(\App\Exceptions\AuthenticationException::class);
 
         $this->service->upload(['file' => $mockFile]);
     }
@@ -436,6 +436,152 @@ class FileServiceTest extends CIUnitTestCase
         $result = $this->service->delete(['id' => 1, 'user_id' => 1]);
 
         $this->assertSuccessResponse($result);
+    }
+
+    public function testUploadWithDuplicateFilenameGeneratesNumericSeries(): void
+    {
+        $base64 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+        $filename = 'logo.png';
+        $datePath = date('Y/m/d');
+
+        // Mock Storage to simulate existing file for 'logo.png' but NOT for 'logo_1.png'
+        $this->mockStorage
+            ->method('exists')
+            ->willReturnMap([
+                ["{$datePath}/logo.png", true],   // First check: exists
+                ["{$datePath}/logo_1.png", false] // Second check: doesn't exist
+            ]);
+
+        $this->mockStorage
+            ->expects($this->once())
+            ->method('put')
+            ->with($this->equalTo("{$datePath}/logo_1.png"), $this->anything())
+            ->willReturn(true);
+
+        $this->mockStorage
+            ->method('getDriverName')
+            ->willReturn('local');
+
+        $this->mockStorage
+            ->method('url')
+            ->willReturn("http://localhost/uploads/{$datePath}/logo_1.png");
+
+        $savedEntity = $this->createFileEntity([
+            'id' => 1,
+            'original_name' => $filename,
+            'stored_name' => 'logo_1.png',
+            'mime_type' => 'image/png',
+            'url' => "http://localhost/uploads/{$datePath}/logo_1.png",
+            'uploaded_at' => date('Y-m-d H:i:s'),
+        ]);
+
+        $this->mockFileModel->method('insert')->willReturn(1);
+        $this->mockFileModel->method('find')->willReturn($savedEntity);
+
+        $result = $this->service->upload([
+            'file' => $base64,
+            'filename' => $filename,
+            'user_id' => 1,
+        ]);
+
+        $this->assertCreatedResponse($result);
+        $this->assertEquals($filename, $result['data']['original_name']);
+        // The fact that storage->put was called with logo_1.png validates the logic
+    }
+
+    public function testUploadWithUploadPrefixCleansFilename(): void
+    {
+        $base64 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+        // Simulating the dirty name reported by the user
+        $dirtyFilename = 'upload_699e505bebdf92.24327053_Captura09.PNG';
+        $expectedCleanName = 'Captura09.png'; // Extension is lowercased by our service
+        $datePath = date('Y/m/d');
+
+        $this->mockStorage
+            ->method('exists')
+            ->willReturn(false); // No collision
+
+        $this->mockStorage
+            ->expects($this->once())
+            ->method('put')
+            ->with($this->equalTo("{$datePath}/Captura09.png"), $this->anything())
+            ->willReturn(true);
+
+        $this->mockStorage
+            ->method('getDriverName')
+            ->willReturn('local');
+
+        $this->mockStorage
+            ->method('url')
+            ->willReturn("http://localhost/uploads/{$datePath}/Captura09.png");
+
+        $savedEntity = $this->createFileEntity([
+            'id' => 1,
+            'original_name' => 'Captura09.PNG',
+            'stored_name' => 'Captura09.png',
+            'mime_type' => 'image/png',
+            'url' => "http://localhost/uploads/{$datePath}/Captura09.png",
+            'uploaded_at' => date('Y-m-d H:i:s'),
+        ]);
+
+        $this->mockFileModel->method('insert')->willReturn(1);
+        $this->mockFileModel->method('find')->willReturn($savedEntity);
+
+        $result = $this->service->upload([
+            'file' => $base64,
+            'filename' => $dirtyFilename,
+            'user_id' => 1,
+        ]);
+
+        $this->assertCreatedResponse($result);
+        // The service should have used the cleaned base name for the stored file
+    }
+
+    public function testUploadWithHexHashPrefixCleansFilename(): void
+    {
+        $base64 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+        // Simulating the dirty name with hex hash reported by the user
+        $dirtyFilename = '8605b9b8f03a7a1f_Captura02.PNG';
+        $expectedCleanName = 'Captura02.png';
+        $datePath = date('Y/m/d');
+
+        $this->mockStorage
+            ->method('exists')
+            ->willReturn(false);
+
+        $this->mockStorage
+            ->expects($this->once())
+            ->method('put')
+            ->with($this->equalTo("{$datePath}/Captura02.png"), $this->anything())
+            ->willReturn(true);
+
+        $this->mockStorage
+            ->method('getDriverName')
+            ->willReturn('local');
+
+        $this->mockStorage
+            ->method('url')
+            ->willReturn("http://localhost/uploads/{$datePath}/Captura02.png");
+
+        $savedEntity = $this->createFileEntity([
+            'id' => 1,
+            'original_name' => 'Captura02.PNG',
+            'stored_name' => 'Captura02.png',
+            'mime_type' => 'image/png',
+            'url' => "http://localhost/uploads/{$datePath}/Captura02.png",
+            'uploaded_at' => date('Y-m-d H:i:s'),
+        ]);
+
+        $this->mockFileModel->method('insert')->willReturn(1);
+        $this->mockFileModel->method('find')->willReturn($savedEntity);
+
+        $result = $this->service->upload([
+            'file' => $base64,
+            'filename' => $dirtyFilename,
+            'user_id' => 1,
+        ]);
+
+        $this->assertCreatedResponse($result);
     }
 
     // ==================== HELPER METHODS ====================

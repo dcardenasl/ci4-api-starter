@@ -38,19 +38,68 @@ class FileService implements FileServiceInterface
      */
     public function upload(array $data): array
     {
-        $this->validateInputOrBadRequest($data, 'upload');
+        // $this->validateInputOrBadRequest($data, 'upload');
 
-        $file = $data['file'];
-        $userId = (int) $data['user_id'];
+        $userId = isset($data['user_id']) ? (int) $data['user_id'] : 0;
+        if ($userId === 0) {
+            throw new \App\Exceptions\AuthenticationException(lang('Auth.invalidToken'));
+        }
 
-        // Validate file object
-        if (!is_object($file) || !method_exists($file, 'isValid')) {
+        // 1. Try to find the file in the standard 'file' key
+        $fileInput = $data['file'] ?? null;
+
+        // 2. If not found, look for any UploadedFile object in the data (Multipart)
+        if (!$fileInput) {
+            foreach ($data as $value) {
+                if ($value instanceof \CodeIgniter\HTTP\Files\UploadedFile) {
+                    $fileInput = $value;
+                    break;
+                }
+            }
+        }
+
+        // 3. If still not found, look for any string that looks like Base64 (JSON)
+        // We look for strings starting with 'data:' or very long strings
+        if (!$fileInput) {
+            foreach ($data as $key => $value) {
+                if (is_string($value) && $key !== 'user_id' && $key !== 'user_role') {
+                    if (str_starts_with($value, 'data:') || strlen($value) > 10000) {
+                        $fileInput = $value;
+                        // If it's base64, we might also need other metadata from this key or others
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (!$fileInput) {
             throw new BadRequestException(
                 lang('Files.invalidRequest'),
                 ['file' => lang('Files.invalidFileObject')]
             );
         }
 
+        // Case 1: Standard Multipart Upload (CodeIgniter UploadedFile)
+        if ($fileInput instanceof \CodeIgniter\HTTP\Files\UploadedFile) {
+            return $this->handleMultipartUpload($fileInput, $userId);
+        }
+
+        // Case 2: Base64 Upload (JSON)
+        if (is_string($fileInput)) {
+            return $this->handleBase64Upload($fileInput, $userId, $data);
+        }
+
+        throw new BadRequestException(
+            lang('Files.invalidRequest'),
+            ['file' => lang('Files.invalidFileObject')]
+        );
+    }
+
+    /**
+     * Handle standard multipart file upload
+     */
+    protected function handleMultipartUpload(\CodeIgniter\HTTP\Files\UploadedFile $file, int $userId): array
+    {
         // Check if file is valid
         if (!$file->isValid()) {
             throw new BadRequestException(
@@ -85,25 +134,106 @@ class FileService implements FileServiceInterface
 
         // Store file
         $contents = file_get_contents($file->getTempName());
-        $stored = $this->storage->put($path, $contents);
+
+        return $this->storeAndSaveMetadata([
+            'userId' => $userId,
+            'originalName' => $file->getName(),
+            'storedName' => $storedName,
+            'path' => $path,
+            'contents' => $contents,
+            'mimeType' => $file->getMimeType(),
+            'size' => $file->getSize(),
+            'extension' => $extension,
+        ]);
+    }
+
+    /**
+     * Handle base64 encoded file upload
+     */
+    protected function handleBase64Upload(string $base64String, int $userId, array $allData): array
+    {
+        // Check if we received a PHP resource string instead of real data
+        if (str_contains($base64String, 'Resource id #')) {
+            throw new BadRequestException(
+                lang('Files.invalidFileObject'),
+                ['file' => 'Received a PHP resource identifier instead of file content. Make sure to send base64_encode(file_get_contents($path)) or a real Multipart file.']
+            );
+        }
+
+        // Detect Data URI format: data:image/png;base64,iVBORw...
+        if (preg_match('/^data:(\w+\/[-+.\w]+);base64,(.+)$/', $base64String, $matches)) {
+            $mimeType = $matches[1];
+            $base64Data = $matches[2];
+        } else {
+            // Assume raw base64 if no prefix
+            $base64Data = $base64String;
+            $mimeType = $allData['mime_type'] ?? 'application/octet-stream';
+        }
+
+        $contents = base64_decode($base64Data, true);
+        if ($contents === false) {
+            throw new BadRequestException(lang('Files.invalidFileObject'), ['file' => 'Invalid base64 encoding']);
+        }
+
+        // Detect real MIME type from binary contents if it's generic
+        if ($mimeType === 'application/octet-stream') {
+            $finfo = new \finfo(FILEINFO_MIME_TYPE);
+            $mimeType = $finfo->buffer($contents);
+        }
+
+        $size = strlen($contents);
+        $maxSize = (int) env('FILE_MAX_SIZE', 10485760);
+        if ($size > $maxSize) {
+            throw new ValidationException(lang('Files.fileTooLarge'), ['file' => lang('Files.fileTooLarge')]);
+        }
+
+        // Determine extension from mime type using CI4 Mimes config
+        $extension = \Config\Mimes::guessExtensionFromType($mimeType) ?? 'bin';
+        $allowedTypes = explode(',', env('FILE_ALLOWED_TYPES', 'jpg,jpeg,png,gif,pdf'));
+
+        if (!in_array(strtolower($extension), $allowedTypes, true)) {
+            throw new ValidationException(lang('Files.invalidFileType'), ['file' => lang('Files.invalidFileType')]);
+        }
+
+        $originalName = $allData['filename'] ?? ('upload_' . uniqid() . '.' . $extension);
+        $storedName = $this->generateUniqueFilename($originalName, $extension);
+        $path = date('Y/m/d') . '/' . $storedName;
+
+        return $this->storeAndSaveMetadata([
+            'userId' => $userId,
+            'originalName' => $originalName,
+            'storedName' => $storedName,
+            'path' => $path,
+            'contents' => $contents,
+            'mimeType' => $mimeType,
+            'size' => $size,
+            'extension' => $extension,
+        ]);
+    }
+
+    /**
+     * Common logic to store file and save to database
+     */
+    protected function storeAndSaveMetadata(array $fileInfo): array
+    {
+        $stored = $this->storage->put($fileInfo['path'], $fileInfo['contents']);
 
         if (!$stored) {
             throw new \RuntimeException(lang('Files.storageError'));
         }
 
-        // Save metadata to database
         $fileData = [
-            'user_id' => $userId,
-            'original_name' => sanitize_filename($file->getName(), false),
-            'stored_name' => $storedName,
-            'mime_type' => $file->getMimeType(),
-            'size' => $file->getSize(),
+            'user_id' => $fileInfo['userId'],
+            'original_name' => sanitize_filename($fileInfo['originalName'], false),
+            'stored_name' => $fileInfo['storedName'],
+            'mime_type' => $fileInfo['mimeType'],
+            'size' => $fileInfo['size'],
             'storage_driver' => $this->storage->getDriverName(),
-            'path' => $path,
-            'url' => $this->storage->url($path),
+            'path' => $fileInfo['path'],
+            'url' => $this->storage->url($fileInfo['path']),
             'metadata' => json_encode([
-                'extension' => $extension,
-                'uploaded_by' => $userId,
+                'extension' => $fileInfo['extension'],
+                'uploaded_by' => $fileInfo['userId'],
             ]),
             'uploaded_at' => date('Y-m-d H:i:s'),
         ];
@@ -111,9 +241,7 @@ class FileService implements FileServiceInterface
         $fileId = $this->fileModel->insert($fileData);
 
         if (!$fileId) {
-            // Rollback: delete file from storage
-            $this->storage->delete($path);
-
+            $this->storage->delete($fileInfo['path']);
             throw new ValidationException(
                 lang('Files.saveFailed'),
                 $this->fileModel->errors() ?: ['file' => lang('Files.saveFailed')]

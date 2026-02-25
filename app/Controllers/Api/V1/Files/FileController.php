@@ -16,9 +16,7 @@ class FileController extends ApiController
 
     public function upload(): ResponseInterface
     {
-        return $this->handleRequest('upload', [
-            'file' => $this->request->getFile('file'),
-        ]);
+        return $this->handleRequest('upload');
     }
 
     public function show($id = null): ResponseInterface

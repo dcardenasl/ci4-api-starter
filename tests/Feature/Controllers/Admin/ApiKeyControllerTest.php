@@ -5,9 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature\Controllers;
 
 use App\Models\ApiKeyModel;
-use CodeIgniter\Test\CIUnitTestCase;
-use CodeIgniter\Test\DatabaseTestTrait;
-use CodeIgniter\Test\FeatureTestTrait;
+use Tests\Support\ApiTestCase;
 use Tests\Support\Traits\AuthTestTrait;
 use Tests\Support\Traits\CustomAssertionsTrait;
 
@@ -17,17 +15,10 @@ use Tests\Support\Traits\CustomAssertionsTrait;
  * Full HTTP request/response cycle tests for the API key management endpoints.
  * All endpoints require admin authentication.
  */
-class ApiKeyControllerTest extends CIUnitTestCase
+class ApiKeyControllerTest extends ApiTestCase
 {
     use AuthTestTrait;
     use CustomAssertionsTrait;
-    use DatabaseTestTrait;
-    use FeatureTestTrait;
-
-    protected $migrate     = true;
-    protected $migrateOnce = false;
-    protected $refresh     = true;
-    protected $namespace   = 'App';
 
     protected ApiKeyModel $apiKeyModel;
 
@@ -77,7 +68,7 @@ class ApiKeyControllerTest extends CIUnitTestCase
 
         $result->assertStatus(200);
 
-        $json = json_decode($result->getJSON(), true);
+        $json = $this->getResponseJson($result);
         $this->assertEquals('success', $json['status']);
         $this->assertArrayHasKey('meta', $json);
     }
@@ -100,7 +91,7 @@ class ApiKeyControllerTest extends CIUnitTestCase
 
         $result->assertStatus(201);
 
-        $json = json_decode($result->getJSON(), true);
+        $json = $this->getResponseJson($result);
         $this->assertEquals('success', $json['status']);
         $this->assertArrayHasKey('data', $json);
         $this->assertArrayHasKey('key', $json['data'], 'Raw key must be returned at creation');
@@ -129,7 +120,7 @@ class ApiKeyControllerTest extends CIUnitTestCase
 
         $result->assertStatus(201);
 
-        $json = json_decode($result->getJSON(), true);
+        $json = $this->getResponseJson($result);
         $this->assertEquals(1200, $json['data']['rate_limit_requests']);
         $this->assertEquals(120, $json['data']['user_rate_limit']);
         $this->assertEquals(400, $json['data']['ip_rate_limit']);
@@ -149,7 +140,7 @@ class ApiKeyControllerTest extends CIUnitTestCase
 
         $result->assertStatus(422);
 
-        $json = json_decode($result->getJSON(), true);
+        $json = $this->getResponseJson($result);
         $this->assertArrayHasKey('errors', $json);
     }
 
@@ -187,7 +178,7 @@ class ApiKeyControllerTest extends CIUnitTestCase
             'name' => 'Showable Key',
         ]);
         $createResult->assertStatus(201);
-        $createdId = json_decode($createResult->getJSON(), true)['data']['id'];
+        $createdId = $this->getResponseJson($createResult)['data']['id'];
 
         // Now fetch it
         $showResult = $this->withHeaders([
@@ -196,7 +187,7 @@ class ApiKeyControllerTest extends CIUnitTestCase
 
         $showResult->assertStatus(200);
 
-        $json = json_decode($showResult->getJSON(), true);
+        $json = $this->getResponseJson($showResult);
         $this->assertEquals('success', $json['status']);
         $this->assertEquals($createdId, $json['data']['id']);
         // Raw key should NOT be present in show response
@@ -234,7 +225,7 @@ class ApiKeyControllerTest extends CIUnitTestCase
             'name' => 'Original Name',
         ]);
         $createResult->assertStatus(201);
-        $createdId = json_decode($createResult->getJSON(), true)['data']['id'];
+        $createdId = $this->getResponseJson($createResult)['data']['id'];
 
         $updateResult = $this->withHeaders([
             'Authorization' => "Bearer {$token}",
@@ -245,7 +236,7 @@ class ApiKeyControllerTest extends CIUnitTestCase
 
         $updateResult->assertStatus(200);
 
-        $json = json_decode($updateResult->getJSON(), true);
+        $json = $this->getResponseJson($updateResult);
         $this->assertEquals('Updated Name', $json['data']['name']);
         $this->assertFalse((bool) $json['data']['is_active']);
     }
@@ -264,7 +255,9 @@ class ApiKeyControllerTest extends CIUnitTestCase
             'name' => 'Immutable Key',
         ]);
         $createResult->assertStatus(201);
-        $createdId = json_decode($createResult->getJSON(), true)['data']['id'];
+        $createdId = $this->getResponseJson($createResult)['data']['id'];
+
+        $this->resetRequest();
 
         $updateResult = $this->withHeaders([
             'Authorization' => "Bearer {$token}",
@@ -289,7 +282,7 @@ class ApiKeyControllerTest extends CIUnitTestCase
             'name' => 'To Be Deleted',
         ]);
         $createResult->assertStatus(201);
-        $createdId = json_decode($createResult->getJSON(), true)['data']['id'];
+        $createdId = $this->getResponseJson($createResult)['data']['id'];
 
         $deleteResult = $this->withHeaders([
             'Authorization' => "Bearer {$token}",
@@ -297,7 +290,7 @@ class ApiKeyControllerTest extends CIUnitTestCase
 
         $deleteResult->assertStatus(200);
 
-        $json = json_decode($deleteResult->getJSON(), true);
+        $json = $this->getResponseJson($deleteResult);
         $this->assertEquals('success', $json['status']);
 
         // Verify it's gone

@@ -5,21 +5,12 @@ declare(strict_types=1);
 namespace Tests\Feature\Controllers;
 
 use App\Models\UserModel;
-use CodeIgniter\Test\CIUnitTestCase;
-use CodeIgniter\Test\DatabaseTestTrait;
-use CodeIgniter\Test\FeatureTestTrait;
+use Tests\Support\ApiTestCase;
 use Tests\Support\Traits\AuthTestTrait;
 
-class UserControllerTest extends CIUnitTestCase
+class UserControllerTest extends ApiTestCase
 {
     use AuthTestTrait;
-    use DatabaseTestTrait;
-    use FeatureTestTrait;
-
-    protected $migrate     = true;
-    protected $migrateOnce = false;
-    protected $refresh     = true;
-    protected $namespace   = 'App';
 
     protected UserModel $userModel;
 
@@ -50,7 +41,7 @@ class UserControllerTest extends CIUnitTestCase
 
         $result->assertStatus(200);
 
-        $json = json_decode($result->getJSON(), true);
+        $json = $this->getResponseJson($result);
         $this->assertEquals('success', $json['status']);
     }
 
@@ -70,10 +61,12 @@ class UserControllerTest extends CIUnitTestCase
         ]);
 
         $createResult->assertStatus(201);
-        $createJson = json_decode($createResult->getJSON(), true);
+        $createJson = $this->getResponseJson($createResult);
         $createdId = $createJson['data']['id'] ?? null;
         $this->assertNotNull($createdId);
         $this->assertEquals('invited', $createJson['data']['status'] ?? null);
+
+        $this->resetRequest();
 
         $updateResult = $this->withHeaders([
             'Authorization' => "Bearer {$token}",
@@ -106,7 +99,7 @@ class UserControllerTest extends CIUnitTestCase
         ]);
 
         $createResult->assertStatus(201);
-        $createJson = json_decode($createResult->getJSON(), true);
+        $createJson = $this->getResponseJson($createResult);
         $createdId = (int) ($createJson['data']['id'] ?? 0);
         $this->assertGreaterThan(0, $createdId);
 
@@ -219,7 +212,7 @@ class UserControllerTest extends CIUnitTestCase
         ])->get('/api/v1/users');
 
         $result->assertStatus(200);
-        $json = json_decode($result->getJSON(), true);
+        $json = $this->getResponseJson($result);
         $roles = array_map(
             static fn ($item) => $item['role'] ?? null,
             $json['data'] ?? []
@@ -244,9 +237,11 @@ class UserControllerTest extends CIUnitTestCase
         ]);
 
         $createResult->assertStatus(201);
-        $createJson = json_decode($createResult->getJSON(), true);
+        $createJson = $this->getResponseJson($createResult);
         $createdId = (int) ($createJson['data']['id'] ?? 0);
         $this->assertGreaterThan(0, $createdId);
+
+        $this->resetRequest();
 
         $updateResult = $this->withHeaders([
             'Authorization' => "Bearer {$token}",
@@ -297,7 +292,7 @@ class UserControllerTest extends CIUnitTestCase
 
         $result->assertStatus(422);
 
-        $json = json_decode($result->getJSON(), true);
+        $json = $this->getResponseJson($result);
         $this->assertArrayHasKey('errors', $json);
         $this->assertArrayHasKey('password', $json['errors']);
     }
@@ -318,7 +313,7 @@ class UserControllerTest extends CIUnitTestCase
         ]);
 
         $createResult->assertStatus(201);
-        $createJson = json_decode($createResult->getJSON(), true);
+        $createJson = $this->getResponseJson($createResult);
         $createdId = $createJson['data']['id'] ?? null;
         $this->assertNotNull($createdId);
 

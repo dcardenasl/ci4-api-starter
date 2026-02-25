@@ -7,9 +7,7 @@ namespace Tests\Feature\Controllers;
 use App\Interfaces\EmailServiceInterface;
 use App\Interfaces\GoogleIdentityServiceInterface;
 use App\Models\UserModel;
-use CodeIgniter\Test\CIUnitTestCase;
-use CodeIgniter\Test\DatabaseTestTrait;
-use CodeIgniter\Test\FeatureTestTrait;
+use Tests\Support\ApiTestCase;
 
 /**
  * AuthController Feature Tests
@@ -17,16 +15,8 @@ use CodeIgniter\Test\FeatureTestTrait;
  * Tests HTTP endpoints for authentication.
  * These tests verify the full request/response cycle.
  */
-class AuthControllerTest extends CIUnitTestCase
+class AuthControllerTest extends ApiTestCase
 {
-    use DatabaseTestTrait;
-    use FeatureTestTrait;
-
-    protected $migrate     = true;
-    protected $migrateOnce = false;
-    protected $refresh     = true;
-    protected $namespace   = 'App';  // Use app migrations
-
     protected UserModel $userModel;
 
     protected function setUp(): void
@@ -60,7 +50,7 @@ class AuthControllerTest extends CIUnitTestCase
         // Register returns 201 Created (not 200)
         $result->assertStatus(201);
 
-        $json = json_decode($result->getJSON(), true);
+        $json = $this->getResponseJson($result);
         $this->assertEquals('success', $json['status']);
         $this->assertArrayHasKey('user', $json['data']);
         $this->assertArrayNotHasKey('access_token', $json['data']);
@@ -78,7 +68,7 @@ class AuthControllerTest extends CIUnitTestCase
 
         $result->assertStatus(422);
 
-        $json = json_decode($result->getJSON(), true);
+        $json = $this->getResponseJson($result);
         $this->assertEquals('error', $json['status']);
         $this->assertArrayHasKey('errors', $json);
     }
@@ -100,7 +90,7 @@ class AuthControllerTest extends CIUnitTestCase
 
         $result->assertStatus(422);
 
-        $json = json_decode($result->getJSON(), true);
+        $json = $this->getResponseJson($result);
         $this->assertEquals('error', $json['status']);
     }
 
@@ -125,7 +115,7 @@ class AuthControllerTest extends CIUnitTestCase
 
         $result->assertStatus(422);
 
-        $json = json_decode($result->getJSON(), true);
+        $json = $this->getResponseJson($result);
         $this->assertEquals('error', $json['status']);
         $this->assertArrayHasKey('errors', $json);
         $this->assertArrayHasKey('email', $json['errors']);
@@ -153,7 +143,7 @@ class AuthControllerTest extends CIUnitTestCase
 
         $result->assertStatus(200);
 
-        $json = json_decode($result->getJSON(), true);
+        $json = $this->getResponseJson($result);
         $this->assertEquals('success', $json['status']);
         $this->assertArrayHasKey('access_token', $json['data']);
         $this->assertArrayHasKey('refresh_token', $json['data']);
@@ -177,7 +167,7 @@ class AuthControllerTest extends CIUnitTestCase
 
         $result->assertStatus(403);
 
-        $json = json_decode($result->getJSON(), true);
+        $json = $this->getResponseJson($result);
         $this->assertEquals('error', $json['status']);
         $this->assertArrayHasKey('errors', $json);
         $this->assertEquals(403, $json['code']);
@@ -202,7 +192,7 @@ class AuthControllerTest extends CIUnitTestCase
 
         $result->assertStatus(403);
 
-        $json = json_decode($result->getJSON(), true);
+        $json = $this->getResponseJson($result);
         $this->assertEquals('error', $json['status']);
         $this->assertArrayHasKey('errors', $json);
         $this->assertEquals(403, $json['code']);
@@ -218,7 +208,7 @@ class AuthControllerTest extends CIUnitTestCase
 
         $result->assertStatus(401);
 
-        $json = json_decode($result->getJSON(), true);
+        $json = $this->getResponseJson($result);
         $this->assertEquals('error', $json['status']);
         $this->assertArrayHasKey('errors', $json);
         $this->assertEquals(401, $json['code']);
@@ -234,7 +224,7 @@ class AuthControllerTest extends CIUnitTestCase
 
         $result->assertStatus(401);
 
-        $json = json_decode($result->getJSON(), true);
+        $json = $this->getResponseJson($result);
         $this->assertEquals('error', $json['status']);
         $this->assertArrayHasKey('errors', $json);
         $this->assertEquals(401, $json['code']);
@@ -268,7 +258,7 @@ class AuthControllerTest extends CIUnitTestCase
 
         $result->assertStatus(200);
 
-        $json = json_decode($result->getJSON(), true);
+        $json = $this->getResponseJson($result);
         $this->assertEquals('success', $json['status']);
         $this->assertArrayHasKey('access_token', $json['data']);
         $this->assertArrayHasKey('refresh_token', $json['data']);
@@ -328,7 +318,7 @@ class AuthControllerTest extends CIUnitTestCase
 
         $result->assertStatus(202);
 
-        $json = json_decode($result->getJSON(), true);
+        $json = $this->getResponseJson($result);
         $this->assertEquals('success', $json['status']);
         $this->assertArrayNotHasKey('access_token', $json['data']);
         $this->assertEquals('pending_approval', $json['data']['user']['status']);
@@ -372,7 +362,7 @@ class AuthControllerTest extends CIUnitTestCase
             ]);
 
         $result->assertStatus(200);
-        $json = json_decode($result->getJSON(), true);
+        $json = $this->getResponseJson($result);
         $this->assertArrayHasKey('access_token', $json['data']);
 
         $updated = $this->userModel->find($userId);
@@ -460,7 +450,7 @@ class AuthControllerTest extends CIUnitTestCase
 
         $result->assertStatus(401);
 
-        $json = json_decode($result->getJSON(), true);
+        $json = $this->getResponseJson($result);
         $this->assertEquals('error', $json['status']);
         $this->assertArrayHasKey('errors', $json);
         $this->assertEquals(401, $json['code']);
@@ -483,7 +473,7 @@ class AuthControllerTest extends CIUnitTestCase
                 'password' => 'ValidPass123!',
             ]);
 
-        $loginJson = json_decode($loginResult->getJSON(), true);
+        $loginJson = $this->getResponseJson($loginResult);
         $token = $loginJson['data']['access_token'];
 
         // Access protected endpoint
@@ -493,7 +483,7 @@ class AuthControllerTest extends CIUnitTestCase
 
         $result->assertStatus(200);
 
-        $json = json_decode($result->getJSON(), true);
+        $json = $this->getResponseJson($result);
         $this->assertEquals('success', $json['status']);
     }
 
@@ -521,7 +511,7 @@ class AuthControllerTest extends CIUnitTestCase
                 'password' => 'ValidPass123!',
             ]);
 
-        $loginJson = json_decode($loginResult->getJSON(), true);
+        $loginJson = $this->getResponseJson($loginResult);
         $token = $loginJson['data']['access_token'];
 
         $approveResult = $this->withHeaders([
@@ -564,7 +554,7 @@ class AuthControllerTest extends CIUnitTestCase
 
         $this->assertTrue(in_array($result->response()->getStatusCode(), [200, 503], true));
 
-        $json = json_decode($result->getJSON(), true);
+        $json = $this->getResponseJson($result);
         $this->assertArrayHasKey('checks', $json);
         $this->assertArrayHasKey('database', $json['checks']);
         $this->assertArrayHasKey('message', $json['checks']['database']);

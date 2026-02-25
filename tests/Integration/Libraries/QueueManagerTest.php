@@ -26,11 +26,21 @@ class QueueManagerTest extends CIUnitTestCase
     {
         parent::setUp();
 
+        // Reset the config factory so that the Queue config is reloaded with new env values
+        \CodeIgniter\Config\Factories::reset('config');
+
         $this->previousRetryAfter = getenv('QUEUE_RETRY_AFTER') !== false ? (string) getenv('QUEUE_RETRY_AFTER') : null;
         $this->previousMaxAttempts = getenv('QUEUE_MAX_ATTEMPTS') !== false ? (string) getenv('QUEUE_MAX_ATTEMPTS') : null;
 
         putenv('QUEUE_RETRY_AFTER=0');
         putenv('QUEUE_MAX_ATTEMPTS=2');
+        putenv('QUEUE_DATABASE_CONNECTION=tests');
+        $_ENV['QUEUE_RETRY_AFTER'] = '0';
+        $_ENV['QUEUE_MAX_ATTEMPTS'] = '2';
+        $_ENV['QUEUE_DATABASE_CONNECTION'] = 'tests';
+        $_SERVER['QUEUE_RETRY_AFTER'] = '0';
+        $_SERVER['QUEUE_MAX_ATTEMPTS'] = '2';
+        $_SERVER['QUEUE_DATABASE_CONNECTION'] = 'tests';
 
         TestQueueSuccessJob::$handled = 0;
         TestQueueAlwaysFailJob::$failedCalls = 0;
@@ -40,15 +50,27 @@ class QueueManagerTest extends CIUnitTestCase
     {
         if ($this->previousRetryAfter === null) {
             putenv('QUEUE_RETRY_AFTER');
+            unset($_ENV['QUEUE_RETRY_AFTER'], $_SERVER['QUEUE_RETRY_AFTER']);
         } else {
             putenv('QUEUE_RETRY_AFTER=' . $this->previousRetryAfter);
+            $_ENV['QUEUE_RETRY_AFTER'] = $this->previousRetryAfter;
+            $_SERVER['QUEUE_RETRY_AFTER'] = $this->previousRetryAfter;
         }
 
         if ($this->previousMaxAttempts === null) {
             putenv('QUEUE_MAX_ATTEMPTS');
+            unset($_ENV['QUEUE_MAX_ATTEMPTS'], $_SERVER['QUEUE_MAX_ATTEMPTS']);
         } else {
             putenv('QUEUE_MAX_ATTEMPTS=' . $this->previousMaxAttempts);
+            $_ENV['QUEUE_MAX_ATTEMPTS'] = $this->previousMaxAttempts;
+            $_SERVER['QUEUE_MAX_ATTEMPTS'] = $this->previousMaxAttempts;
         }
+
+        putenv('QUEUE_DATABASE_CONNECTION');
+        unset($_ENV['QUEUE_DATABASE_CONNECTION'], $_SERVER['QUEUE_DATABASE_CONNECTION']);
+
+        // Reset again to clean up for other tests
+        \CodeIgniter\Config\Factories::reset('config');
 
         parent::tearDown();
     }
@@ -105,7 +127,17 @@ class QueueManagerTest extends CIUnitTestCase
         $db = Database::connect();
 
         $queue->push(TestQueueSuccessJob::class, ['case' => 'success'], 'default');
-        $queue->process('default');
+
+        // Debug: check if job exists
+        $count = $db->table('jobs')->where('queue', 'default')->countAllResults();
+        $this->assertSame(1, $count, 'Job should be in the database');
+
+        $job = $db->table('jobs')->where('queue', 'default')->get()->getRow();
+        // $this->assertNotNull($job);
+        // echo "Job available_at: " . $job->available_at . " vs now: " . time() . "\n";
+
+        $processed = $queue->process('default');
+        $this->assertTrue($processed, 'Queue manager should have processed a job');
 
         $remainingJobs = $db->table('jobs')->where('queue', 'default')->countAllResults();
 

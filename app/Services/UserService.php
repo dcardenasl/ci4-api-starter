@@ -192,6 +192,9 @@ class UserService extends BaseCrudService implements UserServiceInterface
             'role'       => $data['role'] ?? null,
         ], fn ($value) => $value !== null);
 
+        // Importante: Incluir ID para que la validación is_unique ignore este registro
+        $updateData['id'] = $id;
+
         // Model maneja validación y updated_at automáticamente
         $success = $this->userModel->update($id, $updateData);
 

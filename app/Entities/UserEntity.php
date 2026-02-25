@@ -38,8 +38,6 @@ class UserEntity extends Entity
         'id'   => 'integer',
         'role' => 'string',
         'status' => 'string',
-        'approved_by' => 'integer',
-        'invited_by' => 'integer',
     ];
 
     /**

@@ -52,6 +52,7 @@ class UserModel extends Model
 
     // Reglas de validación (integridad de datos)
     protected $validationRules = [
+        'id'    => 'permit_empty|is_natural_no_zero',
         'email' => [
             'rules'  => 'permit_empty|valid_email_idn|max_length[255]|is_unique[users.email,id,{id}]',
             'errors' => [

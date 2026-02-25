@@ -120,11 +120,14 @@ abstract class ApiController extends Controller
         $contentType = (string) $this->request->header('Content-Type');
         $isJson = str_contains($contentType, 'application/json');
 
-        // Start with basic sources
-        $data = array_merge(
-            $this->request->getGet() ?? [],
-            $this->request->getPost() ?? []
-        );
+        // Start with basic sources (GET is always allowed)
+        $data = $this->request->getGet() ?? [];
+
+        // For non-JSON requests, merge POST
+        if (!$isJson) {
+            $postData = $this->request->getPost() ?? [];
+            $data = array_merge($data, $postData);
+        }
 
         // Merge files
         $files = $this->request->getFiles();
@@ -137,10 +140,13 @@ abstract class ApiController extends Controller
             $jsonData = $this->getJsonData();
             $data = array_merge($data, $jsonData);
         } else {
-            // For multipart or other types, try to get raw input if POST/FILES are empty
-            $rawInput = $this->request->getRawInput();
-            if (!empty($rawInput)) {
-                $data = array_merge($data, $rawInput);
+            // For other types (like multipart/form-data), check if we have raw input
+            // but only if POST was empty
+            if (empty($postData)) {
+                $rawInput = $this->request->getRawInput();
+                if (!empty($rawInput)) {
+                    $data = array_merge($data, $rawInput);
+                }
             }
         }
 

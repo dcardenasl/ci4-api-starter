@@ -6,6 +6,7 @@ namespace App\Services;
 
 use App\Exceptions\AuthenticationException;
 use App\Exceptions\BadRequestException;
+use App\Interfaces\AuditServiceInterface;
 use App\Interfaces\JwtServiceInterface;
 use App\Interfaces\TokenRevocationServiceInterface;
 use App\Libraries\ApiResponse;
@@ -27,6 +28,7 @@ class TokenRevocationService implements TokenRevocationServiceInterface
         protected TokenBlacklistModel $blacklistModel,
         protected RefreshTokenModel $refreshTokenModel,
         protected JwtServiceInterface $jwtService,
+        protected AuditServiceInterface $auditService,
         protected ?CacheInterface $cache = null,
         protected ?BearerTokenService $bearerTokenService = null
     ) {
@@ -58,6 +60,15 @@ class TokenRevocationService implements TokenRevocationServiceInterface
         $cacheKey = "token_revoked_{$jti}";
         $ttl      = (int) env('JWT_ACCESS_TOKEN_TTL', 3600);
         $this->cache->save($cacheKey, 1, $ttl);
+
+        // Log token revocation
+        $this->auditService->log(
+            'token_revoked',
+            'tokens',
+            null,
+            [],
+            ['jti' => $jti]
+        );
 
         return ApiResponse::success(null, lang('Tokens.tokenRevokedSuccess'));
     }
@@ -151,6 +162,16 @@ class TokenRevocationService implements TokenRevocationServiceInterface
 
         // Note: We can't easily revoke all access tokens without tracking them
         // Access tokens will expire naturally based on JWT_ACCESS_TOKEN_TTL
+
+        // Log all tokens revocation
+        $this->auditService->log(
+            'all_tokens_revoked',
+            'users',
+            $userId,
+            [],
+            [],
+            $userId
+        );
 
         return ApiResponse::success(
             null,

@@ -7,6 +7,7 @@ namespace App\Services;
 use App\Exceptions\BadRequestException;
 use App\Exceptions\ConflictException;
 use App\Exceptions\NotFoundException;
+use App\Interfaces\AuditServiceInterface;
 use App\Interfaces\EmailServiceInterface;
 use App\Interfaces\VerificationServiceInterface;
 use App\Libraries\ApiResponse;
@@ -20,7 +21,8 @@ class VerificationService implements VerificationServiceInterface
 
     public function __construct(
         protected UserModel $userModel,
-        protected EmailServiceInterface $emailService
+        protected EmailServiceInterface $emailService,
+        protected AuditServiceInterface $auditService
     ) {
     }
 
@@ -52,6 +54,15 @@ class VerificationService implements VerificationServiceInterface
             'email_verification_token' => $token,
             'verification_token_expires' => $expiresAt,
         ]);
+
+        // Log verification email sent
+        $this->auditService->log(
+            'verification_email_sent',
+            'users',
+            (int) $user->id,
+            [],
+            ['email' => $user->email]
+        );
 
         // Build verification link
         $clientBaseUrl = isset($data['client_base_url']) ? (string) $data['client_base_url'] : null;
@@ -124,6 +135,16 @@ class VerificationService implements VerificationServiceInterface
             'email_verification_token' => null,
             'verification_token_expires' => null,
         ]);
+
+        // Log email verification success
+        $this->auditService->log(
+            'email_verification_success',
+            'users',
+            (int) $user->id,
+            [],
+            ['email' => $user->email],
+            (int) $user->id
+        );
 
         return ApiResponse::success(
             ['message' => lang('Verification.verifiedMessage')],

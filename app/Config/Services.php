@@ -76,7 +76,8 @@ class Services extends BaseService
         return new \App\Services\UserService(
             static::userModel(),
             static::emailService(),
-            new \App\Models\PasswordResetModel()
+            new \App\Models\PasswordResetModel(),
+            static::auditService()
         );
     }
 
@@ -99,6 +100,7 @@ class Services extends BaseService
             static::jwtService(),
             static::refreshTokenService(),
             static::verificationService(),
+            static::auditService(),
             static::userAccessPolicyService(),
             static::googleIdentityService(),
             static::emailService()
@@ -223,7 +225,8 @@ class Services extends BaseService
 
         return new \App\Services\VerificationService(
             new \App\Models\UserModel(),
-            static::emailService()
+            static::emailService(),
+            static::auditService()
         );
     }
 
@@ -245,7 +248,8 @@ class Services extends BaseService
             new \App\Models\UserModel(),
             new \App\Models\PasswordResetModel(),
             static::emailService(),
-            static::refreshTokenService()
+            static::refreshTokenService(),
+            static::auditService()
         );
     }
 
@@ -267,6 +271,7 @@ class Services extends BaseService
             new \App\Models\TokenBlacklistModel(),
             new \App\Models\RefreshTokenModel(),
             static::jwtService(),
+            static::auditService(),
             static::cache(),
             static::bearerTokenService()
         );
@@ -330,7 +335,8 @@ class Services extends BaseService
 
         return new \App\Services\FileService(
             new \App\Models\FileModel(),
-            new \App\Libraries\Storage\StorageManager()
+            new \App\Libraries\Storage\StorageManager(),
+            static::auditService()
         );
     }
 

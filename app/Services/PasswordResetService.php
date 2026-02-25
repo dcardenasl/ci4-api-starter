@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Exceptions\NotFoundException;
+use App\Interfaces\AuditServiceInterface;
 use App\Interfaces\EmailServiceInterface;
 use App\Interfaces\PasswordResetServiceInterface;
 use App\Interfaces\RefreshTokenServiceInterface;
@@ -21,7 +22,8 @@ class PasswordResetService implements PasswordResetServiceInterface
         protected UserModel $userModel,
         protected PasswordResetModel $passwordResetModel,
         protected EmailServiceInterface $emailService,
-        protected RefreshTokenServiceInterface $refreshTokenService
+        protected RefreshTokenServiceInterface $refreshTokenService,
+        protected AuditServiceInterface $auditService
     ) {
     }
 
@@ -42,6 +44,15 @@ class PasswordResetService implements PasswordResetServiceInterface
         // Always return success to prevent email enumeration
         // But only send email if user exists and is not deleted
         if ($user) {
+            // Log password reset request
+            $this->auditService->log(
+                'password_reset_request',
+                'users',
+                (int) $user->id,
+                [],
+                ['email' => $email]
+            );
+
             // Generate reset token
             $token = generate_token();
 
@@ -121,6 +132,15 @@ class PasswordResetService implements PasswordResetServiceInterface
                 return;
             }
 
+            // Log account reactivation request
+            $this->auditService->log(
+                'account_reactivation_requested',
+                'users',
+                (int) $user->id,
+                [],
+                ['email' => $email]
+            );
+
             log_message('info', lang('PasswordReset.reactivationRequested') . '. user_id: ' . $user->id);
         } catch (\Throwable $e) {
             log_message(
@@ -198,6 +218,16 @@ class PasswordResetService implements PasswordResetServiceInterface
         }
 
         $this->userModel->update($user->id, $updateData);
+
+        // Log password reset success
+        $this->auditService->log(
+            'password_reset_success',
+            'users',
+            (int) $user->id,
+            [],
+            ['email' => $user->email],
+            (int) $user->id
+        );
 
         // Delete used reset token
         $this->passwordResetModel

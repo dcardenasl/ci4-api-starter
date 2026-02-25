@@ -9,6 +9,7 @@ use App\Exceptions\BadRequestException;
 use App\Exceptions\ConflictException;
 use App\Exceptions\NotFoundException;
 use App\Exceptions\ValidationException;
+use App\Interfaces\AuditServiceInterface;
 use App\Interfaces\EmailServiceInterface;
 use App\Interfaces\UserServiceInterface;
 use App\Libraries\ApiResponse;
@@ -31,7 +32,8 @@ class UserService extends BaseCrudService implements UserServiceInterface
     public function __construct(
         protected UserModel $userModel,
         protected EmailServiceInterface $emailService,
-        protected PasswordResetModel $passwordResetModel
+        protected PasswordResetModel $passwordResetModel,
+        protected AuditServiceInterface $auditService
     ) {
     }
 
@@ -269,6 +271,16 @@ class UserService extends BaseCrudService implements UserServiceInterface
             'approved_at' => date('Y-m-d H:i:s'),
             'approved_by' => $adminId,
         ]);
+
+        // Log user approval as a business event
+        $this->auditService->log(
+            'user_approved',
+            'users',
+            $id,
+            ['status' => $status],
+            ['status' => 'active'],
+            $adminId
+        );
 
         $user = $this->userModel->find($id);
         if ($user) {

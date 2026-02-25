@@ -188,13 +188,7 @@ trait Auditable
      */
     protected function getAuditService(): AuditService
     {
-        static $auditService = null;
-
-        if ($auditService === null) {
-            $auditService = new AuditService(new \App\Models\AuditLogModel());
-        }
-
-        return $auditService;
+        return \Config\Services::auditService();
     }
 
     /**

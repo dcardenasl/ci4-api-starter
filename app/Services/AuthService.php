@@ -9,6 +9,7 @@ use App\Exceptions\AuthorizationException;
 use App\Exceptions\BadRequestException;
 use App\Exceptions\ConflictException;
 use App\Exceptions\ValidationException;
+use App\Interfaces\AuditServiceInterface;
 use App\Interfaces\AuthServiceInterface;
 use App\Interfaces\EmailServiceInterface;
 use App\Interfaces\GoogleIdentityServiceInterface;
@@ -31,6 +32,7 @@ class AuthService implements AuthServiceInterface
         protected JwtServiceInterface $jwtService,
         protected RefreshTokenServiceInterface $refreshTokenService,
         protected VerificationServiceInterface $verificationService,
+        protected AuditServiceInterface $auditService,
         protected ?UserAccessPolicyService $userAccessPolicy = null,
         protected ?GoogleIdentityServiceInterface $googleIdentityService = null,
         protected ?EmailServiceInterface $emailService = null
@@ -69,11 +71,30 @@ class AuthService implements AuthServiceInterface
         $passwordValid = password_verify($data['password'], $storedHash);
 
         if (!$user || !$passwordValid) {
+            // Log failed login attempt
+            $this->auditService->log(
+                'login_failure',
+                'users',
+                $user ? (int) $user->id : null,
+                ['email' => $data['email']],
+                ['reason' => 'invalid_credentials']
+            );
+
             throw new AuthenticationException(
                 lang('Users.auth.invalidCredentials'),
                 ['credentials' => lang('Users.auth.invalidCredentials')]
             );
         }
+
+        // Log successful login
+        $this->auditService->log(
+            'login_success',
+            'users',
+            (int) $user->id,
+            [],
+            ['email' => $user->email],
+            (int) $user->id
+        );
 
         return ApiResponse::success($this->buildAuthUserData($user));
     }
@@ -140,6 +161,15 @@ class AuthService implements AuthServiceInterface
         if (! $user) {
             $user = $this->createPendingGoogleUser($identity);
             $this->sendPendingApprovalEmail($user);
+
+            $this->auditService->log(
+                'google_registration_pending',
+                'users',
+                (int) $user->id,
+                [],
+                ['email' => $user->email, 'provider' => 'google'],
+                (int) $user->id
+            );
 
             return ApiResponse::success(
                 ['user' => $this->buildPendingUserData($user)],
@@ -219,6 +249,16 @@ class AuthService implements AuthServiceInterface
         }
 
         $this->userAccessPolicy->assertCanAuthenticate($user);
+
+        // Log successful Google login
+        $this->auditService->log(
+            'google_login_success',
+            'users',
+            (int) $user->id,
+            [],
+            ['email' => $user->email, 'provider' => 'google'],
+            (int) $user->id
+        );
 
         return $this->generateTokensResponse($user, $this->buildAuthUserData($user));
     }

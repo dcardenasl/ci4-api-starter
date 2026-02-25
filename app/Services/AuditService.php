@@ -34,6 +34,8 @@ class AuditService implements AuditServiceInterface
         'token',
         'access_token',
         'refresh_token',
+        'auth_token',
+        'bearer_token',
         'email_verification_token',
         'verification_token',
         'reset_token',

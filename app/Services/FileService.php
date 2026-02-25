@@ -8,6 +8,7 @@ use App\Exceptions\AuthorizationException;
 use App\Exceptions\BadRequestException;
 use App\Exceptions\NotFoundException;
 use App\Exceptions\ValidationException;
+use App\Interfaces\AuditServiceInterface;
 use App\Interfaces\FileServiceInterface;
 use App\Libraries\ApiResponse;
 use App\Libraries\Query\QueryBuilder;
@@ -26,7 +27,8 @@ class FileService implements FileServiceInterface
 
     public function __construct(
         protected FileModel $fileModel,
-        protected StorageManager $storage
+        protected StorageManager $storage,
+        protected AuditServiceInterface $auditService
     ) {
     }
 
@@ -356,6 +358,14 @@ class FileService implements FileServiceInterface
 
         // Then check authorization
         if ($file->user_id !== (int) $data['user_id']) {
+            $this->auditService->log(
+                'unauthorized_file_download',
+                'files',
+                $file->id,
+                [],
+                ['requested_by' => $data['user_id']],
+                (int) $data['user_id']
+            );
             throw new AuthorizationException(lang('Files.unauthorized'));
         }
 
@@ -388,6 +398,14 @@ class FileService implements FileServiceInterface
 
         // Then check authorization
         if ($file->user_id !== (int) $data['user_id']) {
+            $this->auditService->log(
+                'unauthorized_file_delete',
+                'files',
+                $file->id,
+                [],
+                ['requested_by' => $data['user_id']],
+                (int) $data['user_id']
+            );
             throw new AuthorizationException(lang('Files.unauthorized'));
         }
 

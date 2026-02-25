@@ -13,13 +13,15 @@ A production-ready REST API starter template for CodeIgniter 4 with JWT authenti
 
 - **JWT Authentication** - Access tokens, refresh tokens, and revocation
 - **Role-Based Access** - User, admin, and superadmin roles with middleware protection
+- **Google Authentication** - Social login support ([Docs](docs/features/GOOGLE_AUTH.md))
 - **Email System** - Verification, password reset, queue support
-- **File Management** - Upload/download with local and S3 storage drivers
+- **File Management** - Multipart & Base64 uploads ([Docs](docs/features/FILE_MANAGEMENT.md))
+- **Queue System** - Background job processing ([Docs](docs/features/QUEUE_SYSTEM.md))
 - **Advanced Querying** - Pagination, filtering, searching, sorting
-- **Health Checks** - Kubernetes-ready endpoints (`/health`, `/ready`, `/live`)
 - **Audit Trail** - Automatic logging of data changes
+- **Health Checks** - Kubernetes-ready endpoints (`/health`, `/ready`, `/live`)
 - **OpenAPI Documentation** - Auto-generated Swagger docs
-- **Comprehensive Test Suite** - Unit, integration, and feature tests
+- **Comprehensive Test Suite** - Unit, integration, and feature tests ([Docs](docs/features/TESTING_API.md))
 
 ## Quick Start
 

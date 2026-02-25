@@ -88,8 +88,8 @@ POST /api/v1/auth/resend-verification Resend verification email
 
 ### Users (Protected)
 ```
-GET    /api/v1/users           List users (paginated, filterable; any authenticated user)
-GET    /api/v1/users/{id}      Get user by ID
+GET    /api/v1/users           List users (admin only; paginated, filterable)
+GET    /api/v1/users/{id}      Get user by ID (Self or Admin)
 POST   /api/v1/users           Create user (admin/superadmin with role restrictions)
 PUT    /api/v1/users/{id}      Update user (admin/superadmin with role restrictions)
 DELETE /api/v1/users/{id}      Soft delete user (admin/superadmin with role restrictions)

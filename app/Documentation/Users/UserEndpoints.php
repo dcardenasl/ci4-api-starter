@@ -9,8 +9,8 @@ use OpenApi\Attributes as OA;
 #[OA\Get(
     path: '/api/v1/users',
     tags: ['Users'],
-    summary: 'List users',
-    description: 'Lists users except accounts with role superadmin.',
+    summary: 'List users (admin)',
+    description: 'Lists users except accounts with role superadmin. Requires admin role.',
     security: [['bearerAuth' => []]],
     parameters: [
         new OA\Parameter(
@@ -61,12 +61,14 @@ use OpenApi\Attributes as OA;
             )
         ),
         new OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse'),
+        new OA\Response(response: 403, description: 'Forbidden — requires admin role'),
     ]
 )]
 #[OA\Get(
     path: '/api/v1/users/{id}',
     tags: ['Users'],
     summary: 'Get user by ID',
+    description: 'Get details of a specific user. Regular users can only access their own profile.',
     security: [['bearerAuth' => []]],
     parameters: [
         new OA\Parameter(
@@ -89,6 +91,7 @@ use OpenApi\Attributes as OA;
             )
         ),
         new OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse'),
+        new OA\Response(response: 403, description: 'Forbidden — cannot access another users profile'),
         new OA\Response(response: 404, description: 'User not found'),
     ]
 )]

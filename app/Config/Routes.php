@@ -68,8 +68,7 @@ $routes->group('api/v1', function ($routes) {
             $routes->post('auth/revoke', '\App\Controllers\Api\V1\Auth\TokenController::revoke');
             $routes->post('auth/revoke-all', '\App\Controllers\Api\V1\Auth\TokenController::revokeAll');
 
-            // User routes - read-only for all authenticated users
-            $routes->get('users', '\App\Controllers\Api\V1\Users\UserController::index');
+            // User routes - self-service
             $routes->get('users/(:num)', '\App\Controllers\Api\V1\Users\UserController::show/$1');
 
             // File routes - all authenticated users
@@ -78,8 +77,9 @@ $routes->group('api/v1', function ($routes) {
             $routes->get('files/(:num)', '\App\Controllers\Api\V1\Files\FileController::show/$1');
             $routes->delete('files/(:num)', '\App\Controllers\Api\V1\Files\FileController::delete/$1');
 
-            // User routes - admin only (create, update, delete)
+            // User routes - admin only (list, create, update, delete)
             $routes->group('', ['filter' => 'roleauth:admin'], function ($routes) {
+                $routes->get('users', '\App\Controllers\Api\V1\Users\UserController::index');
                 $routes->post('users', '\App\Controllers\Api\V1\Users\UserController::create');
                 $routes->put('users/(:num)', '\App\Controllers\Api\V1\Users\UserController::update/$1');
                 $routes->delete('users/(:num)', '\App\Controllers\Api\V1\Users\UserController::delete/$1');

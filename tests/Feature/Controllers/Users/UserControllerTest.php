@@ -29,9 +29,9 @@ class UserControllerTest extends ApiTestCase
 
     public function testListUsersReturnsSuccess(): void
     {
-        $email = 'list-users@example.com';
+        $email = 'list-users-admin@example.com';
         $password = 'ValidPass123!';
-        $this->createUser($email, $password);
+        $this->createUser($email, $password, 'admin');
 
         $token = $this->loginAndGetToken($email, $password);
 
@@ -200,12 +200,12 @@ class UserControllerTest extends ApiTestCase
 
     public function testListUsersDoesNotIncludeSuperadmin(): void
     {
-        $userEmail = 'list-regular-user@example.com';
-        $userPassword = 'ValidPass123!';
-        $this->createUser($userEmail, $userPassword, 'user');
+        $adminEmail = 'list-admin-user@example.com';
+        $adminPassword = 'ValidPass123!';
+        $this->createUser($adminEmail, $adminPassword, 'admin');
         $this->createUser('hidden-superadmin@example.com', 'ValidPass123!', 'superadmin');
 
-        $token = $this->loginAndGetToken($userEmail, $userPassword);
+        $token = $this->loginAndGetToken($adminEmail, $adminPassword);
 
         $result = $this->withHeaders([
             'Authorization' => "Bearer {$token}",

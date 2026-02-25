@@ -86,8 +86,8 @@ POST /api/v1/auth/resend-verification Reenviar correo de verificacion
 
 ### Usuarios (Protegido)
 ```
-GET    /api/v1/users           Listar usuarios (paginado, filtrable; cualquier usuario autenticado)
-GET    /api/v1/users/{id}      Obtener usuario por ID
+GET    /api/v1/users           Listar usuarios (solo admin; paginado, filtrable)
+GET    /api/v1/users/{id}      Obtener usuario por ID (Propio o Admin)
 POST   /api/v1/users           Crear usuario (admin/superadmin con restricciones)
 PUT    /api/v1/users/{id}      Actualizar usuario (admin/superadmin con restricciones)
 DELETE /api/v1/users/{id}      Eliminar usuario (admin/superadmin con restricciones)

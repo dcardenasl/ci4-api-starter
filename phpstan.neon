@@ -1,5 +1,5 @@
 parameters:
-    level: 5
+    level: 6
     bootstrapFiles:
         - app/Helpers/validation_helper.php
         - app/Helpers/security_helper.php

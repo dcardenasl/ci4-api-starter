@@ -1,16 +1,17 @@
-# CRUD Snippets (Arquitectura Millonaria)
+# CRUD Snippets (Arquitectura Modernizada)
 
-## Controller
+## Controller (Declarativo)
 
 ```php
 <?php
 
 declare(strict_types=1);
 
-namespace App\Controllers\Api\V1;
+namespace App\Controllers\Api\V1\Catalog;
 
 use App\Controllers\ApiController;
 use App\DTO\Request\Catalog\ProductIndexRequestDTO;
+use App\DTO\Request\Catalog\ProductCreateRequestDTO;
 use CodeIgniter\HTTP\ResponseInterface;
 
 class ProductController extends ApiController
@@ -19,13 +20,17 @@ class ProductController extends ApiController
 
     public function index(): ResponseInterface
     {
-        $dto = $this->getDTO(ProductIndexRequestDTO::class);
-        return $this->handleRequest(fn() => $this->getService()->index($dto));
+        return $this->handleRequest('index', ProductIndexRequestDTO::class);
+    }
+
+    public function create(): ResponseInterface
+    {
+        return $this->handleRequest('store', ProductCreateRequestDTO::class);
     }
 }
 ```
 
-## Interface
+## Interface (Tipada)
 
 ```php
 <?php
@@ -34,17 +39,17 @@ declare(strict_types=1);
 
 namespace App\Interfaces;
 
-use App\DTO\Request\Catalog\ProductIndexRequestDTO;
-use App\DTO\Response\Catalog\ProductResponseDTO;
+use App\Interfaces\DataTransferObjectInterface;
 
 interface ProductServiceInterface
 {
-    public function index(ProductIndexRequestDTO $request): array;
-    public function show(array $data): ProductResponseDTO;
+    public function index(DataTransferObjectInterface $request): array;
+    public function show(int $id): DataTransferObjectInterface;
+    public function store(DataTransferObjectInterface $request): DataTransferObjectInterface;
 }
 ```
 
-## Request DTO
+## Request DTO (Autovalidado)
 
 ```php
 <?php
@@ -53,16 +58,22 @@ declare(strict_types=1);
 
 namespace App\DTO\Request\Catalog;
 
-use App\Interfaces\DataTransferObjectInterface;
+use App\DTO\Request\BaseRequestDTO;
 
-readonly class ProductCreateRequestDTO implements DataTransferObjectInterface
+readonly class ProductCreateRequestDTO extends BaseRequestDTO
 {
     public string $name;
 
-    public function __construct(array $data)
+    protected function rules(): array
     {
-        validateOrFail($data, 'product', 'store');
-        $this->name = (string) $data['name'];
+        return [
+            'name' => 'required|string|max_length[255]',
+        ];
+    }
+
+    protected function map(array $data): void
+    {
+        $this->name = (string) ($data['name'] ?? '');
     }
 
     public function toArray(): array
@@ -72,42 +83,7 @@ readonly class ProductCreateRequestDTO implements DataTransferObjectInterface
 }
 ```
 
-## Response DTO
-
-```php
-<?php
-
-declare(strict_types=1);
-
-namespace App\DTO\Response\Catalog;
-
-use App\Interfaces\DataTransferObjectInterface;
-use OpenApi\Attributes as OA;
-
-#[OA\Schema(schema: 'ProductResponse')]
-readonly class ProductResponseDTO implements DataTransferObjectInterface
-{
-    public function __construct(
-        #[OA\Property] public int $id,
-        #[OA\Property] public string $name
-    ) {}
-
-    public static function fromArray(array $data): self
-    {
-        return new self(
-            id: (int) $data['id'],
-            name: (string) $data['name']
-        );
-    }
-
-    public function toArray(): array
-    {
-        return ['id' => $this->id, 'name' => $this->name];
-    }
-}
-```
-
-## Service (Pure Logic)
+## Service (Heredado y Transaccional)
 
 ```php
 <?php
@@ -116,33 +92,28 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\DTO\Request\Catalog\ProductIndexRequestDTO;
-use App\DTO\Response\Catalog\ProductResponseDTO;
-use App\Exceptions\NotFoundException;
+use App\Interfaces\DataTransferObjectInterface;
 use App\Interfaces\ProductServiceInterface;
 use App\Models\ProductModel;
 use App\Traits\AppliesQueryOptions;
-use App\Traits\ValidatesRequiredFields;
 
-class ProductService implements ProductServiceInterface
+class ProductService extends BaseCrudService implements ProductServiceInterface
 {
-    use AppliesQueryOptions, ValidatesRequiredFields;
+    use AppliesQueryOptions;
 
-    public function __construct(protected ProductModel $productModel) {}
+    protected string $responseDtoClass = \App\DTO\Response\Catalog\ProductResponseDTO::class;
 
-    public function index(ProductIndexRequestDTO $request): array
+    public function __construct(protected ProductModel $productModel) {
+        $this->model = $productModel;
+    }
+
+    public function store(DataTransferObjectInterface $request): DataTransferObjectInterface
     {
-        $builder = new \App\Libraries\Query\QueryBuilder($this->productModel);
-        $this->applyQueryOptions($builder, $request->toArray());
-        
-        $result = $builder->paginate($request->page, $request->perPage);
-        
-        $result['data'] = array_map(
-            fn($item) => ProductResponseDTO::fromArray($item->toArray()), 
-            $result['data']
-        );
-
-        return $result;
+        return $this->wrapInTransaction(function() use ($request) {
+            $id = $this->model->insert($request->toArray());
+            // Lógica de negocio adicional...
+            return $this->mapToResponse($this->model->find($id));
+        });
     }
 }
 ```

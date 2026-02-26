@@ -9,27 +9,22 @@ This document explains the architectural decisions made in this project and the 
 3. [Testing Strategy](#testing-strategy)
 4. [Security Patterns](#security-patterns)
 5. [Service Layer Patterns](#service-layer-patterns)
-6. [Observability and Governance](#observability-and-governance)
+6. [Data Validation Architecture](#data-validation-architecture)
+7. [Observability and Governance](#observability-and-governance)
 
 ---
 
 ## Controller Architecture
 
-### ADR-001: Two Controller Types
+### ADR-001: Standardized API Controllers
 
-**Decision:** The project uses two distinct controller types with different purposes.
+**Decision:** The project uses a declarative controller pattern via `ApiController`.
 
 #### Business API Controllers
 
 **Pattern:** Extend `ApiController`
 
-**Purpose:** Handle business domain operations (CRUD, business logic)
-
-**Examples:**
-- `UserController` - User management
-- `FileController` - File uploads/downloads
-- `AuthController` - Authentication/registration
-- `AuditController` - Audit log queries
+**Purpose:** Act as thin orchestrators between HTTP requests and the Service Layer.
 
 **Characteristics:**
 ```php
@@ -37,71 +32,24 @@ class UserController extends ApiController
 {
     protected string $serviceName = 'userService';
 
-    public function index(): ResponseInterface {
-        $dto = $this->getDTO(UserIndexRequestDTO::class);
-        return $this->handleRequest(fn() => $this->getService()->index($dto));
+    public function create(): ResponseInterface {
+        // Validation happens automatically inside the DTO constructor
+        return $this->handleRequest('store', UserStoreRequestDTO::class);
     }
 }
 ```
 
 **Benefits:**
-- ✅ Centralized exception handling
-- ✅ Automatic request-to-DTO mapping and validation
-- ✅ Standardized response format with recursive DTO normalization
-- ✅ Built-in XSS sanitization
-- ✅ Consistent error responses
+- ✅ **Zero-Boilerplate:** Automatic request-to-DTO mapping.
+- ✅ **Centralized Error Handling:** Global exception-to-JSON transformation.
+- ✅ **Standardized Contract:** Automated `{"status": "success", "data": ...}` wrapping.
+- ✅ **Semantic Codes:** Automated mapping of actions to status codes (201 for creation, 202 for pending).
 
 #### Infrastructure Controllers
 
 **Pattern:** Extend base `Controller`
 
-**Purpose:** System monitoring, health checks, metrics
-
-**Examples:**
-- `HealthController` - Health checks (`/health`, `/ping`, `/ready`, `/live`)
-- `MetricsController` - System metrics (`/metrics/*`)
-
-**Characteristics:**
-```php
-class HealthController extends Controller
-{
-    public function ping(): ResponseInterface {
-        return $this->response->setJSON([
-            'status' => 'ok',
-            'timestamp' => date('Y-m-d H:i:s'),
-        ])->setStatusCode(200);
-    }
-}
-```
-
-**Why NOT ApiController?**
-
-1. **Performance Critical**
-   - Called every 5-10 seconds by orchestrators
-   - Must be ultra-fast (< 50ms)
-   - No overhead from service layer, sanitization, etc.
-
-2. **Different Response Contract**
-   - Health checks follow Kubernetes/Docker standards
-   - Don't use ApiResponse format
-   - Status codes have specific meanings (200=healthy, 503=unhealthy)
-
-3. **No Authentication Required**
-   - Must be publicly accessible
-   - Load balancers need unauthenticated access
-   - Monitoring tools can't handle JWT
-
-4. **No Business Logic**
-   - Just check system state
-   - No data processing
-   - No user input
-
-5. **Industry Standards**
-   - Spring Boot: `HealthIndicator` (simple, no framework overhead)
-   - Express.js: Health middleware (direct response)
-   - Django: Simple view functions
-
-**Important:** If you see a controller that doesn't extend `ApiController`, check if it's infrastructure before reporting it as an inconsistency.
+**Purpose:** System monitoring, health checks, metrics that follow external standards (Kubernetes/Docker).
 
 ---
 
@@ -111,43 +59,12 @@ class HealthController extends Controller
 
 **Decision:** OpenAPI schemas live directly within DTO classes as PHP 8 attributes. Endpoint definitions remain in `app/Documentation/`.
 
-**Structure:**
-```
-app/DTO/
-├── Request/
-│   └── Auth/
-│       └── LoginRequestDTO.php    # Contains #[OA\Schema] for request
-└── Response/
-    └── Users/
-        └── UserResponseDTO.php    # Contains #[OA\Schema] for response
-
-app/Documentation/
-├── Auth/
-│   └── AuthEndpoints.php          # References schemas in DTOs
-└── Users/
-    └── UserEndpoints.php          # References schemas in DTOs
-```
-
 **Generation:**
 ```bash
 php spark swagger:generate  # Scans app/DTO/ and app/Documentation/
 ```
 
-**Why Integrated DTO Documentation?**
-
-#### 1. Single Source of Truth
-The code *is* the documentation. If you add a property to a `UserResponseDTO`, you add the `#[OA\Property]` next to it. They can never go out of sync.
-
-#### 2. Automatic Validation
-The `swagger:generate` command will fail if a DTO references a schema that doesn't exist or if property types mismatch, acting as a compile-time check for documentation.
-
-#### 3. Cleaner Architecture
-We eliminated "phantom classes" in `app/Documentation/` that only existed to hold annotations. Documentation is now an intrinsic part of the data contract.
-
-**References:**
-- This is the same pattern used by Symfony API Platform
-- Laravel OpenAPI Generator supports both approaches
-- NestJS uses decorators but keeps them minimal
+**Single Source of Truth:** The code *is* the documentation. Property types and constraints in DTOs are automatically reflected in the Swagger UI.
 
 ---
 
@@ -155,358 +72,85 @@ We eliminated "phantom classes" in `app/Documentation/` that only existed to hol
 
 ### ADR-003: Three Test Layers
 
-**Decision:** Tests are organized by integration level, not by file type.
+**Decision:** Tests are organized by integration level to maximize speed and coverage.
 
-#### Test Organization
+1.  **Unit (Fast):** Mocked dependencies. Tests logic in Services, DTOs, and Libraries.
+2.  **Integration (DB):** Tests real Database/Model interactions.
+3.  **Feature (E2E):** Full HTTP request/response cycle, filters, and authorization.
 
-```
-tests/
-├── Unit/                    # Fast, no external dependencies
-│   ├── Libraries/           # ApiResponse, QueryBuilder, etc.
-│   ├── Services/            # Services with mocked dependencies
-│   ├── Helpers/             # Helper functions
-│   └── Validations/         # Validation rules
-│
-├── Integration/             # Real database, real dependencies
-│   ├── Models/              # Model CRUD with real DB
-│   └── Services/            # Services with real DB/models
-│
-└── Feature/                 # Full HTTP request/response cycle
-    └── Controllers/         # End-to-end controller tests
-```
-
-#### Unit Tests (470 tests)
-
-**Characteristics:**
-- No database
-- Mocked dependencies
-- Fast (< 1 second total)
-
-**Example:**
-```php
-class AuthServiceTest extends CIUnitTestCase
-{
-    protected function setUp(): void {
-        $this->mockUserModel = $this->createMock(UserModel::class);
-        $this->mockJwtService = $this->createMock(JwtServiceInterface::class);
-        $this->service = new AuthService($this->mockUserModel, $this->mockJwtService);
-    }
-
-    public function testLoginWithValidCredentials(): void {
-        $dto = new LoginRequestDTO(['email' => 'test@example.com', 'password' => 'pass']);
-        $result = $this->service->login($dto);
-        
-        $this->assertInstanceOf(LoginResponseDTO::class, $result);
-        $this->assertEquals('test@example.com', $result->user['email']);
-    }
-}
-```
-
-#### Integration Tests
-
-**Characteristics:**
-- Real database
-- Real models
-- Test DB interactions
-- Slower than unit tests
-
-**Example:**
-```php
-class UserModelTest extends CIUnitTestCase
-{
-    use DatabaseTestTrait;
-
-    protected $migrate = true;
-    protected $namespace = 'App';  // ⚠️ CRITICAL: Use app migrations
-
-    public function testInsertUser(): void {
-        $userId = $this->userModel->insert(['username' => 'test']);
-        $this->assertIsInt($userId);
-        $this->seeInDatabase('users', ['username' => 'test']);
-    }
-}
-```
-
-#### Feature Tests
-
-**Characteristics:**
-- Full HTTP stack
-- Real routes and filters
-- Test authentication/authorization
-- Test complete user flows
-
-**Example:**
-```php
-class UserControllerTest extends FeatureTestCase
-{
-    public function testCreateUserRequiresAdmin(): void {
-        $response = $this->withHeaders(['Authorization' => 'Bearer ' . $this->userToken])
-            ->post('/api/v1/users', ['username' => 'newuser']);
-
-        $response->assertStatus(403);  // Regular user can't create users
-    }
-}
-```
-
-### ADR-004: CustomAssertionsTrait Usage
-
-**Decision:** Only use `CustomAssertionsTrait` in **Feature/Integration tests** that verify the final `ApiResponse` structure returned by the controller. **Service unit tests** should use standard object/type assertions since they return DTOs.
-
-#### When to Use
-
-✅ **Feature/Controller tests** (HTTP responses with ApiResponse body):
-```php
-class UserControllerTest extends FeatureTestCase
-{
-    use CustomAssertionsTrait;
-
-    public function testIndex(): void {
-        $response = $this->get('/api/v1/users');
-        $data = json_decode($response->getBody(), true);
-        $this->assertPaginatedResponse($data);
-    }
-}
-```
-
-#### When NOT to Use
-
-❌ **Service unit tests** (they return DTO objects):
-```php
-class UserServiceTest extends CIUnitTestCase
-{
-    // ❌ NO CustomAssertionsTrait
-    public function testShow(): void {
-        $result = $this->service->show(['id' => 1]);
-        $this->assertInstanceOf(UserResponseDTO::class, $result);
-    }
-}
-```
-
-❌ **ApiResponse library tests** (circular dependency):
-```php
-class ApiResponseTest extends CIUnitTestCase
-{
-    // ❌ NO CustomAssertionsTrait
-
-    public function testSuccess(): void {
-        $result = ApiResponse::success(['id' => 1]);
-        $this->assertEquals('success', $result['status']);  // ✅ Use standard assertions
-    }
-}
-```
-
-❌ **Validation tests** (don't use ApiResponse):
-```php
-class UserValidationTest extends CIUnitTestCase
-{
-    // ❌ NO CustomAssertionsTrait
-
-    public function testStrongPassword(): void {
-        $result = $this->validation->check($password, 'strong_password');
-        $this->assertTrue($result);  // ✅ Standard assertion
-    }
-}
-```
-
-❌ **Helper tests** (don't return ApiResponse):
-```php
-class ValidationHelperTest extends CIUnitTestCase
-{
-    // ❌ NO CustomAssertionsTrait
-
-    public function testValidateOrFail(): void {
-        $this->expectException(ValidationException::class);
-        validateOrFail([], 'user', 'store');
-    }
-}
-```
-
-❌ **Model tests** (return entities, not ApiResponse):
-```php
-class UserModelTest extends CIUnitTestCase
-{
-    // ❌ NO CustomAssertionsTrait
-
-    public function testFind(): void {
-        $user = $this->userModel->find(1);
-        $this->assertInstanceOf(UserEntity::class, $user);  // ✅
-    }
-}
-```
-
-**Rule of Thumb:** If the code under test returns an array with `['status' => 'success/error', 'data' => ...]`, use `CustomAssertionsTrait`. Otherwise, don't.
+**Key Rule:** Service unit tests should verify DTO return types and logic without caring about HTTP status codes or JSON structures.
 
 ---
 
 ## Security Patterns
 
-### ADR-005: File Upload Validation
+### ADR-004: Transactional Integrity
 
-**Decision:** Validate file metadata BEFORE moving to permanent storage, but AFTER PHP's temporary upload.
+**Decision:** All state-changing operations in the Service Layer must be atomic.
 
-**Upload Flow:**
-```
-1. User uploads file
-2. PHP saves to /tmp/phpXXXXX (temporary)
-3. ✅ Validate extension
-4. ✅ Validate size
-5. ✅ Validate MIME type (future)
-6. Read from /tmp/phpXXXXX
-7. Write to permanent storage
-8. Save metadata to database
-9. If DB fails → rollback (delete from storage)
-```
-
-**Implementation:**
+**Implementation:** Use the `HandlesTransactions` trait in services.
 ```php
-// app/Services/FileService.php
-public function upload(FileUploadRequestDTO $request): FileResponseDTO
-{
-    $file = $request->file;
-
-    // ✅ Validate BEFORE moving to permanent storage
-    if ($file->getSize() > $maxSize) {
-        throw new ValidationException('File too large');
-    }
-
-    $allowedTypes = explode(',', env('FILE_ALLOWED_TYPES'));
-    if (!in_array(strtolower($file->getExtension()), $allowedTypes)) {
-        throw new ValidationException('Invalid file type');
-    }
-
-    // Now move to permanent storage
-    $contents = file_get_contents($file->getTempName());
-    $stored = $this->storage->put($path, $contents);
-
-    // Save to DB
-    $fileId = $this->fileModel->insert($metadata);
-
-    // If DB insert fails, rollback
-    if (!$fileId) {
-        $this->storage->delete($path);  // ✅ Clean up
-        throw new \RuntimeException('Failed to save file metadata');
-    }
-
-    return FileResponseDTO::fromArray($this->fileModel->find($fileId)->toArray());
-}
+return $this->wrapInTransaction(function() use ($dto) {
+    $id = $this->model->insert($dto->toArray());
+    $this->auditService->log('create', ...);
+    return $this->mapToResponse($this->model->find($id));
+});
 ```
-
-**Why This is Secure:**
-1. Invalid files NEVER reach permanent storage
-2. Temporary files are in PHP's managed /tmp (auto-cleaned)
-3. Transaction-like behavior (rollback on DB failure)
-4. No race conditions
-
-**Why This Looks Like "Validating After Upload":**
-- The file IS already uploaded (by PHP to /tmp)
-- But NOT yet in permanent storage
-- Validations prevent promotion from /tmp to permanent
 
 ---
 
 ## Service Layer Patterns
 
-### ADR-006: Data Transfer Objects (DTOs)
+### ADR-005: Generic Base CRUD Service
 
-**Decision:** Use PHP 8.2 `readonly classes` for all data transfer between Controllers and Services.
+**Decision:** Reduce boilerplate by using a genric `BaseCrudService` for standard operations.
 
-**Pattern:**
+**Key Features:**
+- **Automated Mapping:** Converts Entities to Response DTOs automatically using `$responseDtoClass`.
+- **Global Security Hook:** `applyBaseCriteria()` allows services to enforce universal filters (e.g., exclude superadmins).
+- **Pure Logic:** Services are agnostic to HTTP. They throw exceptions and return DTOs.
+
+---
+
+## Data Validation Architecture
+
+### ADR-006: DTO-First Auto-Validation
+
+**Decision:** **Validation is no longer a separate service.** It is an intrinsic property of the Data Transfer Object.
+
+**The "Shield" Pattern:**
+- **Request DTOs** must extend `BaseRequestDTO`.
+- Validation happens in the **constructor**. 
+- If a DTO is instantiated, the data is **guaranteed to be valid**.
+
+**Example:**
 ```php
-// Request DTO (Auto-validated)
-readonly class RegisterRequestDTO {
-    public function __construct(array $data) {
-        validateOrFail($data, 'auth', 'register');
-        $this->email = $data['email'];
-        // ...
+readonly class UserStoreRequestDTO extends BaseRequestDTO {
+    protected function rules(): array {
+        return ['email' => 'required|valid_email|is_unique[users.email]'];
     }
-}
-
-// Service Method
-public function register(RegisterRequestDTO $request): RegisterResponseDTO {
-    // Business logic...
 }
 ```
 
-**Benefits:**
-- ✅ **Type Safety:** Eliminate string keys and array guessing.
-- ✅ **Immutability:** Data cannot be modified after validation.
-- ✅ **Early Validation:** The service never receives invalid data because the DTO fails in its constructor.
-- ✅ **Contract Clarity:** Response DTOs explicitly define what fields the frontend receives.
-
-**When to use:**
-- Every API endpoint that receives or returns structured data.
-- List operations (use QueryDTOs for filters/pagination).
-
-### ADR-007: Pure Services & Exception-Based Error Handling
-
-**Decision:** Services are "pure" (decoupled from HTTP/API concerns). They return DTOs/Entities and throw exceptions for errors.
-
-**Pattern:**
-```php
-// ✅ Service
-public function show(array $data): UserResponseDTO
-{
-    $user = $this->userModel->find($data['id']);
-
-    if (!$user) {
-        throw new NotFoundException('User not found');
-    }
-
-    return UserResponseDTO::fromArray($user->toArray());
-}
-
-// ✅ Controller
-public function show($id): ResponseInterface
-{
-    return $this->handleRequest(fn() => $this->getService()->show(['id' => $id]));
-}
-```
-
-**Why Decouple from ApiResponse?**
-- Services shouldn't know about `status` codes or JSON wrapping.
-- Higher reusability (CLI commands can use the same service).
-- Cleaner testing (no need to parse `ApiResponse` arrays).
-
-**Automatic Normalization:**
-The `ApiController` automatically wraps DTOs/Arrays in `ApiResponse::success()` and recursively converts DTOs to arrays before final JSON encoding.
+**Why this is superior:**
+1. **Safety:** Prevents "dirty data" from ever reaching the Service Layer.
+2. **Clarity:** The contract (what data is needed) and the validation (what format) are in the same file.
+3. **Efficiency:** No need to manually call `validate()` in every service method.
 
 ---
 
 ## Summary of Design Principles
 
-1. **Not all controllers are the same** - Infrastructure ≠ Business API
-2. **Documentation is separate** - Code ≠ Docs
-3. **Tests match purpose** - Unit/Integration/Feature layers
-4. **CustomAssertionsTrait only for ApiResponse** - Not for library tests
-5. **File validation happens before permanent storage** - After PHP upload
-6. **Explicit parameters when clarity helps** - Both patterns valid
-7. **Exceptions for errors** - Not return values
-
-**When evaluating code:**
-- ❓ Is this different from the pattern? → Check this document
-- ❓ Does it have a valid reason? → Probably intentional
-- ❓ Not documented here? → Then it might be inconsistent
-
----
-
-## References
-
-- **Health Checks**: Kubernetes Liveness/Readiness Probes
-- **OpenAPI Separation**: Symfony API Platform, Laravel OpenAPI
-- **Testing Pyramid**: Martin Fowler's Test Pyramid
-- **Exception Handling**: Clean Architecture (Robert C. Martin)
+1. **DTOs as Guardians:** Never pass raw arrays to services.
+2. **Thin Controllers:** Controllers only orchestrate; they don't validate or calculate.
+3. **Pure Services:** Agnostic to HTTP, focus on business rules.
+4. **Declarative Code:** Favour configuration over manual implementation (e.g., `handleRequest`).
+5. **Fail Early:** Let the DTO constructor throw the exception.
 
 ---
 
 ## Observability and Governance
 
-This project tracks reliability through request-level indicators and enforces a consistent review bar in pull requests.
-
-- SLO-oriented indicators are exposed in metrics (`p95`, `p99`, error rate, availability, and status-code breakdown).
-- The p95 target is configurable with `SLO_API_P95_TARGET_MS`.
-- Pull requests use a checklist template in `.github/pull_request_template.md` to verify:
-  - quality gates (`cs-check`, `phpstan`, `phpunit`)
-  - security-sensitive changes
-  - documentation and rollout notes
+This project tracks reliability through request-level indicators (SLOs) and enforces a strict quality gates via `composer quality`.
 
 See the decision record at `docs/architecture/ADR-004-OBSERVABILITY-GOVERNANCE.md`.

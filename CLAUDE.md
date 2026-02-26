@@ -28,8 +28,7 @@ composer cs-fix                 # Fix code style (PSR-12)
 ### Database
 ```bash
 php spark migrate               # Run migrations
-php spark migrate:refresh       # Rollback all + re-run migrations
-php spark make:crud {Name} --domain {Domain} --route {endpoint}  # Scaffold new CRUD (Mandatory first step)
+php spark make:crud {Name} --domain {Domain} --route {endpoint}  # Scaffold new CRUD (Mandatory)
 ```
 
 ### OpenAPI Documentation
@@ -37,67 +36,54 @@ php spark make:crud {Name} --domain {Domain} --route {endpoint}  # Scaffold new 
 php spark swagger:generate      # Generate public/swagger.json from DTOs and app/Documentation/
 ```
 
-## Architecture Overview (Million-Dollar Standard)
+## Architecture Overview (Modernized DTO-First)
 
-This is a **DTO-First Layered REST API** following the pattern: **Controller → [RequestDTO] → Service → Model → Entity → [ResponseDTO]**.
+This is a **Declarative DTO-First Layered REST API** following the pattern: **Controller → [RequestDTO] → Service → Model → Entity → [ResponseDTO]**.
 
 ### Key Design Principles
 
-1. **DTO-First:** All data entering or leaving the service layer must use PHP 8.2 `readonly` classes.
-2. **Auto-Validation:** Request DTOs must validate themselves in the constructor via `validateOrFail()`.
-3. **Pure Services:** Services must be agnostic to HTTP/API concerns (no `ApiResponse`, no status codes).
-4. **Output Normalization:** `ApiController` automatically normalizes DTOs to snake_case associative arrays for JSON output.
-5. **Living Documentation:** OpenAPI schemas (`#[OA\Schema]`) are defined directly in DTO classes.
-
-### Request/Response Flow
-
-```
-HTTP Request → Controller → [RequestDTO] → Service → Model → Entity → [ResponseDTO] → ApiController::respond() → JSON
-```
+1. **DTO-First Shield:** Data validation is an intrinsic property of the DTO. Request DTOs must extend `BaseRequestDTO`.
+2. **Auto-Validation:** The `BaseRequestDTO` constructor handles validation automatically via `rules()`. If an object exists, it is valid.
+3. **Pure & Transactional Services:** Services extend `BaseCrudService`, are agnostic to HTTP, and use the `HandlesTransactions` trait.
+4. **Declarative Controllers:** Controllers extend `ApiController` and use `handleRequest()` to orchestrate the flow without boilerplate.
+5. **Output Normalization:** `ApiController` automatically wraps DTOs in `ApiResponse::success()` and handles `data` keying.
 
 ## Implementation Guidelines
 
 ### 1. Request DTOs (`app/DTO/Request/`)
-- Always use `readonly class`.
-- Call `validateOrFail($data, 'domain', 'action')` in the constructor.
-- Properties should be strictly typed.
+- Must extend `BaseRequestDTO`.
+- Implement `rules()` and `map(array $data)`.
+- Use PHP 8.2 `readonly` classes.
+- **NO manual validation calls in services.**
 
 ### 2. Response DTOs (`app/DTO/Response/`)
-- Include OpenAPI `#[OA\Property]` attributes on constructor properties.
-- Use `fromArray(array $data)` static method for instantiation from Entities/Models.
-- Properties should use camelCase (automatically mapped to snake_case in JSON).
+- Define the contract for the client. Include OpenAPI attributes.
+- Use `fromArray(array $data)` static method.
 
 ### 3. Services (`app/Services/`)
-- Must implement an interface in `app/Interfaces/`.
-- Must return DTO objects or Entities (never `ApiResponse`).
-- Throw custom exceptions for errors.
+- Extend `BaseCrudService` for standard CRUD.
+- Use `HandlesTransactions` trait for state changes.
+- Return DTOs or arrays. Throw exceptions for errors.
+- Implement `applyBaseCriteria()` for global security filters.
 
 ### 4. Controllers (`app/Controllers/Api/V1/`)
 - Must extend `ApiController`.
-- Use `$this->getDTO(YourRequestDTO::class)` to map request data.
-- Use `$this->handleRequest(fn() => ...)` to delegate to services.
+- Use declarative handling: `return $this->handleRequest('methodName', RequestDTO::class);`.
 
 ### 5. Documentation
-- Do NOT use annotations in controllers.
 - Schemas live in DTOs. Endpoints live in `app/Documentation/{Domain}/`.
 
 ## Testing Strategy
 
 ### Unit Tests
-- **Services:** Test by asserting against DTO return types. Mock all dependencies.
-- **DTOs:** Test auto-validation by passing invalid data and expecting `ValidationException`.
+- **Services:** Test logic by asserting against DTO return types. Mock dependencies.
+- **DTOs:** Test that the constructor throws `ValidationException` for invalid data.
 
 ### Feature/Integration Tests
-- Use `CustomAssertionsTrait` ONLY to verify the final JSON structure and `status` field.
+- Verify JSON structure and status codes (201 for creation, 202 for pending, 422 for validation).
 
-## Security Mandates
-- **XSS:** Handled automatically by `ApiController`.
-- **Audit:** Use `AuditService` for all state-changing operations.
-- **SQL Injection:** Always use CI4 Query Builder.
-- **Passwords:** Never expose in DTOs or responses.
-
-## Common Pitfalls
-- Returning `ApiResponse` from a service.
-- Using generic arrays instead of DTOs for service parameters.
-- Forgetting to run `php spark swagger:generate` after changing DTO properties.
-- Not using `readonly` classes for data structures.
+## Common Pitfalls (DO NOT DO)
+- ❌ Using `InputValidationService` or `validateOrFail` manual calls (Legacy).
+- ❌ Returning `ApiResponse` from a service.
+- ❌ Passing raw arrays to service methods.
+- ❌ Not using `wrapInTransaction` for state-changing operations.

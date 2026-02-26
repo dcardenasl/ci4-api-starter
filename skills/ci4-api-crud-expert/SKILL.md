@@ -1,11 +1,11 @@
 ---
 name: ci4-api-crud-expert
-description: Experto en este repositorio CodeIgniter 4 API Starter para diseñar e implementar recursos CRUD end-to-end siguiendo la arquitectura Million-Dollar (DTO-First). Usar cuando se pida crear, extender, corregir o documentar un CRUD nuevo en esta base, incluyendo DTOs, pure services, integrated OpenAPI y pruebas Unit/Feature.
+description: Experto en este repositorio CodeIgniter 4 API Starter para diseñar e implementar recursos CRUD end-to-end siguiendo la arquitectura Modernizada (Declarative DTO-First). Usar cuando se pida crear, extender, corregir o documentar un CRUD nuevo en esta base, incluyendo DTOs autovalidados, servicios genéricos, integrated OpenAPI y pruebas Unit/Feature.
 ---
 
-# CI4 API CRUD Expert (Arquitectura Millonaria)
+# CI4 API CRUD Expert (Arquitectura Modernizada)
 
-Este skill define el estándar de oro para crear recursos en este repositorio, priorizando la inmutabilidad, el tipado estricto y el desacoplamiento total.
+Este skill define el estándar de oro para crear recursos en este repositorio, priorizando la inmutabilidad, el tipado estricto y el desacoplamiento total mediante una arquitectura declarativa.
 
 ## Flujo de Implementación Obligatorio
 
@@ -14,40 +14,40 @@ Este skill define el estándar de oro para crear recursos en este repositorio, p
    - Crear **Entidad** con `$casts`.
    - Crear **Modelo** con traits `Filterable`, `Searchable`, `Auditable`.
 
-2. **Capa de Contrato (DTOs):**
-   - Crear **Request DTOs** (`app/DTO/Request/`) usando clases `readonly` de PHP 8.2.
-   - Implementar auto-validación en el constructor del DTO vía `validateOrFail()`.
+2. **Capa de Contrato (DTOs Autovalidados):**
+   - Crear **Request DTOs** (`app/DTO/Request/`) extendiendo de `BaseRequestDTO`.
+   - Definir validación en el método `rules()`. El constructor valida automáticamente.
    - Crear **Response DTOs** (`app/DTO/Response/`) con atributos OpenAPI `#[OA\Property]`.
 
-3. **Lógica de Negocio (Servicio Puro):**
+3. **Lógica de Negocio (Servicio Puro & Transaccional):**
    - Definir **Interface** en `app/Interfaces/`.
-   - Implementar **Servicio** en `app/Services/`.
-   - **Regla de Oro:** El servicio no conoce `ApiResponse`. Recibe DTOs y devuelve DTOs/Entidades. Lanza excepciones para errores.
+   - Implementar **Servicio** heredando de `BaseCrudService`.
+   - Usar el trait `HandlesTransactions` para operaciones de escritura.
+   - **Regla de Oro:** El servicio no conoce la capa HTTP. Recibe DTOs y devuelve DTOs/Arrays.
    - Registrar en `app/Config/Services.php`.
 
-4. **Capa de Transporte (Controller):**
+4. **Capa de Transporte (Controller Declarativo):**
    - Crear **Controller** extendiendo `ApiController`.
-   - Usar `getDTO()` para mapear la entrada.
-   - Usar `handleRequest(fn() => ...)` para delegar al servicio.
-   - Definir **Rutas** con filtros adecuados (`jwtauth`, `roleauth`, `throttle`).
+   - Usar `handleRequest('serviceMethod', RequestDTO::class)` para orquestación automática.
+   - Definir **Rutas** en `app/Config/Routes.php`.
 
 5. **Infraestructura:**
-   - Crear archivos de **Idioma** (`en/` y `es/`) para cada mensaje de usuario.
+   - Crear archivos de **Idioma** (`en/` y `es/`) para cada mensaje.
    - Definir endpoints en `app/Documentation/{Domain}/` (los schemas ya viven en los DTOs).
    - Generar Swagger: `php spark swagger:generate`.
 
-6. **Validación:**
-   - **Pruebas Unitarias:** Validar lógica del servicio y retornos de DTO.
-   - **Pruebas Feature:** Validar estructura final JSON y códigos HTTP.
+6. **Validación de Calidad:**
+   - **Pruebas Unitarias:** Validar lógica del servicio.
+   - **Pruebas Feature:** Validar respuesta JSON (clave `data`) y códigos HTTP semánticos (201, 202, 422).
    - `composer quality` debe pasar al 100%.
 
-## Reglas Inquebrantables
+## Reglas Inquebrantables (Nuevos Estándares)
 
-- ❌ NO usar arreglos asociativos genéricos para datos de negocio; usar DTOs.
-- ❌ NO retornar `ApiResponse` desde la capa de servicio.
-- ❌ NO añadir anotaciones `@OA\Schema` en archivos externos si el DTO ya existe.
-- ✅ SIEMPRE usar `readonly` para DTOs e inyección de dependencias.
-- ✅ SIEMPRE normalizar la salida a snake_case a través de `ApiController`.
+- ❌ **PROHIBIDO** usar `InputValidationService` o `validateOrFail` manual (Legacy).
+- ❌ **PROHIBIDO** retornar `ApiResponse` desde la capa de servicio.
+- ✅ **OBLIGATORIO** extender de `BaseRequestDTO` para validación de entrada.
+- ✅ **OBLIGATORIO** usar `handleRequest` en controladores para evitar boilerplate.
+- ✅ **OBLIGATORIO** envolver todas las respuestas exitosas en la clave `data` (Automático vía `ApiController`).
 
 ## Referencias
 - Pasos detallados: `references/crud-playbook.md`.

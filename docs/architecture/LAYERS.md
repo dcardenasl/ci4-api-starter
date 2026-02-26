@@ -8,46 +8,23 @@ This document explains each layer in detail: Controller, DTO, Service, Model, an
 
 **Location:** `app/Controllers/Api/V1/`
 
-**Responsibility:** Handle HTTP requests, map data to DTOs, and delegate to services.
+**Responsibility:** Act as a thin orchestrator between the HTTP Request and the Service Layer.
 
 ### ApiController (Base Class)
 
-All API controllers extend `ApiController.php`:
+All API controllers extend `ApiController.php`. It provides a declarative `handleRequest` method that automates:
+1. Data collection from all sources (GET, POST, JSON, Files).
+2. DTO instantiation and self-validation.
+3. Exception handling and transformation to JSON.
+4. Response normalization (success/error wrapping and `data` keying).
+
+### Pattern: Declarative Orchestration
 
 ```php
-abstract class ApiController extends Controller
+public function create(): ResponseInterface
 {
-    protected function handleRequest(string|callable $target, ?array $params = null): ResponseInterface
-    {
-        try {
-            if (is_callable($target)) {
-                $result = $target();
-            } else {
-                $data = $this->collectRequestData($params);
-                $result = $this->getService()->$target($data);
-            }
-
-            // Normalization happens here automatically
-            return $this->respond($result);
-        } catch (Exception $e) {
-            return $this->handleException($e);
-        }
-    }
-}
-```
-
-### Pattern: DTO-First
-
-```php
-public function login(): ResponseInterface
-{
-    // 1. Get validated DTO from request
-    $dto = $this->getDTO(LoginRequestDTO::class);
-
-    // 2. Delegate to service using a closure
-    return $this->handleRequest(
-        fn() => $this->getService()->login($dto)
-    );
+    // The controller declares WHAT to do, ApiController handles HOW to construct it.
+    return $this->handleRequest('store', UserStoreRequestDTO::class);
 }
 ```
 
@@ -57,17 +34,18 @@ public function login(): ResponseInterface
 
 **Location:** `app/DTO/`
 
-**Responsibility:** Ensure data integrity, type safety, and contract stability.
+**Responsibility:** Data Integrity, Type Safety, and Contract Stability.
 
-### Request DTOs (Input)
-- **Auto-validation:** They call `validateOrFail()` in their constructor.
+### Request DTOs (Input Guardians)
+- **Base Class:** Extend `BaseRequestDTO`.
+- **Auto-validation:** Validation happens in the constructor via the `rules()` method. 
+- **Safety:** If a DTO object exists in memory, the data is guaranteed to be valid.
 - **Inmutability:** PHP 8.2 `readonly` classes.
-- **Type Safety:** Property types are strictly enforced.
 
-### Response DTOs (Output)
-- **Sanitization:** They explicitly define what fields are exposed to the client.
-- **Standardization:** They normalize data from Entities/Arrays (e.g., date formatting).
-- **Documentation:** They contain OpenAPI `#[OA\Property]` attributes.
+### Response DTOs (Output Contracts)
+- **Explicit Contract:** Define exactly what the client receives.
+- **Mapeo:** Use `fromArray()` to normalize data from entities.
+- **Documentation:** Contain OpenAPI `#[OA\Property]` attributes.
 
 ---
 
@@ -75,30 +53,30 @@ public function login(): ResponseInterface
 
 **Location:** `app/Services/`
 
-**Responsibility:** Business logic, orchestration, and domain operations.
+**Responsibility:** Business logic, transactional integrity, and domain rules.
 
-### Pure Service Pattern
+### Generic & Pure Services
+
+Services should extend `BaseCrudService` for standard operations.
 
 ```php
-class UserService implements UserServiceInterface
+class UserService extends BaseCrudService implements UserServiceInterface
 {
-    public function store(array $data): UserResponseDTO
+    public function store(DataTransferObjectInterface $request): DataTransferObjectInterface
     {
-        // 1. Logic
-        $userId = $this->userModel->insert($data);
-        $user = $this->userModel->find($userId);
-
-        // 2. Return typed DTO (NO ApiResponse here!)
-        return UserResponseDTO::fromArray($user->toArray());
+        return $this->wrapInTransaction(function() use ($request) {
+            // 1. Business Logic (specific to users)
+            // 2. Delegation to Model
+            // 3. Return typed Response DTO
+        });
     }
 }
 ```
 
-### Rules
-- ✅ **Decoupled:** NO knowledge of `ApiResponse`, `status` codes, or JSON.
-- ✅ **Typed:** Use DTOs for parameters and return values.
-- ✅ **Exceptional:** Use custom Exceptions for all error states.
-- ❌ NO direct request/response handling.
+### Mandates
+- ✅ **Atomic:** Use `HandlesTransactions` trait for state changes.
+- ✅ **Typed:** Always accept and return `DataTransferObjectInterface`.
+- ✅ **HTTP Agnostic:** No knowledge of JSON, status codes, or sessions.
 
 ---
 
@@ -106,26 +84,25 @@ class UserService implements UserServiceInterface
 
 **Location:** `app/Models/` & `app/Entities/`
 
-**Responsibility:** Database operations and data representation.
+**Responsibility:** Data persistence and representation.
 
-- **Models:** Use CodeIgniter 4 Query Builder and `Auditable` traits.
-- **Entities:** Represent a single row. They should be converted to **Response DTOs** before leaving the service layer to avoid accidental data leakage.
+- **Models:** Use CodeIgniter 4 Query Builder.
+- **Auditable:** Models use the `Auditable` trait for automatic trail logging.
+- **Entities:** Represent row data. Must be converted to **Response DTOs** in the service layer.
 
 ---
 
 ## Summary
 
-| Layer | Responsibility | Input | Output |
-|-------|----------------|-------|--------|
-| **Controller** | HTTP I/O & Mapping | Request | JSON Response |
-| **DTO** | Contract & Validation | Raw Array | Typed Object |
-| **Service** | Business Logic | DTO/Object | DTO/Entity |
-| **Model** | Database Ops | Array/Entity | Entity/Object |
-| **Entity** | Row Representation | DB Row | Typed Properties |
+| Layer | Responsibility | Pattern |
+|-------|----------------|---------|
+| **Controller** | Orchestration | Declarative via `handleRequest` |
+| **DTO** | Integrity | Self-validating constructor |
+| **Service** | Logic | Pure & Transactional |
+| **Model** | Persistence | Auditable Query Builder |
+| **Entity** | Representation | Strongly Typed Row |
 
 **Flow:**
 ```
-Request → Controller → [RequestDTO] → Service → Model → Entity → [ResponseDTO] → ApiResponse → JSON
+Request → Controller (Orchestrator) → RequestDTO (Guardian) → Service (Logic) → Model → Entity → ResponseDTO (Contract) → JSON
 ```
-
-Each layer is **independently testable** and has **one reason to change**.

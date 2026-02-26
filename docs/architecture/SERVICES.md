@@ -1,50 +1,57 @@
-# Service Container (IoC)
+# Service Layer & IoC
 
+The Service layer contains all business logic and orchestrates domain operations. In this architecture, services are **"Pure"** and **Decoupled**.
 
-## Registering Services
+---
+
+## Pure Service Pattern
+
+Services should NOT have any knowledge of HTTP, JSON, or `ApiResponse`.
+
+- **Input:** Specific DTOs or scalar types.
+- **Output:** DTOs, Entities, or pure arrays.
+- **Errors:** Thrown as custom Exceptions (e.g., `AuthenticationException`).
+
+### Example
+
+```php
+// app/Services/UserService.php
+public function store(UserCreateRequestDTO $request): UserResponseDTO
+{
+    $userId = $this->userModel->insert($request->toArray());
+    
+    // Return typed object
+    return UserResponseDTO::fromArray($this->userModel->find($userId)->toArray());
+}
+```
+
+---
+
+## Registering Services (IoC)
+
+Services are registered in the CodeIgniter 4 Service Container for dependency injection.
 
 ```php
 // app/Config/Services.php
-public static function productService(bool $getShared = true)
+public static function userService(bool $getShared = true)
 {
     if ($getShared) {
-        return static::getSharedInstance('productService');
+        return static::getSharedInstance('userService');
     }
     
-    return new \App\Services\ProductService(
-        new \App\Models\ProductModel()
-    );
-}
-```
-
-## Usage
-
-```php
-// In controllers
-$service = \Config\Services::productService();
-
-// Shared instance (singleton per request)
-$service1 = \Config\Services::productService();
-$service2 = \Config\Services::productService();
-// $service1 === $service2 (true)
-
-// New instance
-$newService = \Config\Services::productService(false);
-```
-
-## Dependency Graph
-
-Services can depend on other services:
-
-```php
-public static function authService(bool $getShared = true)
-{
-    return new \App\Services\AuthService(
+    return new \App\Services\UserService(
         new \App\Models\UserModel(),
-        static::jwtService(),           // Dependency
-        static::refreshTokenService(),  // Dependency
-        static::verificationService()   // Dependency
+        static::emailService(),
+        new \App\Models\PasswordResetModel(),
+        static::auditService()
     );
 }
 ```
 
+---
+
+## Benefits of Decoupling
+
+1. **Testability:** You can test services with simple object assertions, without mocking `ApiResponse`.
+2. **Reusability:** The same service can be used by a Web Controller, a CLI Command, or a Cron Job.
+3. **Clarity:** The interface clearly defines the data contract.

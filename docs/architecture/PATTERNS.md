@@ -1,30 +1,40 @@
 # Design Patterns
 
+## Core Patterns
 
-## Patterns Used
+### Data Transfer Object (DTO)
+Used for all data transfer between Controllers and Services.
+- **Implementation:** PHP 8.2 `readonly` classes.
+- **Benefits:** Inmutability, strict typing, and auto-validation in constructors.
 
-### Service Layer Pattern
-Separate business logic from presentation layer.
+### Pure Service Pattern
+Services are decoupled from HTTP/API concerns.
+- **Implementation:** Return DTOs or Entities, throw exceptions for errors.
+- **Benefits:** Testability and reuse across different interfaces (Web, CLI, API).
 
-### Repository Pattern (via Model)
-Abstract database access.
+### Normalizer / Serializer Pattern
+Automatic conversion of complex objects to JSON-ready arrays.
+- **Implementation:** `ApiController::respond` calling `ApiResponse::convertDataToArrays`.
+- **Benefits:** Contract stability and automatic property mapping.
 
-### Data Transfer Object (via Entity)
-Transport data between layers with behavior.
+### Living Documentation Pattern
+OpenAPI annotations live where the data is defined.
+- **Implementation:** `#[OA\Property]` attributes in DTO classes.
+- **Benefits:** Code and documentation are always in sync.
 
-### Factory Pattern (Services Container)
-Centralize object creation with dependencies.
+## Structural Patterns
 
 ### Template Method Pattern (ApiController)
-Define algorithm skeleton, subclasses provide details.
+Defines the request handling algorithm skeleton (`handleRequest`), while subclasses provide domain-specific services.
 
 ### Strategy Pattern (Storage Drivers)
-Define family of interchangeable algorithms (local vs S3).
+Allows interchangeable storage backends (Local, AWS S3) via `StorageManager`.
 
 ### Chain of Responsibility (Filters)
-Pass request through chain of handlers.
+Requests pass through a chain of filters (Auth, Throttle, Locale) before reaching the controller.
 
-### Decorator Pattern (Model Traits)
-Add responsibilities dynamically (Filterable, Searchable).
+### Facade Pattern (AuthTokenService)
+Provides a simplified interface to complex token management subsystems.
 
-**See `../ARCHITECTURE.md` section 16 for detailed pattern explanations and examples.**
+### Observer Pattern (Events)
+Used for decoupling side-effects like auditing and email sending from main business flows.

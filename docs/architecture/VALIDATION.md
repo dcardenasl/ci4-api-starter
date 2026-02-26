@@ -1,61 +1,52 @@
 # Validation System
 
-This project uses a layered validation strategy with a strict domain/action contract.
+This project uses a layered validation strategy. The primary entry point for validation is the **DTO Layer**.
 
 ## Validation Layers
 
-1. Input validation (`app/Validations/*Validation.php`)
-2. Model validation (`Model::$validationRules`)
-3. Business rules (service logic)
+1. **DTO Validation:** (Request DTOs) Handled via `validateOrFail()` in the constructor.
+2. **Model Validation:** (`Model::$validationRules`) Ensures database integrity.
+3. **Business Rules:** (Service logic) Domain-specific decisions.
 
-Each layer has a different responsibility:
-- Input validation: request shape, format, constraints.
-- Model validation: DB integrity and persistence-level constraints.
-- Business rules: domain decisions (ownership, state transitions, side effects).
+---
+
+## DTO Auto-Validation
+
+Request DTOs are the "gatekeepers". They ensure that no invalid data enters the service layer.
+
+```php
+readonly class RegisterRequestDTO implements DataTransferObjectInterface
+{
+    public function __construct(array $data)
+    {
+        // Triggers CI4 validation against central rules
+        validateOrFail($data, 'auth', 'register');
+
+        $this->email = $data['email'];
+        // ...
+    }
+}
+```
+
+### Benefits
+- **Make illegal states unrepresentable:** You cannot have a DTO instance with invalid data.
+- **Fail Fast:** The request is rejected as soon as the DTO is instantiated in the controller.
+- **Consistency:** The same rules apply regardless of where the DTO is created (API, CLI, etc.).
+
+---
 
 ## Domain/Action Contract
 
-Validation is grouped by domain (for example: `auth`, `user`, `file`, `token`, `audit`) and action (`login`, `update`, `upload`, etc.).
+Validation rules are centralized in `app/Validations/` and registered in `InputValidationService`.
 
-Main helpers:
+Example Domains: `auth`, `user`, `file`, `token`, `audit`, `api_key`.
 
-```php
-validateOrFail($data, 'auth', 'login');
-$validation = getValidationRules('file', 'upload');
-$errors = validateInputs($data, $validation['rules'], $validation['messages']);
-```
-
-Important behavior:
-- `validateOrFail()` now fails fast if the domain is not registered.
-- `validateOrFail()` now fails fast if the action is unknown for a valid domain.
-- Unknown domain/action raises `InvalidArgumentException` (configuration/programming error).
-- Invalid user input raises `ValidationException` (HTTP 422).
-
-## How Services Apply Validation
-
-Two patterns are intentionally used:
-
-1. `validateOrFail(...)` for direct 422 flow.
-2. `getValidationRules(...) + validateInputs(...)` when service maps errors to `BadRequestException` with custom message context.
-
-Recent examples in the codebase:
-- Password reset uses `validateOrFail($data, 'auth', ...)`.
-- User update uses `validateOrFail($data, 'user', 'update')`.
-- File/audit/token services consume centralized rule sets via helpers.
-
-## Model Validation Notes
-
-Model rules should avoid conflicting with partial update semantics.
-
-Example:
-- `UserModel` email rule uses `permit_empty|valid_email_idn|max_length[255]|is_unique[...]`.
-- Required fields for update must be enforced at input-validation level (`user:update`), not by forcing model-required for all writes.
+---
 
 ## Common Rules Used
 
 - `required`, `permit_empty`
-- `is_natural_no_zero`
 - `valid_email_idn`
-- `valid_token[64]`
-- `strong_password`
+- `strong_password` (Custom rule)
 - `max_length[N]`, `min_length[N]`
+- `is_natural_no_zero` (For IDs and counts)

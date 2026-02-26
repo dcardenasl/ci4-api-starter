@@ -1,13 +1,22 @@
 # CodeIgniter 4 API Starter Kit
 
-![PHP Version](https://img.shields.io/badge/PHP-8.1%20%7C%208.2%20%7C%208.3-blue)
+![PHP Version](https://img.shields.io/badge/PHP-8.2%20%7C%208.3-blue)
 ![CodeIgniter](https://img.shields.io/badge/CodeIgniter-4.6-orange)
-![Tests](https://img.shields.io/badge/tests-passing-success)
-![License](https://img.shields.io/badge/license-MIT-blue)
+![Architecture](https://img.shields.io/badge/Architecture-DTO--First-success)
 
 English | [Español](README.es.md)
 
-A production-ready REST API starter template for CodeIgniter 4 with JWT authentication, clean layered architecture, and comprehensive test coverage.
+A production-ready REST API starter template for CodeIgniter 4 with a **modern DTO-first architecture**, JWT authentication, and comprehensive test coverage.
+
+## Core Architecture
+
+This project follows an advanced layered architecture designed for scalability and high-stakes business logic:
+
+- **Immutable DTOs:** Uses PHP 8.2 `readonly` classes for all data transfer between layers.
+- **Pure Services:** Business logic is 100% decoupled from HTTP/API concerns.
+- **Auto-Validation:** Data is validated at the boundary (DTO construction).
+- **Living Documentation:** Swagger schemas are integrated directly into code contracts.
+- **Output Normalization:** Automatic recursive conversion of complex objects to standardized JSON.
 
 ## Features
 
@@ -18,9 +27,9 @@ A production-ready REST API starter template for CodeIgniter 4 with JWT authenti
 - **File Management** - Multipart & Base64 uploads ([Docs](docs/features/FILE_MANAGEMENT.md))
 - **Queue System** - Background job processing ([Docs](docs/features/QUEUE_SYSTEM.md))
 - **Advanced Querying** - Pagination, filtering, searching, sorting
-- **Audit Trail** - Automatic logging of data changes
+- **Audit Trail** - Automatic logging of data changes with sensitive field sanitization
 - **Health Checks** - Kubernetes-ready endpoints (`/health`, `/ready`, `/live`)
-- **OpenAPI Documentation** - Auto-generated Swagger docs
+- **OpenAPI Documentation** - Auto-generated Swagger docs from DTOs
 - **Comprehensive Test Suite** - Unit, integration, and feature tests ([Docs](docs/features/TESTING_API.md))
 
 ## Quick Start
@@ -210,18 +219,21 @@ Generated file: `public/swagger.json` (served at `http://localhost:8080/swagger.
 ```
 app/
 ├── Controllers/
-│   ├── ApiController.php          # Base controller
-│   └── Api/V1/                    # API v1 controllers grouped by domain (Auth, Identity, Users, Files, Admin, System)
-├── Services/                      # Business logic
-├── Interfaces/                    # Service interfaces
+│   ├── ApiController.php          # Base controller with DTO mapping
+│   └── Api/V1/                    # API controllers
+├── DTO/                           # Data Transfer Objects (Inmutable & Validated)
+│   ├── Request/                   # Input contracts
+│   └── Response/                  # Output contracts (OpenAPI integrated)
+├── Services/                      # Pure business logic
+├── Interfaces/                    # Service and DTO interfaces
 ├── Models/                        # Database models
 ├── Entities/                      # Data entities
-├── Filters/                       # HTTP filters (auth, throttle, cors)
+├── Filters/                       # HTTP filters
 ├── Exceptions/                    # Custom exceptions
 ├── Libraries/
-│   ├── ApiResponse.php           # Standardized responses
+│   ├── ApiResponse.php           # Recursive DTO normalization
 │   └── Query/                    # Query builder utilities
-└── Traits/                       # Model traits (Filterable, Searchable)
+└── Traits/                       # Model traits
 
 tests/
 ├── Unit/                         # No database required

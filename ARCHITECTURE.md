@@ -38,15 +38,16 @@ class UserController extends ApiController
     protected string $serviceName = 'userService';
 
     public function index(): ResponseInterface {
-        return $this->handleRequest('index');
+        $dto = $this->getDTO(UserIndexRequestDTO::class);
+        return $this->handleRequest(fn() => $this->getService()->index($dto));
     }
 }
 ```
 
 **Benefits:**
 - ✅ Centralized exception handling
-- ✅ Automatic request data collection
-- ✅ Standardized response format
+- ✅ Automatic request-to-DTO mapping and validation
+- ✅ Standardized response format with recursive DTO normalization
 - ✅ Built-in XSS sanitization
 - ✅ Consistent error responses
 
@@ -106,105 +107,42 @@ class HealthController extends Controller
 
 ## Documentation Strategy
 
-### ADR-002: Separated OpenAPI Documentation
+### ADR-002: Integrated Living Documentation
 
-**Decision:** OpenAPI documentation lives in separate PHP files in `app/Documentation/`, NOT as annotations in controllers.
+**Decision:** OpenAPI schemas live directly within DTO classes as PHP 8 attributes. Endpoint definitions remain in `app/Documentation/`.
 
 **Structure:**
 ```
+app/DTO/
+├── Request/
+│   └── Auth/
+│       └── LoginRequestDTO.php    # Contains #[OA\Schema] for request
+└── Response/
+    └── Users/
+        └── UserResponseDTO.php    # Contains #[OA\Schema] for response
+
 app/Documentation/
 ├── Auth/
-│   ├── AuthEndpoints.php       # Endpoint definitions
-│   ├── LoginRequest.php        # Request schemas
-│   ├── RegisterRequest.php
-│   └── AuthTokenSchema.php     # Response schemas
-├── Users/
-│   ├── UserEndpoints.php
-│   ├── UserSchema.php
-│   ├── CreateUserRequest.php
-│   └── UpdateUserRequest.php
-├── Files/
-│   ├── FileEndpoints.php
-│   └── FileSchema.php
-└── Common/
-    ├── UnauthorizedResponse.php
-    ├── ValidationErrorResponse.php
-    └── NotFoundResponse.php
+│   └── AuthEndpoints.php          # References schemas in DTOs
+└── Users/
+    └── UserEndpoints.php          # References schemas in DTOs
 ```
 
 **Generation:**
 ```bash
-php spark swagger:generate  # Scans app/Documentation/ and generates swagger.json
+php spark swagger:generate  # Scans app/DTO/ and app/Documentation/
 ```
 
-**Why Separated Files Over Annotations?**
+**Why Integrated DTO Documentation?**
 
-#### 1. Separation of Concerns
-```php
-// ❌ BAD: Annotation approach (coupled)
-class UserController extends ApiController
-{
-    /**
-     * @OA\Get(
-     *     path="/api/v1/users/{id}",
-     *     summary="Get user by ID",
-     *     tags={"Users"},
-     *     security={{"bearerAuth":{}}},
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         required=true,
-     *         @OA\Schema(type="integer")
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="User found",
-     *         @OA\JsonContent(ref="#/components/schemas/User")
-     *     ),
-     *     @OA\Response(
-     *         response=404,
-     *         description="User not found"
-     *     )
-     * )
-     */
-    public function show($id): ResponseInterface {
-        return $this->handleRequest('show', ['id' => $id]);
-    }
-}
+#### 1. Single Source of Truth
+The code *is* the documentation. If you add a property to a `UserResponseDTO`, you add the `#[OA\Property]` next to it. They can never go out of sync.
 
-// ✅ GOOD: Separated approach (clean)
-class UserController extends ApiController
-{
-    public function show($id): ResponseInterface {
-        return $this->handleRequest('show', ['id' => $id]);
-    }
-}
+#### 2. Automatic Validation
+The `swagger:generate` command will fail if a DTO references a schema that doesn't exist or if property types mismatch, acting as a compile-time check for documentation.
 
-// Documentation in app/Documentation/Users/UserEndpoints.php
-```
-
-#### 2. Reusability
-```php
-// Common schemas can be reused across endpoints
-class ValidationErrorResponse { /* @OA\Schema ... */ }
-class UnauthorizedResponse { /* @OA\Schema ... */ }
-
-// Used in UserEndpoints, FileEndpoints, AuthEndpoints, etc.
-```
-
-#### 3. Team Collaboration
-- Developers focus on code
-- Technical writers can update docs without touching code
-- Easier code reviews (docs changes don't pollute controller diffs)
-- Less merge conflicts
-
-#### 4. Maintainability
-- Documentation changes don't trigger controller tests
-- Easier to find and update related documentation
-- Better organization (grouped by feature)
-
-#### 5. Cleaner Code
-Controllers stay focused on their responsibility: routing requests to services.
+#### 3. Cleaner Architecture
+We eliminated "phantom classes" in `app/Documentation/` that only existed to hold annotations. Documentation is now an intrinsic part of the data contract.
 
 **References:**
 - This is the same pattern used by Symfony API Platform
@@ -248,8 +186,6 @@ tests/
 ```php
 class AuthServiceTest extends CIUnitTestCase
 {
-    use CustomAssertionsTrait;  // ✅ For services returning ApiResponse
-
     protected function setUp(): void {
         $this->mockUserModel = $this->createMock(UserModel::class);
         $this->mockJwtService = $this->createMock(JwtServiceInterface::class);
@@ -257,8 +193,11 @@ class AuthServiceTest extends CIUnitTestCase
     }
 
     public function testLoginWithValidCredentials(): void {
-        $result = $this->service->login(['username' => 'test', 'password' => 'pass']);
-        $this->assertSuccessResponse($result);  // Uses CustomAssertionsTrait
+        $dto = new LoginRequestDTO(['email' => 'test@example.com', 'password' => 'pass']);
+        $result = $this->service->login($dto);
+        
+        $this->assertInstanceOf(LoginResponseDTO::class, $result);
+        $this->assertEquals('test@example.com', $result->user['email']);
     }
 }
 ```
@@ -311,28 +250,15 @@ class UserControllerTest extends FeatureTestCase
 
 ### ADR-004: CustomAssertionsTrait Usage
 
-**Decision:** Only use `CustomAssertionsTrait` in tests that verify `ApiResponse` structure.
+**Decision:** Only use `CustomAssertionsTrait` in **Feature/Integration tests** that verify the final `ApiResponse` structure returned by the controller. **Service unit tests** should use standard object/type assertions since they return DTOs.
 
 #### When to Use
-
-✅ **Service tests** (they return ApiResponse arrays):
-```php
-class UserServiceTest extends CIUnitTestCase
-{
-    use CustomAssertionsTrait;  // ✅ Correct
-
-    public function testStore(): void {
-        $result = $this->service->store(['username' => 'test']);
-        $this->assertSuccessResponse($result);  // ApiResponse format
-    }
-}
-```
 
 ✅ **Feature/Controller tests** (HTTP responses with ApiResponse body):
 ```php
 class UserControllerTest extends FeatureTestCase
 {
-    use CustomAssertionsTrait;  // ✅ Correct
+    use CustomAssertionsTrait;
 
     public function testIndex(): void {
         $response = $this->get('/api/v1/users');
@@ -343,6 +269,18 @@ class UserControllerTest extends FeatureTestCase
 ```
 
 #### When NOT to Use
+
+❌ **Service unit tests** (they return DTO objects):
+```php
+class UserServiceTest extends CIUnitTestCase
+{
+    // ❌ NO CustomAssertionsTrait
+    public function testShow(): void {
+        $result = $this->service->show(['id' => 1]);
+        $this->assertInstanceOf(UserResponseDTO::class, $result);
+    }
+}
+```
 
 ❌ **ApiResponse library tests** (circular dependency):
 ```php
@@ -422,9 +360,9 @@ class UserModelTest extends CIUnitTestCase
 **Implementation:**
 ```php
 // app/Services/FileService.php
-public function upload(array $data): array
+public function upload(FileUploadRequestDTO $request): FileResponseDTO
 {
-    $file = $data['file'];  // Already in /tmp/phpXXXXX
+    $file = $request->file;
 
     // ✅ Validate BEFORE moving to permanent storage
     if ($file->getSize() > $maxSize) {
@@ -437,8 +375,8 @@ public function upload(array $data): array
     }
 
     // Now move to permanent storage
-    $contents = file_get_contents($file->getTempName());  // Read from /tmp
-    $stored = $this->storage->put($path, $contents);      // Write to storage
+    $contents = file_get_contents($file->getTempName());
+    $stored = $this->storage->put($path, $contents);
 
     // Save to DB
     $fileId = $this->fileModel->insert($metadata);
@@ -449,7 +387,7 @@ public function upload(array $data): array
         throw new \RuntimeException('Failed to save file metadata');
     }
 
-    return ApiResponse::created($file->toArray());
+    return FileResponseDTO::fromArray($this->fileModel->find($fileId)->toArray());
 }
 ```
 
@@ -468,109 +406,69 @@ public function upload(array $data): array
 
 ## Service Layer Patterns
 
-### ADR-006: Explicit Parameters vs Auto-Collection
+### ADR-006: Data Transfer Objects (DTOs)
 
-**Decision:** Both patterns are valid depending on clarity and context.
+**Decision:** Use PHP 8.2 `readonly classes` for all data transfer between Controllers and Services.
 
-#### Explicit Parameters (Recommended for Non-Standard Operations)
-
+**Pattern:**
 ```php
-public function sendResetLink(): ResponseInterface
-{
-    $email = $this->request->getVar('email') ?? '';
-    return $this->handleRequest('sendResetLink', ['email' => $email]);
+// Request DTO (Auto-validated)
+readonly class RegisterRequestDTO {
+    public function __construct(array $data) {
+        validateOrFail($data, 'auth', 'register');
+        $this->email = $data['email'];
+        // ...
+    }
+}
+
+// Service Method
+public function register(RegisterRequestDTO $request): RegisterResponseDTO {
+    // Business logic...
 }
 ```
 
 **Benefits:**
-- ✅ Self-documenting: clearly shows required parameter
-- ✅ Type-safe: can cast or validate immediately
-- ✅ Testable: easy to see what data is passed
-- ✅ Explicit > Implicit (Zen of Python)
+- ✅ **Type Safety:** Eliminate string keys and array guessing.
+- ✅ **Immutability:** Data cannot be modified after validation.
+- ✅ **Early Validation:** The service never receives invalid data because the DTO fails in its constructor.
+- ✅ **Contract Clarity:** Response DTOs explicitly define what fields the frontend receives.
 
-**Use for:**
-- Password reset flows
-- Email verification
-- Token operations
-- Any non-CRUD operation
+**When to use:**
+- Every API endpoint that receives or returns structured data.
+- List operations (use QueryDTOs for filters/pagination).
 
-#### Auto-Collection (Recommended for Standard CRUD)
+### ADR-007: Pure Services & Exception-Based Error Handling
 
-```php
-public function update($id): ResponseInterface
-{
-    return $this->handleRequest('update', ['id' => $id]);
-}
-```
-
-**Benefits:**
-- ✅ Less boilerplate
-- ✅ Standard CRUD is self-evident
-- ✅ `collectRequestData()` handles GET, POST, JSON, etc.
-
-**Use for:**
-- index, show, store, update, destroy
-- Standard resource operations
-- When all data comes from request body
-
-**Both are correct.** Choose based on what makes the code clearer.
-
-### ADR-007: Exception-Based Error Handling
-
-**Decision:** Services throw exceptions; controllers catch them.
+**Decision:** Services are "pure" (decoupled from HTTP/API concerns). They return DTOs/Entities and throw exceptions for errors.
 
 **Pattern:**
 ```php
 // ✅ Service
-public function show(array $data): array
+public function show(array $data): UserResponseDTO
 {
     $user = $this->userModel->find($data['id']);
 
     if (!$user) {
-        throw new NotFoundException('User not found');  // ✅ Throw
+        throw new NotFoundException('User not found');
     }
 
-    return ApiResponse::success($user->toArray());
+    return UserResponseDTO::fromArray($user->toArray());
 }
 
 // ✅ Controller
 public function show($id): ResponseInterface
 {
-    return $this->handleRequest('show', ['id' => $id]);
-    // handleRequest() catches exceptions and converts to HTTP responses
+    return $this->handleRequest(fn() => $this->getService()->show(['id' => $id]));
 }
 ```
 
-**Why NOT return errors?**
-```php
-// ❌ BAD: Service returns error response
-public function show(array $data): array
-{
-    if (!$user) {
-        return ApiResponse::notFound('User not found');  // ❌ Controller concern
-    }
-    return ApiResponse::success($user);
-}
-```
+**Why Decouple from ApiResponse?**
+- Services shouldn't know about `status` codes or JSON wrapping.
+- Higher reusability (CLI commands can use the same service).
+- Cleaner testing (no need to parse `ApiResponse` arrays).
 
-**Problems:**
-- Services shouldn't know about HTTP status codes
-- Can't distinguish between success and error programmatically
-- Makes testing harder
-- Breaks single responsibility
-
-**Exception Mapping:**
-```php
-NotFoundException           → 404
-AuthenticationException     → 401
-AuthorizationException      → 403
-ValidationException         → 422
-BadRequestException         → 400
-ConflictException           → 409
-\Exception                  → 500
-```
-
-**Handled in:** `ApiController::handleException()`
+**Automatic Normalization:**
+The `ApiController` automatically wraps DTOs/Arrays in `ApiResponse::success()` and recursively converts DTOs to arrays before final JSON encoding.
 
 ---
 

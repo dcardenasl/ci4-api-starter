@@ -1,11 +1,34 @@
 # Formato de Respuesta API
 
+La API sigue un formato de respuesta estricto y predecible. Todos los endpoints de negocio retornan JSON envuelto en una estructura estándar.
+
+---
+
+## Normalización Automática
+
+El `ApiController` maneja la estructura final de la respuesta. Los servicios retornan datos puros (DTOs, Entidades o Arreglos), y el controlador automáticamente:
+1. Envuelve el resultado en `ApiResponse::success()`.
+2. Convierte recursivamente todos los DTOs en arreglos asociativos.
+3. Mapea los nombres de propiedades de camelCase (backend) a snake_case (contrato frontend).
+
+---
 
 ## Librería ApiResponse
 
-Todos los servicios DEBEN retornar arrays usando métodos estáticos de `ApiResponse`.
+Aunque el `ApiController` maneja los casos estándar, `ApiResponse` puede usarse explícitamente para necesidades personalizadas.
 
-## Métodos
+### Estructura Core
+
+```json
+{
+  "status": "success",
+  "message": "Mensaje opcional para humanos",
+  "data": { /* Payload principal */ },
+  "meta": { /* Metadatos, ej. paginación */ }
+}
+```
+
+### Métodos
 
 ```php
 // Respuestas de éxito
@@ -15,47 +38,34 @@ ApiResponse::deleted($message = null)
 
 // Paginado
 ApiResponse::paginated($items, $total, $page, $perPage)
-
-// Error (raramente usado - preferir lanzar excepciones)
-ApiResponse::error($errors, $message = null, $code = null)
-ApiResponse::validationError($errors, $message = null)
-ApiResponse::notFound($message = null)
-ApiResponse::unauthorized($message = null)
-ApiResponse::forbidden($message = null)
 ```
 
-## Estructura de Respuesta
+---
 
-### Success (200 OK)
+## Ejemplos de Contrato
+
+### Éxito Estándar (200 OK)
 ```json
 {
   "status": "success",
-  "message": "User retrieved successfully",
-  "data": { /* ... */ }
+  "data": {
+    "id": 1,
+    "email": "user@example.com",
+    "first_name": "Juan"
+  }
 }
 ```
 
-### Created (201 Created)
-```json
-{
-  "status": "success",
-  "message": "Resource created successfully",
-  "data": { /* ... */ }
-}
-```
-
-### Paginated (200 OK)
+### Resultado Paginado (200 OK)
 ```json
 {
   "status": "success",
   "data": [ /* items */ ],
   "meta": {
     "total": 100,
-    "perPage": 20,
+    "per_page": 20,
     "page": 1,
-    "lastPage": 5,
-    "from": 1,
-    "to": 20
+    "last_page": 5
   }
 }
 ```
@@ -66,8 +76,7 @@ ApiResponse::forbidden($message = null)
   "status": "error",
   "message": "Validation failed",
   "errors": {
-    "email": "Email is required",
-    "password": "Password too short"
+    "email": "Email is already registered"
   },
   "code": 422
 }
@@ -75,5 +84,6 @@ ApiResponse::forbidden($message = null)
 
 ## Excepciones a Este Contrato
 
-- Los endpoints operativos de health (`GET /health`, `GET /ping`, `GET /ready`, `GET /live`) usan un payload orientado a monitoreo y no se envuelven con `ApiResponse`.
-- Las respuestas de rate limit (`429`) siguen el contrato de error estándar y adicionalmente incluyen `retry_after` en el nivel raíz.
+- Los endpoints operativos de health (`GET /health`, `GET /ping`) usan un payload plano de monitoreo.
+- Las descargas o streams de archivos retornan datos binarios con el `Content-Type` adecuado.
+- Las respuestas de rate limit (`429`) incluyen un campo `retry_after` en el nivel raíz.

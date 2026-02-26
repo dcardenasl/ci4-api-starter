@@ -13,62 +13,44 @@ HTTP Request
 ┌─────────────────────────────────────────┐
 │ 1. ROUTING                              │
 │    - Match URL to controller/method     │
-│    - Extract route parameters           │
 │    - Assign filters                     │
 └─────────────────────────────────────────┘
      │
      ▼
 ┌─────────────────────────────────────────┐
 │ 2. FILTERS (Middleware Pipeline)        │
-│    CorsFilter                           │
-│         ↓                               │
-│    ThrottleFilter (rate limiting)       │
-│         ↓                               │
-│    JwtAuthFilter (validate token)       │
-│         ↓                               │
-│    RoleAuthFilter (check permissions)   │
+│    Throttle → JwtAuth → RoleAuth        │
 └─────────────────────────────────────────┘
      │
      ▼
 ┌─────────────────────────────────────────┐
-│ 3. CONTROLLER                           │
-│    - handleRequest()                    │
-│    - collectRequestData()               │
-│    - sanitizeInput() (XSS prevention)   │
-│    - Delegate to service                │
+│ 3. CONTROLLER (Mapping)                 │
+│    - getDTO() instantiates DTO          │
+│    - DTO constructor validates input    │
+│    - handleRequest() uses closure       │
 └─────────────────────────────────────────┘
      │
      ▼
 ┌─────────────────────────────────────────┐
-│ 4. SERVICE                              │
-│    - Validate business rules            │
-│    - Call model methods                 │
-│    - Transform data                     │
-│    - Format ApiResponse                 │
+│ 4. SERVICE (Pure Business Logic)        │
+│    - Operates on typed DTOs             │
+│    - Coordinates Models                 │
+│    - Returns Entity or ResponseDTO      │
 └─────────────────────────────────────────┘
      │
      ▼
 ┌─────────────────────────────────────────┐
-│ 5. MODEL                                │
-│    - Build query                        │
-│    - Execute via query builder          │
-│    - Return entities                    │
+│ 5. MODEL & ENTITY                       │
+│    - Standard DB operations             │
+│    - Return hydrated Entities           │
 └─────────────────────────────────────────┘
      │
      ▼
 ┌─────────────────────────────────────────┐
-│ 6. ENTITY                               │
-│    - Cast types                         │
-│    - Hide sensitive fields              │
-│    - Compute properties                 │
-└─────────────────────────────────────────┘
-     │
-     ▼
-┌─────────────────────────────────────────┐
-│ 7. RESPONSE                             │
-│    - ApiResponse formats JSON           │
-│    - Controller sets HTTP status        │
-│    - Return ResponseInterface           │
+│ 6. RESPONSE NORMALIZATION               │
+│    - ApiController::respond()           │
+│    - Recursively convert DTO to array   │
+│    - ApiResponse wraps in 'data'        │
 └─────────────────────────────────────────┘
      │
      ▼
@@ -81,294 +63,50 @@ HTTP Response (JSON)
 
 These rules are mandatory for API controllers extending `ApiController`.
 
-1. Use `handleRequest()` for JSON endpoints.
-2. Do not duplicate `collectRequestData()`, `sanitizeInput()`, `try/catch`, or direct service invocation in each method.
-3. For success status that depends on payload (e.g. `200` vs `202`), override `resolveSuccessStatus($method, $result)` in the controller.
-4. Keep business decisions in services, HTTP transport decisions in controllers.
+1. Use `getDTO()` to capture and validate input data early.
+2. Use `handleRequest(fn() => ...)` to delegate to services.
+3. Services must remain "pure" (no HTTP knowledge).
+4. For success status that depends on payload, override `resolveSuccessStatus($method, $result)`.
 5. Use `handleException()` for consistent error mapping.
-
-### Correct pattern for dynamic status
-
-```php
-// Controller
-public function googleLogin(): ResponseInterface
-{
-    return $this->handleRequest('loginWithGoogleToken');
-}
-
-protected function resolveSuccessStatus(string $method, array $result): int
-{
-    if ($method === 'loginWithGoogleToken') {
-        $pending = ($result['data']['user']['status'] ?? null) === 'pending_approval';
-        $hasToken = isset($result['data']['access_token']);
-        if ($pending && ! $hasToken) {
-            return 202;
-        }
-    }
-
-    return parent::resolveSuccessStatus($method, $result);
-}
-```
-
-### Anti-pattern (do not do this)
-
-```php
-// ❌ Re-implementing handleRequest pipeline in each controller method
-public function someAction(): ResponseInterface
-{
-    try {
-        $data = $this->collectRequestData();
-        $result = $this->getService()->someMethod($data);
-        return $this->respond($result, 200);
-    } catch (Exception $e) {
-        return $this->handleException($e);
-    }
-}
-```
-
-### Explicit exceptions
-
-The only accepted exceptions are:
-- Endpoints that must return non-JSON transport responses (file download/stream).
-- Infrastructure controllers intentionally not extending `ApiController` (e.g. metrics/observability).
 
 ---
 
 ## Example: Create User (POST /api/v1/users)
 
-### Request
-
-```bash
-POST /api/v1/users HTTP/1.1
-Host: localhost:8080
-Authorization: Bearer eyJ0eXAiOiJKV1Qi...
-Content-Type: application/json
-
-{
-  "email": "john@example.com",
-  "first_name": "John",
-  "last_name": "Doe",
-  "role": "user"
-}
-```
-
-### Step-by-Step Execution
-
-#### 1. Routing (app/Config/Routes.php)
-```
-Match: POST /api/v1/users
-Controller: App\Controllers\Api\V1\UserController::create
-Filters: ['throttle', 'jwtauth', 'roleauth:admin']
-```
-
-#### 2. Filter Pipeline
-
-**ThrottleFilter:**
-```php
-- Check rate limit: 60 req/min per IP
-- Increment counter in cache
-- ✅ Pass (45/60 requests used)
-```
-
-**JwtAuthFilter:**
-```php
-- Extract Bearer token from Authorization header
-- Decode JWT using JwtService
-- Validate signature and expiration
-- Check if revoked (blacklist lookup)
-- Inject userId=5, userRole='admin' into request
-- ✅ Pass
-```
-
-**RoleAuthFilter:**
-```php
-- Required role: 'admin'
-- User role: 'admin' (from JWT)
-- ✅ Pass (admin >= admin)
-```
-
-#### 3. Controller (UserController::create)
+### 1. Controller Mapping
 
 ```php
 public function create(): ResponseInterface
 {
-    return $this->handleRequest('store');
-}
+    // DTO instantiation fails if input is invalid
+    $dto = new UserCreateRequestDTO($this->collectRequestData());
 
-// ApiController::handleRequest()
-protected function handleRequest(string $method, ?array $params = null)
-{
-    try {
-        // Collect data
-        $data = $this->collectRequestData($params);
-        // $data = [
-        //     'email' => 'john@example.com',
-        //     'first_name' => 'John',
-        //     'last_name' => 'Doe',
-        //     'role' => 'user',
-        //     'user_id' => 5  // From JWT
-        // ]
-
-        // Sanitize (XSS prevention)
-        $data = $this->sanitizeInput($data);  // strip_tags() on strings
-
-        // Delegate to service
-        $result = $this->getService()->store($data);
-
-        // Determine status code
-        $status = 201;  // Created
-
-        // Return response
-        return $this->respond($result, $status);
-
-    } catch (Exception $e) {
-        return $this->handleException($e);
-    }
+    return $this->handleRequest(
+        fn() => $this->getService()->store($dto)
+    );
 }
 ```
 
-#### 4. Service (UserService::store)
+### 2. Service Logic (Pure)
 
 ```php
-public function store(array $data): array
+public function store(UserCreateRequestDTO $request): UserResponseDTO
 {
-    // 1. Model validation
-    if (!$this->userModel->validate($data)) {
-        throw new ValidationException(
-            'Validation failed',
-            $this->userModel->errors()
-        );
-    }
-
-    // 2. Business rule: admin cannot provide password in request
-
-    // 3. Transform data
-    $generatedPassword = bin2hex(random_bytes(24)) . 'Aa1!';
-    $insertData = [
-        'email' => $data['email'],
-        'first_name' => $data['first_name'],
-        'last_name' => $data['last_name'],
-        'password' => password_hash($generatedPassword, PASSWORD_BCRYPT),
-        'role' => $data['role'] ?? 'user',
-        'status' => 'invited',
-        'approved_at' => date('Y-m-d H:i:s'),
-        'invited_at' => date('Y-m-d H:i:s'),
-        'email_verified_at' => date('Y-m-d H:i:s'),
-    ];
-
-    // 4. Persist
-    $userId = $this->userModel->insert($insertData);
-
-    // 5. Retrieve entity
+    // Business logic using typed $request->email, etc.
+    $userId = $this->userModel->insert($request->toArray());
     $user = $this->userModel->find($userId);
 
-    // 6. Format response
-    return ApiResponse::created($user->toArray());
+    return UserResponseDTO::fromArray($user->toArray());
 }
 ```
 
-#### 5. Model (UserModel::insert)
+### 3. Automatic Normalization
 
-```php
-// Automatic validation runs
-$validationPassed = $this->validate($insertData);
-
-// Build query
-$query = "INSERT INTO users (email, first_name, last_name, password, role, created_at)
-          VALUES (?, ?, ?, ?, ?, NOW())";
-
-// Execute via query builder (CodeIgniter does this)
-$this->db->query($query, [
-    $insertData['email'],
-    $insertData['first_name'],
-    $insertData['last_name'],
-    $insertData['password'],
-    $insertData['role'],
-]);
-
-// Return insert ID
-return $this->db->insertID();  // 42
-```
-
-#### 6. Model (UserModel::find)
-
-```php
-// Query with soft delete check
-$query = "SELECT * FROM users
-          WHERE id = ? AND deleted_at IS NULL";
-
-$row = $this->db->query($query, [42])->getRow();
-
-// Convert to entity
-$entity = new UserEntity($row);
-return $entity;
-```
-
-#### 7. Entity (UserEntity::toArray)
-
-```php
-public function toArray(...): array
-{
-    $data = [
-        'id' => 42,
-        'email' => 'john@example.com',
-        'first_name' => 'John',
-        'last_name' => 'Doe',
-        'role' => 'user',
-        'created_at' => '2026-02-11T23:45:00+00:00',
-        'updated_at' => '2026-02-11T23:45:00+00:00',
-        // 'password' => ... ← HIDDEN
-    ];
-
-    // Remove hidden fields
-    unset($data['password']);
-
-    return $data;
-}
-```
-
-#### 8. Service Returns
-
-```php
-return ApiResponse::created([
-    'id' => 42,
-    'email' => 'john@example.com',
-    'first_name' => 'John',
-    'last_name' => 'Doe',
-    'role' => 'user',
-    'created_at' => '2026-02-11T23:45:00+00:00',
-]);
-
-// ApiResponse::created() returns:
-[
-    'status' => 'success',
-    'message' => 'Resource created successfully',
-    'data' => [ /* user data */ ]
-]
-```
-
-#### 9. Controller Returns
-
-```php
-return $this->respond($result, 201);
-
-// ResponseTrait::respond() outputs:
-HTTP/1.1 201 Created
-Content-Type: application/json
-
-{
-  "status": "success",
-  "message": "Resource created successfully",
-  "data": {
-    "id": 42,
-    "email": "john@example.com",
-    "first_name": "John",
-    "last_name": "Doe",
-    "role": "user",
-    "created_at": "2026-02-11T23:45:00+00:00"
-  }
-}
-```
+The `ApiController` detects that the service returned a `UserResponseDTO`.
+1. Calls `ApiResponse::convertDataToArrays()` recursively.
+2. Property `firstName` (camelCase) is mapped to `first_name` (snake_case).
+3. Wraps the result in `ApiResponse::success()`.
+4. Sends JSON response.
 
 ---
 

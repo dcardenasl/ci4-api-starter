@@ -1,25 +1,36 @@
 # CodeIgniter 4 API Starter Kit
 
-![PHP Version](https://img.shields.io/badge/PHP-8.1%20%7C%208.2%20%7C%208.3-blue)
+![PHP Version](https://img.shields.io/badge/PHP-8.2%20%7C%208.3-blue)
 ![CodeIgniter](https://img.shields.io/badge/CodeIgniter-4.6-orange)
-![Tests](https://img.shields.io/badge/tests-passing-success)
-![License](https://img.shields.io/badge/license-MIT-blue)
+![Arquitectura](https://img.shields.io/badge/Arquitectura-DTO--First-success)
 
 [English](README.md) | Español
 
-Una plantilla de API REST lista para produccion con CodeIgniter 4, autenticacion JWT, arquitectura en capas limpia y cobertura de tests completa.
+Una plantilla de API REST lista para producción con CodeIgniter 4 con una **arquitectura moderna orientada a DTOs**, autenticación JWT y cobertura de tests completa.
+
+## Arquitectura Core
+
+Este proyecto sigue una arquitectura de capas avanzada diseñada para la escalabilidad y lógica de negocio de alto nivel:
+
+- **DTOs Inmutables:** Utiliza clases `readonly` de PHP 8.2 para todo el transporte de datos entre capas.
+- **Servicios Puros:** La lógica de negocio está 100% desacoplada de las preocupaciones de HTTP/API.
+- **Auto-Validación:** Los datos se validan en la frontera (al construir el DTO).
+- **Documentación Viva:** Los esquemas de Swagger están integrados directamente en los contratos de código.
+- **Normalización de Salida:** Conversión recursiva automática de objetos complejos a JSON estandarizado.
 
 ## Caracteristicas
 
 - **Autenticacion JWT** - Tokens de acceso, tokens de refresco y revocacion
 - **Control de Acceso por Roles** - Roles user, admin y superadmin con proteccion por middleware
+- **Google Authentication** - Soporte de login social ([Docs](docs/features/GOOGLE_AUTH.md))
 - **Sistema de Email** - Verificacion, restablecimiento de contrasena, soporte de colas
-- **Gestion de Archivos** - Subida/descarga con drivers local y S3
+- **Gestion de Archivos** - Subida/descarga con drivers local y S3 ([Docs](docs/features/FILE_MANAGEMENT.md))
+- **Queue System** - Procesamiento de trabajos en segundo plano ([Docs](docs/features/QUEUE_SYSTEM.md))
 - **Consultas Avanzadas** - Paginacion, filtrado, busqueda, ordenamiento
+- **Auditoría** - Registro automático de cambios con sanitización de campos sensibles
 - **Health Checks** - Endpoints listos para Kubernetes (`/health`, `/ready`, `/live`)
-- **Auditoria** - Registro automatico de cambios en datos
-- **Documentacion OpenAPI** - Swagger docs auto-generados
-- **Suite de Tests Completa** - Tests unitarios, de integracion y funcionales
+- **Documentacion OpenAPI** - Swagger docs auto-generados desde los DTOs
+- **Suite de Tests Completa** - Tests unitarios, de integracion y funcionales ([Docs](docs/features/TESTING_API.md))
 
 ## Inicio Rapido
 
@@ -208,18 +219,21 @@ Archivo generado: `public/swagger.json` (servido en `http://localhost:8080/swagg
 ```
 app/
 ├── Controllers/
-│   ├── ApiController.php          # Controlador base
-│   └── Api/V1/                    # Controladores API v1 agrupados por dominio (Auth, Identity, Users, Files, Admin, System)
-├── Services/                      # Logica de negocio
-├── Interfaces/                    # Interfaces de servicios
+│   ├── ApiController.php          # Controlador base con mapeo de DTOs
+│   └── Api/V1/                    # Controladores API
+├── DTO/                           # Objetos de Transferencia de Datos (Inmutables y Validados)
+│   ├── Request/                   # Contratos de entrada
+│   └── Response/                  # Contratos de salida (OpenAPI integrado)
+├── Services/                      # Lógica pura de negocio
+├── Interfaces/                    # Interfaces de servicios y DTOs
 ├── Models/                        # Modelos de base de datos
 ├── Entities/                      # Entidades de datos
-├── Filters/                       # Filtros HTTP (auth, throttle, cors)
+├── Filters/                       # Filtros HTTP
 ├── Exceptions/                    # Excepciones personalizadas
 ├── Libraries/
-│   ├── ApiResponse.php           # Respuestas estandarizadas
-│   └── Query/                    # Utilidades del query builder
-└── Traits/                       # Traits de modelos (Filterable, Searchable)
+│   ├── ApiResponse.php           # Normalización recursiva de DTOs
+│   └── Query/                    # Utilidades de query builder
+└── Traits/                       # Traits de modelos
 
 tests/
 ├── Unit/                         # Sin base de datos

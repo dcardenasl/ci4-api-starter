@@ -359,6 +359,15 @@ class Services extends BaseService
         );
     }
 
+    public static function metricsService(bool $getShared = true)
+    {
+        if ($getShared) {
+            return static::getSharedInstance('metricsService');
+        }
+
+        return new \App\Services\MetricsService();
+    }
+
     /**
      * Storage Manager
      *

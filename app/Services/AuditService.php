@@ -4,13 +4,12 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Exceptions\BadRequestException;
 use App\Exceptions\NotFoundException;
 use App\Interfaces\AuditServiceInterface;
-use App\Libraries\ApiResponse;
 use App\Libraries\Query\QueryBuilder;
 use App\Models\AuditLogModel;
 use App\Traits\AppliesQueryOptions;
+use App\Traits\ValidatesRequiredFields;
 use CodeIgniter\HTTP\RequestInterface;
 
 /**
@@ -21,6 +20,7 @@ use CodeIgniter\HTTP\RequestInterface;
 class AuditService implements AuditServiceInterface
 {
     use AppliesQueryOptions;
+    use ValidatesRequiredFields;
 
     /**
      * Sensitive keys that must never be persisted in audit payloads.
@@ -70,15 +70,6 @@ class AuditService implements AuditServiceInterface
 
     /**
      * Log an audit event
-     *
-     * @param string $action Action performed (create, update, delete)
-     * @param string $entityType Entity type (user, file, etc.)
-     * @param int|null $entityId Entity ID
-     * @param array $oldValues Old values before change
-     * @param array $newValues New values after change
-     * @param int|null $userId User who performed action
-     * @param RequestInterface|null $request Request object for IP/User-Agent (optional)
-     * @return void
      */
     public function log(
         string $action,
@@ -109,13 +100,6 @@ class AuditService implements AuditServiceInterface
 
     /**
      * Log a create action
-     *
-     * @param string $entityType
-     * @param int $entityId
-     * @param array $data
-     * @param int|null $userId
-     * @param RequestInterface|null $request
-     * @return void
      */
     public function logCreate(
         string $entityType,
@@ -129,14 +113,6 @@ class AuditService implements AuditServiceInterface
 
     /**
      * Log an update action
-     *
-     * @param string $entityType
-     * @param int $entityId
-     * @param array $oldValues
-     * @param array $newValues
-     * @param int|null $userId
-     * @param RequestInterface|null $request
-     * @return void
      */
     public function logUpdate(
         string $entityType,
@@ -157,13 +133,6 @@ class AuditService implements AuditServiceInterface
 
     /**
      * Log a delete action
-     *
-     * @param string $entityType
-     * @param int $entityId
-     * @param array $data
-     * @param int|null $userId
-     * @param RequestInterface|null $request
-     * @return void
      */
     public function logDelete(
         string $entityType,
@@ -177,118 +146,60 @@ class AuditService implements AuditServiceInterface
 
     /**
      * Get audit logs with filtering and pagination
-     *
-     * @param array $data
-     * @return array
      */
-    public function index(array $data): array
+    public function index(\App\DTO\Request\Audit\AuditIndexRequestDTO $request): array
     {
-        $this->validateInputOrBadRequest($data, 'index');
-
         $builder = new QueryBuilder($this->auditLogModel);
 
-        if (
-            isset($data['filter'])
-            && is_array($data['filter'])
-            && isset($data['filter']['entity_type'])
-            && is_string($data['filter']['entity_type'])
-        ) {
-            $data['filter']['entity_type'] = $this->normalizeEntityType($data['filter']['entity_type']);
-        }
+        $this->applyQueryOptions($builder, $request->toArray());
 
-        $this->applyQueryOptions($builder, $data);
+        $result = $builder->paginate($request->page, $request->perPage);
 
-        [$page, $limit] = $this->resolvePagination($data, 50, 100);
-
-        $result = $builder->paginate($page, $limit);
-
-        // Decode JSON fields
+        // Convert to Response DTOs
         $result['data'] = array_map(function ($log) {
-            return [
-                'id' => $log->id,
-                'user_id' => $log->user_id,
-                'action' => $log->action,
-                'entity_type' => $log->entity_type,
-                'entity_id' => $log->entity_id,
-                'old_values' => $log->old_values ? json_decode($log->old_values, true) : null,
-                'new_values' => $log->new_values ? json_decode($log->new_values, true) : null,
-                'ip_address' => $log->ip_address,
-                'user_agent' => $log->user_agent,
-                'created_at' => $log->created_at,
-            ];
+            return \App\DTO\Response\Audit\AuditResponseDTO::fromArray($log->toArray());
         }, $result['data']);
 
-        return ApiResponse::paginated(
-            $result['data'],
-            $result['total'],
-            $result['page'],
-            $result['perPage']
-        );
+        return [
+            'data' => $result['data'],
+            'total' => $result['total'],
+            'page' => $result['page'],
+            'perPage' => $result['perPage']
+        ];
     }
 
     /**
      * Get audit log by ID
-     *
-     * @param array $data
-     * @return array
      */
-    public function show(array $data): array
+    public function show(array $data): \App\DTO\Response\Audit\AuditResponseDTO
     {
-        $this->validateInputOrBadRequest($data, 'show');
+        $id = $this->validateRequiredId($data);
 
-        $log = $this->auditLogModel->find($data['id']);
+        $log = $this->auditLogModel->find($id);
 
         if (!$log) {
             throw new NotFoundException(lang('Audit.notFound'));
         }
 
-        return ApiResponse::success([
-            'id' => $log->id,
-            'user_id' => $log->user_id,
-            'action' => $log->action,
-            'entity_type' => $log->entity_type,
-            'entity_id' => $log->entity_id,
-            'old_values' => $log->old_values ? json_decode($log->old_values, true) : null,
-            'new_values' => $log->new_values ? json_decode($log->new_values, true) : null,
-            'ip_address' => $log->ip_address,
-            'user_agent' => $log->user_agent,
-            'created_at' => $log->created_at,
-        ]);
+        return \App\DTO\Response\Audit\AuditResponseDTO::fromArray($log->toArray());
     }
 
     /**
      * Get audit logs for a specific entity
-     *
-     * @param array $data
-     * @return array
      */
     public function byEntity(array $data): array
     {
-        $this->validateInputOrBadRequest($data, 'by_entity');
-
-        $entityType = $this->normalizeEntityType((string) $data['entity_type']);
+        $this->validateRequiredId($data, 'entity_id');
+        $entityType = $this->normalizeEntityType((string) ($data['entity_type'] ?? ''));
 
         $logs = $this->auditLogModel->getByEntity(
             $entityType,
             (int) $data['entity_id']
         );
 
-        $logsArray = array_map(function ($log) {
-            return [
-                'id' => $log->id,
-                'user_id' => $log->user_id,
-                'action' => $log->action,
-                'entity_type' => $log->entity_type,
-                'entity_id' => $log->entity_id,
-                'old_values' => $log->old_values ? json_decode($log->old_values, true) : null,
-                'new_values' => $log->new_values ? json_decode($log->new_values, true) : null,
-                'ip_address' => $log->ip_address,
-                'user_agent' => $log->user_agent,
-                'created_at' => $log->created_at,
-            ];
+        return array_map(function ($log) {
+            return \App\DTO\Response\Audit\AuditResponseDTO::fromArray($log->toArray());
         }, $logs);
-
-        return ApiResponse::success($logsArray);
     }
 
     private function normalizeEntityType(string $entityType): string
@@ -298,21 +209,8 @@ class AuditService implements AuditServiceInterface
         return self::ENTITY_TYPE_ALIASES[$normalized] ?? $normalized;
     }
 
-    private function validateInputOrBadRequest(array $data, string $action): void
-    {
-        $validation = getValidationRules('audit', $action);
-        $errors = validateInputs($data, $validation['rules'], $validation['messages']);
-
-        if ($errors !== []) {
-            throw new BadRequestException(lang('Api.invalidRequest'), $errors);
-        }
-    }
-
     /**
      * Recursively remove sensitive fields from audit values.
-     *
-     * @param array $values
-     * @return array
      */
     private function sanitizeAuditValues(array $values): array
     {

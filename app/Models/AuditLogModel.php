@@ -19,7 +19,7 @@ class AuditLogModel extends Model
     protected $table = 'audit_logs';
     protected $primaryKey = 'id';
     protected $useAutoIncrement = true;
-    protected $returnType = 'object';
+    protected $returnType = \App\Entities\AuditLogEntity::class;
     protected $useSoftDeletes = false;
     protected $protectFields = true;
 

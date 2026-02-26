@@ -1,4 +1,4 @@
-# CRUD Snippets (mínimos)
+# CRUD Snippets (Arquitectura Millonaria)
 
 ## Controller
 
@@ -10,10 +10,18 @@ declare(strict_types=1);
 namespace App\Controllers\Api\V1;
 
 use App\Controllers\ApiController;
+use App\DTO\Request\Catalog\ProductIndexRequestDTO;
+use CodeIgniter\HTTP\ResponseInterface;
 
 class ProductController extends ApiController
 {
     protected string $serviceName = 'productService';
+
+    public function index(): ResponseInterface
+    {
+        $dto = $this->getDTO(ProductIndexRequestDTO::class);
+        return $this->handleRequest(fn() => $this->getService()->index($dto));
+    }
 }
 ```
 
@@ -26,17 +34,80 @@ declare(strict_types=1);
 
 namespace App\Interfaces;
 
+use App\DTO\Request\Catalog\ProductIndexRequestDTO;
+use App\DTO\Response\Catalog\ProductResponseDTO;
+
 interface ProductServiceInterface
 {
-    public function index(array $data): array;
-    public function show(array $data): array;
-    public function store(array $data): array;
-    public function update(array $data): array;
-    public function destroy(array $data): array;
+    public function index(ProductIndexRequestDTO $request): array;
+    public function show(array $data): ProductResponseDTO;
 }
 ```
 
-## Service (estructura)
+## Request DTO
+
+```php
+<?php
+
+declare(strict_types=1);
+
+namespace App\DTO\Request\Catalog;
+
+use App\Interfaces\DataTransferObjectInterface;
+
+readonly class ProductCreateRequestDTO implements DataTransferObjectInterface
+{
+    public string $name;
+
+    public function __construct(array $data)
+    {
+        validateOrFail($data, 'product', 'store');
+        $this->name = (string) $data['name'];
+    }
+
+    public function toArray(): array
+    {
+        return ['name' => $this->name];
+    }
+}
+```
+
+## Response DTO
+
+```php
+<?php
+
+declare(strict_types=1);
+
+namespace App\DTO\Response\Catalog;
+
+use App\Interfaces\DataTransferObjectInterface;
+use OpenApi\Attributes as OA;
+
+#[OA\Schema(schema: 'ProductResponse')]
+readonly class ProductResponseDTO implements DataTransferObjectInterface
+{
+    public function __construct(
+        #[OA\Property] public int $id,
+        #[OA\Property] public string $name
+    ) {}
+
+    public static function fromArray(array $data): self
+    {
+        return new self(
+            id: (int) $data['id'],
+            name: (string) $data['name']
+        );
+    }
+
+    public function toArray(): array
+    {
+        return ['id' => $this->id, 'name' => $this->name];
+    }
+}
+```
+
+## Service (Pure Logic)
 
 ```php
 <?php
@@ -45,102 +116,33 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\DTO\Request\Catalog\ProductIndexRequestDTO;
+use App\DTO\Response\Catalog\ProductResponseDTO;
 use App\Exceptions\NotFoundException;
 use App\Interfaces\ProductServiceInterface;
-use App\Libraries\ApiResponse;
-use App\Libraries\Query\QueryBuilder;
 use App\Models\ProductModel;
 use App\Traits\AppliesQueryOptions;
 use App\Traits\ValidatesRequiredFields;
 
 class ProductService implements ProductServiceInterface
 {
-    use AppliesQueryOptions;
-    use ValidatesRequiredFields;
+    use AppliesQueryOptions, ValidatesRequiredFields;
 
-    public function __construct(protected ProductModel $productModel)
+    public function __construct(protected ProductModel $productModel) {}
+
+    public function index(ProductIndexRequestDTO $request): array
     {
-    }
+        $builder = new \App\Libraries\Query\QueryBuilder($this->productModel);
+        $this->applyQueryOptions($builder, $request->toArray());
+        
+        $result = $builder->paginate($request->page, $request->perPage);
+        
+        $result['data'] = array_map(
+            fn($item) => ProductResponseDTO::fromArray($item->toArray()), 
+            $result['data']
+        );
 
-    public function index(array $data): array
-    {
-        $builder = new QueryBuilder($this->productModel);
-        $this->applyQueryOptions($builder, $data);
-        [$page, $limit] = $this->resolvePagination($data, (int) env('PAGINATION_DEFAULT_LIMIT', 20));
-        $result = $builder->paginate($page, $limit);
-        $result['data'] = array_map(fn ($item) => $item->toArray(), $result['data']);
-
-        return ApiResponse::paginated($result['data'], $result['total'], $result['page'], $result['perPage']);
-    }
-
-    public function show(array $data): array
-    {
-        $id = $this->validateRequiredId($data);
-        $item = $this->productModel->find($id);
-        if (! $item) {
-            throw new NotFoundException(lang('Products.notFound'));
-        }
-        return ApiResponse::success($item->toArray());
+        return $result;
     }
 }
-```
-
-## Model
-
-```php
-<?php
-
-declare(strict_types=1);
-
-namespace App\Models;
-
-use App\Entities\ProductEntity;
-use App\Traits\Filterable;
-use App\Traits\Searchable;
-use CodeIgniter\Model;
-
-class ProductModel extends Model
-{
-    use Filterable;
-    use Searchable;
-
-    protected $table = 'products';
-    protected $returnType = ProductEntity::class;
-    protected $useSoftDeletes = true;
-    protected $useTimestamps = true;
-    protected $allowedFields = ['name', 'description'];
-    protected array $searchableFields = ['name', 'description'];
-    protected array $filterableFields = ['name', 'created_at'];
-    protected array $sortableFields = ['id', 'name', 'created_at'];
-}
-```
-
-## Services.php
-
-```php
-public static function productService(bool $getShared = true)
-{
-    if ($getShared) {
-        return static::getSharedInstance('productService');
-    }
-
-    return new \App\Services\ProductService(
-        new \App\Models\ProductModel()
-    );
-}
-```
-
-## Routes
-
-```php
-$routes->group('', ['filter' => 'jwtauth'], function ($routes) {
-    $routes->get('products', 'ProductController::index');
-    $routes->get('products/(:num)', 'ProductController::show/$1');
-
-    $routes->group('', ['filter' => 'roleauth:admin'], function ($routes) {
-        $routes->post('products', 'ProductController::create');
-        $routes->put('products/(:num)', 'ProductController::update/$1');
-        $routes->delete('products/(:num)', 'ProductController::delete/$1');
-    });
-});
 ```

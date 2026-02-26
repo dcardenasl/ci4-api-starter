@@ -1,55 +1,46 @@
-# Repository Guidelines
+# Repository Guidelines for AI Agents
 
 ## Project Structure & Module Organization
-- `app/` contains the API implementation (controllers in `app/Controllers/Api`, services in `app/Services`, models in `app/Models`, entities in `app/Entities`, filters in `app/Filters`, and shared helpers in `app/Libraries`).
+- `app/DTO/` contains the data contract layer (Request/Response DTOs).
+- `app/Controllers/Api` handles HTTP I/O and maps data to DTOs.
+- `app/Services/` implements pure business logic decoupled from HTTP.
+- `app/Interfaces/` defines service contracts.
+- `app/Models/` and `app/Entities/` manage database persistence.
 - `tests/` holds PHPUnit tests split into `Unit/`, `Integration/`, and `Feature/` suites.
-- `public/` is the web root; `writable/` stores logs, cache, and uploads.
-- `docs/` includes supplementary documentation; generated OpenAPI output is `public/swagger.json`.
+
+## Core Development Principles (DTO-First)
+- **Mandatory DTOs:** All data transfer between controllers and services must use PHP 8.2 `readonly` classes.
+- **Pure Services:** Services must not use `ApiResponse` or status codes. They return DTOs or Entities.
+- **Auto-Validation:** Request DTOs validate input in their constructors using `validateOrFail()`.
+- **Living Docs:** OpenAPI schemas are defined as attributes directly in DTO classes.
 
 ## Build, Test, and Development Commands
-- `composer install` installs PHP dependencies.
-- `php spark serve` runs the dev server at `http://localhost:8080`.
-- `php spark migrate` applies database migrations.
-- `php spark make:crud {Resource} --domain {Domain} --route {slug}` scaffolds new CRUD resources (default path for new CRUD work).
-- `vendor/bin/phpunit` runs the full test suite; add `--testdox` for readable output.
-- `composer cs-check` runs PHP-CS-Fixer in dry-run mode; `composer cs-fix` applies fixes.
-- `composer phpstan` runs static analysis.
-- `php spark swagger:generate` regenerates `public/swagger.json` from `app/Documentation/` annotations.
-
-## Coding Style & Naming Conventions
-- Follow PSR-12 with short array syntax; PHP-CS-Fixer enforces this (`.php-cs-fixer.php`).
-- Use `App\` namespace with PSR-4 autoloading (`app/`), and `Tests\` for test classes (`tests/`).
-- Controllers extend `ApiController`; services implement their interfaces and return `ApiResponse` arrays.
-- Prefer descriptive, verb-based test names (e.g., `testLoginWithValidCredentialsReturnsUserData`).
+- `composer install` installs dependencies.
+- `php spark serve` runs the dev server.
+- `php spark migrate` applies migrations.
+- `php spark make:crud {Resource} --domain {Domain} --route {endpoint}` scaffolds new resources (Mandatory first step).
+- `vendor/bin/phpunit` runs the test suite.
+- `composer quality` runs all quality gates (PHPStan, tests, CS-check).
+- `php spark swagger:generate` regenerates `public/swagger.json` from DTO and Documentation annotations.
 
 ## Agent Critical Rules
-- For any new CRUD resource, use `php spark make:crud` first. Do not handcraft the initial CRUD skeleton unless the user explicitly requests manual creation.
-- Keep controllers thin: for standard CRUD, define `protected string $serviceName` and delegate to inherited `ApiController` CRUD methods.
-- Place OpenAPI docs in `app/Documentation/`; do not add OpenAPI annotations directly in controllers.
-- Use `lang()` for user-facing messages and keep parity in `app/Language/en/` and `app/Language/es/`.
-- Follow route filters from `app/Config/Routes.php`: auth public endpoints use `authThrottle`; protected endpoints use `jwtauth`; admin writes use `roleauth:admin`.
-- Register new services in `app/Config/Services.php` using `{resource}Service` naming.
+- **Thin Controllers:** Define `protected string $serviceName` and use `getDTO()` + `handleRequest(fn() => ...)` pattern.
+- **No Inline Annotations:** Do not add OpenAPI annotations to controllers. Use DTOs for schemas and `app/Documentation/` for endpoints.
+- **Service Registration:** Always register new services in `app/Config/Services.php`.
+- **Pure Logic:** Business decisions belong in services; HTTP decisions belong in controllers.
 
-### Controller Architecture Invariants (Do Not Break)
-- API controllers must use `handleRequest()` for standard JSON endpoints. Do not re-implement request collection, sanitize, try/catch, and service delegation in each action.
-- If an endpoint needs dynamic success status (example: `200` vs `202` based on payload), use `ApiController::resolveSuccessStatus()` override in the concrete controller. Do not bypass `handleRequest()` for this.
-- Keep HTTP concerns in controllers and business rules in services:
-  - Controllers choose HTTP status and transport behavior.
-  - Services return `ApiResponse` payloads and throw domain exceptions.
-- Use `handleException()` for exception mapping in controllers. Avoid ad-hoc per-method exception responses.
-- Allowed exceptions to the `handleRequest()` pattern:
-  - Non-JSON transport responses (e.g., file download/stream).
-  - Infra/observability controllers intentionally not extending `ApiController` (e.g., metrics), as documented.
+### Controller Architecture Invariants
+- API controllers must extend `ApiController`.
+- Standard endpoints must use `handleRequest()`.
+- Use `getDTO()` to ensure input data is validated before reaching the service.
+- Automatic normalization in `ApiController::respond()` ensures DTOs are converted to snake_case JSON.
 
 ## Testing Guidelines
-- Framework: PHPUnit (`phpunit.xml`).
-- `tests/Unit` are fast and do not require a database; `tests/Integration` and `tests/Feature` require the test DB (`ci4_test`).
-- Run targeted suites: `vendor/bin/phpunit tests/Unit` or `vendor/bin/phpunit --filter Class::method`.
+- Unit tests for services should assert against DTO return types.
+- Feature tests should verify the final JSON response structure.
+- Always use mocks for external dependencies in unit tests.
 
-## Commit & Pull Request Guidelines
-- Commit history shows mixed styles (`fix: ...`, `Fix: ...`, or sentence case). Prefer short, imperative messages and keep them scoped (e.g., `fix: adjust pagination response`).
-- PRs should include a clear summary, linked issues (if any), and notes on migrations, config changes, or new endpoints. Add screenshots only when API responses or docs output change.
-
-## Security & Configuration Tips
-- Copy `.env.example` to `.env` and set `JWT_SECRET_KEY` plus `encryption.key` before running locally.
-- Do not commit secrets; keep credentials in `.env` or CI variables.
+## Security Mandates
+- Never commit `.env` files.
+- Ensure sensitive fields are sanitized in `AuditService`.
+- Use `readonly` classes for all data structures to ensure inmutability.

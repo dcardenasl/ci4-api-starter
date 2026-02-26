@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace App\Interfaces;
 
-use App\DTO\Request\ApiKeys\ApiKeyCreateRequestDTO;
-use App\DTO\Response\ApiKeys\ApiKeyResponseDTO;
-
 /**
  * API Key Service Interface
  *
@@ -17,25 +14,25 @@ interface ApiKeyServiceInterface
     /**
      * List all API keys with pagination and filtering
      */
-    public function index(array $data): array;
+    public function index(\App\Interfaces\DataTransferObjectInterface $request): array;
 
     /**
      * Get a single API key by ID
      */
-    public function show(array $data): ApiKeyResponseDTO;
+    public function show(int $id): \App\Interfaces\DataTransferObjectInterface;
 
     /**
      * Create a new API key
      */
-    public function store(ApiKeyCreateRequestDTO $request): ApiKeyResponseDTO;
+    public function store(\App\Interfaces\DataTransferObjectInterface $request): \App\Interfaces\DataTransferObjectInterface;
 
     /**
      * Update an existing API key
      */
-    public function update(array $data): ApiKeyResponseDTO;
+    public function update(int $id, \App\Interfaces\DataTransferObjectInterface $request): \App\Interfaces\DataTransferObjectInterface;
 
     /**
      * Delete an API key
      */
-    public function destroy(array $data): array;
+    public function destroy(int $id): array;
 }

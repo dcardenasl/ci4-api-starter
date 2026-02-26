@@ -5,44 +5,74 @@ declare(strict_types=1);
 namespace App\Controllers\Api\V1\Files;
 
 use App\Controllers\ApiController;
+use App\DTO\Request\Files\FileGetRequestDTO;
+use App\DTO\Request\Files\FileIndexRequestDTO;
+use App\DTO\Request\Files\FileUploadRequestDTO;
+use App\Libraries\ApiResponse;
 use CodeIgniter\HTTP\ResponseInterface;
 
 /**
- * File Controller - Upload, download, delete files
+ * File Controller
+ *
+ * Handles file uploads, listing, downloading, and deletion.
+ * Uses automated DTO validation and user context injection.
  */
 class FileController extends ApiController
 {
     protected string $serviceName = 'fileService';
 
-    public function upload(): ResponseInterface
-    {
-        $dto = $this->getDTO(\App\DTO\Request\Files\FileUploadRequestDTO::class);
+    /**
+     * Map upload to 201 Created status
+     */
+    protected array $statusCodes = [
+        'upload' => 201,
+        'store'  => 201,
+    ];
 
-        return $this->handleRequest(
-            fn () => $this->getService()->upload($dto)
-        );
+    /**
+     * List user's files
+     */
+    public function index(): ResponseInterface
+    {
+        return $this->handleRequest('index', FileIndexRequestDTO::class);
     }
 
-    public function show(string|int|null $id = null): ResponseInterface
+    /**
+     * Upload a new file
+     */
+    public function upload(): ResponseInterface
     {
-        try {
-            $result = $this->getService()->download([
-                'id'      => $id,
-                'user_id' => $this->getUserId(),
-            ]);
+        return $this->handleRequest('upload', FileUploadRequestDTO::class);
+    }
 
-            // For local storage, send file for download
-            if ($result['status'] === 'success' && $result['data']['storage_driver'] === 'local') {
-                $filePath = FCPATH . env('FILE_UPLOAD_PATH', 'writable/uploads/') . $result['data']['path'];
+    /**
+     * Download a file
+     */
+    public function show(int $id): ResponseInterface
+    {
+        return $this->handleRequest(function ($dto) {
+            $result = $this->getService()->download($dto);
+
+            // For local storage, send file for direct download
+            if (isset($result['storage_driver']) && $result['storage_driver'] === 'local') {
+                $filePath = FCPATH . env('FILE_UPLOAD_PATH', 'writable/uploads/') . $result['path'];
 
                 if (file_exists($filePath)) {
-                    return $this->response->download($filePath, null)->setFileName($result['data']['original_name']);
+                    return $this->response->download($filePath, null)->setFileName($result['original_name']);
                 }
             }
 
-            return $this->respond($result, $result['status'] === 'success' ? 200 : 404);
-        } catch (\Exception $e) {
-            return $this->handleException($e);
-        }
+            // For external storage like S3, just return the data (with URL)
+            return ApiResponse::success($result);
+        }, FileGetRequestDTO::class, ['id' => $id]);
     }
+
+    /**
+     * Delete a file
+     */
+    public function delete(int $id): ResponseInterface
+    {
+        return $this->handleRequest('delete', FileGetRequestDTO::class, ['id' => $id]);
+    }
+
 }

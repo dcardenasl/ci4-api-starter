@@ -6,78 +6,33 @@ namespace App\Interfaces;
 
 /**
  * Audit Service Interface
- *
- * Contract for audit logging and retrieval operations
- */
-use App\DTO\Request\Audit\AuditIndexRequestDTO;
-use App\DTO\Response\Audit\AuditResponseDTO;
-
-/**
- * Audit Service Interface
- *
- * Contract for audit logging and retrieval operations
  */
 interface AuditServiceInterface
 {
     /**
-     * Log an audit event
+     * Log an audit event (Internal)
      */
-    public function log(
-        string $action,
-        string $entityType,
-        ?int $entityId,
-        array $oldValues,
-        array $newValues,
-        ?int $userId = null,
-        ?\CodeIgniter\HTTP\RequestInterface $request = null
-    ): void;
+    public function log(string $action, string $entityType, ?int $entityId, array $oldValues, array $newValues, ?int $userId = null, ?\CodeIgniter\HTTP\RequestInterface $request = null): void;
 
     /**
-     * Log a create action
+     * Log structured events (Internal)
      */
-    public function logCreate(
-        string $entityType,
-        int $entityId,
-        array $data,
-        ?int $userId = null,
-        ?\CodeIgniter\HTTP\RequestInterface $request = null
-    ): void;
+    public function logCreate(string $entityType, int $entityId, array $data, ?int $userId = null, ?\CodeIgniter\HTTP\RequestInterface $request = null): void;
+    public function logUpdate(string $entityType, int $entityId, array $oldValues, array $newValues, ?int $userId = null, ?\CodeIgniter\HTTP\RequestInterface $request = null): void;
+    public function logDelete(string $entityType, int $entityId, array $data, ?int $userId = null, ?\CodeIgniter\HTTP\RequestInterface $request = null): void;
 
     /**
-     * Log an update action
+     * List audit logs (API)
      */
-    public function logUpdate(
-        string $entityType,
-        int $entityId,
-        array $oldValues,
-        array $newValues,
-        ?int $userId = null,
-        ?\CodeIgniter\HTTP\RequestInterface $request = null
-    ): void;
+    public function index(\App\Interfaces\DataTransferObjectInterface $request): array;
 
     /**
-     * Log a delete action
+     * Get single log (API)
      */
-    public function logDelete(
-        string $entityType,
-        int $entityId,
-        array $data,
-        ?int $userId = null,
-        ?\CodeIgniter\HTTP\RequestInterface $request = null
-    ): void;
+    public function show(int $id): \App\Interfaces\DataTransferObjectInterface;
 
     /**
-     * Get audit logs with filtering and pagination
-     */
-    public function index(AuditIndexRequestDTO $request): array;
-
-    /**
-     * Get audit log by ID
-     */
-    public function show(array $data): AuditResponseDTO;
-
-    /**
-     * Get audit logs for a specific entity
+     * Get logs by entity (Internal/API)
      */
     public function byEntity(array $data): array;
 }

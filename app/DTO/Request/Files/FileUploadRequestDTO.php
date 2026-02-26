@@ -4,62 +4,76 @@ declare(strict_types=1);
 
 namespace App\DTO\Request\Files;
 
-use App\Interfaces\DataTransferObjectInterface;
+use App\DTO\Request\BaseRequestDTO;
+use App\Exceptions\AuthenticationException;
+use App\Exceptions\BadRequestException;
 use CodeIgniter\HTTP\Files\UploadedFile;
 
 /**
  * File Upload Request DTO
  *
- * Validates the uploaded file object and user ownership.
+ * Validates the uploaded file object (Multipart or Base64) and user ownership.
  */
-readonly class FileUploadRequestDTO implements DataTransferObjectInterface
+readonly class FileUploadRequestDTO extends BaseRequestDTO
 {
-    public \CodeIgniter\HTTP\Files\UploadedFile|string $file;
+    public UploadedFile|string $file;
     public int $userId;
     public ?string $filename;
 
-    public function __construct(array $data)
+    protected function rules(): array
+    {
+        return []; // Custom validation handled in map() due to complex file logic
+    }
+
+    protected function map(array $data): void
     {
         if (!isset($data['user_id']) || !is_numeric($data['user_id'])) {
-            throw new \App\Exceptions\AuthenticationException(lang('Auth.unauthorized'));
+            throw new AuthenticationException(lang('Auth.unauthorized'));
         }
 
         $this->userId = (int) $data['user_id'];
         $this->filename = $data['filename'] ?? null;
 
-        // 1. Check for standard UploadedFile object
-        if (isset($data['file']) && $data['file'] instanceof \CodeIgniter\HTTP\Files\UploadedFile) {
-            $this->file = $data['file'];
-            return;
+        $fileData = $this->extractFileFromData($data);
+
+        if ($fileData === null) {
+            throw new BadRequestException(lang('Api.invalidRequest'), [
+                'file' => lang('Files.upload.noFile')
+            ]);
         }
 
-        // 2. Check for any UploadedFile in the data (multipart with random key)
+        $this->file = $fileData;
+    }
+
+    private function extractFileFromData(array $data): UploadedFile|string|null
+    {
+        // 1. Check for standard UploadedFile object in 'file' key
+        if (isset($data['file']) && $data['file'] instanceof UploadedFile) {
+            return $data['file'];
+        }
+
+        // 2. Check for any UploadedFile in the data array (random key)
         foreach ($data as $value) {
-            if ($value instanceof \CodeIgniter\HTTP\Files\UploadedFile) {
-                $this->file = $value;
-                return;
+            if ($value instanceof UploadedFile) {
+                return $value;
             }
         }
 
-        // 3. Check for Base64 string
+        // 3. Check for Base64 string in 'file' key
         if (isset($data['file']) && is_string($data['file'])) {
-            $this->file = $data['file'];
-            return;
+            return $data['file'];
         }
 
-        // 4. Look for base64 in other keys if 'file' is not present (JSON fallback)
+        // 4. Look for base64 in other keys as fallback
         foreach ($data as $key => $value) {
             if (is_string($value) && !in_array($key, ['user_id', 'user_role', 'filename'], true)) {
                 if (str_starts_with($value, 'data:') || strlen($value) > 1000) {
-                    $this->file = $value;
-                    return;
+                    return $value;
                 }
             }
         }
 
-        throw new \App\Exceptions\BadRequestException(lang('Api.invalidRequest'), [
-            'file' => lang('Files.upload.noFile')
-        ]);
+        return null;
     }
 
     public function isBase64(): bool
@@ -70,8 +84,8 @@ readonly class FileUploadRequestDTO implements DataTransferObjectInterface
     public function toArray(): array
     {
         return [
-            'file' => $this->file,
-            'user_id' => $this->userId,
+            'file'     => $this->file,
+            'user_id'  => $this->userId,
             'filename' => $this->filename,
         ];
     }

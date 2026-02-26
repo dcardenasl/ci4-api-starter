@@ -4,36 +4,33 @@ declare(strict_types=1);
 
 namespace App\Interfaces;
 
-use App\DTO\Request\Metrics\RecordMetricRequestDTO;
-use App\DTO\Response\Metrics\MetricsOverviewResponseDTO;
-
 /**
  * Metrics Service Interface
  */
 interface MetricsServiceInterface
 {
     /**
-     * Get system metrics overview
+     * Get system performance overview
      */
-    public function getOverview(string $period): MetricsOverviewResponseDTO;
+    public function getOverview(\App\Interfaces\DataTransferObjectInterface $request): \App\DTO\Response\Metrics\MetricsOverviewResponseDTO;
 
     /**
-     * Get request statistics
-     */
-    public function getRequestStats(string $period): array;
-
-    /**
-     * Get slow requests list
+     * Get list of slow requests
      */
     public function getSlowRequests(int $threshold, int $limit): array;
 
     /**
-     * Record a custom metric
+     * Get raw request stats
      */
-    public function record(RecordMetricRequestDTO $request): bool;
+    public function getRequestStats(string $period): array;
 
     /**
-     * Get custom metric data
+     * Get custom metrics by name
      */
     public function getCustomMetric(string $name, string $period, bool $aggregate = false): array;
+
+    /**
+     * Record a custom metric
+     */
+    public function record(\App\DTO\Request\Metrics\RecordMetricRequestDTO $request): bool;
 }

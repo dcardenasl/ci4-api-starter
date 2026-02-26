@@ -4,38 +4,38 @@ declare(strict_types=1);
 
 namespace App\Controllers\Api\V1\Admin;
 
+use App\Controllers\ApiController;
+use App\DTO\Request\Metrics\MetricsQueryRequestDTO;
 use App\DTO\Request\Metrics\RecordMetricRequestDTO;
 use App\Libraries\ApiResponse;
-use CodeIgniter\Controller;
 use CodeIgniter\HTTP\ResponseInterface;
 
 /**
- * Metrics Controller
+ * Modernized Metrics Controller
  *
- * Infrastructure/observability endpoints.
+ * Provides administrative access to system performance and usage metrics.
  */
-class MetricsController extends Controller
+class MetricsController extends ApiController
 {
-    protected function getService(): object
-    {
-        return service('metricsService');
-    }
+    protected string $serviceName = 'metricsService';
 
     /**
-     * Get metrics overview
+     * Map upload to 201 Created status
+     */
+    protected array $statusCodes = [
+        'record' => 201,
+    ];
+
+    /**
+     * Get system metrics overview
      */
     public function index(): ResponseInterface
     {
         if (! env('METRICS_ENABLED', true)) {
-            return $this->response->setJSON(
-                ApiResponse::error([], lang('Metrics.disabled'), 503)
-            )->setStatusCode(503);
+            return $this->respond(ApiResponse::error([], lang('Metrics.disabled'), 503), 503);
         }
 
-        $period = (string) ($this->request->getGet('period') ?? 'day');
-        $result = $this->getService()->getOverview($period);
-
-        return $this->response->setJSON(ApiResponse::success($result->toArray()));
+        return $this->handleRequest('getOverview', MetricsQueryRequestDTO::class);
     }
 
     /**
@@ -43,58 +43,47 @@ class MetricsController extends Controller
      */
     public function requests(): ResponseInterface
     {
-        $period = (string) ($this->request->getGet('period') ?? 'day');
-        $stats = $this->getService()->getRequestStats($period);
-
-        return $this->response->setJSON(ApiResponse::success($stats));
+        return $this->handleRequest(function ($dto) {
+            return $this->getService()->getRequestStats($dto->period);
+        }, MetricsQueryRequestDTO::class);
     }
 
     /**
-     * Get slow requests
+     * Get list of slow requests
      */
     public function slowRequests(): ResponseInterface
     {
-        $threshold = (int) ($this->request->getGet('threshold') ?? env('SLOW_QUERY_THRESHOLD', 1000));
-        $limit = min((int) ($this->request->getGet('limit') ?? 10), 100);
+        return $this->handleRequest(function () {
+            /** @var \App\HTTP\ApiRequest $request */
+            $request = $this->request;
 
-        $slowRequests = $this->getService()->getSlowRequests($threshold, $limit);
+            $thresholdVal = $request->getVar('threshold');
+            $threshold = is_numeric($thresholdVal) ? (int) $thresholdVal : (int) env('SLOW_QUERY_THRESHOLD', 1000);
 
-        return $this->response->setJSON(ApiResponse::success([
-            'threshold_ms' => $threshold,
-            'count' => count($slowRequests),
-            'requests' => $slowRequests,
-        ]));
+            $limitVal = $request->getVar('limit');
+            $limit = min(is_numeric($limitVal) ? (int) $limitVal : 10, 100);
+
+            return $this->getService()->getSlowRequests($threshold, $limit);
+        });
     }
 
+
     /**
-     * Get custom metrics
+     * Get custom metrics by name
      */
     public function custom(string $name): ResponseInterface
     {
-        $period = (string) ($this->request->getGet('period') ?? 'day');
-        $aggregate = $this->request->getGet('aggregate') === 'true';
-
-        $data = $this->getService()->getCustomMetric($name, $period, $aggregate);
-
-        return $this->response->setJSON(ApiResponse::success($data));
+        return $this->handleRequest(function ($dto) use ($name) {
+            $aggregate = $this->request->getGet('aggregate') === 'true';
+            return $this->getService()->getCustomMetric($name, $dto->period, $aggregate);
+        }, MetricsQueryRequestDTO::class);
     }
 
     /**
-     * Record a custom metric
+     * Record a new custom metric
      */
     public function record(): ResponseInterface
     {
-        try {
-            $dto = new RecordMetricRequestDTO($this->request->getJSON(true) ?? []);
-            $this->getService()->record($dto);
-
-            return $this->response->setJSON(
-                ApiResponse::success(['message' => lang('Metrics.recordedSuccessfully')])
-            )->setStatusCode(201);
-        } catch (\App\Exceptions\ValidationException $e) {
-            return $this->response->setJSON(
-                ApiResponse::validationError($e->getErrors())
-            )->setStatusCode(422);
-        }
+        return $this->handleRequest('record', RecordMetricRequestDTO::class);
     }
 }

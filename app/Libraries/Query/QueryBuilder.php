@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Libraries\Query;
 
 use CodeIgniter\Model;
@@ -13,8 +15,17 @@ use CodeIgniter\Model;
 class QueryBuilder
 {
     protected Model $model;
+
+    /**
+     * @var array<string, array<int, mixed>>
+     */
     protected array $filters = [];
+
+    /**
+     * @var array<int, array<int, string>>
+     */
     protected array $sorts = [];
+
     protected ?string $searchQuery = null;
 
     public function __construct(Model $model)

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Libraries\Queue;
 
 use CodeIgniter\Database\BaseConnection;
@@ -10,6 +12,10 @@ use Throwable;
 class QueueManager
 {
     protected QueueConfig $config;
+
+    /**
+     * @var BaseConnection<object, object>
+     */
     protected BaseConnection $db;
 
     public function __construct()

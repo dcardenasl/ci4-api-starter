@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Libraries\Logging;
 
 use CodeIgniter\Log\Handlers\HandlerInterface;
@@ -10,6 +12,10 @@ use Sentry\Monolog\Handler as SentryHandler;
 class MonologHandler implements HandlerInterface
 {
     protected MonologLogger $logger;
+
+    /**
+     * @var array<int, string>
+     */
     protected array $handles = [];
 
     /**

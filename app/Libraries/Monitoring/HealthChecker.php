@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Libraries\Monitoring;
 
 use CodeIgniter\Database\BaseConnection;
@@ -7,6 +9,9 @@ use Config\Database;
 
 class HealthChecker
 {
+    /**
+     * @var BaseConnection<object, object>
+     */
     protected BaseConnection $db;
 
     public function __construct()

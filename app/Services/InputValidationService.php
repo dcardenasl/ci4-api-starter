@@ -6,6 +6,7 @@ namespace App\Services;
 
 use App\Exceptions\ValidationException;
 use App\Interfaces\InputValidationServiceInterface;
+use App\Validations\ApiKeyValidation;
 use App\Validations\AuditValidation;
 use App\Validations\AuthValidation;
 use App\Validations\BaseValidation;
@@ -47,11 +48,12 @@ class InputValidationService implements InputValidationServiceInterface
     protected function registerValidators(): void
     {
         $this->validators = [
-            'auth'  => new AuthValidation(),
-            'user'  => new UserValidation(),
-            'file'  => new FileValidation(),
-            'token' => new TokenValidation(),
-            'audit' => new AuditValidation(),
+            'auth'    => new AuthValidation(),
+            'user'    => new UserValidation(),
+            'file'    => new FileValidation(),
+            'token'   => new TokenValidation(),
+            'audit'   => new AuditValidation(),
+            'api_key' => new ApiKeyValidation(),
         ];
     }
 

@@ -59,11 +59,11 @@ class RoleAuthorizationFilter implements FilterInterface
      * @param RequestInterface $request
      * @param ResponseInterface $response
      * @param array|null $arguments
-     * @return void
+     * @return ResponseInterface|null
      */
-    public function after(RequestInterface $request, ResponseInterface $response, $arguments = null): void
+    public function after(RequestInterface $request, ResponseInterface $response, $arguments = null): ?ResponseInterface
     {
-        // Not used
+        return $response;
     }
 
     /**

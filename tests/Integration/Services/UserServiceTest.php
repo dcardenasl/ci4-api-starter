@@ -39,7 +39,8 @@ class UserServiceTest extends CIUnitTestCase
         $this->userService = new UserService(
             $this->userModel,
             \Config\Services::emailService(),
-            new \App\Models\PasswordResetModel()
+            new \App\Models\PasswordResetModel(),
+            \Config\Services::auditService()
         );
     }
 
@@ -53,11 +54,12 @@ class UserServiceTest extends CIUnitTestCase
             'last_name' => 'User',
         ]);
 
-        $this->assertSuccessResponse($result);
-        $this->assertArrayHasKey('id', $result['data']);
+        $this->assertInstanceOf(\App\DTO\Response\Users\UserResponseDTO::class, $result);
+        $data = $result->toArray();
+        $this->assertArrayHasKey('id', $data);
 
         // Verify in database
-        $user = $this->userModel->find($result['data']['id']);
+        $user = $this->userModel->find($data['id']);
         $this->assertNotNull($user);
         $this->assertEquals('integration@example.com', $user->email);
     }
@@ -68,7 +70,8 @@ class UserServiceTest extends CIUnitTestCase
             'email' => 'hash@example.com',
         ]);
 
-        $user = $this->userModel->find($result['data']['id']);
+        $data = $result->toArray();
+        $user = $this->userModel->find($data['id']);
 
         $this->assertNotEmpty($user->password);
         $this->assertStringStartsWith('$2', $user->password);
@@ -95,8 +98,9 @@ class UserServiceTest extends CIUnitTestCase
 
         $result = $this->userService->show(['id' => $userId]);
 
-        $this->assertSuccessResponse($result);
-        $this->assertEquals('show@example.com', $result['data']['email']);
+        $this->assertInstanceOf(\App\DTO\Response\Users\UserResponseDTO::class, $result);
+        $data = $result->toArray();
+        $this->assertEquals('show@example.com', $data['email']);
     }
 
     public function testShowThrowsNotFoundForMissingUser(): void
@@ -123,7 +127,8 @@ class UserServiceTest extends CIUnitTestCase
             'last_name' => 'Name',
         ]);
 
-        $this->assertSuccessResponse($result);
+        $this->assertInstanceOf(\App\DTO\Response\Users\UserResponseDTO::class, $result);
+        $data = $result->toArray();
 
         // Verify changes persisted
         $user = $this->userModel->find($userId);
@@ -170,11 +175,12 @@ class UserServiceTest extends CIUnitTestCase
             ]);
         }
 
-        $result = $this->userService->index(['page' => 1, 'limit' => 3]);
+        $dto = new \App\DTO\Request\Users\UserIndexRequestDTO(['page' => 1, 'per_page' => 3]);
+        $result = $this->userService->index($dto);
 
-        $this->assertPaginatedResponse($result);
+        $this->assertIsArray($result);
         $this->assertCount(3, $result['data']);
-        $this->assertEquals(5, $result['meta']['total']);
+        $this->assertEquals(5, $result['total']);
     }
 
     public function testIndexFiltersUsers(): void
@@ -193,12 +199,13 @@ class UserServiceTest extends CIUnitTestCase
             'role' => 'user',
         ]);
 
-        $result = $this->userService->index([
-            'filter' => ['role' => ['eq' => 'admin']],
+        $dto = new \App\DTO\Request\Users\UserIndexRequestDTO([
+            'role' => 'admin',
         ]);
+        $result = $this->userService->index($dto);
 
-        $this->assertPaginatedResponse($result);
+        $this->assertIsArray($result);
         $this->assertCount(1, $result['data']);
-        $this->assertEquals('admin', $result['data'][0]['role']);
+        $this->assertEquals('admin', $result['data'][0]->toArray()['role']);
     }
 }

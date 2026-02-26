@@ -34,7 +34,7 @@ class LocaleFilter implements FilterInterface
         if (empty($acceptLanguage)) {
             // Use default locale
             service('request')->setLocale($config->defaultLocale);
-            return;
+            return $request;
         }
 
         // Parse Accept-Language header and find best match
@@ -42,6 +42,8 @@ class LocaleFilter implements FilterInterface
 
         // Set the locale
         service('request')->setLocale($locale ?? $config->defaultLocale);
+
+        return $request;
     }
 
     /**
@@ -50,11 +52,11 @@ class LocaleFilter implements FilterInterface
      * @param RequestInterface $request
      * @param ResponseInterface $response
      * @param array|null $arguments
-     * @return void
+     * @return ResponseInterface|null
      */
-    public function after(RequestInterface $request, ResponseInterface $response, $arguments = null): void
+    public function after(RequestInterface $request, ResponseInterface $response, $arguments = null): ?ResponseInterface
     {
-        // Not used
+        return $response;
     }
 
     /**

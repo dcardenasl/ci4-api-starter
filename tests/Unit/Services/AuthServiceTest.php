@@ -6,8 +6,8 @@ namespace Tests\Unit\Services;
 
 use App\Entities\UserEntity;
 use App\Exceptions\AuthenticationException;
-use App\Exceptions\BadRequestException;
 use App\Exceptions\ValidationException;
+use App\Interfaces\AuditServiceInterface;
 use App\Interfaces\JwtServiceInterface;
 use App\Interfaces\RefreshTokenServiceInterface;
 use App\Interfaces\VerificationServiceInterface;
@@ -30,6 +30,7 @@ class AuthServiceTest extends CIUnitTestCase
     protected JwtServiceInterface $mockJwtService;
     protected RefreshTokenServiceInterface $mockRefreshTokenService;
     protected VerificationServiceInterface $mockVerificationService;
+    protected AuditServiceInterface $mockAuditService;
 
     protected function setUp(): void
     {
@@ -38,6 +39,7 @@ class AuthServiceTest extends CIUnitTestCase
         $this->mockJwtService = $this->createMock(JwtServiceInterface::class);
         $this->mockRefreshTokenService = $this->createMock(RefreshTokenServiceInterface::class);
         $this->mockVerificationService = $this->createMock(VerificationServiceInterface::class);
+        $this->mockAuditService = $this->createMock(AuditServiceInterface::class);
     }
 
     /**
@@ -84,7 +86,8 @@ class AuthServiceTest extends CIUnitTestCase
             $mockUserModel,
             $this->mockJwtService,
             $this->mockRefreshTokenService,
-            $this->mockVerificationService
+            $this->mockVerificationService,
+            $this->mockAuditService
         );
     }
 
@@ -99,21 +102,32 @@ class AuthServiceTest extends CIUnitTestCase
             'last_name' => 'User',
             'password' => password_hash('ValidPass123!', PASSWORD_BCRYPT),
             'role' => 'user',
+            'status' => 'active',
+            'email_verified_at' => date('Y-m-d H:i:s'),
         ]);
 
         $service = $this->createServiceWithUserQuery($user);
 
-        $result = $service->login([
+        // Expect tokens to be generated
+        $this->mockJwtService
+            ->method('encode')
+            ->willReturn('jwt.access.token');
+
+        $this->mockRefreshTokenService
+            ->method('issueRefreshToken')
+            ->willReturn('refresh.token');
+
+        $result = $service->login(new \App\DTO\Request\Auth\LoginRequestDTO([
             'email' => 'test@example.com',
             'password' => 'ValidPass123!',
-        ]);
+        ]));
 
-        $this->assertSuccessResponse($result);
-        $this->assertEquals(1, $result['data']['id']);
-        $this->assertEquals('test@example.com', $result['data']['email']);
-        $this->assertEquals('Test', $result['data']['first_name']);
-        $this->assertEquals('User', $result['data']['last_name']);
-        $this->assertEquals('user', $result['data']['role']);
+        $this->assertInstanceOf(\App\DTO\Response\Auth\LoginResponseDTO::class, $result);
+        $data = $result->toArray();
+        $this->assertEquals('jwt.access.token', $data['access_token']);
+        $this->assertEquals('refresh.token', $data['refresh_token']);
+        $this->assertEquals(1, $data['user']['id']);
+        $this->assertEquals('test@example.com', $data['user']['email']);
     }
 
     public function testLoginWithInvalidPasswordThrowsException(): void
@@ -127,10 +141,10 @@ class AuthServiceTest extends CIUnitTestCase
 
         $this->expectException(AuthenticationException::class);
 
-        $service->login([
+        $service->login(new \App\DTO\Request\Auth\LoginRequestDTO([
             'email' => 'test@example.com',
             'password' => 'WrongPassword123!',
-        ]);
+        ]));
     }
 
     public function testLoginWithNonExistentUserThrowsException(): void
@@ -139,33 +153,35 @@ class AuthServiceTest extends CIUnitTestCase
 
         $this->expectException(AuthenticationException::class);
 
-        $service->login([
+        $service->login(new \App\DTO\Request\Auth\LoginRequestDTO([
             'email' => 'nonexistent@example.com',
             'password' => 'AnyPassword123!',
-        ]);
+        ]));
     }
 
     public function testLoginWithEmptyCredentialsThrowsException(): void
     {
         $service = $this->createServiceWithUserQuery(null);
 
-        $this->expectException(AuthenticationException::class);
+        // Validation happens in DTO constructor now
+        $this->expectException(\App\Exceptions\ValidationException::class);
 
-        $service->login([
+        $service->login(new \App\DTO\Request\Auth\LoginRequestDTO([
             'email' => '',
             'password' => '',
-        ]);
+        ]));
     }
 
     public function testLoginWithMissingPasswordThrowsException(): void
     {
         $service = $this->createServiceWithUserQuery(null);
 
-        $this->expectException(AuthenticationException::class);
+        // Validation happens in DTO constructor now
+        $this->expectException(\App\Exceptions\ValidationException::class);
 
-        $service->login([
+        $service->login(new \App\DTO\Request\Auth\LoginRequestDTO([
             'email' => 'test@example.com',
-        ]);
+        ]));
     }
 
     // ==================== LOGIN WITH TOKEN TESTS ====================
@@ -207,6 +223,7 @@ class AuthServiceTest extends CIUnitTestCase
         $this->assertEquals('refresh.token.here', $result['data']['refresh_token']);
         $this->assertArrayHasKey('expires_in', $result['data']);
         $this->assertArrayHasKey('user', $result['data']);
+        $this->assertEquals(1, $result['data']['user']['id']);
     }
 
     public function testLoginWithTokenFailsIfEmailNotVerified(): void
@@ -394,31 +411,35 @@ class AuthServiceTest extends CIUnitTestCase
             'first_name' => 'New',
             'last_name' => 'User',
             'role' => 'user',
+            'status' => 'pending_approval',
         ]);
 
         $service = $this->createServiceWithUserQuery($createdUser);
 
-        $result = $service->register([
+        $result = $service->register(new \App\DTO\Request\Auth\RegisterRequestDTO([
             'email' => 'new@example.com',
             'first_name' => 'New',
             'last_name' => 'User',
             'password' => 'ValidPass123!',
-        ]);
+        ]));
 
-        $this->assertSuccessResponse($result);
-        $this->assertEquals(1, $result['data']['user']['id']);
-        $this->assertEquals('user', $result['data']['user']['role']);
+        $this->assertInstanceOf(\App\DTO\Response\Auth\RegisterResponseDTO::class, $result);
+        $data = $result->toArray();
+        $this->assertEquals(1, $data['id']);
+        $this->assertEquals('user', $data['role']);
+        $this->assertEquals('pending_approval', $data['status']);
     }
 
     public function testRegisterWithoutPasswordThrowsException(): void
     {
         $service = $this->createServiceWithUserQuery(null);
 
-        $this->expectException(BadRequestException::class);
+        // Validation now happens in DTO constructor
+        $this->expectException(\App\Exceptions\ValidationException::class);
 
-        $service->register([
+        $service->register(new \App\DTO\Request\Auth\RegisterRequestDTO([
             'email' => 'new@example.com',
-        ]);
+        ]));
     }
 
     public function testRegisterWithInvalidDataThrowsValidationException(): void
@@ -427,10 +448,10 @@ class AuthServiceTest extends CIUnitTestCase
 
         $this->expectException(ValidationException::class);
 
-        $service->register([
+        $service->register(new \App\DTO\Request\Auth\RegisterRequestDTO([
             'email' => 'invalid-email',
             'password' => 'ValidPass123!',
-        ]);
+        ]));
     }
 
     // ==================== REGISTER WITH TOKEN TESTS ====================
@@ -443,6 +464,7 @@ class AuthServiceTest extends CIUnitTestCase
             'first_name' => 'New',
             'last_name' => 'User',
             'role' => 'user',
+            'status' => 'pending_approval',
         ]);
 
         $service = $this->createServiceWithUserQuery($createdUser);
@@ -460,7 +482,8 @@ class AuthServiceTest extends CIUnitTestCase
         ]);
 
         $this->assertSuccessResponse($result);
-        $this->assertArrayHasKey('message', $result);
+        $this->assertEquals(1, $result['data']['id']);
+        $this->assertEquals('new@example.com', $result['data']['email']);
     }
 
     public function testRegisterWithTokenContinuesIfVerificationEmailFails(): void
@@ -471,6 +494,7 @@ class AuthServiceTest extends CIUnitTestCase
             'first_name' => 'New',
             'last_name' => 'User',
             'role' => 'user',
+            'status' => 'pending_approval',
         ]);
 
         $service = $this->createServiceWithUserQuery($createdUser);

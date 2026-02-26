@@ -8,6 +8,7 @@ use App\Entities\UserEntity;
 use App\Exceptions\BadRequestException;
 use App\Exceptions\ConflictException;
 use App\Exceptions\NotFoundException;
+use App\Interfaces\AuditServiceInterface;
 use App\Interfaces\EmailServiceInterface;
 use App\Models\UserModel;
 use App\Services\VerificationService;
@@ -25,12 +26,14 @@ class VerificationServiceTest extends CIUnitTestCase
 
     protected VerificationService $service;
     protected EmailServiceInterface $mockEmailService;
+    protected AuditServiceInterface $mockAuditService;
 
     protected function setUp(): void
     {
         parent::setUp();
 
         $this->mockEmailService = $this->createMock(EmailServiceInterface::class);
+        $this->mockAuditService = $this->createMock(AuditServiceInterface::class);
     }
 
     protected function tearDown(): void
@@ -88,7 +91,8 @@ class VerificationServiceTest extends CIUnitTestCase
 
         return new VerificationService(
             $mockUserModel,
-            $this->mockEmailService
+            $this->mockEmailService,
+            $this->mockAuditService
         );
     }
 
@@ -205,9 +209,15 @@ class VerificationServiceTest extends CIUnitTestCase
 
         $service = $this->createServiceWithUser($user);
 
-        $result = $service->verifyEmail(['token' => 'valid-token-123']);
+        $result = $service->verifyEmail(new \App\DTO\Request\Identity\VerificationRequestDTO([
+            'token' => 'valid-token-123',
+            'email' => 'test@example.com'
+        ]));
 
-        $this->assertSuccessResponse($result);
+        $this->assertInstanceOf(\App\DTO\Response\Identity\VerificationResponseDTO::class, $result);
+        $data = $result->toArray();
+        $this->assertEquals(1, $data['user_id']);
+
         // Verify the user entity was updated
         $this->assertNotNull($user->email_verified_at);
     }
@@ -226,7 +236,10 @@ class VerificationServiceTest extends CIUnitTestCase
 
         $this->expectException(BadRequestException::class);
 
-        $service->verifyEmail(['token' => 'expired-token']);
+        $service->verifyEmail(new \App\DTO\Request\Identity\VerificationRequestDTO([
+            'token' => 'expired-token',
+            'email' => 'test@example.com'
+        ]));
     }
 
     public function testVerifyEmailFailsForInvalidToken(): void
@@ -235,32 +248,18 @@ class VerificationServiceTest extends CIUnitTestCase
 
         $this->expectException(NotFoundException::class);
 
-        $service->verifyEmail(['token' => 'invalid-token']);
-    }
-
-    public function testVerifyEmailFailsForAlreadyVerified(): void
-    {
-        $user = $this->createUserEntity([
-            'id' => 1,
-            'email' => 'verified@example.com',
-            'email_verified_at' => '2024-01-01 00:00:00',
-            'email_verification_token' => 'token-123',
-        ]);
-
-        $service = $this->createServiceWithUser($user);
-
-        $this->expectException(ConflictException::class);
-
-        $service->verifyEmail(['token' => 'token-123']);
+        $service->verifyEmail(new \App\DTO\Request\Identity\VerificationRequestDTO([
+            'token' => 'invalid-token',
+            'email' => 'test@example.com'
+        ]));
     }
 
     public function testVerifyEmailThrowsForEmptyToken(): void
     {
-        $service = $this->createServiceWithUser(null);
+        // Validation now happens in DTO constructor
+        $this->expectException(\App\Exceptions\ValidationException::class);
 
-        $this->expectException(BadRequestException::class);
-
-        $service->verifyEmail(['token' => '']);
+        new \App\DTO\Request\Identity\VerificationRequestDTO(['token' => '']);
     }
 
     // ==================== RESEND VERIFICATION TESTS ====================

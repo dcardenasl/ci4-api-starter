@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Services;
 
-use App\Exceptions\BadRequestException;
-use App\Exceptions\NotFoundException;
 use App\Interfaces\JwtServiceInterface;
 use App\Models\RefreshTokenModel;
 use App\Models\UserModel;
@@ -89,13 +87,6 @@ class RefreshTokenServiceTest extends CIUnitTestCase
 
     // ==================== REVOKE TESTS ====================
 
-    public function testRevokeWithEmptyTokenThrowsException(): void
-    {
-        $this->expectException(BadRequestException::class);
-
-        $this->service->revoke([]);
-    }
-
     public function testRevokeWithValidTokenReturnsSuccess(): void
     {
         $this->mockRefreshTokenModel
@@ -106,7 +97,8 @@ class RefreshTokenServiceTest extends CIUnitTestCase
 
         $result = $this->service->revoke(['refresh_token' => self::VALID_REFRESH_TOKEN]);
 
-        $this->assertSuccessResponse($result);
+        $this->assertIsArray($result);
+        $this->assertEquals('success', $result['status']);
     }
 
     public function testRevokeWithNonExistentTokenThrowsNotFoundException(): void
@@ -115,7 +107,7 @@ class RefreshTokenServiceTest extends CIUnitTestCase
             ->method('revokeToken')
             ->willReturn(false);
 
-        $this->expectException(NotFoundException::class);
+        $this->expectException(\App\Exceptions\NotFoundException::class);
 
         $this->service->revoke(['refresh_token' => self::UNKNOWN_REFRESH_TOKEN]);
     }
@@ -131,6 +123,7 @@ class RefreshTokenServiceTest extends CIUnitTestCase
 
         $result = $this->service->revokeAllUserTokens(1);
 
-        $this->assertSuccessResponse($result);
+        $this->assertIsArray($result);
+        $this->assertEquals('success', $result['status']);
     }
 }

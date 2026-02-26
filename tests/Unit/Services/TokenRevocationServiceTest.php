@@ -6,6 +6,7 @@ namespace Tests\Unit\Services;
 
 use App\Exceptions\AuthenticationException;
 use App\Exceptions\BadRequestException;
+use App\Interfaces\AuditServiceInterface;
 use App\Interfaces\JwtServiceInterface;
 use App\Models\RefreshTokenModel;
 use App\Models\TokenBlacklistModel;
@@ -25,6 +26,7 @@ class TokenRevocationServiceTest extends CIUnitTestCase
     protected TokenBlacklistModel $mockBlacklistModel;
     protected RefreshTokenModel $mockRefreshTokenModel;
     protected JwtServiceInterface $mockJwtService;
+    protected AuditServiceInterface $mockAuditService;
     protected CacheInterface $mockCache;
 
     protected function setUp(): void
@@ -34,12 +36,14 @@ class TokenRevocationServiceTest extends CIUnitTestCase
         $this->mockBlacklistModel = $this->createMock(TokenBlacklistModel::class);
         $this->mockRefreshTokenModel = $this->createMock(RefreshTokenModel::class);
         $this->mockJwtService = $this->createMock(JwtServiceInterface::class);
+        $this->mockAuditService = $this->createMock(AuditServiceInterface::class);
         $this->mockCache = $this->createMock(CacheInterface::class);
 
         $this->service = new TokenRevocationService(
             $this->mockBlacklistModel,
             $this->mockRefreshTokenModel,
             $this->mockJwtService,
+            $this->mockAuditService,
             $this->mockCache
         );
     }
@@ -70,7 +74,8 @@ class TokenRevocationServiceTest extends CIUnitTestCase
             'authorization_header' => 'Bearer valid-token-here',
         ]);
 
-        $this->assertSuccessResponse($result);
+        $this->assertIsArray($result);
+        $this->assertEquals('success', $result['status']);
     }
 
     public function testRevokeAccessTokenWithoutHeaderThrowsException(): void
@@ -157,7 +162,8 @@ class TokenRevocationServiceTest extends CIUnitTestCase
 
         $result = $this->service->revokeToken($jti, $exp);
 
-        $this->assertSuccessResponse($result);
+        $this->assertIsArray($result);
+        $this->assertEquals('success', $result['status']);
     }
 
     public function testRevokeTokenFailureThrowsException(): void
@@ -252,6 +258,7 @@ class TokenRevocationServiceTest extends CIUnitTestCase
 
         $result = $this->service->revokeAllUserTokens($userId);
 
-        $this->assertSuccessResponse($result);
+        $this->assertIsArray($result);
+        $this->assertEquals('success', $result['status']);
     }
 }

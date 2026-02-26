@@ -246,14 +246,16 @@ class AuditServiceTest extends CIUnitTestCase
 
         $result = $this->service->show(['id' => 1]);
 
-        $this->assertSuccessResponse($result);
-        $this->assertEquals(1, $result['data']['id']);
-        $this->assertEquals('create', $result['data']['action']);
+        $this->assertInstanceOf(\App\DTO\Response\Audit\AuditResponseDTO::class, $result);
+        $data = $result->toArray();
+        $this->assertEquals(1, $data['id']);
+        $this->assertEquals('create', $data['action']);
     }
 
     public function testShowWithoutIdThrowsException(): void
     {
-        $this->expectException(BadRequestException::class);
+        // validateRequiredId from trait throws BadRequestException
+        $this->expectException(\App\Exceptions\BadRequestException::class);
 
         $this->service->show([]);
     }
@@ -311,8 +313,9 @@ class AuditServiceTest extends CIUnitTestCase
             'entity_id' => 5,
         ]);
 
-        $this->assertSuccessResponse($result);
-        $this->assertCount(2, $result['data']);
+        $this->assertIsArray($result);
+        $this->assertCount(2, $result);
+        $this->assertInstanceOf(\App\DTO\Response\Audit\AuditResponseDTO::class, $result[0]);
     }
 
     public function testByEntityNormalizesSingularEntityType(): void
@@ -328,25 +331,20 @@ class AuditServiceTest extends CIUnitTestCase
             'entity_id' => 5,
         ]);
 
-        $this->assertSuccessResponse($result);
-        $this->assertSame([], $result['data']);
+        $this->assertSame([], $result);
     }
 
     public function testByEntityWithMissingParamsThrowsException(): void
     {
-        $this->expectException(BadRequestException::class);
+        $this->expectException(\App\Exceptions\BadRequestException::class);
 
         $this->service->byEntity(['entity_type' => 'users']);
     }
 
     // ==================== HELPER METHODS ====================
 
-    private function createAuditLogEntity(array $data): \stdClass
+    private function createAuditLogEntity(array $data): \App\Entities\AuditLogEntity
     {
-        $entity = new \stdClass();
-        foreach ($data as $key => $value) {
-            $entity->{$key} = $value;
-        }
-        return $entity;
+        return new \App\Entities\AuditLogEntity($data);
     }
 }

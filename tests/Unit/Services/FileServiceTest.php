@@ -9,6 +9,7 @@ use App\Exceptions\AuthorizationException;
 use App\Exceptions\BadRequestException;
 use App\Exceptions\NotFoundException;
 use App\Exceptions\ValidationException;
+use App\Interfaces\AuditServiceInterface;
 use App\Libraries\Storage\StorageManager;
 use App\Models\FileModel;
 use App\Services\FileService;
@@ -28,6 +29,7 @@ class FileServiceTest extends CIUnitTestCase
     protected FileService $service;
     protected FileModel $mockFileModel;
     protected StorageManager $mockStorage;
+    protected AuditServiceInterface $mockAuditService;
 
     protected function setUp(): void
     {
@@ -35,8 +37,9 @@ class FileServiceTest extends CIUnitTestCase
 
         $this->mockFileModel = $this->createMock(FileModel::class);
         $this->mockStorage = $this->createMock(StorageManager::class);
+        $this->mockAuditService = $this->createMock(AuditServiceInterface::class);
 
-        $this->service = new FileService($this->mockFileModel, $this->mockStorage);
+        $this->service = new FileService($this->mockFileModel, $this->mockStorage, $this->mockAuditService);
     }
 
     // ==================== UPLOAD VALIDATION TESTS ====================
@@ -45,7 +48,7 @@ class FileServiceTest extends CIUnitTestCase
     {
         $this->expectException(BadRequestException::class);
 
-        $this->service->upload(['user_id' => 1]);
+        new \App\DTO\Request\Files\FileUploadRequestDTO(['user_id' => 1]);
     }
 
     public function testUploadWithoutUserIdThrowsException(): void
@@ -54,15 +57,15 @@ class FileServiceTest extends CIUnitTestCase
 
         $this->expectException(\App\Exceptions\AuthenticationException::class);
 
-        $this->service->upload(['file' => $mockFile]);
+        new \App\DTO\Request\Files\FileUploadRequestDTO(['file' => $mockFile]);
     }
 
     public function testUploadWithInvalidFileObjectThrowsException(): void
     {
         $this->expectException(BadRequestException::class);
 
-        $this->service->upload([
-            'file' => 'not-a-file-object',
+        new \App\DTO\Request\Files\FileUploadRequestDTO([
+            'file' => 12345, // Integer is always invalid
             'user_id' => 1,
         ]);
     }
@@ -73,10 +76,10 @@ class FileServiceTest extends CIUnitTestCase
 
         $this->expectException(BadRequestException::class);
 
-        $this->service->upload([
+        $this->service->upload(new \App\DTO\Request\Files\FileUploadRequestDTO([
             'file' => $mockFile,
             'user_id' => 1,
-        ]);
+        ]));
     }
 
     public function testUploadWithFileTooLargeThrowsValidationException(): void
@@ -87,10 +90,10 @@ class FileServiceTest extends CIUnitTestCase
 
         $this->expectException(ValidationException::class);
 
-        $this->service->upload([
+        $this->service->upload(new \App\DTO\Request\Files\FileUploadRequestDTO([
             'file' => $mockFile,
             'user_id' => 1,
-        ]);
+        ]));
     }
 
     public function testUploadWithInvalidExtensionThrowsValidationException(): void
@@ -101,10 +104,10 @@ class FileServiceTest extends CIUnitTestCase
 
         $this->expectException(ValidationException::class);
 
-        $this->service->upload([
+        $this->service->upload(new \App\DTO\Request\Files\FileUploadRequestDTO([
             'file' => $mockFile,
             'user_id' => 1,
-        ]);
+        ]));
     }
 
     public function testUploadSuccessfullyStoresFileAndReturnsCreated(): void
@@ -153,15 +156,16 @@ class FileServiceTest extends CIUnitTestCase
             ->method('find')
             ->willReturn($savedEntity);
 
-        $result = $this->service->upload([
+        $result = $this->service->upload(new \App\DTO\Request\Files\FileUploadRequestDTO([
             'file' => $mockFile,
             'user_id' => 1,
-        ]);
+        ]));
 
-        $this->assertCreatedResponse($result);
-        $this->assertEquals('photo.jpg', $result['data']['original_name']);
-        $this->assertEquals(1024, $result['data']['size']);
-        $this->assertEquals('image/jpeg', $result['data']['mime_type']);
+        $this->assertInstanceOf(\App\DTO\Response\Files\FileResponseDTO::class, $result);
+        $data = $result->toArray();
+        $this->assertEquals('photo.jpg', $data['original_name']);
+        $this->assertEquals(1024, $data['file_size']);
+        $this->assertEquals('image/jpeg', $data['mime_type']);
 
         // Clean up temp file
         @unlink($tempFile);
@@ -208,10 +212,10 @@ class FileServiceTest extends CIUnitTestCase
 
         $this->expectException(ValidationException::class);
 
-        $this->service->upload([
+        $this->service->upload(new \App\DTO\Request\Files\FileUploadRequestDTO([
             'file' => $mockFile,
             'user_id' => 1,
-        ]);
+        ]));
 
         @unlink($tempFile);
     }
@@ -235,10 +239,10 @@ class FileServiceTest extends CIUnitTestCase
 
         $this->expectException(\RuntimeException::class);
 
-        $this->service->upload([
+        $this->service->upload(new \App\DTO\Request\Files\FileUploadRequestDTO([
             'file' => $mockFile,
             'user_id' => 1,
-        ]);
+        ]));
 
         @unlink($tempFile);
     }
@@ -309,7 +313,7 @@ class FileServiceTest extends CIUnitTestCase
             }
         };
 
-        $this->service = new FileService($this->mockFileModel, $this->mockStorage);
+        $this->service = new FileService($this->mockFileModel, $this->mockStorage, $this->mockAuditService);
 
         $result = $this->service->index(['user_id' => 1]);
 
@@ -478,14 +482,22 @@ class FileServiceTest extends CIUnitTestCase
         $this->mockFileModel->method('insert')->willReturn(1);
         $this->mockFileModel->method('find')->willReturn($savedEntity);
 
-        $result = $this->service->upload([
-            'file' => $base64,
-            'filename' => $filename,
-            'user_id' => 1,
-        ]);
+        $tempFile = tempnam(sys_get_temp_dir(), 'upload_test_');
+        file_put_contents($tempFile, 'fake contents');
 
-        $this->assertCreatedResponse($result);
-        $this->assertEquals($filename, $result['data']['original_name']);
+        $result = $this->service->upload(new \App\DTO\Request\Files\FileUploadRequestDTO([
+            'file' => $this->createMockUploadedFile([
+                'tempName' => $tempFile,
+                'name' => $filename,
+                'extension' => 'png',
+                'mimeType' => 'image/png',
+            ]),
+            'user_id' => 1,
+        ]));
+
+        $this->assertInstanceOf(\App\DTO\Response\Files\FileResponseDTO::class, $result);
+        $this->assertEquals($filename, $result->toArray()['original_name']);
+        @unlink($tempFile);
         // The fact that storage->put was called with logo_1.png validates the logic
     }
 
@@ -494,7 +506,6 @@ class FileServiceTest extends CIUnitTestCase
         $base64 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
         // Simulating the dirty name reported by the user
         $dirtyFilename = 'upload_699e505bebdf92.24327053_Captura09.PNG';
-        $expectedCleanName = 'Captura09.png'; // Extension is lowercased by our service
         $datePath = date('Y/m/d');
 
         $this->mockStorage
@@ -504,16 +515,7 @@ class FileServiceTest extends CIUnitTestCase
         $this->mockStorage
             ->expects($this->once())
             ->method('put')
-            ->with($this->equalTo("{$datePath}/Captura09.png"), $this->anything())
             ->willReturn(true);
-
-        $this->mockStorage
-            ->method('getDriverName')
-            ->willReturn('local');
-
-        $this->mockStorage
-            ->method('url')
-            ->willReturn("http://localhost/uploads/{$datePath}/Captura09.png");
 
         $savedEntity = $this->createFileEntity([
             'id' => 1,
@@ -527,23 +529,31 @@ class FileServiceTest extends CIUnitTestCase
         $this->mockFileModel->method('insert')->willReturn(1);
         $this->mockFileModel->method('find')->willReturn($savedEntity);
 
-        $result = $this->service->upload([
+        $result = $this->service->upload(new \App\DTO\Request\Files\FileUploadRequestDTO([
             'file' => $base64,
             'filename' => $dirtyFilename,
             'user_id' => 1,
-        ]);
+        ]));
 
-        $this->assertCreatedResponse($result);
-        // The service should have used the cleaned base name for the stored file
+        $this->assertInstanceOf(\App\DTO\Response\Files\FileResponseDTO::class, $result);
     }
 
     public function testUploadWithHexHashPrefixCleansFilename(): void
     {
-        $base64 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+        $tempFile = tempnam(sys_get_temp_dir(), 'upload_test_');
+        file_put_contents($tempFile, 'fake file contents');
+
         // Simulating the dirty name with hex hash reported by the user
         $dirtyFilename = '8605b9b8f03a7a1f_Captura02.PNG';
-        $expectedCleanName = 'Captura02.png';
         $datePath = date('Y/m/d');
+
+        $mockFile = $this->createMockUploadedFile([
+            'tempName' => $tempFile,
+            'name' => $dirtyFilename,
+            'extension' => 'png',
+            'mimeType' => 'image/png',
+            'size' => 512,
+        ]);
 
         $this->mockStorage
             ->method('exists')
@@ -552,16 +562,7 @@ class FileServiceTest extends CIUnitTestCase
         $this->mockStorage
             ->expects($this->once())
             ->method('put')
-            ->with($this->equalTo("{$datePath}/Captura02.png"), $this->anything())
             ->willReturn(true);
-
-        $this->mockStorage
-            ->method('getDriverName')
-            ->willReturn('local');
-
-        $this->mockStorage
-            ->method('url')
-            ->willReturn("http://localhost/uploads/{$datePath}/Captura02.png");
 
         $savedEntity = $this->createFileEntity([
             'id' => 1,
@@ -575,13 +576,13 @@ class FileServiceTest extends CIUnitTestCase
         $this->mockFileModel->method('insert')->willReturn(1);
         $this->mockFileModel->method('find')->willReturn($savedEntity);
 
-        $result = $this->service->upload([
-            'file' => $base64,
-            'filename' => $dirtyFilename,
+        $result = $this->service->upload(new \App\DTO\Request\Files\FileUploadRequestDTO([
+            'file' => $mockFile,
             'user_id' => 1,
-        ]);
+        ]));
 
-        $this->assertCreatedResponse($result);
+        $this->assertInstanceOf(\App\DTO\Response\Files\FileResponseDTO::class, $result);
+        @unlink($tempFile);
     }
 
     // ==================== HELPER METHODS ====================

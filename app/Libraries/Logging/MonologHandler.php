@@ -74,7 +74,8 @@ class MonologHandler implements HandlerInterface
     public function handle($level, $message): bool
     {
         // Convert CI4 level to Monolog level
-        $monologLevel = $this->mapLevel($level);
+        /** @var \Monolog\Level $monologLevel */
+        $monologLevel = $this->mapLevel((string) $level);
 
         // Extract context from message if present
         $context = [];
@@ -125,21 +126,19 @@ class MonologHandler implements HandlerInterface
      * Map CodeIgniter log level to Monolog level
      *
      * @param string $level
-     * @return int
+     * @return \Monolog\Level
      */
-    protected function mapLevel(string $level): int
+    protected function mapLevel(string $level): \Monolog\Level
     {
-        $map = [
-            'emergency' => MonologLogger::EMERGENCY,
-            'alert' => MonologLogger::ALERT,
-            'critical' => MonologLogger::CRITICAL,
-            'error' => MonologLogger::ERROR,
-            'warning' => MonologLogger::WARNING,
-            'notice' => MonologLogger::NOTICE,
-            'info' => MonologLogger::INFO,
-            'debug' => MonologLogger::DEBUG,
-        ];
-
-        return $map[$level] ?? MonologLogger::INFO;
+        return match (strtolower($level)) {
+            'emergency' => \Monolog\Level::Emergency,
+            'alert'     => \Monolog\Level::Alert,
+            'critical'  => \Monolog\Level::Critical,
+            'error'     => \Monolog\Level::Error,
+            'warning'   => \Monolog\Level::Warning,
+            'notice'    => \Monolog\Level::Notice,
+            'debug'     => \Monolog\Level::Debug,
+            default     => \Monolog\Level::Info,
+        };
     }
 }

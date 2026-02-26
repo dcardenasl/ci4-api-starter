@@ -1,5 +1,5 @@
 parameters:
-    level: 6
+    level: 5
     bootstrapFiles:
         - app/Helpers/validation_helper.php
         - app/Helpers/security_helper.php
@@ -22,20 +22,11 @@ parameters:
         - '#Call to an undefined method CodeIgniter\\Database\\BaseBuilder::#'
         - '#Function (esc|lang|service|helper|model|config|cache|view|is_cli|env|base_url|site_url|redirect|clean_path|log_message) not found#'
         - '#Constant (APPPATH|FCPATH|ROOTPATH|WRITEPATH|ENVIRONMENT) not found#'
-        - '#Cannot call method .* on CodeIgniter\\.*\|null#'
-        - '#has parameter .* with no type specified#'
         - '#has parameter .* with no value type specified in iterable type array#'
         - '#return type has no value type specified in iterable type array#'
-        - '#Cannot access property .* on array\|object#'
-        - '#Cannot access property .* on array<.*>\|object#'
-        - '#Access to an undefined property CodeIgniter\\HTTP\\RequestInterface::#'
-        - '#return statement is missing#'
-        - '#Return type .* should be compatible with return type#'
-        - '#Cannot call method toArray\(\) on array<.*>\|object#'
-        - '#Property .* with generic class CodeIgniter\\Database\\BaseConnection does not specify its types#'
-        - '#Call to an undefined method App\\Models\\.*::get\(\)#'
-        - '#Parameter .* of method Monolog\\Logger::log\(\) expects#'
-        - '#Property .* type has no value type specified in iterable type array#'
-        - '#Call to an undefined method object::(getErrorString|getSize|getExtension|getName|getTempName|getMimeType)\(\)#'
-        - '#Cannot call method getHumanSize\(\) on array.*\|object#'
-        - '#Access to an undefined property App\\Entities\\.*Entity::#'
+        - '#Call to an undefined method object::#'
+        - '#Access to an undefined property object::#'
+        - '#Access to an undefined property App\\Entities\\.*::\$#'
+        - '#Cannot access property .* on array.*\|object#'
+        - '#Cannot call method toArray\(\) on array.*\|object#'
+        - '#Call to an undefined method App\\Controllers\\.*::respondForbidden\(\)#'

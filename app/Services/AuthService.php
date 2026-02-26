@@ -6,7 +6,6 @@ namespace App\Services;
 
 use App\Exceptions\AuthenticationException;
 use App\Exceptions\AuthorizationException;
-use App\Exceptions\BadRequestException;
 use App\Exceptions\ConflictException;
 use App\Exceptions\ValidationException;
 use App\Interfaces\AuditServiceInterface;
@@ -45,21 +44,11 @@ class AuthService implements AuthServiceInterface
     /**
      * Authenticate user with credentials
      * Protected against timing attacks by always verifying password hash
-     *
-     * @param array $data Login credentials (email, password)
-     * @return array Result with user data
      */
-    public function login(array $data): array
+    public function login(\App\DTO\Request\Auth\LoginRequestDTO $request): \App\DTO\Response\Auth\LoginResponseDTO
     {
-        if (empty($data['email']) || empty($data['password'])) {
-            throw new AuthenticationException(
-                lang('Users.auth.invalidCredentials'),
-                ['credentials' => lang('Users.auth.credentialsRequired')]
-            );
-        }
-
         $user = $this->userModel
-            ->where('email', $data['email'])
+            ->where('email', $request->email)
             ->first();
 
         // Use a fake hash for non-existent users to prevent timing attacks
@@ -68,7 +57,7 @@ class AuthService implements AuthServiceInterface
             ? $user->password
             : '$2y$10$fakeHashToPreventTimingAttacksByEnsuringConstantTimeResponse1234567890';
 
-        $passwordValid = password_verify($data['password'], $storedHash);
+        $passwordValid = password_verify($request->password, $storedHash);
 
         if (!$user || !$passwordValid) {
             // Log failed login attempt
@@ -76,7 +65,7 @@ class AuthService implements AuthServiceInterface
                 'login_failure',
                 'users',
                 $user ? (int) $user->id : null,
-                ['email' => $data['email']],
+                ['email' => $request->email],
                 ['reason' => 'invalid_credentials']
             );
 
@@ -96,7 +85,15 @@ class AuthService implements AuthServiceInterface
             (int) $user->id
         );
 
-        return ApiResponse::success($this->buildAuthUserData($user));
+        $userData = $this->buildAuthUserData($user);
+
+        // Generate tokens (moved logic from loginWithToken to have a single login flow)
+        $userEntity = $this->userModel->find((int) $userData['id']);
+        $this->userAccessPolicy->assertCanAuthenticate($userEntity);
+
+        $tokens = $this->generateTokensResponse($userEntity, $userData);
+
+        return \App\DTO\Response\Auth\LoginResponseDTO::fromArray($tokens);
     }
 
     /**
@@ -107,22 +104,10 @@ class AuthService implements AuthServiceInterface
      */
     public function loginWithToken(array $data): array
     {
-        $result = $this->login($data);
+        $dto = new \App\DTO\Request\Auth\LoginRequestDTO($data);
+        $result = $this->login($dto);
 
-        // login() now throws exceptions on error, so if we get here, it's successful
-        $user = $result['data'];
-        $userEntity = $this->userModel->find((int) $user['id']);
-
-        if (! $userEntity) {
-            throw new AuthenticationException(
-                lang('Users.auth.invalidCredentials'),
-                ['credentials' => lang('Users.auth.invalidCredentials')]
-            );
-        }
-
-        $this->userAccessPolicy->assertCanAuthenticate($userEntity);
-
-        return $this->generateTokensResponse($userEntity, $user);
+        return ApiResponse::success($result->toArray());
     }
 
     /**
@@ -137,7 +122,7 @@ class AuthService implements AuthServiceInterface
 
         $identity = $this->googleIdentityService->verifyIdToken((string) ($data['id_token'] ?? ''));
 
-        $email = strtolower(trim((string) ($identity['email'] ?? '')));
+        $email = strtolower($identity->email);
         if ($email === '') {
             throw new AuthenticationException(
                 lang('Auth.googleInvalidToken'),
@@ -145,7 +130,7 @@ class AuthService implements AuthServiceInterface
             );
         }
 
-        $providerId = trim((string) ($identity['provider_id'] ?? ''));
+        $providerId = $identity->providerId;
         if ($providerId === '') {
             throw new AuthenticationException(
                 lang('Auth.googleInvalidToken'),
@@ -159,7 +144,7 @@ class AuthService implements AuthServiceInterface
             ->first();
 
         if (! $user) {
-            $user = $this->createPendingGoogleUser($identity);
+            $user = $this->createPendingGoogleUser($identity->toArray());
             $this->sendPendingApprovalEmail($user);
 
             $this->auditService->log(
@@ -171,10 +156,11 @@ class AuthService implements AuthServiceInterface
                 (int) $user->id
             );
 
-            return ApiResponse::success(
-                ['user' => $this->buildPendingUserData($user)],
-                lang('Auth.googleRegistrationPendingApproval')
-            );
+            return [
+                'status' => 'success',
+                'data' => ['user' => $this->buildPendingUserData($user)],
+                'message' => lang('Auth.googleRegistrationPendingApproval')
+            ];
         }
 
         $oauthProvider = $user->oauth_provider ?? null;
@@ -195,13 +181,14 @@ class AuthService implements AuthServiceInterface
         }
 
         if (($user->deleted_at ?? null) !== null) {
-            $user = $this->reactivateDeletedGoogleUser($user, $identity);
+            $user = $this->reactivateDeletedGoogleUser($user, $identity->toArray());
             $this->sendPendingApprovalEmail($user);
 
-            return ApiResponse::success(
-                ['user' => $this->buildPendingUserData($user)],
-                lang('Auth.googleRegistrationPendingApproval')
-            );
+            return [
+                'status' => 'success',
+                'data' => ['user' => $this->buildPendingUserData($user)],
+                'message' => lang('Auth.googleRegistrationPendingApproval')
+            ];
         }
 
         if (($user->status ?? null) === 'pending_approval') {
@@ -221,7 +208,7 @@ class AuthService implements AuthServiceInterface
             $updateData['oauth_provider_id'] = $providerId;
         }
 
-        $this->syncGoogleProfileIfEmpty($updateData, $user, $identity);
+        $this->syncGoogleProfileIfEmpty($updateData, $user, $identity->toArray());
 
         if ($user->email_verified_at === null) {
             $updateData['email_verified_at'] = date('Y-m-d H:i:s');
@@ -297,36 +284,25 @@ class AuthService implements AuthServiceInterface
         $accessToken = $this->jwtService->encode((int) $user['id'], $user['role']);
         $refreshToken = $this->refreshTokenService->issueRefreshToken((int) $user['id']);
 
-        return ApiResponse::success([
+        return [
             'access_token' => $accessToken,
             'refresh_token' => $refreshToken,
             'expires_in' => (int) (getenv('JWT_ACCESS_TOKEN_TTL') ?: env('JWT_ACCESS_TOKEN_TTL', 3600)),
             'user' => $user,
-        ]);
+        ];
     }
 
     /**
      * Register a new user with password
-     *
-     * @param array $data Registration data (email, password, names)
-     * @return array Result with created user data
      */
-    public function register(array $data): array
+    public function register(\App\DTO\Request\Auth\RegisterRequestDTO $request): \App\DTO\Response\Auth\RegisterResponseDTO
     {
-        if (empty($data['password'])) {
-            throw new BadRequestException(
-                lang('Api.invalidRequest'),
-                ['password' => lang('Users.passwordRequired')]
-            );
-        }
-
-        // Validate request input (format, required fields, password strength)
-        validateOrFail($data, 'auth', 'register');
+        $data = $request->toArray();
 
         $userId = $this->userModel->insert([
-            'email'      => $data['email'] ?? null,
-            'first_name' => $data['first_name'] ?? null,
-            'last_name'  => $data['last_name'] ?? null,
+            'email'      => $data['email'],
+            'first_name' => $data['first_name'],
+            'last_name'  => $data['last_name'],
             'password' => password_hash($data['password'], PASSWORD_BCRYPT),
             'role'     => 'user', // Always 'user' for self-registration (security fix)
             'status'   => 'pending_approval',
@@ -345,29 +321,13 @@ class AuthService implements AuthServiceInterface
 
         // Send verification email (don't fail registration if email fails)
         try {
-            $this->verificationService->sendVerificationEmail((int) $userId, [
-                'client_base_url' => $data['client_base_url'] ?? null,
-            ]);
+            $this->verificationService->sendVerificationEmail((int) $userId);
         } catch (\Throwable $e) {
             // Log error but don't fail registration
             log_message('error', 'Failed to send verification email: ' . $e->getMessage());
         }
 
-        $message = lang('Auth.registrationPendingApproval');
-        if (! is_email_verification_required()) {
-            $message = lang('Auth.registrationPendingApprovalNoVerification');
-        }
-
-        return ApiResponse::created([
-            'user' => [
-                'id' => $user->id,
-                'email' => $user->email,
-                'first_name' => $user->first_name,
-                'last_name' => $user->last_name,
-                'avatar_url' => $user->avatar_url,
-                'role' => $user->role,
-            ],
-        ], $message);
+        return \App\DTO\Response\Auth\RegisterResponseDTO::fromArray($user->toArray());
     }
 
     /**
@@ -378,7 +338,10 @@ class AuthService implements AuthServiceInterface
      */
     public function registerWithToken(array $data): array
     {
-        return $this->register($data);
+        $dto = new \App\DTO\Request\Auth\RegisterRequestDTO($data);
+        $result = $this->register($dto);
+
+        return ApiResponse::success($result->toArray());
     }
 
     private function createPendingGoogleUser(array $identity): object

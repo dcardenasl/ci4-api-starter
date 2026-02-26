@@ -74,13 +74,14 @@ class MetricModel extends Model
             default => date('Y-m-d H:i:s', strtotime('-1 day')),
         };
 
-        $result = $this->select('
-            COUNT(*) as count,
-            AVG(metric_value) as average,
-            MIN(metric_value) as minimum,
-            MAX(metric_value) as maximum,
-            SUM(metric_value) as sum
-        ')
+        $result = $this->builder()
+            ->select('
+                COUNT(*) as count,
+                AVG(metric_value) as average,
+                MIN(metric_value) as minimum,
+                MAX(metric_value) as maximum,
+                SUM(metric_value) as sum
+            ')
             ->where('metric_name', $name)
             ->where('created_at >=', $since)
             ->get()

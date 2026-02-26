@@ -71,6 +71,8 @@ class JwtAuthFilter implements FilterInterface
         if ($request instanceof ApiRequest) {
             $request->setAuthContext((int) $decoded->uid, (string) $decoded->role);
         }
+
+        return $request;
     }
 
     /**
@@ -123,6 +125,6 @@ class JwtAuthFilter implements FilterInterface
 
     public function after(RequestInterface $request, ResponseInterface $response, $arguments = null)
     {
-        // Do nothing
+        return $response;
     }
 }

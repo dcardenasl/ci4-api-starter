@@ -8,6 +8,7 @@ use App\Entities\UserEntity;
 use App\Exceptions\BadRequestException;
 use App\Exceptions\NotFoundException;
 use App\Exceptions\ValidationException;
+use App\Interfaces\AuditServiceInterface;
 use App\Interfaces\EmailServiceInterface;
 use App\Models\PasswordResetModel;
 use App\Models\UserModel;
@@ -28,6 +29,7 @@ class UserServiceTest extends CIUnitTestCase
     protected UserModel $mockUserModel;
     protected EmailServiceInterface $mockEmailService;
     protected PasswordResetModel $passwordResetModelStub;
+    protected AuditServiceInterface $mockAuditService;
 
     protected function setUp(): void
     {
@@ -35,6 +37,7 @@ class UserServiceTest extends CIUnitTestCase
 
         $this->mockUserModel = $this->createMock(UserModel::class);
         $this->mockEmailService = $this->createMock(EmailServiceInterface::class);
+        $this->mockAuditService = $this->createMock(AuditServiceInterface::class);
         $this->passwordResetModelStub = new class () extends PasswordResetModel {
             public function __construct()
             {
@@ -63,7 +66,8 @@ class UserServiceTest extends CIUnitTestCase
         $this->service = new UserService(
             $this->mockUserModel,
             $this->mockEmailService,
-            $this->passwordResetModelStub
+            $this->passwordResetModelStub,
+            $this->mockAuditService
         );
     }
 
@@ -77,6 +81,7 @@ class UserServiceTest extends CIUnitTestCase
             'first_name' => 'Test',
             'last_name' => 'User',
             'role' => 'user',
+            'status' => 'active',
         ]);
 
         $this->mockUserModel
@@ -87,9 +92,10 @@ class UserServiceTest extends CIUnitTestCase
 
         $result = $this->service->show(['id' => 1]);
 
-        $this->assertSuccessResponse($result);
-        $this->assertEquals(1, $result['data']['id']);
-        $this->assertEquals('test@example.com', $result['data']['email']);
+        $this->assertInstanceOf(\App\DTO\Response\Users\UserResponseDTO::class, $result);
+        $data = $result->toArray();
+        $this->assertEquals(1, $data['id']);
+        $this->assertEquals('test@example.com', $data['email']);
     }
 
     public function testShowWithoutIdThrowsException(): void
@@ -123,6 +129,8 @@ class UserServiceTest extends CIUnitTestCase
         $createdUser = $this->createUserEntity([
             'id' => 1,
             'email' => 'new@example.com',
+            'first_name' => 'New',
+            'last_name' => 'User',
             'role' => 'user',
             'status' => 'invited',
         ]);
@@ -138,9 +146,10 @@ class UserServiceTest extends CIUnitTestCase
             'user_id' => 99,
         ]);
 
-        $this->assertSuccessResponse($result);
-        $this->assertEquals(1, $result['data']['id']);
-        $this->assertEquals('invited', $result['data']['status']);
+        $this->assertInstanceOf(\App\DTO\Response\Users\UserResponseDTO::class, $result);
+        $data = $result->toArray();
+        $this->assertEquals(1, $data['id']);
+        $this->assertEquals('invited', $data['status']);
     }
 
     public function testStoreWithInvalidDataThrowsValidationException(): void
@@ -221,8 +230,9 @@ class UserServiceTest extends CIUnitTestCase
             'first_name' => 'New',
         ]);
 
-        $this->assertSuccessResponse($result);
-        $this->assertEquals('new@example.com', $result['data']['email']);
+        $this->assertInstanceOf(\App\DTO\Response\Users\UserResponseDTO::class, $result);
+        $data = $result->toArray();
+        $this->assertEquals('new@example.com', $data['email']);
     }
 
     public function testUpdateWithoutIdThrowsException(): void
@@ -344,8 +354,9 @@ class UserServiceTest extends CIUnitTestCase
 
         $result = $this->service->approve(['id' => 10, 'user_id' => 1]);
 
-        $this->assertSuccessResponse($result);
-        $this->assertEquals('active', $result['data']['status']);
+        $this->assertInstanceOf(\App\DTO\Response\Users\UserResponseDTO::class, $result);
+        $data = $result->toArray();
+        $this->assertEquals('active', $data['status']);
     }
 
     // ==================== HELPER METHODS ====================

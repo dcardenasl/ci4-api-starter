@@ -174,7 +174,16 @@ $ignoredNamespaces = [
     'Errors',
 ];
 
+$ignoredFiles = [
+    'app/Commands/MakeCrud.php',
+];
+
 foreach (listPhpFiles($root . '/app') as $file) {
+    $relative = str_replace($root . '/', '', $file);
+    if (in_array($relative, $ignoredFiles, true)) {
+        continue;
+    }
+
     $lines = file($file);
     if ($lines === false) {
         continue;
@@ -188,6 +197,11 @@ foreach (listPhpFiles($root . '/app') as $file) {
         foreach ($matches as $match) {
             $langKey = $match[2];
 
+            // Skip keys with variables
+            if (str_contains($langKey, '$') || str_contains($langKey, '{')) {
+                continue;
+            }
+
             if (!str_contains($langKey, '.')) {
                 continue;
             }
@@ -199,7 +213,6 @@ foreach (listPhpFiles($root . '/app') as $file) {
 
             foreach ($locales as $locale) {
                 if (!isset($catalog[$locale][$langKey])) {
-                    $relative = str_replace($root . '/', '', $file);
                     $errors[] = "Missing lang key {$langKey} in {$locale} (used at {$relative}:" . ($lineNumber + 1) . ')';
                 }
             }

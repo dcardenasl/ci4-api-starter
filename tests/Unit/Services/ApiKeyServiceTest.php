@@ -90,9 +90,10 @@ class ApiKeyServiceTest extends CIUnitTestCase
 
         $result = $this->service->show(['id' => 1]);
 
-        $this->assertSuccessResponse($result);
-        $this->assertEquals(1, $result['data']['id']);
-        $this->assertEquals('Test Key', $result['data']['name']);
+        $this->assertInstanceOf(\App\DTO\Response\ApiKeys\ApiKeyResponseDTO::class, $result);
+        $data = $result->toArray();
+        $this->assertEquals(1, $data['id']);
+        $this->assertEquals('Test Key', $data['name']);
     }
 
     public function testShowWithoutIdThrowsBadRequestException(): void
@@ -128,23 +129,21 @@ class ApiKeyServiceTest extends CIUnitTestCase
         $this->mockApiKeyModel->insertReturn = 1;
         $this->mockApiKeyModel->returnEntity = $entity;
 
-        $result = $this->service->store(['name' => 'My App']);
+        $result = $this->service->store(new \App\DTO\Request\ApiKeys\ApiKeyCreateRequestDTO(['name' => 'My App']));
 
-        // Should return 201 created response structure
-        $this->assertArrayHasKey('status', $result);
-        $this->assertEquals('success', $result['status']);
-        $this->assertArrayHasKey('data', $result);
+        $this->assertInstanceOf(\App\DTO\Response\ApiKeys\ApiKeyResponseDTO::class, $result);
+        $data = $result->toArray();
 
         // Raw key must be present in response
-        $this->assertArrayHasKey('key', $result['data']);
-        $this->assertStringStartsWith('apk_', $result['data']['key']);
+        $this->assertArrayHasKey('key', $data);
+        $this->assertStringStartsWith('apk_', $data['key']);
     }
 
     public function testStoreWithoutNameThrowsValidationException(): void
     {
         $this->expectException(ValidationException::class);
 
-        $this->service->store([]);
+        new \App\DTO\Request\ApiKeys\ApiKeyCreateRequestDTO([]);
     }
 
     public function testStoreUsesProvidedRateLimits(): void
@@ -182,13 +181,13 @@ class ApiKeyServiceTest extends CIUnitTestCase
         $model->entity = $entity;
 
         $service = new ApiKeyService($model);
-        $service->store([
+        $service->store(new \App\DTO\Request\ApiKeys\ApiKeyCreateRequestDTO([
             'name'                => 'Custom Limits',
             'rate_limit_requests' => 1200,
             'rate_limit_window'   => 30,
             'user_rate_limit'     => 120,
             'ip_rate_limit'       => 400,
-        ]);
+        ]));
 
         $this->assertNotNull($capturedData);
         $this->assertEquals(1200, $capturedData['rate_limit_requests']);
@@ -204,7 +203,7 @@ class ApiKeyServiceTest extends CIUnitTestCase
 
         $this->expectException(ValidationException::class);
 
-        $this->service->store(['name' => 'Failing Key']);
+        $this->service->store(new \App\DTO\Request\ApiKeys\ApiKeyCreateRequestDTO(['name' => 'Failing Key']));
     }
 
     // ==================== UPDATE TESTS ====================
@@ -248,8 +247,9 @@ class ApiKeyServiceTest extends CIUnitTestCase
         $service = new ApiKeyService($model);
         $result  = $service->update(['id' => 1, 'name' => 'New Name']);
 
-        $this->assertSuccessResponse($result);
-        $this->assertEquals('New Name', $result['data']['name']);
+        $this->assertInstanceOf(\App\DTO\Response\ApiKeys\ApiKeyResponseDTO::class, $result);
+        $data = $result->toArray();
+        $this->assertEquals('New Name', $data['name']);
     }
 
     public function testUpdateWithoutIdThrowsBadRequestException(): void

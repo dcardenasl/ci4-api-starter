@@ -14,6 +14,9 @@ class RegistrationController extends ApiController
 {
     protected string $serviceName = 'authService';
 
+    /**
+     * @var array<string, int>
+     */
     protected array $statusCodes = [
         'register' => 201,
     ];

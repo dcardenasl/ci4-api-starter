@@ -23,7 +23,7 @@ class FileController extends ApiController
         );
     }
 
-    public function show($id = null): ResponseInterface
+    public function show(string|int|null $id = null): ResponseInterface
     {
         try {
             $result = $this->getService()->download([

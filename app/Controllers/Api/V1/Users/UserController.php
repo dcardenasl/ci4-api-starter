@@ -30,7 +30,7 @@ class UserController extends ApiController
      * Display a specific user.
      * Regular users can only see their own profile.
      */
-    public function show($id = null): ResponseInterface
+    public function show(string|int|null $id = null): ResponseInterface
     {
         $currentUserId = $this->getUserId();
         $currentUserRole = $this->getUserRole();
@@ -52,14 +52,14 @@ class UserController extends ApiController
         );
     }
 
-    public function update($id = null): ResponseInterface
+    public function update(string|int|null $id = null): ResponseInterface
     {
         return $this->handleRequest(
             fn () => $this->getService()->update(['id' => $id] + $this->collectRequestData())
         );
     }
 
-    public function approve($id = null): ResponseInterface
+    public function approve(string|int|null $id = null): ResponseInterface
     {
         return $this->handleRequest(
             fn () => $this->getService()->approve(['id' => $id])

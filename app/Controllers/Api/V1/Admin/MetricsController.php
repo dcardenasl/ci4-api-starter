@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Controllers\Api\V1\Admin;
 
 use App\DTO\Request\Metrics\RecordMetricRequestDTO;
@@ -14,7 +16,7 @@ use CodeIgniter\HTTP\ResponseInterface;
  */
 class MetricsController extends Controller
 {
-    protected function getService()
+    protected function getService(): object
     {
         return service('metricsService');
     }

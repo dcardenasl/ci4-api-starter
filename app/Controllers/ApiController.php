@@ -35,6 +35,8 @@ abstract class ApiController extends Controller
     /**
      * Custom status codes per method
      * Override in child controllers if needed
+     *
+     * @var array<string, int>
      */
     protected array $statusCodes = [
         'store'   => 201,
@@ -63,16 +65,12 @@ abstract class ApiController extends Controller
         return $this->statusCodes[$method] ?? 200;
     }
 
-    // =========================================================================
-    // CRUD Methods - Override only when needed
-    // =========================================================================
-
     public function index(): ResponseInterface
     {
         return $this->handleRequest('index');
     }
 
-    public function show($id = null): ResponseInterface
+    public function show(string|int|null $id = null): ResponseInterface
     {
         return $this->handleRequest('show', ['id' => $id]);
     }
@@ -82,24 +80,20 @@ abstract class ApiController extends Controller
         return $this->handleRequest('store');
     }
 
-    public function update($id = null): ResponseInterface
+    public function update(string|int|null $id = null): ResponseInterface
     {
         return $this->handleRequest('update', ['id' => $id]);
     }
 
-    public function delete($id = null): ResponseInterface
+    public function delete(string|int|null $id = null): ResponseInterface
     {
         return $this->handleRequest('destroy', ['id' => $id]);
     }
 
-    // =========================================================================
-    // Request Handling
-    // =========================================================================
-
     /**
      * Override respond to ensure all DTOs are recursively converted to arrays.
      */
-    public function respond($data = null, int $status = null, string $message = ''): ResponseInterface
+    public function respond(mixed $data = null, ?int $status = null, string $message = ''): ResponseInterface
     {
         if ($data !== null) {
             $data = ApiResponse::convertDataToArrays($data);
@@ -110,7 +104,6 @@ abstract class ApiController extends Controller
 
     /**
      * Handle an API request by delegating to the service layer
-     * Now supports both method names and closures for DTO usage.
      */
     protected function handleRequest(string|callable $target, ?array $params = null): ResponseInterface
     {
@@ -129,7 +122,7 @@ abstract class ApiController extends Controller
                 $result = ApiResponse::success($result->toArray());
             }
 
-            $status = $this->determineStatus($result, is_string($target) ? $target : 'custom');
+            $status = $this->determineStatus((array) $result, is_string($target) ? $target : 'custom');
 
             return $this->respond($result, $status);
         } catch (Exception $e) {
@@ -198,17 +191,9 @@ abstract class ApiController extends Controller
             $data['user_role'] = $authUserRole;
         }
 
-        // Merge explicit params (highest priority)
-        if ($params !== null) {
-            $data = array_merge($data, $params);
-        }
-
         return $this->sanitizeInput($data);
     }
 
-    /**
-     * Parse JSON data from request body
-     */
     protected function getJsonData(): array
     {
         $body = $this->request->getBody();
@@ -221,9 +206,6 @@ abstract class ApiController extends Controller
         return (json_last_error() === JSON_ERROR_NONE && is_array($json)) ? $json : [];
     }
 
-    /**
-     * Sanitize input to prevent XSS
-     */
     protected function sanitizeInput(array $data): array
     {
         return array_map(function ($value) {
@@ -231,7 +213,6 @@ abstract class ApiController extends Controller
                 return $value;
             }
             if (is_string($value)) {
-                // Skip heavy sanitization for very long strings (base64/files)
                 if (strlen($value) > 2048) {
                     return trim($value);
                 }
@@ -244,9 +225,6 @@ abstract class ApiController extends Controller
         }, $data);
     }
 
-    /**
-     * Determine HTTP status code based on result
-     */
     protected function determineStatus(array $result, string $method): int
     {
         return isset($result['errors'])
@@ -254,28 +232,20 @@ abstract class ApiController extends Controller
             : $this->resolveSuccessStatus($method, $result);
     }
 
-    /**
-     * Resolve success HTTP status code based on method and response payload.
-     */
     protected function resolveSuccessStatus(string $method, array $result): int
     {
         return $this->getSuccessStatus($method);
     }
 
-    /**
-     * Handle exceptions and return appropriate error response
-     */
     protected function handleException(Exception $e): ResponseInterface
     {
         log_message('error', 'API Exception: ' . $e->getMessage());
         log_message('error', 'Trace: ' . $e->getTraceAsString());
 
-        // Custom API exceptions
         if ($e instanceof \App\Exceptions\ApiException) {
             return $this->respond($e->toArray(), $e->getStatusCode());
         }
 
-        // Database exceptions
         if ($e instanceof \CodeIgniter\Database\Exceptions\DatabaseException) {
             log_message('critical', 'Database error: ' . $e->getMessage());
             return $this->respond([
@@ -285,7 +255,6 @@ abstract class ApiController extends Controller
             ], 500);
         }
 
-        // Generic exceptions
         $message = ENVIRONMENT === 'production'
             ? lang('Api.serverError')
             : $e->getMessage();
@@ -297,13 +266,6 @@ abstract class ApiController extends Controller
         ], 500);
     }
 
-    // =========================================================================
-    // Auth Helpers
-    // =========================================================================
-
-    /**
-     * Get authenticated user ID from request (set by JwtAuthFilter)
-     */
     protected function getUserId(): ?int
     {
         return $this->request instanceof ApiRequest
@@ -311,19 +273,12 @@ abstract class ApiController extends Controller
             : null;
     }
 
-    /**
-     * Get authenticated user role from request (set by JwtAuthFilter)
-     */
     protected function getUserRole(): ?string
     {
         return $this->request instanceof ApiRequest
             ? $this->request->getAuthUserRole()
             : null;
     }
-
-    // =========================================================================
-    // Response Helpers
-    // =========================================================================
 
     protected function respondCreated(array $data = []): ResponseInterface
     {

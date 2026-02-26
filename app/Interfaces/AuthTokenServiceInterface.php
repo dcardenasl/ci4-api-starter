@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Interfaces;
 
+use App\DTO\Request\Identity\RefreshTokenRequestDTO;
+use App\DTO\Response\Identity\TokenResponseDTO;
+
 /**
  * Auth Token Service Interface
  *
@@ -13,25 +16,16 @@ interface AuthTokenServiceInterface
 {
     /**
      * Refresh access token using refresh token.
-     *
-     * @param array $data
-     * @return array
      */
-    public function refreshAccessToken(array $data): array;
+    public function refreshAccessToken(RefreshTokenRequestDTO $request): TokenResponseDTO;
 
     /**
      * Revoke current access token from authorization header.
-     *
-     * @param array $data
-     * @return array
      */
     public function revoke(array $data): array;
 
     /**
      * Revoke all tokens for current user.
-     *
-     * @param array $data
-     * @return array
      */
     public function revokeAll(array $data): array;
 }

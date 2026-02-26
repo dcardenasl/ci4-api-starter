@@ -16,9 +16,13 @@ class TokenController extends ApiController
 
     public function refresh(): ResponseInterface
     {
-        return $this->handleRequest('refreshAccessToken', [
+        $dto = new \App\DTO\Request\Identity\RefreshTokenRequestDTO([
             'refresh_token' => $this->request->getVar('refresh_token'),
         ]);
+
+        return $this->handleRequest(
+            fn () => $this->getService()->refreshAccessToken($dto)
+        );
     }
 
     public function revoke(): ResponseInterface

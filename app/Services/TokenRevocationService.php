@@ -9,7 +9,6 @@ use App\Exceptions\BadRequestException;
 use App\Interfaces\AuditServiceInterface;
 use App\Interfaces\JwtServiceInterface;
 use App\Interfaces\TokenRevocationServiceInterface;
-use App\Libraries\ApiResponse;
 use App\Models\RefreshTokenModel;
 use App\Models\TokenBlacklistModel;
 use App\Traits\ValidatesRequiredFields;
@@ -39,10 +38,6 @@ class TokenRevocationService implements TokenRevocationServiceInterface
 
     /**
      * Revoke an access token by adding its JTI to blacklist
-     *
-     * @param string $jti Token JTI (unique identifier)
-     * @param int $expiresAt Token expiration timestamp
-     * @return array
      */
     public function revokeToken(string $jti, int $expiresAt): array
     {
@@ -55,8 +50,7 @@ class TokenRevocationService implements TokenRevocationServiceInterface
             );
         }
 
-        // Mark as revoked in cache immediately. Use the full token TTL because a revoked
-        // token will never become valid again, so long-lived caching is safe here.
+        // Mark as revoked in cache immediately.
         $cacheKey = "token_revoked_{$jti}";
         $ttl      = (int) env('JWT_ACCESS_TOKEN_TTL', 3600);
         $this->cache->save($cacheKey, 1, $ttl);
@@ -70,16 +64,11 @@ class TokenRevocationService implements TokenRevocationServiceInterface
             ['jti' => $jti]
         );
 
-        return ApiResponse::success(null, lang('Tokens.tokenRevokedSuccess'));
+        return ['status' => 'success', 'message' => lang('Tokens.tokenRevokedSuccess')];
     }
 
     /**
      * Revoke an access token from authorization header
-     *
-     * @param array $data Request data with 'authorization_header'
-     * @return array
-     * @throws BadRequestException If header missing or invalid format
-     * @throws AuthenticationException If token invalid or missing claims
      */
     public function revokeAccessToken(array $data): array
     {
@@ -118,9 +107,6 @@ class TokenRevocationService implements TokenRevocationServiceInterface
 
     /**
      * Check if a token is revoked
-     *
-     * @param string $jti Token JTI
-     * @return bool
      */
     public function isRevoked(string $jti): bool
     {
@@ -136,11 +122,8 @@ class TokenRevocationService implements TokenRevocationServiceInterface
         $isBlacklisted = $this->blacklistModel->isBlacklisted($jti);
 
         if ($isBlacklisted) {
-            // Revoked tokens never become valid again — cache for the full token lifetime
             $ttl = (int) env('JWT_ACCESS_TOKEN_TTL', 3600);
         } else {
-            // Non-revoked tokens are cached briefly so newly revoked tokens are detected
-            // within JWT_REVOCATION_CACHE_TTL seconds (default 60)
             $ttl = (int) env('JWT_REVOCATION_CACHE_TTL', 60);
         }
 
@@ -151,17 +134,11 @@ class TokenRevocationService implements TokenRevocationServiceInterface
 
     /**
      * Revoke all tokens for a user
-     *
-     * @param int $userId
-     * @return array
      */
     public function revokeAllUserTokens(int $userId): array
     {
         // Revoke all refresh tokens
         $this->refreshTokenModel->revokeAllUserTokens($userId);
-
-        // Note: We can't easily revoke all access tokens without tracking them
-        // Access tokens will expire naturally based on JWT_ACCESS_TOKEN_TTL
 
         // Log all tokens revocation
         $this->auditService->log(
@@ -173,16 +150,11 @@ class TokenRevocationService implements TokenRevocationServiceInterface
             $userId
         );
 
-        return ApiResponse::success(
-            null,
-            lang('Tokens.allUserTokensRevoked')
-        );
+        return ['status' => 'success', 'message' => lang('Tokens.allUserTokensRevoked')];
     }
 
     /**
      * Clean up expired blacklisted tokens
-     *
-     * @return int Number of deleted tokens
      */
     public function cleanupExpired(): int
     {

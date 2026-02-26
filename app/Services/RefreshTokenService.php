@@ -6,11 +6,8 @@ namespace App\Services;
 
 use App\Exceptions\AuthenticationException;
 use App\Exceptions\AuthorizationException;
-use App\Exceptions\BadRequestException;
-use App\Exceptions\NotFoundException;
 use App\Interfaces\JwtServiceInterface;
 use App\Interfaces\RefreshTokenServiceInterface;
-use App\Libraries\ApiResponse;
 use App\Models\RefreshTokenModel;
 use App\Models\UserModel;
 
@@ -32,9 +29,6 @@ class RefreshTokenService implements RefreshTokenServiceInterface
 
     /**
      * Issue a new refresh token
-     *
-     * @param int $userId
-     * @return string Generated refresh token
      */
     public function issueRefreshToken(int $userId): string
     {
@@ -42,7 +36,6 @@ class RefreshTokenService implements RefreshTokenServiceInterface
         $token = generate_token();
 
         // Calculate expiry
-        // Check getenv first for unit tests that use putenv(), then fall back to env() for .env files
         $ttl = (int) (getenv('JWT_REFRESH_TOKEN_TTL') ?: env('JWT_REFRESH_TOKEN_TTL', 604800)); // 7 days default
         $expiresAt = date('Y-m-d H:i:s', time() + $ttl);
 
@@ -59,25 +52,16 @@ class RefreshTokenService implements RefreshTokenServiceInterface
 
     /**
      * Refresh access token using refresh token
-     *
-     * Uses database transactions and row-level locking to prevent race conditions
-     * where concurrent requests could both succeed with the same token.
-     *
-     * @param array $data Request data with 'refresh_token'
-     * @return array
      */
-    public function refreshAccessToken(array $data): array
+    public function refreshAccessToken(\App\DTO\Request\Identity\RefreshTokenRequestDTO $request): \App\DTO\Response\Identity\TokenResponseDTO
     {
-        $this->validateInputOrBadRequest($data, 'refresh');
-
-        $refreshToken = $data['refresh_token'];
+        $refreshToken = $request->refreshToken;
         $db = \Config\Database::connect();
 
         // Start transaction to protect token rotation
         $db->transStart();
 
         // Validate refresh token with row-level lock (FOR UPDATE)
-        // This prevents concurrent requests from retrieving the same token
         $builder = $db->table('refresh_tokens');
         $sql = $builder
             ->where('token', $refreshToken)
@@ -85,7 +69,6 @@ class RefreshTokenService implements RefreshTokenServiceInterface
             ->where('revoked_at', null)
             ->getCompiledSelect();
 
-        // Append FOR UPDATE to the compiled query
         $sql .= ' FOR UPDATE';
 
         $result = $db->query($sql);
@@ -97,7 +80,6 @@ class RefreshTokenService implements RefreshTokenServiceInterface
         }
 
         // Revoke old refresh token (token rotation)
-        // Still within transaction, so no other request can access this token
         $this->refreshTokenModel->revokeToken($refreshToken);
 
         // Issue new refresh token
@@ -120,10 +102,10 @@ class RefreshTokenService implements RefreshTokenServiceInterface
 
         $accessToken = $this->jwtService->encode((int) $user->id, $user->role);
 
-        // Commit transaction - all changes are now permanent
+        // Commit transaction
         $db->transComplete();
 
-        return ApiResponse::success([
+        return \App\DTO\Response\Identity\TokenResponseDTO::fromArray([
             'access_token' => $accessToken,
             'refresh_token' => $newRefreshToken,
             'expires_in' => (int) (getenv('JWT_ACCESS_TOKEN_TTL') ?: env('JWT_ACCESS_TOKEN_TTL', 3600)),
@@ -132,43 +114,25 @@ class RefreshTokenService implements RefreshTokenServiceInterface
 
     /**
      * Revoke a refresh token
-     *
-     * @param array $data Request data with 'refresh_token'
-     * @return array
      */
     public function revoke(array $data): array
     {
-        $this->validateInputOrBadRequest($data, 'revoke');
-
-        $revoked = $this->refreshTokenModel->revokeToken($data['refresh_token']);
+        $revoked = $this->refreshTokenModel->revokeToken($data['refresh_token'] ?? '');
 
         if (!$revoked) {
-            throw new NotFoundException(lang('Tokens.tokenNotFound'));
+            throw new \App\Exceptions\NotFoundException(lang('Tokens.tokenNotFound'));
         }
 
-        return ApiResponse::success([], lang('Tokens.refreshTokenRevoked'));
+        return ['status' => 'success', 'message' => lang('Tokens.refreshTokenRevoked')];
     }
 
     /**
      * Revoke all user's refresh tokens
-     *
-     * @param int $userId
-     * @return array
      */
     public function revokeAllUserTokens(int $userId): array
     {
         $this->refreshTokenModel->revokeAllUserTokens($userId);
 
-        return ApiResponse::success([], lang('Tokens.allTokensRevoked'));
-    }
-
-    private function validateInputOrBadRequest(array $data, string $action): void
-    {
-        $validation = getValidationRules('token', $action);
-        $errors = validateInputs($data, $validation['rules'], $validation['messages']);
-
-        if ($errors !== []) {
-            throw new BadRequestException(lang('Tokens.invalidRequest'), $errors);
-        }
+        return ['status' => 'success', 'message' => lang('Tokens.allTokensRevoked')];
     }
 }

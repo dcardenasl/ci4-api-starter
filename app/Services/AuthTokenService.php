@@ -9,6 +9,11 @@ use App\Interfaces\AuthTokenServiceInterface;
 use App\Interfaces\RefreshTokenServiceInterface;
 use App\Interfaces\TokenRevocationServiceInterface;
 
+/**
+ * Auth Token Service
+ *
+ * Facade for token management operations.
+ */
 class AuthTokenService implements AuthTokenServiceInterface
 {
     public function __construct(
@@ -17,16 +22,25 @@ class AuthTokenService implements AuthTokenServiceInterface
     ) {
     }
 
-    public function refreshAccessToken(array $data): array
+    /**
+     * Refresh access token using refresh token
+     */
+    public function refreshAccessToken(\App\DTO\Request\Identity\RefreshTokenRequestDTO $request): \App\DTO\Response\Identity\TokenResponseDTO
     {
-        return $this->refreshTokenService->refreshAccessToken($data);
+        return $this->refreshTokenService->refreshAccessToken($request);
     }
 
+    /**
+     * Revoke current access token from authorization header
+     */
     public function revoke(array $data): array
     {
         return $this->tokenRevocationService->revokeAccessToken($data);
     }
 
+    /**
+     * Revoke all user tokens
+     */
     public function revokeAll(array $data): array
     {
         $userId = isset($data['user_id']) ? (int) $data['user_id'] : 0;

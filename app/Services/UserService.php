@@ -40,7 +40,7 @@ class UserService implements UserServiceInterface
     }
 
     /**
-     * Obtener todos los usuarios con paginación, filtros, búsqueda y ordenamiento
+     * Get all users with pagination, filters, search, and ordering
      */
     public function index(\App\DTO\Request\Users\UserIndexRequestDTO $request): array
     {
@@ -67,7 +67,7 @@ class UserService implements UserServiceInterface
     }
 
     /**
-     * Obtener un usuario por ID
+     * Get a user by ID
      */
     public function show(array $data): \App\DTO\Response\Users\UserResponseDTO
     {
@@ -83,7 +83,7 @@ class UserService implements UserServiceInterface
     }
 
     /**
-     * Crear un nuevo usuario
+     * Create a new user
      */
     public function store(array $data): \App\DTO\Response\Users\UserResponseDTO
     {
@@ -119,7 +119,7 @@ class UserService implements UserServiceInterface
             'email_verified_at' => $now,
         ];
 
-        // Model maneja validación y timestamps automáticamente
+        // Model handles validation and timestamps automatically
         $userId = $this->userModel->insert($insertData);
 
         if (!$userId) {
@@ -148,7 +148,7 @@ class UserService implements UserServiceInterface
     }
 
     /**
-     * Actualizar un usuario existente
+     * Update an existing user
      */
     public function update(array $data): \App\DTO\Response\Users\UserResponseDTO
     {
@@ -157,7 +157,7 @@ class UserService implements UserServiceInterface
         $actorRole = (string) ($data['user_role'] ?? '');
         $actorId = isset($data['user_id']) ? (int) $data['user_id'] : null;
 
-        // Verificar si el usuario existe
+        // Check if the user exists
         $targetUser = $this->userModel->find($id);
         if (!$targetUser) {
             throw new NotFoundException(lang('Users.notFound'));
@@ -171,7 +171,7 @@ class UserService implements UserServiceInterface
             $this->assertAdminCanChangeRole($actorRole, $targetRole, $requestedRole);
         }
 
-        // Regla de negocio: al menos un campo requerido
+        // Business rule: at least one field required
         if (
             empty($data['email']) &&
             empty($data['first_name']) &&
@@ -185,7 +185,7 @@ class UserService implements UserServiceInterface
             );
         }
 
-        // Preparar datos de actualización
+        // Prepare update data
         $updateData = array_filter([
             'email'      => $data['email'] ?? null,
             'first_name' => $data['first_name'] ?? null,
@@ -194,10 +194,10 @@ class UserService implements UserServiceInterface
             'role'       => $data['role'] ?? null,
         ], fn ($value) => $value !== null);
 
-        // Importante: Incluir ID para que la validación is_unique ignore este registro
+        // Important: Include ID so that is_unique validation ignores this record
         $updateData['id'] = $id;
 
-        // Model maneja validación y updated_at automáticamente
+        // Model handles validation and updated_at automatically
         $success = $this->userModel->update($id, $updateData);
 
         if (!$success) {
@@ -213,14 +213,14 @@ class UserService implements UserServiceInterface
     }
 
     /**
-     * Eliminar un usuario (soft delete)
+     * Delete a user (soft delete)
      */
     public function destroy(array $data): array
     {
         $id = $this->validateRequiredId($data);
         $actorRole = (string) ($data['user_role'] ?? '');
 
-        // Verificar si el usuario existe
+        // Check if the user exists
         $targetUser = $this->userModel->find($id);
         if (!$targetUser) {
             throw new NotFoundException(lang('Users.notFound'));
@@ -231,7 +231,7 @@ class UserService implements UserServiceInterface
             throw new AuthorizationException(lang('Users.adminCannotManagePrivileged'));
         }
 
-        // Realiza soft delete (gracias a useSoftDeletes = true)
+        // Perform soft delete (thanks to useSoftDeletes = true)
         if (!$this->userModel->delete($id)) {
             throw new \RuntimeException(lang('Users.deleteError'));
         }

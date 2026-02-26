@@ -17,7 +17,7 @@ readonly class ResetPasswordRequestDTO implements DataTransferObjectInterface
 
     public function __construct(array $data)
     {
-        // REUTILIZACIÓN: Validación 'auth.reset_password'
+        // REUSE: 'auth.reset_password' validation
         validateOrFail($data, 'auth', 'reset_password');
 
         $this->token = (string) $data['token'];

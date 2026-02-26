@@ -15,7 +15,7 @@ readonly class RefreshTokenRequestDTO implements DataTransferObjectInterface
 
     public function __construct(array $data)
     {
-        // REUTILIZACIÓN: Validación 'auth.refresh'
+        // REUSE: 'auth.refresh' validation
         validateOrFail($data, 'auth', 'refresh');
 
         $this->refreshToken = (string) $data['refresh_token'];

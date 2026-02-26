@@ -17,7 +17,7 @@ readonly class RecordMetricRequestDTO implements DataTransferObjectInterface
 
     public function __construct(array $data)
     {
-        // REUTILIZACIÓN: Validación 'metrics.record'
+        // REUSE: 'metrics.record' validation
         if (empty($data['name'])) {
             throw new \App\Exceptions\ValidationException(
                 lang('Api.validationFailed'),

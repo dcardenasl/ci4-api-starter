@@ -15,7 +15,7 @@ readonly class ForgotPasswordRequestDTO implements DataTransferObjectInterface
 
     public function __construct(array $data)
     {
-        // REUTILIZACIÓN: Validación 'auth.forgot_password'
+        // REUSE: 'auth.forgot_password' validation
         validateOrFail($data, 'auth', 'forgot_password');
 
         $this->email = (string) $data['email'];

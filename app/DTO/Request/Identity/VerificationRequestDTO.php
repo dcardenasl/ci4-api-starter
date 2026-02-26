@@ -18,11 +18,11 @@ readonly class VerificationRequestDTO implements DataTransferObjectInterface
 
     public function __construct(array $data)
     {
-        // REUTILIZACIÓN: Validación 'auth.verify_email'
-        // Si no viene email, lo añadimos como null para que validateOrFail no chille si es requerido
-        // O mejor, relajamos la validación aquí si el email no es estrictamente necesario para encontrar el token
+        // REUSE: 'auth.verify_email' validation
+        // If email is missing, add a placeholder to prevent validation failure if required
+        // Or better, relax validation here if email is not strictly necessary to find the token
         $this->token = (string) ($data['token'] ?? '');
-        $this->email = (string) ($data['email'] ?? 'temp@example.com'); // Hack temporal para pasar validación estricta de CI4 si es requerida
+        $this->email = (string) ($data['email'] ?? 'temp@example.com'); // Temporary hack to pass strict CI4 validation if required
 
         validateOrFail($data + ['email' => $this->email], 'auth', 'verify_email');
     }

@@ -21,7 +21,7 @@ readonly class RegisterRequestDTO implements DataTransferObjectInterface
 
     public function __construct(array $data)
     {
-        // REUTILIZACIÓN: Usa tus reglas actuales en Config/Validation.php
+        // REUSE: Use existing rules from Config/Validation.php
         validateOrFail($data, 'auth', 'register');
 
         $this->email = (string) $data['email'];

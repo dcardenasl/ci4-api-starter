@@ -19,8 +19,8 @@ readonly class ApiKeyCreateRequestDTO implements DataTransferObjectInterface
 
     public function __construct(array $data)
     {
-        // REUTILIZACIÓN: Usamos el sistema de validación centralizado
-        // validación 'api_key.store' requiere 'name'
+        // REUSE: Using centralized validation system
+        // 'api_key.store' validation requires 'name'
         validateOrFail($data, 'api_key', 'store');
 
         $this->name = (string) $data['name'];

@@ -9,11 +9,15 @@ use App\Interfaces\AuditServiceInterface;
 use App\Interfaces\EmailServiceInterface;
 use App\Interfaces\PasswordResetServiceInterface;
 use App\Interfaces\RefreshTokenServiceInterface;
-use App\Libraries\ApiResponse;
 use App\Models\PasswordResetModel;
 use App\Models\UserModel;
 use App\Traits\ResolvesWebAppLinks;
 
+/**
+ * Password Reset Service
+ *
+ * Handles the flow for recovering lost passwords.
+ */
 class PasswordResetService implements PasswordResetServiceInterface
 {
     use ResolvesWebAppLinks;
@@ -29,14 +33,10 @@ class PasswordResetService implements PasswordResetServiceInterface
 
     /**
      * Send password reset link to email
-     *
-     * @param array $data Contains 'email'
-     * @return array<string, mixed>
      */
-    public function sendResetLink(array $data): array
+    public function sendResetLink(\App\DTO\Request\Identity\ForgotPasswordRequestDTO $request): array
     {
-        validateOrFail($data, 'auth', 'forgot_password');
-        $email = (string) ($data['email'] ?? '');
+        $email = $request->email;
 
         // Find active (non-deleted) user by email
         $user = $this->userModel->where('email', $email)->first();
@@ -67,8 +67,7 @@ class PasswordResetService implements PasswordResetServiceInterface
             ]);
 
             // Build reset link
-            $clientBaseUrl = isset($data['client_base_url']) ? (string) $data['client_base_url'] : null;
-            $resetLink = $this->buildResetPasswordUrl($token, $email, $clientBaseUrl);
+            $resetLink = $this->buildResetPasswordUrl($token, $email, null);
 
             // Queue password reset email
             $this->emailService->queueTemplate('password-reset', $email, [
@@ -89,19 +88,14 @@ class PasswordResetService implements PasswordResetServiceInterface
         }
 
         // Always return success message (security best practice)
-        return ApiResponse::success(
-            ['message' => lang('PasswordReset.sentMessage')],
-            lang('PasswordReset.linkSent')
-        );
+        return [
+            'status' => 'success',
+            'message' => lang('PasswordReset.sentMessage')
+        ];
     }
 
     /**
      * Reactivate a soft-deleted user and mark account pending admin approval.
-     * Public API response stays generic to avoid email enumeration.
-     *
-     * @param object $user
-     * @param string $email
-     * @return void
      */
     private function reactivateDeletedUserForApproval(object $user, string $email): void
     {
@@ -155,9 +149,6 @@ class PasswordResetService implements PasswordResetServiceInterface
 
     /**
      * Validate reset token
-     *
-     * @param array $data Contains 'token' and 'email'
-     * @return array<string, mixed>
      */
     public function validateToken(array $data): array
     {
@@ -173,21 +164,21 @@ class PasswordResetService implements PasswordResetServiceInterface
             throw new NotFoundException(lang('PasswordReset.invalidToken'));
         }
 
-        return ApiResponse::success(['valid' => true], lang('PasswordReset.tokenValid'));
+        return [
+            'status' => 'success',
+            'valid' => true,
+            'message' => lang('PasswordReset.tokenValid')
+        ];
     }
 
     /**
      * Reset password using token
-     *
-     * @param array $data Contains 'token', 'email', 'password'
-     * @return array<string, mixed>
      */
-    public function resetPassword(array $data): array
+    public function resetPassword(\App\DTO\Request\Identity\ResetPasswordRequestDTO $request): \App\DTO\Response\Identity\PasswordResetResponseDTO
     {
-        validateOrFail($data, 'auth', 'password_reset');
-        $token = (string) ($data['token'] ?? '');
-        $email = (string) ($data['email'] ?? '');
-        $newPassword = (string) ($data['password'] ?? '');
+        $token = $request->token;
+        $email = $request->email;
+        $newPassword = $request->password;
 
         // Clean expired tokens
         $this->passwordResetModel->cleanExpired(60);
@@ -235,9 +226,8 @@ class PasswordResetService implements PasswordResetServiceInterface
             ->where('token', $token)
             ->delete();
 
-        return ApiResponse::success(
-            ['message' => lang('PasswordReset.resetMessage')],
-            lang('PasswordReset.passwordReset')
-        );
+        return \App\DTO\Response\Identity\PasswordResetResponseDTO::fromArray([
+            'message' => lang('PasswordReset.resetMessage')
+        ]);
     }
 }

@@ -17,7 +17,11 @@ class PasswordResetController extends ApiController
     public function sendResetLink(): ResponseInterface
     {
         $email = $this->request->getVar('email') ?? '';
-        return $this->handleRequest('sendResetLink', ['email' => $email]);
+        $dto = new \App\DTO\Request\Identity\ForgotPasswordRequestDTO(['email' => $email]);
+
+        return $this->handleRequest(
+            fn () => $this->getService()->sendResetLink($dto)
+        );
     }
 
     public function validateToken(): ResponseInterface
@@ -25,20 +29,20 @@ class PasswordResetController extends ApiController
         $token = $this->request->getGet('token') ?? '';
         $email = $this->request->getGet('email') ?? '';
 
-        return $this->handleRequest('validateToken', [
-            'token' => $token,
-            'email' => $email,
-        ]);
+        return $this->handleRequest(
+            fn () => $this->getService()->validateToken([
+                'token' => $token,
+                'email' => $email,
+            ])
+        );
     }
 
     public function resetPassword(): ResponseInterface
     {
-        $data = $this->getJsonData();
+        $dto = $this->getDTO(\App\DTO\Request\Identity\ResetPasswordRequestDTO::class);
 
-        return $this->handleRequest('resetPassword', [
-            'token'    => $data['token'] ?? '',
-            'email'    => $data['email'] ?? '',
-            'password' => $data['password'] ?? '',
-        ]);
+        return $this->handleRequest(
+            fn () => $this->getService()->resetPassword($dto)
+        );
     }
 }

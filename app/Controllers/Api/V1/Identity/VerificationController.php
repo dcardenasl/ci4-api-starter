@@ -17,7 +17,11 @@ class VerificationController extends ApiController
     public function verify(): ResponseInterface
     {
         $token = $this->request->getVar('token') ?? '';
-        return $this->handleRequest('verifyEmail', ['token' => $token]);
+        $dto = new \App\DTO\Request\Identity\VerificationRequestDTO(['token' => $token]);
+
+        return $this->handleRequest(
+            fn () => $this->getService()->verifyEmail($dto)
+        );
     }
 
     public function resend(): ResponseInterface

@@ -20,6 +20,10 @@ class RegistrationController extends ApiController
 
     public function register(): ResponseInterface
     {
-        return $this->handleRequest('register');
+        $dto = $this->getDTO(\App\DTO\Request\Auth\RegisterRequestDTO::class);
+
+        return $this->handleRequest(
+            fn () => $this->getService()->register($dto)
+        );
     }
 }

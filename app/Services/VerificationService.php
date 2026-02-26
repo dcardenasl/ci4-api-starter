@@ -10,14 +10,20 @@ use App\Exceptions\NotFoundException;
 use App\Interfaces\AuditServiceInterface;
 use App\Interfaces\EmailServiceInterface;
 use App\Interfaces\VerificationServiceInterface;
-use App\Libraries\ApiResponse;
 use App\Models\UserModel;
 use App\Traits\ResolvesWebAppLinks;
+use App\Traits\ValidatesRequiredFields;
 use CodeIgniter\I18n\Time;
 
+/**
+ * Verification Service
+ *
+ * Handles email verification flow
+ */
 class VerificationService implements VerificationServiceInterface
 {
     use ResolvesWebAppLinks;
+    use ValidatesRequiredFields;
 
     public function __construct(
         protected UserModel $userModel,
@@ -28,9 +34,6 @@ class VerificationService implements VerificationServiceInterface
 
     /**
      * Send verification email to user
-     *
-     * @param int $userId
-     * @return array<string, mixed>
      */
     public function sendVerificationEmail(int $userId, array $data = []): array
     {
@@ -83,28 +86,18 @@ class VerificationService implements VerificationServiceInterface
             'expires_at' => date('F j, Y g:i A', strtotime($expiresAt)),
         ]);
 
-        return ApiResponse::success(
-            ['message' => lang('Verification.sentMessage')],
-            lang('Verification.emailSent')
-        );
+        return [
+            'status' => 'success',
+            'message' => lang('Verification.sentMessage')
+        ];
     }
 
     /**
      * Verify email with token
-     *
-     * @param array $data Contains 'token'
-     * @return array<string, mixed>
      */
-    public function verifyEmail(array $data): array
+    public function verifyEmail(\App\DTO\Request\Identity\VerificationRequestDTO $request): \App\DTO\Response\Identity\VerificationResponseDTO
     {
-        $token = $data['token'] ?? '';
-
-        if (empty($token)) {
-            throw new BadRequestException(
-                lang('Verification.tokenRequired'),
-                ['token' => lang('Verification.tokenRequired')]
-            );
-        }
+        $token = $request->token;
 
         // Find user by token
         $user = $this->userModel
@@ -124,55 +117,38 @@ class VerificationService implements VerificationServiceInterface
             throw new BadRequestException(lang('Verification.tokenExpired'));
         }
 
-        // Check if already verified
-        if ($user->email_verified_at !== null) {
-            throw new ConflictException(lang('Verification.alreadyVerified'));
-        }
-
-        // Mark email as verified
+        // Update user status
+        $now = date('Y-m-d H:i:s');
         $this->userModel->update($user->id, [
-            'email_verified_at' => date('Y-m-d H:i:s'),
+            'email_verified_at' => $now,
             'email_verification_token' => null,
             'verification_token_expires' => null,
         ]);
 
-        // Log email verification success
+        // Log successful verification
         $this->auditService->log(
-            'email_verification_success',
+            'email_verified',
             'users',
             (int) $user->id,
             [],
-            ['email' => $user->email],
-            (int) $user->id
+            ['email' => $user->email]
         );
 
-        return ApiResponse::success(
-            ['message' => lang('Verification.verifiedMessage')],
-            lang('Verification.emailVerified')
-        );
+        return \App\DTO\Response\Identity\VerificationResponseDTO::fromArray([
+            'message' => lang('Verification.success'),
+            'user_id' => $user->id,
+            'email' => $user->email,
+            'verified_at' => $now,
+        ]);
     }
 
     /**
      * Resend verification email
-     *
-     * @param array $data Contains 'user_id'
-     * @return array<string, mixed>
      */
     public function resendVerification(array $data): array
     {
-        $userId = (int) ($data['user_id'] ?? 0);
-        $user = $this->userModel->find($userId);
+        $userId = $this->validateRequiredId($data, 'user_id');
 
-        if (! $user) {
-            throw new NotFoundException(lang('Verification.userNotFound'));
-        }
-
-        // Check if already verified
-        if ($user->email_verified_at !== null) {
-            throw new ConflictException(lang('Verification.alreadyVerified'));
-        }
-
-        // Send new verification email
         return $this->sendVerificationEmail($userId, $data);
     }
 }

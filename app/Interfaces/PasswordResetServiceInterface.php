@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace App\Interfaces;
 
+use App\DTO\Request\Identity\ForgotPasswordRequestDTO;
+use App\DTO\Request\Identity\ResetPasswordRequestDTO;
+use App\DTO\Response\Identity\PasswordResetResponseDTO;
+
 /**
  * Password Reset Service Interface
  *
@@ -13,25 +17,16 @@ interface PasswordResetServiceInterface
 {
     /**
      * Send password reset link to email
-     *
-     * @param array $data Contains 'email'
-     * @return array<string, mixed>
      */
-    public function sendResetLink(array $data): array;
+    public function sendResetLink(ForgotPasswordRequestDTO $request): array;
 
     /**
      * Validate reset token
-     *
-     * @param array $data Contains 'token' and 'email'
-     * @return array<string, mixed>
      */
     public function validateToken(array $data): array;
 
     /**
      * Reset password using token
-     *
-     * @param array $data Contains 'token', 'email', 'password'
-     * @return array<string, mixed>
      */
-    public function resetPassword(array $data): array;
+    public function resetPassword(ResetPasswordRequestDTO $request): PasswordResetResponseDTO;
 }

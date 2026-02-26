@@ -16,7 +16,11 @@ class AuthController extends ApiController
 
     public function login(): ResponseInterface
     {
-        return $this->handleRequest('loginWithToken');
+        $dto = $this->getDTO(\App\DTO\Request\Auth\LoginRequestDTO::class);
+
+        return $this->handleRequest(
+            fn () => $this->getService()->login($dto)
+        );
     }
 
     public function me(): ResponseInterface

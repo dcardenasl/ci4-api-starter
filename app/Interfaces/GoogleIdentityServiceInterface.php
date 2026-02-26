@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Interfaces;
 
+use App\DTO\Response\Identity\GoogleIdentityResponseDTO;
+
 /**
  * Google Identity Service Interface
  *
@@ -13,9 +15,6 @@ interface GoogleIdentityServiceInterface
 {
     /**
      * Verify a Google ID token and return normalized claims.
-     *
-     * @param string $idToken
-     * @return array<string, mixed>
      */
-    public function verifyIdToken(string $idToken): array;
+    public function verifyIdToken(string $idToken): GoogleIdentityResponseDTO;
 }

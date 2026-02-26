@@ -11,9 +11,9 @@ use App\Interfaces\GoogleIdentityServiceInterface;
 class GoogleIdentityService implements GoogleIdentityServiceInterface
 {
     /**
-     * @return array<string, mixed>
+     * Verify a Google ID token and return normalized claims.
      */
-    public function verifyIdToken(string $idToken): array
+    public function verifyIdToken(string $idToken): \App\DTO\Response\Identity\GoogleIdentityResponseDTO
     {
         $token = trim($idToken);
 
@@ -98,7 +98,7 @@ class GoogleIdentityService implements GoogleIdentityServiceInterface
             );
         }
 
-        return [
+        return \App\DTO\Response\Identity\GoogleIdentityResponseDTO::fromArray([
             'provider' => 'google',
             'provider_id' => (string) ($payload['sub'] ?? ''),
             'email' => $email,
@@ -106,6 +106,6 @@ class GoogleIdentityService implements GoogleIdentityServiceInterface
             'last_name' => isset($payload['family_name']) ? trim((string) $payload['family_name']) : null,
             'avatar_url' => isset($payload['picture']) ? trim((string) $payload['picture']) : null,
             'claims' => $payload,
-        ];
+        ]);
     }
 }

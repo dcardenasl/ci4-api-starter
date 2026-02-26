@@ -4,6 +4,11 @@ declare(strict_types=1);
 
 namespace App\Interfaces;
 
+use App\DTO\Request\Auth\LoginRequestDTO;
+use App\DTO\Request\Auth\RegisterRequestDTO;
+use App\DTO\Response\Auth\LoginResponseDTO;
+use App\DTO\Response\Auth\RegisterResponseDTO;
+
 /**
  * Authentication Service Interface
  *
@@ -14,10 +19,10 @@ interface AuthServiceInterface
     /**
      * Authenticate user with credentials
      *
-     * @param array $data Login credentials (email, password)
-     * @return array Result with user data or errors
+     * @param LoginRequestDTO $request Login credentials
+     * @return LoginResponseDTO Result with tokens and user data
      */
-    public function login(array $data): array;
+    public function login(LoginRequestDTO $request): LoginResponseDTO;
 
     /**
      * Authenticate user and return JWT token with refresh token
@@ -46,10 +51,10 @@ interface AuthServiceInterface
     /**
      * Register a new user with password
      *
-     * @param array $data Registration data (email, password, names)
-     * @return array Result with created user data or errors
+     * @param RegisterRequestDTO $request Registration data
+     * @return RegisterResponseDTO Result with created user data
      */
-    public function register(array $data): array;
+    public function register(RegisterRequestDTO $request): RegisterResponseDTO;
 
     /**
      * Register new user (legacy method, no tokens returned)

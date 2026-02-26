@@ -4,25 +4,44 @@ declare(strict_types=1);
 
 namespace App\Interfaces;
 
+use App\DTO\Request\Users\UserIndexRequestDTO;
+use App\DTO\Response\Users\UserResponseDTO;
+
 /**
  * User Service Interface
  *
  * Defines the contract for user CRUD operations.
  * Authentication methods have been moved to AuthServiceInterface.
  */
-interface UserServiceInterface extends CrudServiceContract
+interface UserServiceInterface
 {
     /**
-     * Get all users
-     *
-     * @param array $data Request data
-     * @return array Result with list of users
+     * Get all users with pagination and filtering
      */
+    public function index(UserIndexRequestDTO $request): array;
+
+    /**
+     * Get a single user by ID
+     */
+    public function show(array $data): UserResponseDTO;
+
+    /**
+     * Create a new user (Admin only)
+     */
+    public function store(array $data): UserResponseDTO;
+
+    /**
+     * Update an existing user
+     */
+    public function update(array $data): UserResponseDTO;
+
+    /**
+     * Delete a user (Soft delete)
+     */
+    public function destroy(array $data): array;
+
     /**
      * Approve a pending user
-     *
-     * @param array $data Request data containing 'id'
-     * @return array Result with approved user data
      */
-    public function approve(array $data): array;
+    public function approve(array $data): UserResponseDTO;
 }

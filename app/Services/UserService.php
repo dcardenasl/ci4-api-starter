@@ -25,10 +25,12 @@ use App\Traits\ResolvesWebAppLinks;
  * Handles CRUD operations for users.
  * Authentication methods have been moved to AuthService.
  */
-class UserService extends BaseCrudService implements UserServiceInterface
+class UserService implements UserServiceInterface
 {
     use AppliesQueryOptions;
     use ResolvesWebAppLinks;
+    use \App\Traits\ValidatesRequiredFields;
+
     public function __construct(
         protected UserModel $userModel,
         protected EmailServiceInterface $emailService,
@@ -40,38 +42,36 @@ class UserService extends BaseCrudService implements UserServiceInterface
     /**
      * Obtener todos los usuarios con paginación, filtros, búsqueda y ordenamiento
      */
-    public function index(array $data): array
+    public function index(\App\DTO\Request\Users\UserIndexRequestDTO $request): array
     {
         $builder = new QueryBuilder($this->userModel);
         $this->userModel->where('role !=', 'superadmin');
 
-        $this->applyQueryOptions($builder, $data);
-
-        [$page, $limit] = $this->resolvePagination(
-            $data,
-            (int) env('PAGINATION_DEFAULT_LIMIT', 20)
-        );
+        $this->applyQueryOptions($builder, $request->toArray());
 
         // Paginate results
-        $result = $builder->paginate($page, $limit);
+        $result = $builder->paginate($request->page, $request->perPage);
 
-        // Convert entities to arrays
-        $result['data'] = array_map(fn ($user) => $user->toArray(), $result['data']);
-
-        return ApiResponse::paginated(
-            $result['data'],
-            $result['total'],
-            $result['page'],
-            $result['perPage']
+        // Convert entities to Response DTOs
+        $result['data'] = array_map(
+            fn ($user) => \App\DTO\Response\Users\UserResponseDTO::fromArray($user->toArray()),
+            $result['data']
         );
+
+        return [
+            'data' => $result['data'],
+            'total' => $result['total'],
+            'page' => $result['page'],
+            'perPage' => $result['perPage']
+        ];
     }
 
     /**
      * Obtener un usuario por ID
      */
-    public function show(array $data): array
+    public function show(array $data): \App\DTO\Response\Users\UserResponseDTO
     {
-        $id = $this->requireId($data);
+        $id = $this->validateRequiredId($data);
 
         $user = $this->userModel->find($id);
 
@@ -79,13 +79,13 @@ class UserService extends BaseCrudService implements UserServiceInterface
             throw new NotFoundException(lang('Users.notFound'));
         }
 
-        return ApiResponse::success($user->toArray());
+        return \App\DTO\Response\Users\UserResponseDTO::fromArray($user->toArray());
     }
 
     /**
      * Crear un nuevo usuario
      */
-    public function store(array $data): array
+    public function store(array $data): \App\DTO\Response\Users\UserResponseDTO
     {
         validateOrFail($data, 'user', 'store_admin');
         $actorRole = (string) ($data['user_role'] ?? '');
@@ -144,15 +144,15 @@ class UserService extends BaseCrudService implements UserServiceInterface
             log_message('error', 'Failed to send invitation email: ' . $e->getMessage());
         }
 
-        return ApiResponse::created($user->toArray(), lang('Users.invitationSent'));
+        return \App\DTO\Response\Users\UserResponseDTO::fromArray($user->toArray());
     }
 
     /**
      * Actualizar un usuario existente
      */
-    public function update(array $data): array
+    public function update(array $data): \App\DTO\Response\Users\UserResponseDTO
     {
-        $id = $this->requireId($data);
+        $id = $this->validateRequiredId($data);
         validateOrFail($data, 'user', 'update');
         $actorRole = (string) ($data['user_role'] ?? '');
         $actorId = isset($data['user_id']) ? (int) $data['user_id'] : null;
@@ -209,7 +209,7 @@ class UserService extends BaseCrudService implements UserServiceInterface
 
         $user = $this->userModel->find($id);
 
-        return ApiResponse::success($user->toArray());
+        return \App\DTO\Response\Users\UserResponseDTO::fromArray($user->toArray());
     }
 
     /**
@@ -217,7 +217,7 @@ class UserService extends BaseCrudService implements UserServiceInterface
      */
     public function destroy(array $data): array
     {
-        $id = $this->requireId($data);
+        $id = $this->validateRequiredId($data);
         $actorRole = (string) ($data['user_role'] ?? '');
 
         // Verificar si el usuario existe
@@ -242,9 +242,9 @@ class UserService extends BaseCrudService implements UserServiceInterface
     /**
      * Approve a pending user
      */
-    public function approve(array $data): array
+    public function approve(array $data): \App\DTO\Response\Users\UserResponseDTO
     {
-        $id = $this->requireId($data);
+        $id = $this->validateRequiredId($data);
         $adminId = isset($data['user_id']) ? (int) $data['user_id'] : null;
 
         $user = $this->userModel->find($id);
@@ -292,7 +292,7 @@ class UserService extends BaseCrudService implements UserServiceInterface
             ]);
         }
 
-        return ApiResponse::success($user->toArray(), lang('Users.approvedSuccess'));
+        return \App\DTO\Response\Users\UserResponseDTO::fromArray($user->toArray());
     }
 
     /**

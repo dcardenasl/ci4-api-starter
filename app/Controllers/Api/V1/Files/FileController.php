@@ -16,7 +16,11 @@ class FileController extends ApiController
 
     public function upload(): ResponseInterface
     {
-        return $this->handleRequest('upload');
+        $dto = $this->getDTO(\App\DTO\Request\Files\FileUploadRequestDTO::class);
+
+        return $this->handleRequest(
+            fn () => $this->getService()->upload($dto)
+        );
     }
 
     public function show($id = null): ResponseInterface

@@ -34,73 +34,20 @@ class FileService implements FileServiceInterface
 
     /**
      * Upload a file
-     *
-     * @param array $data Request data with 'file' and 'user_id'
-     * @return array
      */
-    public function upload(array $data): array
+    public function upload(\App\DTO\Request\Files\FileUploadRequestDTO $request): \App\DTO\Response\Files\FileResponseDTO
     {
-        // $this->validateInputOrBadRequest($data, 'upload');
-
-        $userId = isset($data['user_id']) ? (int) $data['user_id'] : 0;
-        if ($userId === 0) {
-            throw new \App\Exceptions\AuthenticationException(lang('Auth.invalidToken'));
+        if ($request->isBase64()) {
+            return $this->handleBase64Upload($request->file, $request->userId, $request->toArray());
         }
 
-        // 1. Try to find the file in the standard 'file' key
-        $fileInput = $data['file'] ?? null;
-
-        // 2. If not found, look for any UploadedFile object in the data (Multipart)
-        if (!$fileInput) {
-            foreach ($data as $value) {
-                if ($value instanceof \CodeIgniter\HTTP\Files\UploadedFile) {
-                    $fileInput = $value;
-                    break;
-                }
-            }
-        }
-
-        // 3. If still not found, look for any string that looks like Base64 (JSON)
-        // We look for strings starting with 'data:' or very long strings
-        if (!$fileInput) {
-            foreach ($data as $key => $value) {
-                if (is_string($value) && $key !== 'user_id' && $key !== 'user_role') {
-                    if (str_starts_with($value, 'data:') || strlen($value) > 10000) {
-                        $fileInput = $value;
-                        // If it's base64, we might also need other metadata from this key or others
-                        break;
-                    }
-                }
-            }
-        }
-
-        if (!$fileInput) {
-            throw new BadRequestException(
-                lang('Files.invalidRequest'),
-                ['file' => lang('Files.invalidFileObject')]
-            );
-        }
-
-        // Case 1: Standard Multipart Upload (CodeIgniter UploadedFile)
-        if ($fileInput instanceof \CodeIgniter\HTTP\Files\UploadedFile) {
-            return $this->handleMultipartUpload($fileInput, $userId);
-        }
-
-        // Case 2: Base64 Upload (JSON)
-        if (is_string($fileInput)) {
-            return $this->handleBase64Upload($fileInput, $userId, $data);
-        }
-
-        throw new BadRequestException(
-            lang('Files.invalidRequest'),
-            ['file' => lang('Files.invalidFileObject')]
-        );
+        return $this->handleMultipartUpload($request->file, $request->userId);
     }
 
     /**
      * Handle standard multipart file upload
      */
-    protected function handleMultipartUpload(\CodeIgniter\HTTP\Files\UploadedFile $file, int $userId): array
+    protected function handleMultipartUpload(\CodeIgniter\HTTP\Files\UploadedFile $file, int $userId): \App\DTO\Response\Files\FileResponseDTO
     {
         // Check if file is valid
         if (!$file->isValid()) {
@@ -165,7 +112,7 @@ class FileService implements FileServiceInterface
     /**
      * Handle base64 encoded file upload
      */
-    protected function handleBase64Upload(string $base64String, int $userId, array $allData): array
+    protected function handleBase64Upload(string $base64String, int $userId, array $allData): \App\DTO\Response\Files\FileResponseDTO
     {
         // Check if we received a PHP resource string instead of real data
         if (str_contains($base64String, 'Resource id #')) {
@@ -245,7 +192,7 @@ class FileService implements FileServiceInterface
     /**
      * Common logic to store file and save to database
      */
-    protected function storeAndSaveMetadata(array $fileInfo): array
+    protected function storeAndSaveMetadata(array $fileInfo): \App\DTO\Response\Files\FileResponseDTO
     {
         $stored = $this->storage->put($fileInfo['path'], $fileInfo['contents']);
 
@@ -281,14 +228,13 @@ class FileService implements FileServiceInterface
 
         $savedFile = $this->fileModel->find($fileId);
 
-        return ApiResponse::created([
+        return \App\DTO\Response\Files\FileResponseDTO::fromArray([
             'id' => $savedFile->id,
             'original_name' => $savedFile->original_name,
-            'size' => $savedFile->size,
-            'human_size' => $savedFile->getHumanSize(),
+            'file_size' => $savedFile->size,
             'mime_type' => $savedFile->mime_type,
             'url' => $savedFile->url,
-            'uploaded_at' => $savedFile->uploaded_at,
+            'created_at' => $savedFile->uploaded_at,
         ]);
     }
 

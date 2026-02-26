@@ -38,7 +38,7 @@ class ApiResponse
         }
 
         if ($data !== null) {
-            $response['data'] = $data;
+            $response['data'] = self::convertDataToArrays($data);
         }
 
         if (!empty($meta)) {
@@ -46,6 +46,26 @@ class ApiResponse
         }
 
         return $response;
+    }
+
+    /**
+     * Recursively convert DTOs to arrays
+     */
+    public static function convertDataToArrays(mixed $data): mixed
+    {
+        if ($data instanceof \App\Interfaces\DataTransferObjectInterface) {
+            return $data->toArray();
+        }
+
+        if (is_array($data)) {
+            $result = [];
+            foreach ($data as $key => $value) {
+                $result[$key] = self::convertDataToArrays($value);
+            }
+            return $result;
+        }
+
+        return $data;
     }
 
     /**

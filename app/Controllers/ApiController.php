@@ -97,19 +97,59 @@ abstract class ApiController extends Controller
     // =========================================================================
 
     /**
-     * Handle an API request by delegating to the service layer
+     * Override respond to ensure all DTOs are recursively converted to arrays.
      */
-    protected function handleRequest(string $method, ?array $params = null): ResponseInterface
+    public function respond($data = null, int $status = null, string $message = ''): ResponseInterface
+    {
+        if ($data !== null) {
+            $data = ApiResponse::convertDataToArrays($data);
+        }
+
+        return $this->response->setJSON($data)->setStatusCode($status ?? 200);
+    }
+
+    /**
+     * Handle an API request by delegating to the service layer
+     * Now supports both method names and closures for DTO usage.
+     */
+    protected function handleRequest(string|callable $target, ?array $params = null): ResponseInterface
     {
         try {
-            $data = $this->collectRequestData($params);
-            $result = $this->getService()->$method($data);
-            $status = $this->determineStatus($result, $method);
+            if (is_callable($target)) {
+                $result = $target();
+            } else {
+                $data = $this->collectRequestData($params);
+                $result = $this->getService()->$target($data);
+            }
+
+            // If result is not already an ApiResponse structure (with 'status'), wrap it
+            if (is_array($result) && !isset($result['status'])) {
+                $result = ApiResponse::success($result);
+            } elseif ($result instanceof \App\Interfaces\DataTransferObjectInterface) {
+                $result = ApiResponse::success($result->toArray());
+            }
+
+            $status = $this->determineStatus($result, is_string($target) ? $target : 'custom');
 
             return $this->respond($result, $status);
         } catch (Exception $e) {
             return $this->handleException($e);
         }
+    }
+
+    /**
+     * Get a validated DTO from the request data
+     *
+     * @template T of \App\Interfaces\DataTransferObjectInterface
+     * @param class-string<T> $dtoClass
+     * @return T
+     */
+    protected function getDTO(string $dtoClass, ?array $params = null): object
+    {
+        $data = $this->collectRequestData($params);
+
+        /** @var T */
+        return new $dtoClass($data);
     }
 
     /**

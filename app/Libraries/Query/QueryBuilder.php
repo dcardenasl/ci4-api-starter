@@ -178,6 +178,6 @@ class QueryBuilder
      */
     public function count(): int
     {
-        return $this->model->countAllResults();
+        return (int) $this->model->countAllResults();
     }
 }

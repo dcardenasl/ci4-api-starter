@@ -4,13 +4,8 @@ declare(strict_types=1);
 
 namespace App\Interfaces;
 
-use App\DTO\Request\Identity\VerificationRequestDTO;
-use App\DTO\Response\Identity\VerificationResponseDTO;
-
 /**
- * Verification Service Interface
- *
- * Contract for email verification functionality
+ * Email Verification Service Interface
  */
 interface VerificationServiceInterface
 {
@@ -22,10 +17,10 @@ interface VerificationServiceInterface
     /**
      * Verify email with token
      */
-    public function verifyEmail(VerificationRequestDTO $request): VerificationResponseDTO;
+    public function verifyEmail(\App\Interfaces\DataTransferObjectInterface $request): \App\Interfaces\DataTransferObjectInterface;
 
     /**
      * Resend verification email
      */
-    public function resendVerification(array $data): array;
+    public function resendVerification(int $userId, array $data = []): array;
 }

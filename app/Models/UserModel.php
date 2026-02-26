@@ -58,7 +58,7 @@ class UserModel extends Model
     /**
      * Validation rules (data integrity)
      *
-     * @var array<string, string|array<string, string>>
+     * @var array<string, array<string, array<string, string>|string>|string>
      */
     protected $validationRules = [
         'id'    => 'permit_empty|is_natural_no_zero',

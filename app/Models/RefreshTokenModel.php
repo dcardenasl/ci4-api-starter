@@ -49,6 +49,7 @@ class RefreshTokenModel extends Model
      */
     public function getActiveToken(string $token): ?object
     {
+        /** @var object|null */
         return $this->where('token', $token)
             ->where('expires_at >', date('Y-m-d H:i:s'))
             ->where('revoked_at', null)

@@ -49,7 +49,10 @@ class TokenBlacklistModel extends Model
     public function isBlacklisted(string $jti): bool
     {
         // Use BINARY comparison for case-sensitive token matching
-        $record = $this->where("BINARY token_jti = BINARY '{$this->db->escapeString($jti)}'", null, false)
+        $escapedValue = $this->db->escapeString($jti);
+        $escapedJti = is_array($escapedValue) ? (string) reset($escapedValue) : (string) $escapedValue;
+
+        $record = $this->where("BINARY token_jti = BINARY '{$escapedJti}'", null, false)
             ->where('expires_at >', date('Y-m-d H:i:s'))
             ->first();
 
@@ -64,7 +67,10 @@ class TokenBlacklistModel extends Model
      */
     public function existsByJti(string $jti): bool
     {
-        $record = $this->where("BINARY token_jti = BINARY '{$this->db->escapeString($jti)}'", null, false)
+        $escapedValue = $this->db->escapeString($jti);
+        $escapedJti = is_array($escapedValue) ? (string) reset($escapedValue) : (string) $escapedValue;
+
+        $record = $this->where("BINARY token_jti = BINARY '{$escapedJti}'", null, false)
             ->first();
 
         return $record !== null;

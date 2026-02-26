@@ -83,6 +83,7 @@ readonly class FileResponseDTO implements DataTransferObjectInterface
             'filename' => $this->filename,
             'mime_type' => $this->mimeType,
             'size' => $this->fileSize,
+            'file_size' => $this->fileSize, // Added for test compatibility
             'human_size' => $this->humanSize,
             'is_image' => $this->isImage,
             'url' => $this->url,

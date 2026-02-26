@@ -119,7 +119,7 @@ class QueueManager
 
         // Attempt multiple times in case another worker reserves the same row first.
         for ($attempt = 0; $attempt < 5; $attempt++) {
-            $job = $this->db->table('jobs')
+            $query = $this->db->table('jobs')
                 ->where('queue', $queue)
                 ->where('available_at <=', $now)
                 ->groupStart()
@@ -127,8 +127,9 @@ class QueueManager
                     ->orWhere('reserved_at <=', $staleThreshold)
                 ->groupEnd()
                 ->orderBy('id', 'ASC')
-                ->get()
-                ->getRow();
+                ->get();
+
+            $job = $query ? $query->getRow() : null;
 
             if (! $job) {
                 return null;
@@ -260,17 +261,17 @@ class QueueManager
      */
     public function getStats(string $queue = 'default'): array
     {
-        $pending = $this->db->table('jobs')
+        $pending = (int) $this->db->table('jobs')
             ->where('queue', $queue)
             ->where('reserved_at', null)
             ->countAllResults();
 
-        $processing = $this->db->table('jobs')
+        $processing = (int) $this->db->table('jobs')
             ->where('queue', $queue)
             ->where('reserved_at IS NOT NULL')
             ->countAllResults();
 
-        $failed = $this->db->table('failed_jobs')
+        $failed = (int) $this->db->table('failed_jobs')
             ->where('queue', $queue)
             ->countAllResults();
 

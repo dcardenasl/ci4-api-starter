@@ -42,7 +42,7 @@ class ApiKeyModel extends Model
     protected $updatedField  = 'updated_at';
 
     /**
-     * @var array<string, array<string, string>>
+     * @var array<string, array<string, array<string, string>|string>|string>
      */
     protected $validationRules = [
         'name' => [

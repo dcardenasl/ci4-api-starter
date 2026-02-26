@@ -110,6 +110,7 @@ class FileModel extends Model
      */
     public function getByIdAndUser(int $fileId, int $userId): ?FileEntity
     {
+        /** @var FileEntity|null */
         return $this->where('id', $fileId)
             ->where('user_id', $userId)
             ->first();
@@ -130,6 +131,6 @@ class FileModel extends Model
             return false;
         }
 
-        return $this->delete($fileId);
+        return (bool) $this->delete($fileId);
     }
 }

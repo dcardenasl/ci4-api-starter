@@ -45,19 +45,21 @@ class RequestLogModel extends Model
             ->where('response_code >=', 400)
             ->countAllResults();
 
-        $avgResponseTimeRaw = $this->db->table($this->table)
+        $avgResponseTimeQuery = $this->db->table($this->table)
             ->select('AVG(response_time) as avg_response_time')
             ->where('created_at >=', $since)
-            ->get()
-            ->getRow();
+            ->get();
+
+        $avgResponseTimeRaw = $avgResponseTimeQuery ? $avgResponseTimeQuery->getRow() : null;
         $avgResponseTime = $avgResponseTimeRaw ? (float) ($avgResponseTimeRaw->avg_response_time ?? 0) : 0.0;
 
-        $responseTimes = $this->db->table($this->table)
+        $responseTimesQuery = $this->db->table($this->table)
             ->select('response_time')
             ->where('created_at >=', $since)
             ->orderBy('response_time', 'ASC')
-            ->get()
-            ->getResultArray();
+            ->get();
+
+        $responseTimes = $responseTimesQuery ? $responseTimesQuery->getResultArray() : [];
 
         $latencies = array_map(
             static fn (array $row): int => (int) ($row['response_time'] ?? 0),
@@ -95,7 +97,7 @@ class RequestLogModel extends Model
      *
      * @param int $threshold Threshold in milliseconds
      * @param int $limit
-     * @return array<int, object>
+     * @return array<int, array<int|string, bool|float|int|object|string|null>|object>
      */
     public function getSlowRequests(int $threshold = 1000, int $limit = 10): array
     {

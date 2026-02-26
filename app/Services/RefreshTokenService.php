@@ -72,9 +72,13 @@ class RefreshTokenService implements RefreshTokenServiceInterface
         $sql .= ' FOR UPDATE';
 
         $result = $db->query($sql);
-        $tokenRecord = $result ? $result->getFirstRow('object') : null;
+        $tokenRecord = null;
+        if ($result instanceof \CodeIgniter\Database\ResultInterface) {
+            /** @var object|null $tokenRecord */
+            $tokenRecord = $result->getFirstRow('object');
+        }
 
-        if (!$tokenRecord) {
+        if (!$tokenRecord || !isset($tokenRecord->user_id)) {
             $db->transRollback();
             throw new AuthenticationException(lang('Tokens.invalidRefreshToken'));
         }
@@ -88,7 +92,7 @@ class RefreshTokenService implements RefreshTokenServiceInterface
         // Get user to get role
         $user = $this->userModel->find($tokenRecord->user_id);
 
-        if (!$user) {
+        if (!$user instanceof \App\Entities\UserEntity) {
             $db->transRollback();
             throw new AuthenticationException(lang('Tokens.userNotFound'));
         }
@@ -100,7 +104,7 @@ class RefreshTokenService implements RefreshTokenServiceInterface
             throw $e;
         }
 
-        $accessToken = $this->jwtService->encode((int) $user->id, $user->role);
+        $accessToken = $this->jwtService->encode((int) $user->id, (string) ($user->role ?? 'user'));
 
         // Commit transaction
         $db->transComplete();

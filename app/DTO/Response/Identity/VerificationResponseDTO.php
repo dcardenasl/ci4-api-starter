@@ -32,6 +32,7 @@ readonly class VerificationResponseDTO implements DataTransferObjectInterface
     public function toArray(): array
     {
         return [
+            'status' => 'success',
             'message' => $this->message,
             'user_id' => $this->userId,
             'email' => $this->email,

@@ -153,7 +153,7 @@ class EmailService implements EmailServiceInterface
         try {
             if ($targetLocale !== null && $targetLocale !== '') {
                 $language->setLocale($targetLocale);
-                if (method_exists($request, 'setLocale')) {
+                if ($request instanceof \CodeIgniter\HTTP\IncomingRequest) {
                     $request->setLocale($targetLocale);
                 }
             }
@@ -162,7 +162,7 @@ class EmailService implements EmailServiceInterface
             $message = view($viewPath, $data);
 
             // Extract subject from data or use template name
-            $subject = $data['subject'] ?? ucfirst(str_replace('_', ' ', $template));
+            $subject = is_string($data['subject'] ?? null) ? $data['subject'] : ucfirst(str_replace('_', ' ', $template));
 
             return $this->send($to, $subject, $message);
         } catch (Throwable $e) {
@@ -170,7 +170,7 @@ class EmailService implements EmailServiceInterface
             return false;
         } finally {
             $language->setLocale($previousLocale);
-            if (method_exists($request, 'setLocale')) {
+            if ($request instanceof \CodeIgniter\HTTP\IncomingRequest) {
                 $request->setLocale($previousLocale);
             }
         }
@@ -187,10 +187,14 @@ class EmailService implements EmailServiceInterface
     public function queueTemplate(string $template, string $to, array $data): int
     {
         if (! isset($data['locale']) || ! is_string($data['locale']) || $data['locale'] === '') {
+            $request = service('request');
             $language = service('language');
-            $data['locale'] = method_exists(service('request'), 'getLocale')
-                ? service('request')->getLocale()
-                : $language->getLocale();
+
+            if ($request instanceof \CodeIgniter\HTTP\IncomingRequest) {
+                $data['locale'] = $request->getLocale();
+            } else {
+                $data['locale'] = $language->getLocale();
+            }
         }
 
         return $this->queueManager->push(

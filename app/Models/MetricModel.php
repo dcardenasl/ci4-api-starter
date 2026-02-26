@@ -26,12 +26,14 @@ class MetricModel extends Model
      */
     public function record(string $name, float $value, array $tags = [])
     {
-        return $this->insert([
+        $id = $this->insert([
             'metric_name' => $name,
             'metric_value' => $value,
             'tags' => empty($tags) ? null : json_encode($tags),
             'created_at' => date('Y-m-d H:i:s'),
         ]);
+
+        return is_numeric($id) ? (int) $id : false;
     }
 
     /**
@@ -39,7 +41,7 @@ class MetricModel extends Model
      *
      * @param string $name
      * @param string $period
-     * @return array<int, object>
+     * @return array<int, array<int|string, bool|float|int|object|string|null>|object>
      */
     public function getByName(string $name, string $period = 'day'): array
     {
@@ -74,7 +76,7 @@ class MetricModel extends Model
             default => date('Y-m-d H:i:s', strtotime('-1 day')),
         };
 
-        $result = $this->builder()
+        $query = $this->builder()
             ->select('
                 COUNT(*) as count,
                 AVG(metric_value) as average,
@@ -84,17 +86,30 @@ class MetricModel extends Model
             ')
             ->where('metric_name', $name)
             ->where('created_at >=', $since)
-            ->get()
-            ->getRow();
+            ->get();
+
+        $result = $query ? $query->getRow() : null;
+
+        if (!$result) {
+            return [
+                'metric_name' => $name,
+                'period' => $period,
+                'count' => 0,
+                'average' => 0.0,
+                'minimum' => 0.0,
+                'maximum' => 0.0,
+                'sum' => 0.0,
+            ];
+        }
 
         return [
             'metric_name' => $name,
             'period' => $period,
-            'count' => (int) $result->count,
-            'average' => round((float) $result->average, 2),
-            'minimum' => round((float) $result->minimum, 2),
-            'maximum' => round((float) $result->maximum, 2),
-            'sum' => round((float) $result->sum, 2),
+            'count' => (int) ($result->count ?? 0),
+            'average' => round((float) ($result->average ?? 0), 2),
+            'minimum' => round((float) ($result->minimum ?? 0), 2),
+            'maximum' => round((float) ($result->maximum ?? 0), 2),
+            'sum' => round((float) ($result->sum ?? 0), 2),
         ];
     }
 }

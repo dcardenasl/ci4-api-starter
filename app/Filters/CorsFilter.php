@@ -65,7 +65,7 @@ class CorsFilter implements FilterInterface
     private function applyCorsHeaders(RequestInterface $request, ResponseInterface $response): void
     {
         $config = $this->getConfig();
-        $origin = $request->header('Origin') ? $request->header('Origin')->getValue() : '';
+        $origin = $request->getHeaderLine('Origin');
 
         if ($this->isOriginAllowed($origin, $config['allowedOrigins'], $config['allowedOriginsPatterns'])) {
             $response->setHeader('Access-Control-Allow-Origin', $origin);

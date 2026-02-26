@@ -19,7 +19,7 @@ class UserEntity extends Entity
     protected $datamap = [];
 
     /**
-     * @var list<string> Date fields for automatic conversion
+     * @var array<int, string> Date fields for automatic conversion
      */
     protected $dates = [
         'created_at',
@@ -41,7 +41,7 @@ class UserEntity extends Entity
     ];
 
     /**
-     * @var array Fields to hide from serialization
+     * @var array<int, string> Fields to hide from serialization
      */
     protected array $hidden = [
         'password',

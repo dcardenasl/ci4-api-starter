@@ -41,6 +41,9 @@ class ApiKeyModel extends Model
     protected $createdField  = 'created_at';
     protected $updatedField  = 'updated_at';
 
+    /**
+     * @var array<string, array<string, string>>
+     */
     protected $validationRules = [
         'name' => [
             'rules'  => 'required|string|max_length[100]',
@@ -97,8 +100,11 @@ class ApiKeyModel extends Model
     protected $cleanValidationRules = true;
 
     // Search and filter configuration
+    /** @var array<int, string> */
     protected array $searchableFields  = ['name', 'key_prefix'];
+    /** @var array<int, string> */
     protected array $filterableFields  = ['name', 'is_active', 'created_at'];
+    /** @var array<int, string> */
     protected array $sortableFields    = ['id', 'name', 'is_active', 'created_at'];
 
     /**

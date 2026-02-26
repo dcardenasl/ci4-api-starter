@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use App\Entities\UserEntity;
@@ -13,17 +15,21 @@ class UserModel extends Model
     use Auditable;
     use Filterable;
     use Searchable;
-    // Configuración de tabla
+
+    /**
+     * @var string
+     */
     protected $table            = 'users';
+
     protected $primaryKey       = 'id';
     protected $useAutoIncrement = true;
     protected $returnType       = UserEntity::class;
-
-    // Soft deletes (borrado lógico)
     protected $useSoftDeletes   = true;
-
-    // Protección contra mass assignment
     protected $protectFields    = true;
+
+    /**
+     * @var array<int, string>
+     */
     protected $allowedFields    = [
         'email',
         'first_name',
@@ -43,14 +49,17 @@ class UserModel extends Model
         'email_verified_at',
     ];
 
-    // Gestión automática de timestamps
     protected $useTimestamps      = true;
     protected $dateFormat         = 'datetime';
     protected $createdField       = 'created_at';
     protected $updatedField       = 'updated_at';
     protected $deletedField       = 'deleted_at';
 
-    // Reglas de validación (integridad de datos)
+    /**
+     * Validation rules (data integrity)
+     *
+     * @var array<string, string|array<string, string>>
+     */
     protected $validationRules = [
         'id'    => 'permit_empty|is_natural_no_zero',
         'email' => [
@@ -66,12 +75,13 @@ class UserModel extends Model
     protected $skipValidation       = false;
     protected $cleanValidationRules = true;
 
-    // Search and filter configuration
+    /** @var array<int, string> */
     protected array $searchableFields = ['email', 'first_name', 'last_name'];
+    /** @var array<int, string> */
     protected array $filterableFields = ['role', 'status', 'email', 'created_at', 'id', 'first_name', 'last_name'];
+    /** @var array<int, string> */
     protected array $sortableFields = ['id', 'email', 'created_at', 'role', 'status', 'first_name', 'last_name'];
 
-    // Callbacks para procesamiento adicional
     protected $allowCallbacks = true;
     protected $beforeInsert   = [];
     protected $afterInsert    = [];

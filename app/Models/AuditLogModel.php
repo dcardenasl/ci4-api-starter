@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use App\Traits\Filterable;
@@ -39,7 +41,11 @@ class AuditLogModel extends Model
     protected $useTimestamps = false;
     protected $dateFormat = 'datetime';
 
-    // Validation rules
+    /**
+     * Validation rules
+     *
+     * @var array<string, string>
+     */
     protected $validationRules = [
         'action' => 'required|max_length[50]',
         'entity_type' => 'required|max_length[50]',
@@ -51,8 +57,13 @@ class AuditLogModel extends Model
     protected $cleanValidationRules = true;
 
     // Filtering and searching
+    /** @var array<int, string> */
     protected array $filterableFields = ['user_id', 'action', 'entity_type', 'entity_id', 'created_at'];
+
+    /** @var array<int, string> */
     protected array $searchableFields = ['action', 'entity_type'];
+
+    /** @var array<int, string> */
     protected array $sortableFields = ['id', 'user_id', 'action', 'entity_type', 'entity_id', 'created_at'];
 
     /**

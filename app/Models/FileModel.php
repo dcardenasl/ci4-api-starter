@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use App\Entities\FileEntity;
@@ -42,7 +44,11 @@ class FileModel extends Model
     protected $useTimestamps = false; // Using uploaded_at instead
     protected $dateFormat = 'datetime';
 
-    // Validation rules
+    /**
+     * Validation rules
+     *
+     * @var array<string, string>
+     */
     protected $validationRules = [
         'user_id' => 'required|integer',
         'original_name' => 'required|max_length[255]',
@@ -53,6 +59,11 @@ class FileModel extends Model
         'path' => 'required|max_length[500]',
     ];
 
+    /**
+     * Validation messages
+     *
+     * @var array<string, array<string, string>>
+     */
     protected $validationMessages = [
         'user_id' => [
             'required' => 'InputValidation.common.userIdRequired',
@@ -64,8 +75,11 @@ class FileModel extends Model
     protected $cleanValidationRules = true;
 
     // Query capabilities
+    /** @var array<int, string> */
     protected array $searchableFields = ['original_name', 'mime_type'];
+    /** @var array<int, string> */
     protected array $filterableFields = ['user_id', 'mime_type', 'size', 'uploaded_at', 'storage_driver'];
+    /** @var array<int, string> */
     protected array $sortableFields = ['id', 'user_id', 'original_name', 'size', 'uploaded_at', 'mime_type'];
 
     public function __construct()

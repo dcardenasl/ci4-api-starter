@@ -20,16 +20,7 @@ use OpenApi\Attributes as OA;
             content: new OA\JsonContent(
                 properties: [
                     new OA\Property(property: 'status', type: 'string', example: 'success'),
-                    new OA\Property(
-                        property: 'data',
-                        type: 'object',
-                        properties: [
-                            new OA\Property(property: 'access_token', type: 'string'),
-                            new OA\Property(property: 'refresh_token', type: 'string'),
-                            new OA\Property(property: 'expires_in', type: 'integer', example: 3600),
-                            new OA\Property(property: 'user', ref: '#/components/schemas/User'),
-                        ]
-                    ),
+                    new OA\Property(property: 'data', ref: '#/components/schemas/LoginResponse'),
                 ],
                 type: 'object'
             )
@@ -52,16 +43,7 @@ use OpenApi\Attributes as OA;
             content: new OA\JsonContent(
                 properties: [
                     new OA\Property(property: 'status', type: 'string', example: 'success'),
-                    new OA\Property(
-                        property: 'data',
-                        type: 'object',
-                        properties: [
-                            new OA\Property(property: 'access_token', type: 'string'),
-                            new OA\Property(property: 'refresh_token', type: 'string'),
-                            new OA\Property(property: 'expires_in', type: 'integer', example: 3600),
-                            new OA\Property(property: 'user', ref: '#/components/schemas/User'),
-                        ]
-                    ),
+                    new OA\Property(property: 'data', ref: '#/components/schemas/LoginResponse'),
                 ],
                 type: 'object'
             )
@@ -90,13 +72,7 @@ use OpenApi\Attributes as OA;
             content: new OA\JsonContent(
                 properties: [
                     new OA\Property(property: 'status', type: 'string', example: 'success'),
-                    new OA\Property(
-                        property: 'data',
-                        type: 'object',
-                        properties: [
-                            new OA\Property(property: 'user', ref: '#/components/schemas/User'),
-                        ]
-                    ),
+                    new OA\Property(property: 'data', ref: '#/components/schemas/UserResponse'),
                     new OA\Property(property: 'message', type: 'string'),
                 ],
                 type: 'object'
@@ -117,7 +93,7 @@ use OpenApi\Attributes as OA;
             content: new OA\JsonContent(
                 properties: [
                     new OA\Property(property: 'status', type: 'string', example: 'success'),
-                    new OA\Property(property: 'data', ref: '#/components/schemas/User'),
+                    new OA\Property(property: 'data', ref: '#/components/schemas/UserResponse'),
                 ],
                 type: 'object'
             )

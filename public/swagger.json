@@ -61,7 +61,7 @@
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/components/schemas/ApiKey"
+                                                "$ref": "#/components/schemas/ApiKeyResponse"
                                             }
                                         },
                                         "meta": {
@@ -163,7 +163,7 @@
                                             "example": "success"
                                         },
                                         "data": {
-                                            "$ref": "#/components/schemas/ApiKey"
+                                            "$ref": "#/components/schemas/ApiKeyResponse"
                                         },
                                         "message": {
                                             "type": "string"
@@ -220,7 +220,7 @@
                                             "example": "success"
                                         },
                                         "data": {
-                                            "$ref": "#/components/schemas/ApiKey"
+                                            "$ref": "#/components/schemas/ApiKeyResponse"
                                         }
                                     },
                                     "type": "object"
@@ -308,7 +308,7 @@
                                             "example": "success"
                                         },
                                         "data": {
-                                            "$ref": "#/components/schemas/ApiKey"
+                                            "$ref": "#/components/schemas/ApiKeyResponse"
                                         }
                                     },
                                     "type": "object"
@@ -429,7 +429,7 @@
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/components/schemas/AuditLog"
+                                                "$ref": "#/components/schemas/AuditResponse"
                                             }
                                         },
                                         "meta": {
@@ -481,7 +481,7 @@
                                             "example": "success"
                                         },
                                         "data": {
-                                            "$ref": "#/components/schemas/AuditLog"
+                                            "$ref": "#/components/schemas/AuditResponse"
                                         }
                                     },
                                     "type": "object"
@@ -542,7 +542,7 @@
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/components/schemas/AuditLog"
+                                                "$ref": "#/components/schemas/AuditResponse"
                                             }
                                         }
                                     },
@@ -587,22 +587,7 @@
                                             "example": "success"
                                         },
                                         "data": {
-                                            "properties": {
-                                                "access_token": {
-                                                    "type": "string"
-                                                },
-                                                "refresh_token": {
-                                                    "type": "string"
-                                                },
-                                                "expires_in": {
-                                                    "type": "integer",
-                                                    "example": 3600
-                                                },
-                                                "user": {
-                                                    "$ref": "#/components/schemas/User"
-                                                }
-                                            },
-                                            "type": "object"
+                                            "$ref": "#/components/schemas/LoginResponse"
                                         }
                                     },
                                     "type": "object"
@@ -641,22 +626,7 @@
                                             "example": "success"
                                         },
                                         "data": {
-                                            "properties": {
-                                                "access_token": {
-                                                    "type": "string"
-                                                },
-                                                "refresh_token": {
-                                                    "type": "string"
-                                                },
-                                                "expires_in": {
-                                                    "type": "integer",
-                                                    "example": 3600
-                                                },
-                                                "user": {
-                                                    "$ref": "#/components/schemas/User"
-                                                }
-                                            },
-                                            "type": "object"
+                                            "$ref": "#/components/schemas/LoginResponse"
                                         }
                                     },
                                     "type": "object"
@@ -704,12 +674,7 @@
                                             "example": "success"
                                         },
                                         "data": {
-                                            "properties": {
-                                                "user": {
-                                                    "$ref": "#/components/schemas/User"
-                                                }
-                                            },
-                                            "type": "object"
+                                            "$ref": "#/components/schemas/UserResponse"
                                         },
                                         "message": {
                                             "type": "string"
@@ -745,7 +710,7 @@
                                             "example": "success"
                                         },
                                         "data": {
-                                            "$ref": "#/components/schemas/User"
+                                            "$ref": "#/components/schemas/UserResponse"
                                         }
                                     },
                                     "type": "object"
@@ -1259,7 +1224,7 @@
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/components/schemas/File"
+                                                "$ref": "#/components/schemas/FileResponse"
                                             }
                                         }
                                     },
@@ -1317,7 +1282,7 @@
                                             "example": "success"
                                         },
                                         "data": {
-                                            "$ref": "#/components/schemas/File"
+                                            "$ref": "#/components/schemas/FileResponse"
                                         }
                                     },
                                     "type": "object"
@@ -1368,7 +1333,7 @@
                                             "example": "success"
                                         },
                                         "data": {
-                                            "$ref": "#/components/schemas/FileDownload"
+                                            "$ref": "#/components/schemas/FileResponse"
                                         }
                                     },
                                     "type": "object"
@@ -1870,8 +1835,8 @@
                 "tags": [
                     "Users"
                 ],
-                "summary": "List users",
-                "description": "Lists users except accounts with role superadmin.",
+                "summary": "List users (admin)",
+                "description": "Lists users except accounts with role superadmin. Requires admin role.",
                 "operationId": "bb16d86dd4253aeb9142d6f70fd5dcaa",
                 "parameters": [
                     {
@@ -1915,7 +1880,7 @@
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/components/schemas/User"
+                                                "$ref": "#/components/schemas/UserResponse"
                                             }
                                         },
                                         "meta": {
@@ -1955,6 +1920,9 @@
                     },
                     "401": {
                         "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "403": {
+                        "description": "Forbidden — requires admin role"
                     }
                 },
                 "security": [
@@ -1985,7 +1953,7 @@
                                             "example": "success"
                                         },
                                         "data": {
-                                            "$ref": "#/components/schemas/User"
+                                            "$ref": "#/components/schemas/UserResponse"
                                         }
                                     },
                                     "type": "object"
@@ -2016,6 +1984,7 @@
                     "Users"
                 ],
                 "summary": "Get user by ID",
+                "description": "Get details of a specific user. Regular users can only access their own profile.",
                 "operationId": "f75dc71b97800024d1f43c723b617d77",
                 "parameters": [
                     {
@@ -2039,7 +2008,7 @@
                                             "example": "success"
                                         },
                                         "data": {
-                                            "$ref": "#/components/schemas/User"
+                                            "$ref": "#/components/schemas/UserResponse"
                                         }
                                     },
                                     "type": "object"
@@ -2049,6 +2018,9 @@
                     },
                     "401": {
                         "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "403": {
+                        "description": "Forbidden — cannot access another users profile"
                     },
                     "404": {
                         "description": "User not found"
@@ -2092,7 +2064,7 @@
                                             "example": "success"
                                         },
                                         "data": {
-                                            "$ref": "#/components/schemas/User"
+                                            "$ref": "#/components/schemas/UserResponse"
                                         }
                                     },
                                     "type": "object"
@@ -2202,7 +2174,7 @@
                                             "example": "success"
                                         },
                                         "data": {
-                                            "$ref": "#/components/schemas/User"
+                                            "$ref": "#/components/schemas/UserResponse"
                                         },
                                         "message": {
                                             "type": "string"
@@ -2230,134 +2202,6 @@
     },
     "components": {
         "schemas": {
-            "ApiKey": {
-                "title": "ApiKey",
-                "description": "API key object. The raw key value is only returned once at creation.",
-                "required": [
-                    "id",
-                    "name",
-                    "key_prefix",
-                    "is_active",
-                    "rate_limit_requests",
-                    "rate_limit_window",
-                    "user_rate_limit",
-                    "ip_rate_limit",
-                    "created_at",
-                    "updated_at"
-                ],
-                "properties": {
-                    "id": {
-                        "description": "Unique API key identifier",
-                        "type": "integer",
-                        "example": 1
-                    },
-                    "name": {
-                        "description": "Human-readable label for the API key",
-                        "type": "string",
-                        "example": "My Mobile App"
-                    },
-                    "key_prefix": {
-                        "description": "First 12 characters of the raw key (safe to display)",
-                        "type": "string",
-                        "example": "apk_a3f9c2b1"
-                    },
-                    "key": {
-                        "description": "Full raw API key — only present in the creation response",
-                        "type": "string",
-                        "example": "apk_a3f9c2b1d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3",
-                        "nullable": true
-                    },
-                    "is_active": {
-                        "description": "Whether the key is currently active",
-                        "type": "boolean",
-                        "example": true
-                    },
-                    "rate_limit_requests": {
-                        "description": "Maximum requests per window (global key budget)",
-                        "type": "integer",
-                        "example": 600
-                    },
-                    "rate_limit_window": {
-                        "description": "Rate limit window in seconds",
-                        "type": "integer",
-                        "example": 60
-                    },
-                    "user_rate_limit": {
-                        "description": "Per-user request limit within the window when JWT is present",
-                        "type": "integer",
-                        "example": 60
-                    },
-                    "ip_rate_limit": {
-                        "description": "Per-IP defensive limit within the window when no JWT is present",
-                        "type": "integer",
-                        "example": 200
-                    },
-                    "created_at": {
-                        "description": "Creation timestamp",
-                        "type": "string",
-                        "format": "date-time",
-                        "example": "2026-02-18T00:00:00Z"
-                    },
-                    "updated_at": {
-                        "description": "Last update timestamp",
-                        "type": "string",
-                        "format": "date-time",
-                        "example": "2026-02-18T00:00:00Z"
-                    }
-                },
-                "type": "object"
-            },
-            "AuditLog": {
-                "title": "Audit Log",
-                "description": "Audit log entry",
-                "properties": {
-                    "id": {
-                        "description": "Audit Log Schema",
-                        "type": "integer",
-                        "example": 10
-                    },
-                    "user_id": {
-                        "type": "integer",
-                        "example": 1,
-                        "nullable": true
-                    },
-                    "action": {
-                        "type": "string",
-                        "example": "update"
-                    },
-                    "entity_type": {
-                        "type": "string",
-                        "example": "users"
-                    },
-                    "entity_id": {
-                        "type": "integer",
-                        "example": 5,
-                        "nullable": true
-                    },
-                    "old_values": {
-                        "type": "object",
-                        "nullable": true
-                    },
-                    "new_values": {
-                        "type": "object",
-                        "nullable": true
-                    },
-                    "ip_address": {
-                        "type": "string",
-                        "example": "127.0.0.1"
-                    },
-                    "user_agent": {
-                        "type": "string",
-                        "example": "Mozilla/5.0"
-                    },
-                    "created_at": {
-                        "type": "string",
-                        "format": "date-time",
-                        "example": "2026-02-06T19:00:00Z"
-                    }
-                },
-                "type": "object"
-            },
             "AuthToken": {
                 "title": "Authentication Token",
                 "description": "JWT token with associated user data",
@@ -2372,75 +2216,7 @@
                         "example": "eyJ0eXAiOiJKV1QiLCJhbGc..."
                     },
                     "user": {
-                        "$ref": "#/components/schemas/User"
-                    }
-                },
-                "type": "object"
-            },
-            "File": {
-                "title": "File",
-                "description": "File metadata",
-                "properties": {
-                    "id": {
-                        "description": "File Schema\n\nReusable File object schema.",
-                        "type": "integer",
-                        "example": 1
-                    },
-                    "original_name": {
-                        "type": "string",
-                        "example": "document.pdf"
-                    },
-                    "size": {
-                        "type": "integer",
-                        "example": 102400
-                    },
-                    "human_size": {
-                        "type": "string",
-                        "example": "100 KB"
-                    },
-                    "mime_type": {
-                        "type": "string",
-                        "example": "application/pdf"
-                    },
-                    "url": {
-                        "type": "string",
-                        "example": "https://example.com/files/1"
-                    },
-                    "uploaded_at": {
-                        "type": "string",
-                        "format": "date-time",
-                        "example": "2026-02-06T19:00:00Z"
-                    },
-                    "is_image": {
-                        "type": "boolean",
-                        "example": false
-                    }
-                },
-                "type": "object"
-            },
-            "FileDownload": {
-                "title": "File Download",
-                "description": "File download or storage metadata",
-                "properties": {
-                    "id": {
-                        "type": "integer",
-                        "example": 1
-                    },
-                    "original_name": {
-                        "type": "string",
-                        "example": "document.pdf"
-                    },
-                    "url": {
-                        "type": "string",
-                        "example": "https://example.com/files/1"
-                    },
-                    "path": {
-                        "type": "string",
-                        "example": "2026/02/06/document_abc.pdf"
-                    },
-                    "storage_driver": {
-                        "type": "string",
-                        "example": "local"
+                        "$ref": "#/components/schemas/UserResponse"
                     }
                 },
                 "type": "object"
@@ -2473,15 +2249,256 @@
                 },
                 "type": "object"
             },
-            "User": {
-                "title": "User",
-                "description": "User object with all properties",
+            "ApiKeyResponse": {
+                "title": "API Key Response",
+                "description": "API key object metadata",
+                "required": [
+                    "id",
+                    "name",
+                    "key_prefix",
+                    "is_active"
+                ],
+                "properties": {
+                    "id": {
+                        "description": "Unique API key identifier",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "name": {
+                        "description": "Human-readable label for the API key",
+                        "type": "string",
+                        "example": "My Mobile App"
+                    },
+                    "key_prefix": {
+                        "description": "First characters of the key (safe to display)",
+                        "type": "string",
+                        "example": "apk_a3f9c2b1"
+                    },
+                    "is_active": {
+                        "description": "Whether the key is currently active",
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "rate_limit_requests": {
+                        "description": "Max requests per window",
+                        "type": "integer",
+                        "example": 600
+                    },
+                    "rate_limit_window": {
+                        "description": "Window in seconds",
+                        "type": "integer",
+                        "example": 60
+                    },
+                    "user_rate_limit": {
+                        "description": "Per-user limit",
+                        "type": "integer",
+                        "example": 60
+                    },
+                    "ip_rate_limit": {
+                        "description": "Per-IP limit",
+                        "type": "integer",
+                        "example": 200
+                    },
+                    "key": {
+                        "description": "Full raw API key (only returned once)",
+                        "type": "string",
+                        "example": "apk_a3f9...",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "description": "Creation timestamp",
+                        "type": "string",
+                        "example": "2026-02-26 12:00:00",
+                        "nullable": true
+                    },
+                    "updated_at": {
+                        "description": "Last update timestamp",
+                        "type": "string",
+                        "example": "2026-02-26 12:00:00",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "AuditResponse": {
+                "title": "Audit Response",
+                "description": "Audit log entry metadata",
+                "required": [
+                    "id",
+                    "action",
+                    "entity_type",
+                    "created_at"
+                ],
+                "properties": {
+                    "id": {
+                        "description": "Unique log identifier",
+                        "type": "integer",
+                        "example": 10
+                    },
+                    "action": {
+                        "description": "Action performed",
+                        "type": "string",
+                        "enum": [
+                            "create",
+                            "update",
+                            "delete",
+                            "login_success",
+                            "login_failure"
+                        ],
+                        "example": "update"
+                    },
+                    "entity_type": {
+                        "description": "Affected entity type",
+                        "type": "string",
+                        "example": "users"
+                    },
+                    "entity_id": {
+                        "description": "Affected entity ID",
+                        "type": "integer",
+                        "example": 5,
+                        "nullable": true
+                    },
+                    "old_values": {
+                        "description": "Values before the change",
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "new_values": {
+                        "description": "Values after the change",
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "user_id": {
+                        "description": "ID of user who performed the action",
+                        "type": "integer",
+                        "example": 1,
+                        "nullable": true
+                    },
+                    "user_email": {
+                        "description": "Email of user who performed the action",
+                        "type": "string",
+                        "example": "admin@example.com",
+                        "nullable": true
+                    },
+                    "ip_address": {
+                        "description": "IP address of the requester",
+                        "type": "string",
+                        "example": "127.0.0.1",
+                        "nullable": true
+                    },
+                    "user_agent": {
+                        "description": "User-Agent of the requester",
+                        "type": "string",
+                        "example": "Mozilla/5.0...",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "description": "Log timestamp",
+                        "type": "string",
+                        "example": "2026-02-26 12:00:00"
+                    }
+                },
+                "type": "object"
+            },
+            "LoginResponse": {
+                "title": "Login Response",
+                "description": "Successful authentication response containing JWT tokens and user data",
+                "required": [
+                    "access_token",
+                    "refresh_token",
+                    "expires_in",
+                    "user"
+                ],
+                "properties": {
+                    "access_token": {
+                        "description": "JWT access token",
+                        "type": "string",
+                        "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                    },
+                    "refresh_token": {
+                        "description": "Opaque refresh token",
+                        "type": "string",
+                        "example": "apk_a1b2c3d4e5f6g7h8i9j0..."
+                    },
+                    "expires_in": {
+                        "description": "Token expiration time in seconds",
+                        "type": "integer",
+                        "example": 3600
+                    },
+                    "user": {
+                        "$ref": "#/components/schemas/UserResponse"
+                    }
+                },
+                "type": "object"
+            },
+            "FileResponse": {
+                "title": "File Response",
+                "description": "File metadata and access URL",
+                "required": [
+                    "id",
+                    "original_name",
+                    "mime_type",
+                    "size",
+                    "url"
+                ],
+                "properties": {
+                    "id": {
+                        "description": "Unique file identifier",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "original_name": {
+                        "description": "Original filename",
+                        "type": "string",
+                        "example": "document.pdf"
+                    },
+                    "filename": {
+                        "description": "Stored filename",
+                        "type": "string",
+                        "example": "abc123_document.pdf"
+                    },
+                    "mime_type": {
+                        "description": "MIME type",
+                        "type": "string",
+                        "example": "application/pdf"
+                    },
+                    "size": {
+                        "description": "File size in bytes",
+                        "type": "integer",
+                        "example": 102400
+                    },
+                    "human_size": {
+                        "description": "Human readable file size",
+                        "type": "string",
+                        "example": "100 KB"
+                    },
+                    "is_image": {
+                        "description": "Whether the file is an image",
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "url": {
+                        "description": "Public or temporary access URL",
+                        "type": "string",
+                        "example": "https://example.com/storage/file.pdf"
+                    },
+                    "uploaded_at": {
+                        "description": "Upload timestamp",
+                        "type": "string",
+                        "example": "2026-02-26 12:00:00",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "UserResponse": {
+                "title": "User Response",
+                "description": "User data returned by the API",
                 "required": [
                     "id",
                     "email",
                     "role",
-                    "created_at",
-                    "updated_at"
+                    "status"
                 ],
                 "properties": {
                     "id": {
@@ -2489,102 +2506,59 @@
                         "type": "integer",
                         "example": 1
                     },
-                    "first_name": {
-                        "description": "First name",
+                    "email": {
+                        "description": "User email address",
                         "type": "string",
-                        "example": "Alex",
+                        "example": "user@example.com"
+                    },
+                    "first_name": {
+                        "description": "User first name",
+                        "type": "string",
+                        "example": "John",
                         "nullable": true
                     },
                     "last_name": {
-                        "description": "Last name",
+                        "description": "User last name",
                         "type": "string",
                         "example": "Doe",
                         "nullable": true
                     },
-                    "email": {
-                        "description": "User email address",
+                    "role": {
+                        "description": "User role",
                         "type": "string",
-                        "format": "email",
-                        "example": "test@example.com"
+                        "enum": [
+                            "user",
+                            "admin",
+                            "superadmin"
+                        ],
+                        "example": "user"
+                    },
+                    "status": {
+                        "description": "Account status",
+                        "type": "string",
+                        "enum": [
+                            "pending_approval",
+                            "active",
+                            "invited"
+                        ],
+                        "example": "active"
                     },
                     "avatar_url": {
-                        "description": "Avatar URL",
+                        "description": "URL to user avatar",
                         "type": "string",
                         "example": "https://example.com/avatar.png",
                         "nullable": true
                     },
-                    "oauth_provider": {
-                        "description": "OAuth provider (google, github)",
-                        "type": "string",
-                        "example": "google",
-                        "nullable": true
-                    },
-                    "oauth_provider_id": {
-                        "description": "OAuth provider user id",
-                        "type": "string",
-                        "example": "1234567890",
-                        "nullable": true
-                    },
-                    "role": {
-                        "description": "User role (user, admin, superadmin)",
-                        "type": "string",
-                        "example": "user"
-                    },
-                    "status": {
-                        "description": "Account status (pending_approval, active)",
-                        "type": "string",
-                        "example": "pending_approval"
-                    },
-                    "email_verified_at": {
-                        "description": "Email verification timestamp",
-                        "type": "string",
-                        "format": "date-time",
-                        "example": null,
-                        "nullable": true
-                    },
-                    "approved_at": {
-                        "description": "Approval timestamp",
-                        "type": "string",
-                        "format": "date-time",
-                        "example": null,
-                        "nullable": true
-                    },
-                    "approved_by": {
-                        "description": "Admin user id who approved",
-                        "type": "integer",
-                        "example": null,
-                        "nullable": true
-                    },
-                    "invited_at": {
-                        "description": "Invitation timestamp",
-                        "type": "string",
-                        "format": "date-time",
-                        "example": null,
-                        "nullable": true
-                    },
-                    "invited_by": {
-                        "description": "Admin user id who invited",
-                        "type": "integer",
-                        "example": null,
-                        "nullable": true
-                    },
                     "created_at": {
-                        "description": "User creation timestamp",
+                        "description": "Creation timestamp",
                         "type": "string",
-                        "format": "date-time",
-                        "example": "2026-01-28T12:00:00Z"
+                        "example": "2026-02-26 12:00:00",
+                        "nullable": true
                     },
                     "updated_at": {
                         "description": "Last update timestamp",
                         "type": "string",
-                        "format": "date-time",
-                        "example": "2026-01-28T12:00:00Z"
-                    },
-                    "deleted_at": {
-                        "description": "Soft delete timestamp",
-                        "type": "string",
-                        "format": "date-time",
-                        "example": null,
+                        "example": "2026-02-26 12:00:00",
                         "nullable": true
                     }
                 },

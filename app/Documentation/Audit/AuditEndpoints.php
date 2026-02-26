@@ -32,7 +32,7 @@ use OpenApi\Attributes as OA;
             content: new OA\JsonContent(
                 properties: [
                     new OA\Property(property: 'status', type: 'string', example: 'success'),
-                    new OA\Property(property: 'data', type: 'array', items: new OA\Items(ref: '#/components/schemas/AuditLog')),
+                    new OA\Property(property: 'data', type: 'array', items: new OA\Items(ref: '#/components/schemas/AuditResponse')),
                     new OA\Property(property: 'meta', type: 'object'),
                 ],
                 type: 'object'
@@ -61,7 +61,7 @@ use OpenApi\Attributes as OA;
             content: new OA\JsonContent(
                 properties: [
                     new OA\Property(property: 'status', type: 'string', example: 'success'),
-                    new OA\Property(property: 'data', ref: '#/components/schemas/AuditLog'),
+                    new OA\Property(property: 'data', ref: '#/components/schemas/AuditResponse'),
                 ],
                 type: 'object'
             )
@@ -96,7 +96,7 @@ use OpenApi\Attributes as OA;
             content: new OA\JsonContent(
                 properties: [
                     new OA\Property(property: 'status', type: 'string', example: 'success'),
-                    new OA\Property(property: 'data', type: 'array', items: new OA\Items(ref: '#/components/schemas/AuditLog')),
+                    new OA\Property(property: 'data', type: 'array', items: new OA\Items(ref: '#/components/schemas/AuditResponse')),
                 ],
                 type: 'object'
             )

@@ -21,7 +21,7 @@ use OpenApi\Attributes as OA;
                     new OA\Property(
                         property: 'data',
                         type: 'array',
-                        items: new OA\Items(ref: '#/components/schemas/File')
+                        items: new OA\Items(ref: '#/components/schemas/FileResponse')
                     ),
                 ],
                 type: 'object'
@@ -57,7 +57,7 @@ use OpenApi\Attributes as OA;
                     new OA\Property(property: 'status', type: 'string', example: 'success'),
                     new OA\Property(
                         property: 'data',
-                        ref: '#/components/schemas/File'
+                        ref: '#/components/schemas/FileResponse'
                     ),
                 ],
                 type: 'object'
@@ -89,7 +89,7 @@ use OpenApi\Attributes as OA;
                     new OA\Property(property: 'status', type: 'string', example: 'success'),
                     new OA\Property(
                         property: 'data',
-                        ref: '#/components/schemas/FileDownload'
+                        ref: '#/components/schemas/FileResponse'
                     ),
                 ],
                 type: 'object'

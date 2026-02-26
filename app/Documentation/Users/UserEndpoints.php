@@ -42,7 +42,7 @@ use OpenApi\Attributes as OA;
                     new OA\Property(
                         property: 'data',
                         type: 'array',
-                        items: new OA\Items(ref: '#/components/schemas/User')
+                        items: new OA\Items(ref: '#/components/schemas/UserResponse')
                     ),
                     new OA\Property(
                         property: 'meta',
@@ -85,7 +85,7 @@ use OpenApi\Attributes as OA;
             content: new OA\JsonContent(
                 properties: [
                     new OA\Property(property: 'status', type: 'string', example: 'success'),
-                    new OA\Property(property: 'data', ref: '#/components/schemas/User'),
+                    new OA\Property(property: 'data', ref: '#/components/schemas/UserResponse'),
                 ],
                 type: 'object'
             )
@@ -111,7 +111,7 @@ use OpenApi\Attributes as OA;
             content: new OA\JsonContent(
                 properties: [
                     new OA\Property(property: 'status', type: 'string', example: 'success'),
-                    new OA\Property(property: 'data', ref: '#/components/schemas/User'),
+                    new OA\Property(property: 'data', ref: '#/components/schemas/UserResponse'),
                 ],
                 type: 'object'
             )
@@ -145,7 +145,7 @@ use OpenApi\Attributes as OA;
             content: new OA\JsonContent(
                 properties: [
                     new OA\Property(property: 'status', type: 'string', example: 'success'),
-                    new OA\Property(property: 'data', ref: '#/components/schemas/User'),
+                    new OA\Property(property: 'data', ref: '#/components/schemas/UserResponse'),
                 ],
                 type: 'object'
             )
@@ -176,7 +176,7 @@ use OpenApi\Attributes as OA;
             content: new OA\JsonContent(
                 properties: [
                     new OA\Property(property: 'status', type: 'string', example: 'success'),
-                    new OA\Property(property: 'data', ref: '#/components/schemas/User'),
+                    new OA\Property(property: 'data', ref: '#/components/schemas/UserResponse'),
                     new OA\Property(property: 'message', type: 'string'),
                 ],
                 type: 'object'

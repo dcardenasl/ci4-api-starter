@@ -26,7 +26,7 @@ use OpenApi\Attributes as OA;
         ),
         new OA\Property(
             property: 'user',
-            ref: '#/components/schemas/User',
+            ref: '#/components/schemas/UserResponse',
             description: 'Authenticated user data'
         ),
     ],

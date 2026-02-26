@@ -41,7 +41,7 @@ use OpenApi\Attributes as OA;
                     new OA\Property(
                         property: 'data',
                         type: 'array',
-                        items: new OA\Items(ref: '#/components/schemas/ApiKey')
+                        items: new OA\Items(ref: '#/components/schemas/ApiKeyResponse')
                     ),
                     new OA\Property(
                         property: 'meta',
@@ -88,7 +88,7 @@ use OpenApi\Attributes as OA;
             content: new OA\JsonContent(
                 properties: [
                     new OA\Property(property: 'status', type: 'string', example: 'success'),
-                    new OA\Property(property: 'data', ref: '#/components/schemas/ApiKey'),
+                    new OA\Property(property: 'data', ref: '#/components/schemas/ApiKeyResponse'),
                     new OA\Property(property: 'message', type: 'string'),
                 ],
                 type: 'object'
@@ -119,7 +119,7 @@ use OpenApi\Attributes as OA;
             content: new OA\JsonContent(
                 properties: [
                     new OA\Property(property: 'status', type: 'string', example: 'success'),
-                    new OA\Property(property: 'data', ref: '#/components/schemas/ApiKey'),
+                    new OA\Property(property: 'data', ref: '#/components/schemas/ApiKeyResponse'),
                 ],
                 type: 'object'
             )
@@ -163,7 +163,7 @@ use OpenApi\Attributes as OA;
             content: new OA\JsonContent(
                 properties: [
                     new OA\Property(property: 'status', type: 'string', example: 'success'),
-                    new OA\Property(property: 'data', ref: '#/components/schemas/ApiKey'),
+                    new OA\Property(property: 'data', ref: '#/components/schemas/ApiKeyResponse'),
                 ],
                 type: 'object'
             )

@@ -15,4 +15,13 @@ use App\Controllers\ApiController;
 class ApiKeyController extends ApiController
 {
     protected string $serviceName = 'apiKeyService';
+
+    public function create(): \CodeIgniter\HTTP\ResponseInterface
+    {
+        $dto = $this->getDTO(\App\DTO\Request\ApiKeys\ApiKeyCreateRequestDTO::class);
+
+        return $this->handleRequest(
+            fn () => $this->getService()->store($dto)
+        );
+    }
 }

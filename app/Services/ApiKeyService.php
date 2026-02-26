@@ -8,10 +8,10 @@ use App\Exceptions\BadRequestException;
 use App\Exceptions\NotFoundException;
 use App\Exceptions\ValidationException;
 use App\Interfaces\ApiKeyServiceInterface;
-use App\Libraries\ApiResponse;
 use App\Libraries\Query\QueryBuilder;
 use App\Models\ApiKeyModel;
 use App\Traits\AppliesQueryOptions;
+use App\Traits\ValidatesRequiredFields;
 
 /**
  * API Key Service
@@ -24,9 +24,10 @@ use App\Traits\AppliesQueryOptions;
  *   - key_hash: SHA-256 of raw key (stored for lookup)
  *   - The raw key is returned ONCE at creation time and never stored.
  */
-class ApiKeyService extends BaseCrudService implements ApiKeyServiceInterface
+class ApiKeyService implements ApiKeyServiceInterface
 {
     use AppliesQueryOptions;
+    use ValidatesRequiredFields;
 
     public function __construct(
         protected ApiKeyModel $apiKeyModel
@@ -49,25 +50,26 @@ class ApiKeyService extends BaseCrudService implements ApiKeyServiceInterface
 
         $result = $builder->paginate($page, $limit);
 
+        // Convert to Response DTOs
         $result['data'] = array_map(
-            fn ($key) => $key->toArray(),
+            fn ($key) => \App\DTO\Response\ApiKeys\ApiKeyResponseDTO::fromArray($key->toArray()),
             $result['data']
         );
 
-        return ApiResponse::paginated(
-            $result['data'],
-            $result['total'],
-            $result['page'],
-            $result['perPage']
-        );
+        return [
+            'data' => $result['data'],
+            'total' => $result['total'],
+            'page' => $result['page'],
+            'perPage' => $result['perPage']
+        ];
     }
 
     /**
      * Get a single API key by ID
      */
-    public function show(array $data): array
+    public function show(array $data): \App\DTO\Response\ApiKeys\ApiKeyResponseDTO
     {
-        $id = $this->requireId($data);
+        $id = $this->validateRequiredId($data);
 
         $apiKey = $this->apiKeyModel->find($id);
 
@@ -75,23 +77,15 @@ class ApiKeyService extends BaseCrudService implements ApiKeyServiceInterface
             throw new NotFoundException(lang('ApiKeys.notFound'));
         }
 
-        return ApiResponse::success($apiKey->toArray());
+        return \App\DTO\Response\ApiKeys\ApiKeyResponseDTO::fromArray($apiKey->toArray());
     }
 
     /**
      * Create a new API key
-     *
-     * The raw key is returned only once in the response. It is never
-     * stored in the database; only the prefix and SHA-256 hash are persisted.
      */
-    public function store(array $data): array
+    public function store(\App\DTO\Request\ApiKeys\ApiKeyCreateRequestDTO $request): \App\DTO\Response\ApiKeys\ApiKeyResponseDTO
     {
-        if (empty($data['name'])) {
-            throw new ValidationException(
-                lang('Api.validationFailed'),
-                ['name' => lang('ApiKeys.nameRequired')]
-            );
-        }
+        $data = $request->toArray();
 
         // Generate secure random key
         $rawKey    = 'apk_' . bin2hex(random_bytes(24));   // 52 chars total
@@ -103,18 +97,10 @@ class ApiKeyService extends BaseCrudService implements ApiKeyServiceInterface
             'key_prefix'          => $keyPrefix,
             'key_hash'            => $keyHash,
             'is_active'           => 1,
-            'rate_limit_requests' => isset($data['rate_limit_requests'])
-                ? (int) $data['rate_limit_requests']
-                : (int) env('API_KEY_RATE_LIMIT_DEFAULT', 600),
-            'rate_limit_window'   => isset($data['rate_limit_window'])
-                ? (int) $data['rate_limit_window']
-                : (int) env('API_KEY_WINDOW_DEFAULT', 60),
-            'user_rate_limit'     => isset($data['user_rate_limit'])
-                ? (int) $data['user_rate_limit']
-                : (int) env('API_KEY_USER_RATE_LIMIT_DEFAULT', 60),
-            'ip_rate_limit'       => isset($data['ip_rate_limit'])
-                ? (int) $data['ip_rate_limit']
-                : (int) env('API_KEY_IP_RATE_LIMIT_DEFAULT', 200),
+            'rate_limit_requests' => $data['rate_limit_requests'] ?? (int) env('API_KEY_RATE_LIMIT_DEFAULT', 600),
+            'rate_limit_window'   => $data['rate_limit_window'] ?? (int) env('API_KEY_WINDOW_DEFAULT', 60),
+            'user_rate_limit'     => $data['user_rate_limit'] ?? (int) env('API_KEY_USER_RATE_LIMIT_DEFAULT', 60),
+            'ip_rate_limit'       => $data['ip_rate_limit'] ?? (int) env('API_KEY_IP_RATE_LIMIT_DEFAULT', 200),
         ];
 
         $newId = $this->apiKeyModel->insert($insertData);
@@ -136,18 +122,15 @@ class ApiKeyService extends BaseCrudService implements ApiKeyServiceInterface
         // Include raw key only in the creation response
         $responseData['key'] = $rawKey;
 
-        return ApiResponse::created(
-            $responseData,
-            lang('ApiKeys.createdSuccess')
-        );
+        return \App\DTO\Response\ApiKeys\ApiKeyResponseDTO::fromArray($responseData);
     }
 
     /**
      * Update an existing API key (name, active status, rate limits)
      */
-    public function update(array $data): array
+    public function update(array $data): \App\DTO\Response\ApiKeys\ApiKeyResponseDTO
     {
-        $id = $this->requireId($data);
+        $id = $this->validateRequiredId($data);
 
         $apiKey = $this->apiKeyModel->find($id);
 
@@ -182,7 +165,7 @@ class ApiKeyService extends BaseCrudService implements ApiKeyServiceInterface
 
         $updated = $this->apiKeyModel->find($id);
 
-        return ApiResponse::success($updated->toArray());
+        return \App\DTO\Response\ApiKeys\ApiKeyResponseDTO::fromArray($updated->toArray());
     }
 
     /**
@@ -190,7 +173,7 @@ class ApiKeyService extends BaseCrudService implements ApiKeyServiceInterface
      */
     public function destroy(array $data): array
     {
-        $id = $this->requireId($data);
+        $id = $this->validateRequiredId($data);
 
         if (!$this->apiKeyModel->find($id)) {
             throw new NotFoundException(lang('ApiKeys.notFound'));
@@ -200,6 +183,6 @@ class ApiKeyService extends BaseCrudService implements ApiKeyServiceInterface
             throw new \RuntimeException(lang('ApiKeys.deleteError'));
         }
 
-        return ApiResponse::deleted(lang('ApiKeys.deletedSuccess'));
+        return ['status' => 'success', 'message' => lang('ApiKeys.deletedSuccess')];
     }
 }

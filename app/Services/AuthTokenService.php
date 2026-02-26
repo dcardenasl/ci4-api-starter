@@ -10,7 +10,7 @@ use App\Interfaces\RefreshTokenServiceInterface;
 use App\Interfaces\TokenRevocationServiceInterface;
 
 /**
- * Auth Token Service
+ * Modernized Auth Token Service
  *
  * Facade for token management operations.
  */
@@ -25,7 +25,7 @@ class AuthTokenService implements AuthTokenServiceInterface
     /**
      * Refresh access token using refresh token
      */
-    public function refreshAccessToken(\App\DTO\Request\Identity\RefreshTokenRequestDTO $request): \App\DTO\Response\Identity\TokenResponseDTO
+    public function refreshAccessToken(\App\DTO\Request\Identity\RefreshTokenRequestDTO $request): \App\Interfaces\DataTransferObjectInterface
     {
         return $this->refreshTokenService->refreshAccessToken($request);
     }
@@ -33,18 +33,18 @@ class AuthTokenService implements AuthTokenServiceInterface
     /**
      * Revoke current access token from authorization header
      */
-    public function revoke(array $data): array
+    public function revokeToken(string $authorizationHeader): array
     {
-        return $this->tokenRevocationService->revokeAccessToken($data);
+        return $this->tokenRevocationService->revokeAccessToken([
+            'authorization_header' => $authorizationHeader
+        ]);
     }
 
     /**
      * Revoke all user tokens
      */
-    public function revokeAll(array $data): array
+    public function revokeAllUserTokens(int $userId): array
     {
-        $userId = isset($data['user_id']) ? (int) $data['user_id'] : 0;
-
         if ($userId <= 0) {
             throw new AuthenticationException(lang('Auth.authRequired'));
         }

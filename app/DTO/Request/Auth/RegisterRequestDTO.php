@@ -4,41 +4,45 @@ declare(strict_types=1);
 
 namespace App\DTO\Request\Auth;
 
-use App\Interfaces\DataTransferObjectInterface;
+use App\DTO\Request\BaseRequestDTO;
 
 /**
  * Register Request DTO
  *
- * Validates and encapsulates user registration data.
+ * Validates data for user self-registration.
  */
-readonly class RegisterRequestDTO implements DataTransferObjectInterface
+readonly class RegisterRequestDTO extends BaseRequestDTO
 {
     public string $email;
-    public string $password;
     public string $firstName;
     public string $lastName;
-    public ?string $role;
+    public string $password;
 
-    public function __construct(array $data)
+    protected function rules(): array
     {
-        // REUSE: Use existing rules from Config/Validation.php
-        validateOrFail($data, 'auth', 'register');
+        return [
+            'email'      => 'required|valid_email_idn|max_length[255]|is_unique[users.email]',
+            'first_name' => 'required|string|max_length[100]',
+            'last_name'  => 'required|string|max_length[100]',
+            'password'   => 'required|strong_password',
+        ];
+    }
 
-        $this->email = (string) $data['email'];
+    protected function map(array $data): void
+    {
+        $this->email = strtolower(trim((string) $data['email']));
+        $this->firstName = trim((string) $data['first_name']);
+        $this->lastName = trim((string) $data['last_name']);
         $this->password = (string) $data['password'];
-        $this->firstName = (string) ($data['first_name'] ?? '');
-        $this->lastName = (string) ($data['last_name'] ?? '');
-        $this->role = $data['role'] ?? 'user';
     }
 
     public function toArray(): array
     {
         return [
-            'email' => $this->email,
-            'password' => $this->password,
+            'email'      => $this->email,
             'first_name' => $this->firstName,
-            'last_name' => $this->lastName,
-            'role' => $this->role,
+            'last_name'  => $this->lastName,
+            'password'   => $this->password,
         ];
     }
 }

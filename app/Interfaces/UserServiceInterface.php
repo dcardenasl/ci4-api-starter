@@ -4,44 +4,40 @@ declare(strict_types=1);
 
 namespace App\Interfaces;
 
-use App\DTO\Request\Users\UserIndexRequestDTO;
-use App\DTO\Response\Users\UserResponseDTO;
-
 /**
  * User Service Interface
  *
- * Defines the contract for user CRUD operations.
- * Authentication methods have been moved to AuthServiceInterface.
+ * Defines the contract for user CRUD operations with strict typing.
  */
 interface UserServiceInterface
 {
     /**
      * Get all users with pagination and filtering
      */
-    public function index(UserIndexRequestDTO $request): array;
+    public function index(\App\Interfaces\DataTransferObjectInterface $request): array;
 
     /**
      * Get a single user by ID
      */
-    public function show(array $data): UserResponseDTO;
+    public function show(int $id): \App\Interfaces\DataTransferObjectInterface;
 
     /**
      * Create a new user (Admin only)
      */
-    public function store(array $data): UserResponseDTO;
+    public function store(\App\Interfaces\DataTransferObjectInterface $request): \App\Interfaces\DataTransferObjectInterface;
 
     /**
      * Update an existing user
      */
-    public function update(array $data): UserResponseDTO;
+    public function update(int $id, \App\Interfaces\DataTransferObjectInterface $request): \App\Interfaces\DataTransferObjectInterface;
 
     /**
      * Delete a user (Soft delete)
      */
-    public function destroy(array $data): array;
+    public function destroy(int $id): array;
 
     /**
      * Approve a pending user
      */
-    public function approve(array $data): UserResponseDTO;
+    public function approve(int $id, ?int $adminId = null, ?string $clientBaseUrl = null): \App\Interfaces\DataTransferObjectInterface;
 }

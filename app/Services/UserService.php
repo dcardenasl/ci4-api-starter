@@ -5,15 +5,11 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Exceptions\AuthorizationException;
-use App\Exceptions\BadRequestException;
-use App\Exceptions\ConflictException;
 use App\Exceptions\NotFoundException;
 use App\Exceptions\ValidationException;
 use App\Interfaces\AuditServiceInterface;
 use App\Interfaces\EmailServiceInterface;
 use App\Interfaces\UserServiceInterface;
-use App\Libraries\ApiResponse;
-use App\Libraries\Query\QueryBuilder;
 use App\Models\PasswordResetModel;
 use App\Models\UserModel;
 use App\Traits\AppliesQueryOptions;
@@ -25,11 +21,13 @@ use App\Traits\ResolvesWebAppLinks;
  * Handles CRUD operations for users.
  * Authentication methods have been moved to AuthService.
  */
-class UserService implements UserServiceInterface
+class UserService extends BaseCrudService implements UserServiceInterface
 {
     use AppliesQueryOptions;
     use ResolvesWebAppLinks;
     use \App\Traits\ValidatesRequiredFields;
+
+    protected string $responseDtoClass = \App\DTO\Response\Users\UserResponseDTO::class;
 
     public function __construct(
         protected UserModel $userModel,
@@ -37,128 +35,91 @@ class UserService implements UserServiceInterface
         protected PasswordResetModel $passwordResetModel,
         protected AuditServiceInterface $auditService
     ) {
+        $this->model = $userModel;
     }
 
     /**
-     * Get all users with pagination, filters, search, and ordering
+     * Enforce security criteria for user listings
      */
-    public function index(\App\DTO\Request\Users\UserIndexRequestDTO $request): array
+    protected function applyBaseCriteria(\CodeIgniter\Model $model): void
     {
-        $builder = new QueryBuilder($this->userModel);
-        $this->userModel->where('role !=', 'superadmin');
-
-        $this->applyQueryOptions($builder, $request->toArray());
-
-        // Paginate results
-        $result = $builder->paginate($request->page, $request->perPage);
-
-        // Convert entities to Response DTOs
-        $result['data'] = array_map(
-            fn ($user) => \App\DTO\Response\Users\UserResponseDTO::fromArray($user->toArray()),
-            $result['data']
-        );
-
-        return [
-            'data' => $result['data'],
-            'total' => $result['total'],
-            'page' => $result['page'],
-            'perPage' => $result['perPage']
-        ];
+        $model->where('role !=', 'superadmin');
     }
 
     /**
-     * Get a user by ID
+     * Create a new user (Overriding store because it has specific business logic)
      */
-    public function show(array $data): \App\DTO\Response\Users\UserResponseDTO
+    public function store(\App\Interfaces\DataTransferObjectInterface $request): \App\Interfaces\DataTransferObjectInterface
     {
-        $id = $this->validateRequiredId($data);
-
-        $user = $this->userModel->find($id);
-
-        if (!$user) {
-            throw new NotFoundException(lang('Users.notFound'));
-        }
-
-        return \App\DTO\Response\Users\UserResponseDTO::fromArray($user->toArray());
-    }
-
-    /**
-     * Create a new user
-     */
-    public function store(array $data): \App\DTO\Response\Users\UserResponseDTO
-    {
-        validateOrFail($data, 'user', 'store_admin');
-        $actorRole = (string) ($data['user_role'] ?? '');
-        $requestedRole = (string) ($data['role'] ?? 'user');
-
-        $this->assertAdminCanAssignRole($actorRole, $requestedRole);
-
-        if (array_key_exists('password', $data) && $data['password'] !== null && $data['password'] !== '') {
-            throw new ValidationException(
-                lang('Api.validationFailed'),
-                ['password' => lang('Users.adminPasswordForbidden')]
-            );
-        }
-
-        $adminId = isset($data['user_id']) ? (int) $data['user_id'] : null;
-        $now = date('Y-m-d H:i:s');
-        $generatedPassword = bin2hex(random_bytes(24)) . 'Aa1!';
-
-        // Prepare data for insertion with hashed password
-        $insertData = [
-            'email'      => $data['email'] ?? null,
-            'first_name' => $data['first_name'] ?? null,
-            'last_name'  => $data['last_name'] ?? null,
-            'password'   => password_hash($generatedPassword, PASSWORD_BCRYPT),
-            'role'       => $data['role'] ?? 'user',
-            'status'     => 'invited',
-            'approved_at' => $now,
-            'approved_by' => $adminId,
-            'invited_at'  => $now,
-            'invited_by'  => $adminId,
-            'email_verified_at' => $now,
-        ];
-
-        // Model handles validation and timestamps automatically
-        $userId = $this->userModel->insert($insertData);
-
-        if (!$userId) {
-            throw new ValidationException(
-                lang('Api.validationFailed'),
-                $this->userModel->errors() ?: ['general' => lang('Users.createError')]
-            );
-        }
-
-        $user = $this->userModel->find($userId);
-
-        if (! $user) {
-            throw new \RuntimeException(lang('Users.createError'));
-        }
-
+        /** @var \App\DTO\Request\Users\UserStoreRequestDTO $request */
         try {
-            $this->sendInvitationEmail(
-                $user,
-                isset($data['client_base_url']) ? (string) $data['client_base_url'] : null
-            );
-        } catch (\Throwable $e) {
-            log_message('error', 'Failed to send invitation email: ' . $e->getMessage());
-        }
+            return $this->wrapInTransaction(function () use ($request) {
+                $apiRequest = \Config\Services::request();
+                $actorRole = $apiRequest instanceof \App\HTTP\ApiRequest ? (string) $apiRequest->getAuthUserRole() : '';
+                $adminId = $apiRequest instanceof \App\HTTP\ApiRequest ? $apiRequest->getAuthUserId() : null;
 
-        return \App\DTO\Response\Users\UserResponseDTO::fromArray($user->toArray());
+                $requestedRole = (string) $request->role;
+
+                $this->assertAdminCanAssignRole($actorRole, $requestedRole);
+
+                $now = date('Y-m-d H:i:s');
+                $generatedPassword = bin2hex(random_bytes(24)) . 'Aa1!';
+
+                // Prepare data for insertion
+                $insertData = [
+                    'email'      => $request->email,
+                    'first_name' => $request->firstName,
+                    'last_name'  => $request->lastName,
+                    'password'   => password_hash($generatedPassword, PASSWORD_BCRYPT),
+                    'role'       => $request->role,
+                    'status'     => 'invited',
+                    'approved_at' => $now,
+                    'approved_by' => $adminId,
+                    'invited_at'  => $now,
+                    'invited_by'  => $adminId,
+                    'email_verified_at' => $now,
+                ];
+
+                $userId = $this->model->insert($insertData);
+
+                if (!$userId) {
+                    throw new ValidationException(
+                        lang('Api.validationFailed'),
+                        $this->model->errors() ?: ['general' => lang('Users.createError')]
+                    );
+                }
+
+                /** @var \App\Entities\UserEntity $user */
+                $user = $this->model->find($userId);
+
+                try {
+                    $this->sendInvitationEmail($user);
+
+                } catch (\Throwable $e) {
+                    log_message('error', 'Failed to send invitation email: ' . $e->getMessage());
+                }
+
+                return $this->mapToResponse($user);
+            });
+        } catch (\Throwable $e) {
+            echo "\nFATAL ERROR IN USER SERVICE STORE: " . $e->getMessage() . "\n";
+            echo $e->getTraceAsString() . "\n";
+            throw $e;
+        }
     }
 
     /**
-     * Update an existing user
+     * Update an existing user (Specific logic for roles and permissions)
      */
-    public function update(array $data): \App\DTO\Response\Users\UserResponseDTO
+    public function update(int $id, \App\Interfaces\DataTransferObjectInterface $request): \App\Interfaces\DataTransferObjectInterface
     {
-        $id = $this->validateRequiredId($data);
-        validateOrFail($data, 'user', 'update');
+        $data = $request->toArray();
         $actorRole = (string) ($data['user_role'] ?? '');
         $actorId = isset($data['user_id']) ? (int) $data['user_id'] : null;
 
         // Check if the user exists
-        $targetUser = $this->userModel->find($id);
+        /** @var \App\Entities\UserEntity|null $targetUser */
+        $targetUser = $this->model->find($id);
         if (!$targetUser) {
             throw new NotFoundException(lang('Users.notFound'));
         }
@@ -171,20 +132,6 @@ class UserService implements UserServiceInterface
             $this->assertAdminCanChangeRole($actorRole, $targetRole, $requestedRole);
         }
 
-        // Business rule: at least one field required
-        if (
-            empty($data['email']) &&
-            empty($data['first_name']) &&
-            empty($data['last_name']) &&
-            empty($data['password']) &&
-            empty($data['role'])
-        ) {
-            throw new BadRequestException(
-                lang('Api.invalidRequest'),
-                ['fields' => lang('Users.fieldRequired')]
-            );
-        }
-
         // Prepare update data
         $updateData = array_filter([
             'email'      => $data['email'] ?? null,
@@ -194,133 +141,115 @@ class UserService implements UserServiceInterface
             'role'       => $data['role'] ?? null,
         ], fn ($value) => $value !== null);
 
-        // Important: Include ID so that is_unique validation ignores this record
         $updateData['id'] = $id;
 
-        // Model handles validation and updated_at automatically
-        $success = $this->userModel->update($id, $updateData);
+        $this->model->update($id, $updateData);
 
-        if (!$success) {
-            throw new ValidationException(
-                lang('Api.validationFailed'),
-                $this->userModel->errors()
-            );
-        }
-
-        $user = $this->userModel->find($id);
-
-        return \App\DTO\Response\Users\UserResponseDTO::fromArray($user->toArray());
-    }
-
-    /**
-     * Delete a user (soft delete)
-     */
-    public function destroy(array $data): array
-    {
-        $id = $this->validateRequiredId($data);
-        $actorRole = (string) ($data['user_role'] ?? '');
-
-        // Check if the user exists
-        $targetUser = $this->userModel->find($id);
-        if (!$targetUser) {
-            throw new NotFoundException(lang('Users.notFound'));
-        }
-        $targetRole = (string) ($targetUser->role ?? 'user');
-
-        if ($actorRole === 'admin' && $targetRole !== 'user') {
-            throw new AuthorizationException(lang('Users.adminCannotManagePrivileged'));
-        }
-
-        // Perform soft delete (thanks to useSoftDeletes = true)
-        if (!$this->userModel->delete($id)) {
-            throw new \RuntimeException(lang('Users.deleteError'));
-        }
-
-        return ApiResponse::deleted(lang('Users.deletedSuccess'));
+        /** @var \App\Entities\UserEntity $updatedUser */
+        $updatedUser = $this->model->find($id);
+        return $this->mapToResponse($updatedUser);
     }
 
     /**
      * Approve a pending user
      */
-    public function approve(array $data): \App\DTO\Response\Users\UserResponseDTO
+    public function approve(int $id, ?int $adminId = null, ?string $clientBaseUrl = null): \App\Interfaces\DataTransferObjectInterface
     {
-        $id = $this->validateRequiredId($data);
-        $adminId = isset($data['user_id']) ? (int) $data['user_id'] : null;
-
-        $user = $this->userModel->find($id);
-        if (! $user) {
+        /** @var \App\Entities\UserEntity|null $user */
+        $user = $this->model->find($id);
+        if (!$user) {
             throw new NotFoundException(lang('Users.notFound'));
         }
 
-        $status = $user->status ?? null;
+        $status = (string) ($user->status ?? '');
 
         if ($status === 'active') {
-            throw new ConflictException(lang('Users.alreadyApproved'));
+            throw new \App\Exceptions\ConflictException(lang('Users.alreadyApproved'));
         }
 
         if ($status === 'invited') {
-            throw new ConflictException(lang('Users.cannotApproveInvited'));
+            throw new \App\Exceptions\ConflictException(lang('Users.cannotApproveInvited'));
         }
 
         if ($status !== 'pending_approval') {
-            throw new ConflictException(lang('Users.invalidApprovalState'));
+            throw new \App\Exceptions\ConflictException(lang('Users.invalidApprovalState'));
         }
 
-        $this->userModel->update($id, [
-            'status' => 'active',
-            'approved_at' => date('Y-m-d H:i:s'),
-            'approved_by' => $adminId,
-        ]);
+        return $this->wrapInTransaction(function () use ($id, $adminId, $status, $user, $clientBaseUrl) {
+            $this->model->update($id, [
+                'status' => 'active',
+                'approved_at' => date('Y-m-d H:i:s'),
+                'approved_by' => $adminId,
+            ]);
 
-        // Log user approval as a business event
-        $this->auditService->log(
-            'user_approved',
-            'users',
-            $id,
-            ['status' => $status],
-            ['status' => 'active'],
-            $adminId
-        );
+            // Log user approval
+            $this->auditService->log(
+                'user_approved',
+                'users',
+                $id,
+                ['status' => $status],
+                ['status' => 'active'],
+                $adminId
+            );
 
-        $user = $this->userModel->find($id);
-        if ($user) {
-            $clientBaseUrl = isset($data['client_base_url']) ? (string) $data['client_base_url'] : null;
-            $this->emailService->queueTemplate('account-approved', $user->email, [
+            $this->emailService->queueTemplate('account-approved', (string) $user->email, [
                 'subject' => lang('Email.accountApproved.subject'),
-                'display_name' => method_exists($user, 'getDisplayName') ? $user->getDisplayName() : 'User',
+                'display_name' => method_exists($user, 'getDisplayName') ? (string) $user->getDisplayName() : 'User',
                 'login_link' => $this->buildLoginUrl($clientBaseUrl),
             ]);
+
+            /** @var object $finalUser */
+            $finalUser = $this->model->find($id);
+            return $this->mapToResponse($finalUser);
+        });
+    }
+
+    /**
+     * Delete a user
+     */
+    public function destroy(int $id): array
+    {
+        $request = \Config\Services::request();
+        $actorRole = $request instanceof \App\HTTP\ApiRequest ? (string) $request->getAuthUserRole() : '';
+        $actorId = $request instanceof \App\HTTP\ApiRequest ? (int) $request->getAuthUserId() : 0;
+
+        $targetUser = $this->model->find($id);
+        if (!$targetUser) {
+            throw new NotFoundException(lang('Users.notFound'));
         }
 
-        return \App\DTO\Response\Users\UserResponseDTO::fromArray($user->toArray());
+        $this->assertAdminCanManageTarget($actorRole, $actorId, $id, (string) $targetUser->role);
+
+        return parent::destroy($id);
     }
 
     /**
      * Send invitation email using password reset flow
      *
-     * @param object $user
+     * @param \App\Entities\UserEntity $user
      * @return void
      */
-    protected function sendInvitationEmail(object $user, ?string $clientBaseUrl = null): void
+    protected function sendInvitationEmail(\App\Entities\UserEntity $user, ?string $clientBaseUrl = null): void
     {
-        if (empty($user->email)) {
+        $email = (string) ($user->email ?? '');
+        if ($email === '') {
             return;
         }
 
         $token = generate_token();
 
-        $this->passwordResetModel->where('email', $user->email)->delete();
+        $this->passwordResetModel->where('email', $email)->delete();
         $this->passwordResetModel->insert([
-            'email' => $user->email,
+            'email' => $email,
             'token' => $token,
             'created_at' => date('Y-m-d H:i:s'),
         ]);
 
-        $resetLink = $this->buildResetPasswordUrl($token, (string) $user->email, $clientBaseUrl);
+        $resetLink = $this->buildResetPasswordUrl($token, $email, $clientBaseUrl);
 
-        $displayName = method_exists($user, 'getDisplayName') ? $user->getDisplayName() : 'User';
+        $displayName = method_exists($user, 'getDisplayName') ? (string) $user->getDisplayName() : 'User';
 
-        $this->emailService->queueTemplate('invitation', $user->email, [
+        $this->emailService->queueTemplate('invitation', $email, [
             'subject' => lang('Email.invitation.subject'),
             'display_name' => $displayName,
             'reset_link' => $resetLink,

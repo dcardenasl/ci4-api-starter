@@ -5,45 +5,61 @@ declare(strict_types=1);
 namespace App\Controllers\Api\V1\Auth;
 
 use App\Controllers\ApiController;
+use App\DTO\Request\Auth\GoogleLoginRequestDTO;
+use App\DTO\Request\Auth\LoginRequestDTO;
+use App\DTO\Request\Auth\RegisterRequestDTO;
 use CodeIgniter\HTTP\ResponseInterface;
 
 /**
- * Authentication Controller
+ * Modernized Authentication Controller
+ *
+ * Uses automated DTO validation and standardized request handling.
  */
 class AuthController extends ApiController
 {
     protected string $serviceName = 'authService';
 
+    /**
+     * Authenticate with email/password
+     */
     public function login(): ResponseInterface
     {
-        $dto = $this->getDTO(\App\DTO\Request\Auth\LoginRequestDTO::class);
-
-        return $this->handleRequest(
-            fn () => $this->getService()->login($dto)
-        );
+        return $this->handleRequest('login', LoginRequestDTO::class);
     }
 
-    public function me(): ResponseInterface
+    /**
+     * Register a new user
+     */
+    public function register(): ResponseInterface
     {
-        return $this->handleRequest('me');
+        return $this->handleRequest('register', RegisterRequestDTO::class);
     }
 
+    /**
+     * Authenticate with Google ID Token
+     */
     public function googleLogin(): ResponseInterface
     {
-        return $this->handleRequest('loginWithGoogleToken');
+        return $this->handleRequest(function ($dto) {
+            $result = $this->getService()->loginWithGoogleToken($dto);
+
+            // Explicitly detect 202 status for pending approval
+            $status = 200;
+            if (isset($result['message']) && (str_contains($result['message'], 'pending') || str_contains($result['message'], 'pendiente'))) {
+                $status = 202;
+            }
+
+            return $this->respond($result, $status);
+        }, GoogleLoginRequestDTO::class);
     }
 
-    protected function resolveSuccessStatus(string $method, array $result): int
+    /**
+     * Get current user profile
+     */
+    public function me(): ResponseInterface
     {
-        if ($method === 'loginWithGoogleToken') {
-            $pendingStatus = $result['data']['user']['status'] ?? null;
-            $hasAccessToken = isset($result['data']['access_token']);
-
-            if ($pendingStatus === 'pending_approval' && ! $hasAccessToken) {
-                return 202;
-            }
-        }
-
-        return parent::resolveSuccessStatus($method, $result);
+        return $this->handleRequest(function () {
+            return $this->getService()->me($this->getUserId());
+        });
     }
 }

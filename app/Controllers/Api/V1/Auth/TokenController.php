@@ -5,35 +5,45 @@ declare(strict_types=1);
 namespace App\Controllers\Api\V1\Auth;
 
 use App\Controllers\ApiController;
+use App\DTO\Request\Identity\RefreshTokenRequestDTO;
 use CodeIgniter\HTTP\ResponseInterface;
 
 /**
- * Token Controller - Refresh and revoke tokens
+ * Modernized Token Controller
  */
 class TokenController extends ApiController
 {
     protected string $serviceName = 'authTokenService';
 
+    /**
+     * Refresh access token using refresh token
+     */
     public function refresh(): ResponseInterface
     {
-        $dto = new \App\DTO\Request\Identity\RefreshTokenRequestDTO([
-            'refresh_token' => $this->request->getVar('refresh_token'),
-        ]);
-
-        return $this->handleRequest(
-            fn () => $this->getService()->refreshAccessToken($dto)
-        );
+        return $this->handleRequest(function ($dto) {
+            return $this->getService()->refreshAccessToken($dto);
+        }, RefreshTokenRequestDTO::class);
     }
 
+    /**
+     * Revoke current access token
+     */
     public function revoke(): ResponseInterface
     {
-        return $this->handleRequest('revoke', [
-            'authorization_header' => $this->request->getHeaderLine('Authorization'),
-        ]);
+        return $this->handleRequest(function () {
+            return $this->getService()->revokeToken(
+                $this->request->getHeaderLine('Authorization')
+            );
+        });
     }
 
+    /**
+     * Revoke all tokens for the current user
+     */
     public function revokeAll(): ResponseInterface
     {
-        return $this->handleRequest('revokeAll');
+        return $this->handleRequest(function () {
+            return $this->getService()->revokeAllUserTokens($this->getUserId());
+        });
     }
 }

@@ -4,25 +4,120 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Exceptions\BadRequestException;
+use App\Exceptions\NotFoundException;
 use App\Interfaces\CrudServiceContract;
+use App\Interfaces\DataTransferObjectInterface;
+use App\Libraries\ApiResponse;
+use App\Libraries\Query\QueryBuilder;
+use CodeIgniter\Model;
 
+/**
+ * Enhanced Base CRUD Service
+ *
+ * Provides automated, generic CRUD operations for all services.
+ * Implements transaction safety and automatic Response DTO mapping.
+ */
 abstract class BaseCrudService implements CrudServiceContract
 {
+    use \App\Traits\HandlesTransactions;
+
     /**
-     * Enforce common id requirement across CRUD services.
-     *
-     * @param array<string, mixed> $data
+     * @var Model The primary model for this service
      */
-    protected function requireId(array $data, string $field = 'id', string $label = 'Id'): int
+    protected \CodeIgniter\Model $model;
+
+    /**
+     * @var string The class name of the Response DTO for this service
+     */
+    protected string $responseDtoClass;
+
+    /**
+     * Get a paginated list of resources
+     */
+    public function index(DataTransferObjectInterface $request): array
     {
-        if (!isset($data[$field]) || !is_numeric($data[$field])) {
-            throw new BadRequestException(
-                lang('Api.invalidRequest'),
-                [$field => lang('InputValidation.common.idRequired', [$label])]
-            );
+        $builder = new QueryBuilder($this->model);
+
+        // Apply global security/business criteria defined by the service
+        $this->applyBaseCriteria($this->model);
+
+        // Use a generic query option applying method if trait is available
+        if (method_exists($this, 'applyQueryOptions')) {
+            $this->applyQueryOptions($builder, $request->toArray());
         }
 
-        return (int) $data[$field];
+        $requestData = $request->toArray();
+        $page = $requestData['page'] ?? 1;
+        $perPage = $requestData['per_page'] ?? 20;
+
+        $result = $builder->paginate((int) $page, (int) $perPage);
+
+        // Auto-map entities to response DTOs
+        $result['data'] = array_map(
+            function ($entity) {
+                /** @var object $entity */
+                return $this->mapToResponse($entity);
+            },
+            (array) $result['data']
+        );
+
+        return ApiResponse::paginated(
+            $result['data'],
+            $result['total'],
+            $result['page'],
+            $result['perPage']
+        );
+    }
+
+    /**
+     * Get a single resource by ID
+     */
+    public function show(int $id): DataTransferObjectInterface
+    {
+        /** @var object|null $entity */
+        $entity = $this->model->find($id);
+
+        if (!$entity) {
+            throw new NotFoundException(lang('Api.resourceNotFound'));
+        }
+
+        return $this->mapToResponse($entity);
+    }
+
+    /**
+     * Delete a resource (soft delete by default)
+     */
+    public function destroy(int $id): array
+    {
+        if (!$this->model->find($id)) {
+            throw new NotFoundException(lang('Api.resourceNotFound'));
+        }
+
+        return $this->wrapInTransaction(function () use ($id) {
+            if (!$this->model->delete($id)) {
+                throw new \RuntimeException(lang('Api.deleteError'));
+            }
+            return ApiResponse::deleted();
+        });
+    }
+
+    /**
+     * Optional hook for child services to apply global criteria (e.g. security filters)
+     */
+    protected function applyBaseCriteria(Model $model): void
+    {
+        // Default: no criteria
+    }
+
+    /**
+     * Map a model entity to its corresponding Response DTO
+     */
+    protected function mapToResponse(object $entity): DataTransferObjectInterface
+    {
+        if (!isset($this->responseDtoClass) || !class_exists($this->responseDtoClass)) {
+            throw new \RuntimeException(lang('Api.responseDtoNotDefined', [static::class]));
+        }
+
+        return ($this->responseDtoClass)::fromArray($entity->toArray());
     }
 }

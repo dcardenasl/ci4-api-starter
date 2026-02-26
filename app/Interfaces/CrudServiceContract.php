@@ -4,15 +4,36 @@ declare(strict_types=1);
 
 namespace App\Interfaces;
 
+/**
+ * Modernized CRUD Service Contract
+ *
+ * Enforces strict typing using Data Transfer Objects (DTOs)
+ * for all input data.
+ */
 interface CrudServiceContract
 {
-    public function index(array $data): array;
+    /**
+     * Get a paginated list of resources
+     */
+    public function index(\App\Interfaces\DataTransferObjectInterface $request): array;
 
-    public function show(array $data): array;
+    /**
+     * Get a single resource by ID
+     */
+    public function show(int $id): \App\Interfaces\DataTransferObjectInterface;
 
-    public function store(array $data): array;
+    /**
+     * Create a new resource
+     */
+    public function store(\App\Interfaces\DataTransferObjectInterface $request): \App\Interfaces\DataTransferObjectInterface;
 
-    public function update(array $data): array;
+    /**
+     * Update an existing resource
+     */
+    public function update(int $id, \App\Interfaces\DataTransferObjectInterface $request): \App\Interfaces\DataTransferObjectInterface;
 
-    public function destroy(array $data): array;
+    /**
+     * Remove a resource (soft or hard delete)
+     */
+    public function destroy(int $id): array;
 }

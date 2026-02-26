@@ -19,4 +19,5 @@ return [
     'sentMessage'         => 'Correo de verificación enviado',
     'verifiedMessage'     => 'Correo verificado exitosamente',
     'alreadyVerifiedMsg'  => 'El correo ya está verificado',
+    'success'             => 'Correo verificado exitosamente',
 ];

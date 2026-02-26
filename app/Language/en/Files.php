@@ -24,4 +24,8 @@ return [
     'invalidRequest'     => 'Invalid request',
     'storageError'       => 'Storage error',
     'notFound'           => 'Not found',
+    'useDeleteWithContext' => 'Use delete() with FileGetRequestDTO to enforce ownership checks',
+    'upload' => [
+        'noFile' => 'No file was uploaded or file is invalid',
+    ],
 ];

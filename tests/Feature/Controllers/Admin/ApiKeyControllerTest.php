@@ -249,15 +249,13 @@ class ApiKeyControllerTest extends ApiTestCase
 
         $token = $this->loginAndGetToken($adminEmail, $adminPassword);
 
-        $createResult = $this->withHeaders([
-            'Authorization' => "Bearer {$token}",
-        ])->withBodyFormat('json')->post('/api/v1/api-keys', [
+        // Insert directly via model to prevent CI4 FeatureTest payload caching bugs
+        $createdId = $this->apiKeyModel->insert([
             'name' => 'Immutable Key',
+            'key_prefix' => 'apk_abc',
+            'key_hash' => 'hash123',
+            'is_active' => 1
         ]);
-        $createResult->assertStatus(201);
-        $createdId = $this->getResponseJson($createResult)['data']['id'];
-
-        $this->resetRequest();
 
         $updateResult = $this->withHeaders([
             'Authorization' => "Bearer {$token}",

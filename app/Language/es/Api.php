@@ -20,6 +20,9 @@ return [
     'invalidRequest'   => 'Solicitud inválida',
     'fieldRequired'    => '{0} es obligatorio',
     'databaseError'    => 'Ocurrió un error en la base de datos',
+    'deleteError'      => 'Error al eliminar el recurso',
+    'transactionFailed' => 'La transacción de base de datos falló',
+    'responseDtoNotDefined' => 'Clase Response DTO no definida para {0}',
 
     // Mensajes de log
     'exception'         => 'Excepción de API',

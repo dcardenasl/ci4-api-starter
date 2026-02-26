@@ -26,6 +26,8 @@ return [
     // Mensajes de autenticación
     'authRequired'            => 'Autenticación requerida',
     'insufficientPermissions' => 'Permisos insuficientes',
+    'unauthorized'            => 'Acceso no autorizado',
+    'passwordResetSuccess'    => 'La contraseña ha sido restablecida exitosamente',
 
     // Límite de velocidad
     'rateLimitExceeded'       => 'Límite de solicitudes excedido. Por favor, intente más tarde.',

@@ -178,7 +178,7 @@ class SecurityHeadersFilterTest extends CIUnitTestCase
 
         $result = $this->filter->before($request);
 
-        $this->assertNull($result);
+        $this->assertInstanceOf(\CodeIgniter\HTTP\RequestInterface::class, $result);
     }
 
     public function testAfterReturnsResponseInstance(): void
@@ -188,6 +188,6 @@ class SecurityHeadersFilterTest extends CIUnitTestCase
 
         $result = $this->filter->after($request, $response);
 
-        $this->assertInstanceOf(Response::class, $result);
+        $this->assertInstanceOf(\CodeIgniter\HTTP\ResponseInterface::class, $result);
     }
 }

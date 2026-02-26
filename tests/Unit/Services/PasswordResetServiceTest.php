@@ -216,10 +216,12 @@ class PasswordResetServiceTest extends CIUnitTestCase
     {
         $service = $this->createServiceWithUser(null);
 
-        $result = $service->validateToken([
+        $request = new \App\DTO\Request\Identity\PasswordResetTokenValidationDTO([
             'email' => 'test@example.com',
             'token' => self::VALID_RESET_TOKEN,
         ]);
+
+        $result = $service->validateToken($request);
 
         $this->assertIsArray($result);
         $this->assertTrue($result['valid']);
@@ -231,10 +233,12 @@ class PasswordResetServiceTest extends CIUnitTestCase
 
         $this->expectException(NotFoundException::class);
 
-        $service->validateToken([
+        $request = new \App\DTO\Request\Identity\PasswordResetTokenValidationDTO([
             'email' => 'test@example.com',
             'token' => self::UNKNOWN_RESET_TOKEN,
         ]);
+
+        $service->validateToken($request);
     }
 
     // ==================== RESET PASSWORD TESTS ====================

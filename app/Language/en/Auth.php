@@ -26,6 +26,8 @@ return [
     // Authentication messages
     'authRequired'            => 'Authentication required',
     'insufficientPermissions' => 'Insufficient permissions',
+    'unauthorized'            => 'Unauthorized access',
+    'passwordResetSuccess'    => 'Password has been reset successfully',
 
     // Rate limiting
     'rateLimitExceeded'       => 'Rate limit exceeded. Please try again later.',

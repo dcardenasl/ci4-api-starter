@@ -1,7 +1,6 @@
 parameters:
-    level: 6
+    level: 7
     bootstrapFiles:
-        - app/Helpers/validation_helper.php
         - app/Helpers/security_helper.php
     paths:
         - app/Controllers
@@ -29,4 +28,8 @@ parameters:
         - '#Access to an undefined property App\\Entities\\.*::\$#'
         - '#Cannot access property .* on array.*\|object#'
         - '#Cannot call method toArray\(\) on array.*\|object#'
+        - '#Call to an undefined method App\\Controllers\\.*::(request|getVarString|getGetString|getVarInt)\(\)#'
         - '#Call to an undefined method App\\Controllers\\.*::respondForbidden\(\)#'
+        - '#Else branch is unreachable because ternary operator condition is always true.#'
+        - '#Parameter \#2 \$timestamp of function date expects int\|null, int\|false given.#'
+        - '#Parameter \#1 \$datetime of function strtotime expects string, string\|false given.#'

@@ -19,4 +19,5 @@ return [
     'sentMessage'         => 'Verification email sent',
     'verifiedMessage'     => 'Email verified successfully',
     'alreadyVerifiedMsg'  => 'Email already verified',
+    'success'             => 'Email verified successfully',
 ];

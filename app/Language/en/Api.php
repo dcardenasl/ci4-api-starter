@@ -20,6 +20,9 @@ return [
     'invalidRequest'   => 'Invalid request',
     'fieldRequired'    => '{0} is required',
     'databaseError'    => 'A database error occurred',
+    'deleteError'      => 'Failed to delete resource',
+    'transactionFailed' => 'Database transaction failed',
+    'responseDtoNotDefined' => 'Response DTO class not defined for {0}',
 
     // Log messages
     'exception'         => 'API Exception',

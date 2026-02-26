@@ -251,9 +251,8 @@ class FileServiceTest extends CIUnitTestCase
 
     public function testIndexWithoutUserIdThrowsException(): void
     {
-        $this->expectException(BadRequestException::class);
-
-        $this->service->index([]);
+        $this->expectException(\App\Exceptions\AuthenticationException::class);
+        new \App\DTO\Request\Files\FileIndexRequestDTO([]);
     }
 
     public function testIndexReturnsUserFiles(): void
@@ -315,7 +314,8 @@ class FileServiceTest extends CIUnitTestCase
 
         $this->service = new FileService($this->mockFileModel, $this->mockStorage, $this->mockAuditService);
 
-        $result = $this->service->index(['user_id' => 1]);
+        $request = new \App\DTO\Request\Files\FileIndexRequestDTO(['user_id' => 1]);
+        $result = $this->service->index($request);
 
         $this->assertPaginatedResponse($result);
         $this->assertCount(2, $result['data']);
@@ -325,16 +325,14 @@ class FileServiceTest extends CIUnitTestCase
 
     public function testDownloadWithoutIdThrowsException(): void
     {
-        $this->expectException(BadRequestException::class);
-
-        $this->service->download(['user_id' => 1]);
+        $this->expectException(ValidationException::class);
+        new \App\DTO\Request\Files\FileGetRequestDTO(['user_id' => 1]);
     }
 
     public function testDownloadWithoutUserIdThrowsException(): void
     {
-        $this->expectException(BadRequestException::class);
-
-        $this->service->download(['id' => 1]);
+        $this->expectException(\App\Exceptions\AuthenticationException::class);
+        new \App\DTO\Request\Files\FileGetRequestDTO(['id' => 1]);
     }
 
     public function testDownloadNonExistentFileThrowsNotFoundException(): void
@@ -345,7 +343,8 @@ class FileServiceTest extends CIUnitTestCase
 
         $this->expectException(NotFoundException::class);
 
-        $this->service->download(['id' => 999, 'user_id' => 1]);
+        $request = new \App\DTO\Request\Files\FileGetRequestDTO(['id' => 999, 'user_id' => 1]);
+        $this->service->download($request);
     }
 
     public function testDownloadOtherUsersFileThrowsAuthorizationException(): void
@@ -361,7 +360,8 @@ class FileServiceTest extends CIUnitTestCase
 
         $this->expectException(AuthorizationException::class);
 
-        $this->service->download(['id' => 1, 'user_id' => 1]);
+        $request = new \App\DTO\Request\Files\FileGetRequestDTO(['id' => 1, 'user_id' => 1]);
+        $this->service->download($request);
     }
 
     public function testDownloadOwnFileReturnsSuccess(): void
@@ -379,10 +379,11 @@ class FileServiceTest extends CIUnitTestCase
             ->method('find')
             ->willReturn($file);
 
-        $result = $this->service->download(['id' => 1, 'user_id' => 1]);
+        $request = new \App\DTO\Request\Files\FileGetRequestDTO(['id' => 1, 'user_id' => 1]);
+        $result = $this->service->download($request);
 
-        $this->assertSuccessResponse($result);
-        $this->assertEquals('myfile.pdf', $result['data']['original_name']);
+        $this->assertEquals('myfile.pdf', $result['original_name']);
+        $this->assertEquals('http://example.com/myfile.pdf', $result['url']);
     }
 
     // ==================== DELETE TESTS ====================
@@ -395,7 +396,8 @@ class FileServiceTest extends CIUnitTestCase
 
         $this->expectException(NotFoundException::class);
 
-        $this->service->delete(['id' => 999, 'user_id' => 1]);
+        $request = new \App\DTO\Request\Files\FileGetRequestDTO(['id' => 999, 'user_id' => 1]);
+        $this->service->delete($request);
     }
 
     public function testDeleteOtherUsersFileThrowsAuthorizationException(): void
@@ -411,7 +413,8 @@ class FileServiceTest extends CIUnitTestCase
 
         $this->expectException(AuthorizationException::class);
 
-        $this->service->delete(['id' => 1, 'user_id' => 1]);
+        $request = new \App\DTO\Request\Files\FileGetRequestDTO(['id' => 1, 'user_id' => 1]);
+        $this->service->delete($request);
     }
 
     public function testDeleteOwnFileReturnsSuccess(): void
@@ -437,7 +440,8 @@ class FileServiceTest extends CIUnitTestCase
             ->method('delete')
             ->with(1);
 
-        $result = $this->service->delete(['id' => 1, 'user_id' => 1]);
+        $request = new \App\DTO\Request\Files\FileGetRequestDTO(['id' => 1, 'user_id' => 1]);
+        $result = $this->service->delete($request);
 
         $this->assertSuccessResponse($result);
     }

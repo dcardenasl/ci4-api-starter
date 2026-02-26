@@ -328,6 +328,6 @@ class JwtAuthFilterTest extends CIUnitTestCase
 
         $result = $this->filter->after($request, $response);
 
-        $this->assertNull($result);
+        $this->assertInstanceOf(\CodeIgniter\HTTP\ResponseInterface::class, $result);
     }
 }

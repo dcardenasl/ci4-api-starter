@@ -24,4 +24,8 @@ return [
     'invalidRequest'     => 'Solicitud inválida',
     'storageError'       => 'Error de almacenamiento',
     'notFound'           => 'No encontrado',
+    'useDeleteWithContext' => 'Use delete() con FileGetRequestDTO para forzar la validación de propiedad',
+    'upload' => [
+        'noFile' => 'No se subió ningún archivo o el archivo no es válido',
+    ],
 ];

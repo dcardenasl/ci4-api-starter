@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Services;
 
-use App\Exceptions\BadRequestException;
 use App\Exceptions\NotFoundException;
 use App\Models\AuditLogModel;
 use App\Services\AuditService;
@@ -244,20 +243,12 @@ class AuditServiceTest extends CIUnitTestCase
             ->with(1)
             ->willReturn($log);
 
-        $result = $this->service->show(['id' => 1]);
+        $result = $this->service->show(1);
 
         $this->assertInstanceOf(\App\DTO\Response\Audit\AuditResponseDTO::class, $result);
         $data = $result->toArray();
         $this->assertEquals(1, $data['id']);
         $this->assertEquals('create', $data['action']);
-    }
-
-    public function testShowWithoutIdThrowsException(): void
-    {
-        // validateRequiredId from trait throws BadRequestException
-        $this->expectException(\App\Exceptions\BadRequestException::class);
-
-        $this->service->show([]);
     }
 
     public function testShowWithNonExistentIdThrowsNotFoundException(): void
@@ -268,7 +259,7 @@ class AuditServiceTest extends CIUnitTestCase
 
         $this->expectException(NotFoundException::class);
 
-        $this->service->show(['id' => 999]);
+        $this->service->show(999);
     }
 
     // ==================== BY ENTITY TESTS ====================
@@ -315,7 +306,7 @@ class AuditServiceTest extends CIUnitTestCase
 
         $this->assertIsArray($result);
         $this->assertCount(2, $result);
-        $this->assertInstanceOf(\App\DTO\Response\Audit\AuditResponseDTO::class, $result[0]);
+        $this->assertInstanceOf(\App\Interfaces\DataTransferObjectInterface::class, $result[0]);
     }
 
     public function testByEntityNormalizesSingularEntityType(): void
@@ -334,11 +325,10 @@ class AuditServiceTest extends CIUnitTestCase
         $this->assertSame([], $result);
     }
 
-    public function testByEntityWithMissingParamsThrowsException(): void
+    public function testByEntityWithMissingParamsReturnsEmptyArray(): void
     {
-        $this->expectException(\App\Exceptions\BadRequestException::class);
-
-        $this->service->byEntity(['entity_type' => 'users']);
+        $result = $this->service->byEntity(['entity_type' => 'users']);
+        $this->assertSame([], $result);
     }
 
     // ==================== HELPER METHODS ====================

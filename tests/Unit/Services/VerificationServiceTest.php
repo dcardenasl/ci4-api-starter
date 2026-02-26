@@ -278,7 +278,7 @@ class VerificationServiceTest extends CIUnitTestCase
             ->method('queueTemplate')
             ->with('verification', 'test@example.com', $this->anything());
 
-        $result = $service->resendVerification(['user_id' => 1]);
+        $result = $service->resendVerification(1);
 
         $this->assertSuccessResponse($result);
     }
@@ -295,7 +295,7 @@ class VerificationServiceTest extends CIUnitTestCase
 
         $this->expectException(ConflictException::class);
 
-        $service->resendVerification(['user_id' => 1]);
+        $service->resendVerification(1);
     }
 
     public function testResendVerificationThrowsForNonExistentUser(): void
@@ -304,6 +304,6 @@ class VerificationServiceTest extends CIUnitTestCase
 
         $this->expectException(NotFoundException::class);
 
-        $service->resendVerification(['user_id' => 999]);
+        $service->resendVerification(999);
     }
 }

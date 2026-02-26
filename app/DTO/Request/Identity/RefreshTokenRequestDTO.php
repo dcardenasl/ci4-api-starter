@@ -4,21 +4,27 @@ declare(strict_types=1);
 
 namespace App\DTO\Request\Identity;
 
-use App\Interfaces\DataTransferObjectInterface;
+use App\DTO\Request\BaseRequestDTO;
 
 /**
  * Refresh Token Request DTO
+ *
+ * Validates the refresh token string.
  */
-readonly class RefreshTokenRequestDTO implements DataTransferObjectInterface
+readonly class RefreshTokenRequestDTO extends BaseRequestDTO
 {
     public string $refreshToken;
 
-    public function __construct(array $data)
+    protected function rules(): array
     {
-        // REUSE: 'auth.refresh' validation
-        validateOrFail($data, 'auth', 'refresh');
+        return [
+            'refresh_token' => 'required|string|min_length[10]',
+        ];
+    }
 
-        $this->refreshToken = (string) $data['refresh_token'];
+    protected function map(array $data): void
+    {
+        $this->refreshToken = (string) ($data['refresh_token'] ?? '');
     }
 
     public function toArray(): array

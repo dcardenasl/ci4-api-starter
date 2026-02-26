@@ -5,10 +5,13 @@ declare(strict_types=1);
 namespace App\Controllers\Api\V1\Identity;
 
 use App\Controllers\ApiController;
+use App\DTO\Request\Auth\RegisterRequestDTO;
 use CodeIgniter\HTTP\ResponseInterface;
 
 /**
- * Registration Controller
+ * Modernized Registration Controller
+ *
+ * Uses automated DTO validation for user self-registration.
  */
 class RegistrationController extends ApiController
 {
@@ -21,12 +24,11 @@ class RegistrationController extends ApiController
         'register' => 201,
     ];
 
+    /**
+     * Register a new user
+     */
     public function register(): ResponseInterface
     {
-        $dto = $this->getDTO(\App\DTO\Request\Auth\RegisterRequestDTO::class);
-
-        return $this->handleRequest(
-            fn () => $this->getService()->register($dto)
-        );
+        return $this->handleRequest('register', RegisterRequestDTO::class);
     }
 }

@@ -8,22 +8,20 @@ use App\Exceptions\BadRequestException;
 use App\Exceptions\ConflictException;
 use App\Exceptions\NotFoundException;
 use App\Interfaces\AuditServiceInterface;
+use App\Interfaces\DataTransferObjectInterface;
 use App\Interfaces\EmailServiceInterface;
 use App\Interfaces\VerificationServiceInterface;
 use App\Models\UserModel;
 use App\Traits\ResolvesWebAppLinks;
-use App\Traits\ValidatesRequiredFields;
 use CodeIgniter\I18n\Time;
 
 /**
- * Verification Service
- *
- * Handles email verification flow
+ * Modernized Verification Service
  */
 class VerificationService implements VerificationServiceInterface
 {
     use ResolvesWebAppLinks;
-    use ValidatesRequiredFields;
+    use \App\Traits\HandlesTransactions;
 
     public function __construct(
         protected UserModel $userModel,
@@ -39,116 +37,93 @@ class VerificationService implements VerificationServiceInterface
     {
         $user = $this->userModel->find($userId);
 
-        if (! $user) {
+        if (!$user instanceof \App\Entities\UserEntity) {
             throw new NotFoundException(lang('Verification.userNotFound'));
         }
 
-        // Check if already verified
         if ($user->email_verified_at !== null) {
             throw new ConflictException(lang('Verification.alreadyVerified'));
         }
 
-        // Generate verification token
-        $token = generate_token();
-        $expiresAt = date('Y-m-d H:i:s', strtotime('+24 hours'));
+        $token = bin2hex(random_bytes(32));
+        $timestamp = strtotime('+24 hours');
 
-        // Update user with token
+        // Ensure $timestamp is int for date()
+        $finalTimestamp = is_int($timestamp) ? $timestamp : (time() + 86400);
+        $expiresAt = date('Y-m-d H:i:s', $finalTimestamp);
+
         $this->userModel->update($userId, [
             'email_verification_token' => $token,
             'verification_token_expires' => $expiresAt,
         ]);
 
-        // Log verification email sent
-        $this->auditService->log(
-            'verification_email_sent',
-            'users',
-            (int) $user->id,
-            [],
-            ['email' => $user->email]
-        );
+        $this->auditService->log('verification_email_sent', 'users', (int) $user->id, [], ['email' => $user->email]);
 
-        // Build verification link
         $clientBaseUrl = isset($data['client_base_url']) ? (string) $data['client_base_url'] : null;
         $verificationLink = $this->buildVerificationUrl($token, $clientBaseUrl);
 
-        // Queue verification email
-        $displayName = 'User';
-        if (is_object($user) && method_exists($user, 'getDisplayName')) {
-            $displayName = $user->getDisplayName();
-        } elseif (is_object($user) && !empty($user->email)) {
-            $displayName = explode('@', $user->email)[0];
-        }
-
-        $this->emailService->queueTemplate('verification', $user->email, [
+        $this->emailService->queueTemplate('verification', (string) $user->email, [
             'subject' => lang('Email.verification.subject'),
-            'display_name' => $displayName,
+            'display_name' => method_exists($user, 'getDisplayName') ? (string) $user->getDisplayName() : (string) $user->email,
             'verification_link' => $verificationLink,
             'expires_at' => date('F j, Y g:i A', strtotime($expiresAt)),
         ]);
 
-        return [
-            'status' => 'success',
-            'message' => lang('Verification.sentMessage')
-        ];
+        return ['status' => 'success', 'message' => lang('Verification.sentMessage')];
     }
 
-    /**
-     * Verify email with token
-     */
-    public function verifyEmail(\App\DTO\Request\Identity\VerificationRequestDTO $request): \App\DTO\Response\Identity\VerificationResponseDTO
+    public function verifyEmail(DataTransferObjectInterface $request): DataTransferObjectInterface
     {
-        $token = $request->token;
+        /** @var \App\DTO\Request\Identity\VerificationRequestDTO $request */
+        $user = $this->userModel->where('email_verification_token', $request->token)->first();
 
-        // Find user by token
-        $user = $this->userModel
-            ->where('email_verification_token', $token)
-            ->first();
-
-        if (! $user) {
+        if (!$user) {
             throw new NotFoundException(lang('Verification.invalidToken'));
         }
 
-        // Check if token expired
-        $expiresAt = $user->verification_token_expires ?? null;
-        if ($expiresAt instanceof Time) {
-            $expiresAt = $expiresAt->toDateTimeString();
-        }
-        if (! empty($expiresAt) && strtotime((string) $expiresAt) < time()) {
-            throw new BadRequestException(lang('Verification.tokenExpired'));
+        /** @var \App\Entities\UserEntity $user */
+
+        $expiresAtVal = $user->verification_token_expires;
+        $expiresAtStr = '';
+
+        if ($expiresAtVal instanceof Time) {
+            $expiresAtStr = $expiresAtVal->toDateTimeString();
+        } elseif (is_string($expiresAtVal)) {
+            $expiresAtStr = $expiresAtVal;
         }
 
-        // Update user status
+        if ($expiresAtStr !== '') {
+            $expiresAtTimestamp = strtotime($expiresAtStr);
+            if (is_int($expiresAtTimestamp) && $expiresAtTimestamp < time()) {
+                throw new BadRequestException(lang('Verification.tokenExpired'));
+            }
+        }
+
         $now = date('Y-m-d H:i:s');
-        $this->userModel->update($user->id, [
-            'email_verified_at' => $now,
-            'email_verification_token' => null,
-            'verification_token_expires' => null,
-        ]);
 
-        // Log successful verification
-        $this->auditService->log(
-            'email_verified',
-            'users',
-            (int) $user->id,
-            [],
-            ['email' => $user->email]
-        );
+        return $this->wrapInTransaction(function () use ($user, $now) {
+            $this->userModel->update($user->id, [
+                'email_verified_at' => $now,
+                'email_verification_token' => null,
+                'verification_token_expires' => null,
+            ]);
 
-        return \App\DTO\Response\Identity\VerificationResponseDTO::fromArray([
-            'message' => lang('Verification.success'),
-            'user_id' => $user->id,
-            'email' => $user->email,
-            'verified_at' => $now,
-        ]);
+            $this->auditService->log('email_verified', 'users', (int) $user->id, [], ['email' => $user->email]);
+
+            return \App\DTO\Response\Identity\VerificationResponseDTO::fromArray([
+                'message' => lang('Verification.success'),
+                'user_id' => $user->id,
+                'email' => $user->email,
+                'verified_at' => $now,
+            ]);
+        });
     }
 
     /**
      * Resend verification email
      */
-    public function resendVerification(array $data): array
+    public function resendVerification(int $userId, array $data = []): array
     {
-        $userId = $this->validateRequiredId($data, 'user_id');
-
         return $this->sendVerificationEmail($userId, $data);
     }
 }

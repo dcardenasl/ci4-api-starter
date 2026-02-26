@@ -5,35 +5,31 @@ declare(strict_types=1);
 namespace App\Controllers\Api\V1\Identity;
 
 use App\Controllers\ApiController;
+use App\DTO\Request\Identity\VerificationRequestDTO;
 use CodeIgniter\HTTP\ResponseInterface;
 
 /**
- * Verification Controller - Email verification
+ * Modernized Verification Controller
  */
 class VerificationController extends ApiController
 {
     protected string $serviceName = 'verificationService';
 
+    /**
+     * Verify email with token
+     */
     public function verify(): ResponseInterface
     {
-        $token = $this->request->getVar('token') ?? '';
-        $dto = new \App\DTO\Request\Identity\VerificationRequestDTO(['token' => $token]);
-
-        return $this->handleRequest(
-            fn () => $this->getService()->verifyEmail($dto)
-        );
+        return $this->handleRequest('verifyEmail', VerificationRequestDTO::class);
     }
 
+    /**
+     * Resend verification email
+     */
     public function resend(): ResponseInterface
     {
-        $userId = $this->getUserId();
-
-        if (!$userId) {
-            return $this->respondUnauthorized(lang('Auth.authRequired'));
-        }
-
-        return $this->handleRequest('resendVerification', [
-            'user_id' => $userId,
-        ]);
+        return $this->handleRequest(function () {
+            return $this->getService()->resendVerification($this->getUserId());
+        });
     }
 }

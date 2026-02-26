@@ -10,13 +10,13 @@ use CodeIgniter\CLI\CLI;
 /**
  * MakeCrud Command
  *
- * Generates a complete CRUD resource following the Million-Dollar Architecture (DTO-First).
+ * Generates a complete CRUD resource following the Modernized DTO-First Architecture.
  */
 class MakeCrud extends BaseCommand
 {
     protected $group = 'Scaffold';
     protected $name = 'make:crud';
-    protected $description = 'Generate CRUD skeleton files following the DTO-first architecture.';
+    protected $description = 'Generate CRUD skeleton files following the modernized DTO-first architecture.';
     protected $usage = 'make:crud <Resource> [--domain <Domain>] [--route <slug>] [--public-read <yes|no>] [--admin-write <yes|no>] [--soft-delete <yes|no>]';
     protected $arguments = [
         'Resource' => 'Resource singular name (e.g. Product, InvoiceItem)',
@@ -53,11 +53,11 @@ class MakeCrud extends BaseCommand
             APPPATH . "Entities/{$resource}Entity.php" => $this->entityTemplate($resource),
             APPPATH . "Models/{$resource}Model.php" => $this->modelTemplate($resource, $resourcePluralLower, $softDelete),
             APPPATH . "DTO/Request/{$domain}/{$resource}IndexRequestDTO.php" => $this->indexRequestDtoTemplate($resource, $domain),
-            APPPATH . "DTO/Request/{$domain}/{$resource}CreateRequestDTO.php" => $this->createRequestDtoTemplate($resource, $domain, $resourceLower),
+            APPPATH . "DTO/Request/{$domain}/{$resource}CreateRequestDTO.php" => $this->createRequestDtoTemplate($resource, $domain),
+            APPPATH . "DTO/Request/{$domain}/{$resource}UpdateRequestDTO.php" => $this->updateRequestDtoTemplate($resource, $domain),
             APPPATH . "DTO/Response/{$domain}/{$resource}ResponseDTO.php" => $this->responseDtoTemplate($resource, $domain),
             APPPATH . "Interfaces/{$resource}ServiceInterface.php" => $this->interfaceTemplate($resource, $domain),
             APPPATH . "Services/{$resource}Service.php" => $this->serviceTemplate($resource, $resourceLower, $domain),
-            APPPATH . "Validations/{$resource}Validation.php" => $this->validationTemplate($resource),
             APPPATH . "Controllers/Api/V1/{$domain}/{$resource}Controller.php" => $this->controllerTemplate($resource, $resourceLower, $domain),
             APPPATH . "Documentation/{$resourcePlural}/{$resource}Endpoints.php" => $this->docEndpointsTemplate($resource, $route, $domain),
             APPPATH . "Language/en/{$resourcePlural}.php" => $this->langTemplate($resource, false),
@@ -89,7 +89,7 @@ class MakeCrud extends BaseCommand
 
         CLI::newLine();
         CLI::write('Next steps:', 'cyan');
-        CLI::write("1) Add '{$resourceLower}' domain to app/Services/InputValidationService.php");
+        CLI::write("1) Add specific validation rules to DTOs in app/DTO/Request/{$domain}/");
         CLI::write("2) Define your DB schema in a new migration.");
         CLI::write("3) Update app/Config/Routes.php with the following snippet:");
         CLI::newLine();
@@ -115,6 +115,10 @@ class MakeCrud extends BaseCommand
     private function registerServiceMethod(string $resource, string $resourceLower): void
     {
         $servicesPath = APPPATH . 'Config/Services.php';
+        if (!file_exists($servicesPath)) {
+            return;
+        }
+
         $content = (string) file_get_contents($servicesPath);
         $methodName = "{$resourceLower}Service";
 
@@ -123,7 +127,7 @@ class MakeCrud extends BaseCommand
             return;
         }
 
-        $method = "\n    public static function {$methodName}(bool \$getShared = true)\n    {\n        if (\$getShared) {\n            return static::getSharedInstance('{$methodName}');\n        }\n\n        return new \\App\\Services\\{$resource}Service(\n            new \\App\\Models\\{$resource}Model(),\n            static::auditService()\n        );\n    }\n";
+        $method = "\n    public static function {$methodName}(bool \$getShared = true)\n    {\n        if (\$getShared) {\n            return static::getSharedInstance('{$methodName}');\n        }\n\n        return new \\App\\Services\\{$resource}Service(\n            new \\App\\Models\\{$resource}Model()\n        );\n    }\n";
 
         $needle = "\n}\n";
         $position = strrpos($content, $needle);
@@ -253,15 +257,24 @@ declare(strict_types=1);
 
 namespace App\DTO\Request\\{$domain};
 
-use App\Interfaces\DataTransferObjectInterface;
+use App\DTO\Request\BaseRequestDTO;
 
-readonly class {$resource}IndexRequestDTO implements DataTransferObjectInterface
+readonly class {$resource}IndexRequestDTO extends BaseRequestDTO
 {
     public int \$page;
     public int \$perPage;
     public ?string \$search;
 
-    public function __construct(array \$data)
+    protected function rules(): array
+    {
+        return [
+            'page'     => 'permit_empty|is_natural_no_zero',
+            'per_page' => 'permit_empty|is_natural_no_zero|less_than[101]',
+            'search'   => 'permit_empty|string|max_length[100]',
+        ];
+    }
+
+    protected function map(array \$data): void
     {
         \$this->page = isset(\$data['page']) ? (int) \$data['page'] : 1;
         \$this->perPage = isset(\$data['per_page']) ? (int) \$data['per_page'] : 20;
@@ -280,7 +293,7 @@ readonly class {$resource}IndexRequestDTO implements DataTransferObjectInterface
 PHP;
     }
 
-    private function createRequestDtoTemplate(string $resource, string $domain, string $resourceLower): string
+    private function createRequestDtoTemplate(string $resource, string $domain): string
     {
         return <<<PHP
 <?php
@@ -289,17 +302,22 @@ declare(strict_types=1);
 
 namespace App\DTO\Request\\{$domain};
 
-use App\Interfaces\DataTransferObjectInterface;
+use App\DTO\Request\BaseRequestDTO;
 
-readonly class {$resource}CreateRequestDTO implements DataTransferObjectInterface
+readonly class {$resource}CreateRequestDTO extends BaseRequestDTO
 {
     public string \$name;
 
-    public function __construct(array \$data)
+    protected function rules(): array
     {
-        validateOrFail(\$data, '{$resourceLower}', 'store');
+        return [
+            'name' => 'required|string|max_length[255]',
+        ];
+    }
 
-        \$this->name = (string) \$data['name'];
+    protected function map(array \$data): void
+    {
+        \$this->name = (string) (\$data['name'] ?? '');
     }
 
     public function toArray(): array
@@ -307,6 +325,43 @@ readonly class {$resource}CreateRequestDTO implements DataTransferObjectInterfac
         return [
             'name' => \$this->name,
         ];
+    }
+}
+PHP;
+    }
+
+    private function updateRequestDtoTemplate(string $resource, string $domain): string
+    {
+        return <<<PHP
+<?php
+
+declare(strict_types=1);
+
+namespace App\DTO\Request\\{$domain};
+
+use App\DTO\Request\BaseRequestDTO;
+
+readonly class {$resource}UpdateRequestDTO extends BaseRequestDTO
+{
+    public ?string \$name;
+
+    protected function rules(): array
+    {
+        return [
+            'name' => 'permit_empty|string|max_length[255]',
+        ];
+    }
+
+    protected function map(array \$data): void
+    {
+        \$this->name = isset(\$data['name']) ? (string) \$data['name'] : null;
+    }
+
+    public function toArray(): array
+    {
+        return array_filter([
+            'name' => \$this->name,
+        ], fn(\$v) => \$v !== null);
     }
 }
 PHP;
@@ -377,24 +432,21 @@ declare(strict_types=1);
 
 namespace App\Interfaces;
 
-use App\DTO\Request\\{$domain}\\{$resource}IndexRequestDTO;
-use App\DTO\Response\\{$domain}\\{$resource}ResponseDTO;
+use App\Interfaces\DataTransferObjectInterface;
 
 interface {$resource}ServiceInterface
 {
-    public function index({$resource}IndexRequestDTO \$request): array;
-    public function show(array \$data): {$resource}ResponseDTO;
-    public function store(array \$data): {$resource}ResponseDTO;
-    public function update(array \$data): {$resource}ResponseDTO;
-    public function destroy(array \$data): array;
+    public function index(DataTransferObjectInterface \$request): array;
+    public function show(int \$id): DataTransferObjectInterface;
+    public function store(DataTransferObjectInterface \$request): DataTransferObjectInterface;
+    public function update(int \$id, DataTransferObjectInterface \$request): DataTransferObjectInterface;
+    public function destroy(int \$id): array;
 }
 PHP;
     }
 
     private function serviceTemplate(string $resource, string $resourceLower, string $domain): string
     {
-        $plural = $this->pluralize($resource);
-
         return <<<PHP
 <?php
 
@@ -402,140 +454,50 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\DTO\Request\\{$domain}\\{$resource}IndexRequestDTO;
-use App\DTO\Response\\{$domain}\\{$resource}ResponseDTO;
-use App\Exceptions\NotFoundException;
-use App\Exceptions\ValidationException;
-use App\Interfaces\AuditServiceInterface;
+use App\Exceptions\BadRequestException;
+use App\Interfaces\DataTransferObjectInterface;
 use App\Interfaces\{$resource}ServiceInterface;
-use App\Libraries\Query\QueryBuilder;
-use App\Models\{$resource}Model;
+use App\Models\\{$resource}Model;
 use App\Traits\AppliesQueryOptions;
-use App\Traits\ValidatesRequiredFields;
 
-class {$resource}Service implements {$resource}ServiceInterface
+class {$resource}Service extends BaseCrudService implements {$resource}ServiceInterface
 {
     use AppliesQueryOptions;
-    use ValidatesRequiredFields;
+
+    protected string \$responseDtoClass = \App\DTO\Response\\{$domain}\\{$resource}ResponseDTO::class;
 
     public function __construct(
-        protected {$resource}Model \${$resourceLower}Model,
-        protected AuditServiceInterface \$auditService
+        protected {$resource}Model \${$resourceLower}Model
     ) {
+        \$this->model = \${$resourceLower}Model;
     }
 
-    public function index({$resource}IndexRequestDTO \$request): array
+    public function store(DataTransferObjectInterface \$request): DataTransferObjectInterface
     {
-        \$builder = new QueryBuilder(\$this->{$resourceLower}Model);
-        \$this->applyQueryOptions(\$builder, \$request->toArray());
-
-        \$result = \$builder->paginate(\$request->page, \$request->perPage);
-
-        \$result['data'] = array_map(
-            fn (\$item) => {$resource}ResponseDTO::fromArray(\$item->toArray()),
-            \$result['data']
-        );
-
-        return [
-            'data' => \$result['data'],
-            'total' => \$result['total'],
-            'page' => \$result['page'],
-            'perPage' => \$result['perPage']
-        ];
+        return \$this->wrapInTransaction(function() use (\$request) {
+            \$id = \$this->model->insert(\$request->toArray());
+            if (!\$id) {
+                throw new \App\Exceptions\ValidationException(lang('Api.validationFailed'), \$this->model->errors());
+            }
+            return \$this->mapToResponse(\$this->model->find(\$id));
+        });
     }
 
-    public function show(array \$data): {$resource}ResponseDTO
+    public function update(int \$id, DataTransferObjectInterface \$request): DataTransferObjectInterface
     {
-        \$id = \$this->validateRequiredId(\$data);
-        \$item = \$this->{$resourceLower}Model->find(\$id);
+        return \$this->wrapInTransaction(function() use (\$id, \$request) {
+            if (!\$this->model->find(\$id)) {
+                throw new \App\Exceptions\NotFoundException(lang('Api.resourceNotFound'));
+            }
+            
+            \$data = \$request->toArray();
+            if (empty(\$data)) {
+                throw new BadRequestException(lang('Api.invalidRequest'));
+            }
 
-        if (!\$item) {
-            throw new NotFoundException(lang('{$plural}.notFound'));
-        }
-
-        return {$resource}ResponseDTO::fromArray(\$item->toArray());
-    }
-
-    public function store(array \$data): {$resource}ResponseDTO
-    {
-        validateOrFail(\$data, '{$resourceLower}', 'store');
-
-        \$id = \$this->{$resourceLower}Model->insert(\$data);
-        if (!\$id) {
-            throw new ValidationException(lang('Api.validationFailed'), \$this->{$resourceLower}Model->errors());
-        }
-
-        \$item = \$this->{$resourceLower}Model->find(\$id);
-
-        return {$resource}ResponseDTO::fromArray(\$item->toArray());
-    }
-
-    public function update(array \$data): {$resource}ResponseDTO
-    {
-        \$id = \$this->validateRequiredId(\$data);
-        validateOrFail(\$data, '{$resourceLower}', 'update');
-
-        \$success = \$this->{$resourceLower}Model->update(\$id, \$data);
-        if (!\$success) {
-            throw new ValidationException(lang('Api.validationFailed'), \$this->{$resourceLower}Model->errors());
-        }
-
-        \$item = \$this->{$resourceLower}Model->find(\$id);
-
-        return {$resource}ResponseDTO::fromArray(\$item->toArray());
-    }
-
-    public function destroy(array \$data): array
-    {
-        \$id = \$this->validateRequiredId(\$data);
-
-        if (!\$this->{$resourceLower}Model->find(\$id)) {
-            throw new NotFoundException(lang('{$plural}.notFound'));
-        }
-
-        \$this->{$resourceLower}Model->delete(\$id);
-
-        return ['status' => 'success', 'message' => lang('{$plural}.deletedSuccess')];
-    }
-}
-PHP;
-    }
-
-    private function validationTemplate(string $resource): string
-    {
-        $domain = lcfirst($resource);
-
-        return <<<PHP
-<?php
-
-declare(strict_types=1);
-
-namespace App\Validations;
-
-class {$resource}Validation extends BaseValidation
-{
-    public function getRules(string \$action): array
-    {
-        return match (\$action) {
-            'store' => [
-                'name' => 'required|string|max_length[255]',
-            ],
-            'update' => [
-                'name' => 'permit_empty|string|max_length[255]',
-            ],
-            default => [],
-        };
-    }
-
-    public function getMessages(string \$action): array
-    {
-        return match (\$action) {
-            'store', 'update' => [
-                'name.required' => lang('InputValidation.{$domain}.nameRequired'),
-                'name.max_length' => lang('InputValidation.{$domain}.nameMaxLength'),
-            ],
-            default => [],
-        };
+            \$this->model->update(\$id, \$data);
+            return \$this->mapToResponse(\$this->model->find(\$id));
+        });
     }
 }
 PHP;
@@ -552,6 +514,8 @@ namespace App\Controllers\Api\V1\\{$domain};
 
 use App\Controllers\ApiController;
 use App\DTO\Request\\{$domain}\\{$resource}IndexRequestDTO;
+use App\DTO\Request\\{$domain}\\{$resource}CreateRequestDTO;
+use App\DTO\Request\\{$domain}\\{$resource}UpdateRequestDTO;
 use CodeIgniter\HTTP\ResponseInterface;
 
 class {$resource}Controller extends ApiController
@@ -560,32 +524,30 @@ class {$resource}Controller extends ApiController
 
     public function index(): ResponseInterface
     {
-        \$dto = \$this->getDTO({$resource}IndexRequestDTO::class);
-
-        return \$this->handleRequest(
-            fn() => \$this->getService()->index(\$dto)
-        );
+        return \$this->handleRequest('index', {$resource}IndexRequestDTO::class);
     }
 
     public function create(): ResponseInterface
     {
+        return \$this->handleRequest('store', {$resource}CreateRequestDTO::class);
+    }
+
+    public function update(int \$id): ResponseInterface
+    {
         return \$this->handleRequest(
-            fn() => \$this->getService()->store(\$this->collectRequestData())
+            fn(\$dto) => \$this->getService()->update(\$id, \$dto),
+            {$resource}UpdateRequestDTO::class
         );
     }
 
-    public function update(\$id = null): ResponseInterface
+    public function show(int \$id): ResponseInterface
     {
-        return \$this->handleRequest(
-            fn() => \$this->getService()->update(['id' => \$id] + \$this->collectRequestData())
-        );
+        return \$this->handleRequest(fn() => \$this->getService()->show(\$id));
     }
 
-    public function show(\$id = null): ResponseInterface
+    public function delete(int \$id): ResponseInterface
     {
-        return \$this->handleRequest(
-            fn() => \$this->getService()->show(['id' => \$id])
-        );
+        return \$this->handleRequest(fn() => \$this->getService()->destroy(\$id));
     }
 }
 PHP;
@@ -668,8 +630,6 @@ declare(strict_types=1);
 namespace Tests\Unit\Services;
 
 use App\DTO\Request\\{$domain}\\{$resource}IndexRequestDTO;
-use App\DTO\Response\\{$domain}\\{$resource}ResponseDTO;
-use App\Interfaces\AuditServiceInterface;
 use App\Models\\{$resource}Model;
 use App\Services\\{$resource}Service;
 use CodeIgniter\Test\CIUnitTestCase;
@@ -680,14 +640,12 @@ class {$resource}ServiceTest extends CIUnitTestCase
     {
         parent::setUp();
         \$this->mockModel = \$this->createMock({$resource}Model::class);
-        \$this->mockAudit = \$this->createMock(AuditServiceInterface::class);
-        \$this->service = new {$resource}Service(\$this->mockModel, \$this->mockAudit);
+        \$this->service = new {$resource}Service(\$this->mockModel);
     }
 
     public function testIndexReturnsData(): void
     {
         \$dto = new {$resource}IndexRequestDTO(['page' => 1]);
-        // Implementation here...
         \$this->assertTrue(true);
     }
 }
@@ -711,8 +669,6 @@ class {$resource}ModelTest extends CIUnitTestCase
     use DatabaseTestTrait;
 
     protected \$migrate = true;
-    protected \$migrateOnce = false;
-    protected \$refresh = true;
     protected \$namespace = 'App';
 
     public function testPlaceholder(): void
@@ -742,8 +698,6 @@ class {$resource}ControllerTest extends CIUnitTestCase
     use FeatureTestTrait;
 
     protected \$migrate = true;
-    protected \$migrateOnce = false;
-    protected \$refresh = true;
     protected \$namespace = 'App';
 
     public function testPlaceholder(): void

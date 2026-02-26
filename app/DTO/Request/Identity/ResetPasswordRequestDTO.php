@@ -4,32 +4,40 @@ declare(strict_types=1);
 
 namespace App\DTO\Request\Identity;
 
-use App\Interfaces\DataTransferObjectInterface;
+use App\DTO\Request\BaseRequestDTO;
 
 /**
  * Reset Password Request DTO
+ *
+ * Validates the token, email, and new password.
  */
-readonly class ResetPasswordRequestDTO implements DataTransferObjectInterface
+readonly class ResetPasswordRequestDTO extends BaseRequestDTO
 {
-    public string $token;
     public string $email;
+    public string $token;
     public string $password;
 
-    public function __construct(array $data)
+    protected function rules(): array
     {
-        // REUSE: 'auth.reset_password' validation
-        validateOrFail($data, 'auth', 'reset_password');
+        return [
+            'email'    => 'required|valid_email',
+            'token'    => 'required|string',
+            'password' => 'required|strong_password',
+        ];
+    }
 
-        $this->token = (string) $data['token'];
-        $this->email = (string) $data['email'];
-        $this->password = (string) $data['password'];
+    protected function map(array $data): void
+    {
+        $this->email = strtolower(trim((string) ($data['email'] ?? '')));
+        $this->token = (string) ($data['token'] ?? '');
+        $this->password = (string) ($data['password'] ?? '');
     }
 
     public function toArray(): array
     {
         return [
-            'token' => $this->token,
-            'email' => $this->email,
+            'email'    => $this->email,
+            'token'    => $this->token,
             'password' => $this->password,
         ];
     }

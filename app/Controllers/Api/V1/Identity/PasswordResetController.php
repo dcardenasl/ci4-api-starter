@@ -5,44 +5,39 @@ declare(strict_types=1);
 namespace App\Controllers\Api\V1\Identity;
 
 use App\Controllers\ApiController;
+use App\DTO\Request\Identity\ForgotPasswordRequestDTO;
+use App\DTO\Request\Identity\PasswordResetTokenValidationDTO;
+use App\DTO\Request\Identity\ResetPasswordRequestDTO;
 use CodeIgniter\HTTP\ResponseInterface;
 
 /**
- * Password Reset Controller
+ * Modernized Password Reset Controller
  */
 class PasswordResetController extends ApiController
 {
     protected string $serviceName = 'passwordResetService';
 
+    /**
+     * Send reset link to email
+     */
     public function sendResetLink(): ResponseInterface
     {
-        $email = $this->request->getVar('email') ?? '';
-        $dto = new \App\DTO\Request\Identity\ForgotPasswordRequestDTO(['email' => $email]);
-
-        return $this->handleRequest(
-            fn () => $this->getService()->sendResetLink($dto)
-        );
+        return $this->handleRequest('sendResetLink', ForgotPasswordRequestDTO::class);
     }
 
     public function validateToken(): ResponseInterface
     {
-        $token = $this->request->getGet('token') ?? '';
-        $email = $this->request->getGet('email') ?? '';
-
         return $this->handleRequest(
-            fn () => $this->getService()->validateToken([
-                'token' => $token,
-                'email' => $email,
-            ])
+            'validateToken',
+            PasswordResetTokenValidationDTO::class,
+            (array) $this->request->getGet()
         );
     }
-
+    /**
+     * Reset password using token
+     */
     public function resetPassword(): ResponseInterface
     {
-        $dto = $this->getDTO(\App\DTO\Request\Identity\ResetPasswordRequestDTO::class);
-
-        return $this->handleRequest(
-            fn () => $this->getService()->resetPassword($dto)
-        );
+        return $this->handleRequest('resetPassword', ResetPasswordRequestDTO::class);
     }
 }

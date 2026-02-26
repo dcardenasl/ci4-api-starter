@@ -4,27 +4,27 @@ declare(strict_types=1);
 
 namespace App\DTO\Request\Identity;
 
-use App\Interfaces\DataTransferObjectInterface;
+use App\DTO\Request\BaseRequestDTO;
 
 /**
  * Verification Request DTO
  *
- * Validates the verification token.
+ * Validates the verification token provided in the URL or body.
  */
-readonly class VerificationRequestDTO implements DataTransferObjectInterface
+readonly class VerificationRequestDTO extends BaseRequestDTO
 {
     public string $token;
-    public ?string $email;
 
-    public function __construct(array $data)
+    protected function rules(): array
     {
-        // REUSE: 'auth.verify_email' validation
-        // If email is missing, add a placeholder to prevent validation failure if required
-        // Or better, relax validation here if email is not strictly necessary to find the token
-        $this->token = (string) ($data['token'] ?? '');
-        $this->email = (string) ($data['email'] ?? 'temp@example.com'); // Temporary hack to pass strict CI4 validation if required
+        return [
+            'token' => 'required|string|min_length[10]',
+        ];
+    }
 
-        validateOrFail($data + ['email' => $this->email], 'auth', 'verify_email');
+    protected function map(array $data): void
+    {
+        $this->token = (string) ($data['token'] ?? '');
     }
 
     public function toArray(): array

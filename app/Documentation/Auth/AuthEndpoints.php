@@ -50,7 +50,29 @@ use OpenApi\Attributes as OA;
         ),
         new OA\Response(
             response: 202,
-            description: 'Google login received, account pending admin approval'
+            description: 'Google login received, account pending admin approval',
+            content: new OA\JsonContent(
+                properties: [
+                    new OA\Property(property: 'status', type: 'string', example: 'success'),
+                    new OA\Property(property: 'message', type: 'string'),
+                    new OA\Property(
+                        property: 'data',
+                        type: 'object',
+                        properties: [
+                            new OA\Property(
+                                property: 'user',
+                                type: 'object',
+                                properties: [
+                                    new OA\Property(property: 'id', type: 'integer', example: 123),
+                                    new OA\Property(property: 'email', type: 'string', example: 'user@example.com'),
+                                    new OA\Property(property: 'status', type: 'string', example: 'pending_approval'),
+                                ]
+                            ),
+                        ]
+                    ),
+                ],
+                type: 'object'
+            )
         ),
         new OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse'),
         new OA\Response(response: 403, description: 'Account pending approval'),
@@ -72,8 +94,7 @@ use OpenApi\Attributes as OA;
             content: new OA\JsonContent(
                 properties: [
                     new OA\Property(property: 'status', type: 'string', example: 'success'),
-                    new OA\Property(property: 'data', ref: '#/components/schemas/UserResponse'),
-                    new OA\Property(property: 'message', type: 'string'),
+                    new OA\Property(property: 'data', ref: '#/components/schemas/RegisterResponse'),
                 ],
                 type: 'object'
             )

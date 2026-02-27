@@ -16,7 +16,7 @@ use OpenApi\Attributes as OA;
             name: 'period',
             in: 'query',
             required: false,
-            schema: new OA\Schema(type: 'string', example: 'day')
+            schema: new OA\Schema(type: 'string', enum: ['1h', '24h', '7d', '30d'], example: '24h')
         ),
     ],
     responses: [
@@ -45,7 +45,7 @@ use OpenApi\Attributes as OA;
             name: 'period',
             in: 'query',
             required: false,
-            schema: new OA\Schema(type: 'string', example: 'day')
+            schema: new OA\Schema(type: 'string', enum: ['1h', '24h', '7d', '30d'], example: '24h')
         ),
     ],
     responses: [
@@ -55,7 +55,7 @@ use OpenApi\Attributes as OA;
             content: new OA\JsonContent(
                 properties: [
                     new OA\Property(property: 'status', type: 'string', example: 'success'),
-                    new OA\Property(property: 'data', type: 'object'),
+                    new OA\Property(property: 'data', ref: '#/components/schemas/MetricsRequestStats'),
                 ],
                 type: 'object'
             )
@@ -89,7 +89,11 @@ use OpenApi\Attributes as OA;
             content: new OA\JsonContent(
                 properties: [
                     new OA\Property(property: 'status', type: 'string', example: 'success'),
-                    new OA\Property(property: 'data', type: 'object'),
+                    new OA\Property(
+                        property: 'data',
+                        type: 'array',
+                        items: new OA\Items(ref: '#/components/schemas/MetricsSlowRequest')
+                    ),
                 ],
                 type: 'object'
             )
@@ -113,7 +117,7 @@ use OpenApi\Attributes as OA;
             name: 'period',
             in: 'query',
             required: false,
-            schema: new OA\Schema(type: 'string', example: 'day')
+            schema: new OA\Schema(type: 'string', enum: ['1h', '24h', '7d', '30d'], example: '24h')
         ),
         new OA\Parameter(
             name: 'aggregate',
@@ -129,7 +133,7 @@ use OpenApi\Attributes as OA;
             content: new OA\JsonContent(
                 properties: [
                     new OA\Property(property: 'status', type: 'string', example: 'success'),
-                    new OA\Property(property: 'data', type: 'object'),
+                    new OA\Property(property: 'data', ref: '#/components/schemas/MetricsPayload'),
                 ],
                 type: 'object'
             )
@@ -160,6 +164,7 @@ use OpenApi\Attributes as OA;
             content: new OA\JsonContent(
                 properties: [
                     new OA\Property(property: 'status', type: 'string', example: 'success'),
+                    new OA\Property(property: 'message', type: 'string'),
                     new OA\Property(property: 'data', ref: '#/components/schemas/MetricRecord'),
                 ],
                 type: 'object'

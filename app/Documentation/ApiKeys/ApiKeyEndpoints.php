@@ -19,7 +19,7 @@ use OpenApi\Attributes as OA;
             schema: new OA\Schema(type: 'integer', minimum: 1)
         ),
         new OA\Parameter(
-            name: 'limit',
+            name: 'per_page',
             in: 'query',
             required: false,
             schema: new OA\Schema(type: 'integer', minimum: 1)
@@ -29,6 +29,12 @@ use OpenApi\Attributes as OA;
             in: 'query',
             required: false,
             schema: new OA\Schema(type: 'string')
+        ),
+        new OA\Parameter(
+            name: 'is_active',
+            in: 'query',
+            required: false,
+            schema: new OA\Schema(type: 'integer', enum: [0, 1])
         ),
     ],
     responses: [
@@ -51,6 +57,8 @@ use OpenApi\Attributes as OA;
                             new OA\Property(property: 'perPage', type: 'integer', example: 20),
                             new OA\Property(property: 'page', type: 'integer', example: 1),
                             new OA\Property(property: 'lastPage', type: 'integer', example: 1),
+                            new OA\Property(property: 'from', type: 'integer', example: 1),
+                            new OA\Property(property: 'to', type: 'integer', example: 5),
                         ]
                     ),
                 ],
@@ -147,7 +155,7 @@ use OpenApi\Attributes as OA;
         content: new OA\JsonContent(
             properties: [
                 new OA\Property(property: 'name', type: 'string', example: 'Renamed App'),
-                new OA\Property(property: 'is_active', type: 'boolean', example: false),
+                new OA\Property(property: 'is_active', type: 'integer', enum: [0, 1], example: 0),
                 new OA\Property(property: 'rate_limit_requests', type: 'integer', example: 1200),
                 new OA\Property(property: 'rate_limit_window', type: 'integer', example: 60),
                 new OA\Property(property: 'user_rate_limit', type: 'integer', example: 120),

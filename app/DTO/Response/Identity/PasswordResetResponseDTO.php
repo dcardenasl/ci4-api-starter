@@ -5,14 +5,23 @@ declare(strict_types=1);
 namespace App\DTO\Response\Identity;
 
 use App\Interfaces\DataTransferObjectInterface;
+use OpenApi\Attributes as OA;
 
 /**
  * Password Reset Response DTO
  */
+#[OA\Schema(
+    schema: 'PasswordResetResponse',
+    title: 'Password Reset Response',
+    description: 'Password reset acknowledgement',
+    required: ['message', 'success']
+)]
 readonly class PasswordResetResponseDTO implements DataTransferObjectInterface
 {
     public function __construct(
+        #[OA\Property(description: 'Result message', example: 'Password reset successful')]
         public string $message,
+        #[OA\Property(description: 'Whether the reset was successful', example: true)]
         public bool $success = true
     ) {
     }

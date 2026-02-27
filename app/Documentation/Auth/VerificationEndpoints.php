@@ -26,12 +26,11 @@ use OpenApi\Attributes as OA;
             content: new OA\JsonContent(
                 properties: [
                     new OA\Property(property: 'status', type: 'string', example: 'success'),
-                    new OA\Property(property: 'message', type: 'string'),
                     new OA\Property(
                         property: 'data',
                         type: 'object',
                         properties: [
-                            new OA\Property(property: 'message', type: 'string'),
+                            new OA\Property(property: 'success', type: 'boolean', example: true),
                         ]
                     ),
                 ],
@@ -46,20 +45,6 @@ use OpenApi\Attributes as OA;
     tags: ['Authentication'],
     summary: 'Resend verification email',
     security: [['bearerAuth' => []]],
-    requestBody: new OA\RequestBody(
-        required: false,
-        content: new OA\JsonContent(
-            properties: [
-                new OA\Property(
-                    property: 'clientBaseUrl',
-                    type: 'string',
-                    format: 'uri',
-                    description: 'Optional client app base URL used to build verification link',
-                    example: 'https://admin.example.com'
-                ),
-            ]
-        )
-    ),
     responses: [
         new OA\Response(
             response: 200,
@@ -67,12 +52,11 @@ use OpenApi\Attributes as OA;
             content: new OA\JsonContent(
                 properties: [
                     new OA\Property(property: 'status', type: 'string', example: 'success'),
-                    new OA\Property(property: 'message', type: 'string'),
                     new OA\Property(
                         property: 'data',
                         type: 'object',
                         properties: [
-                            new OA\Property(property: 'message', type: 'string'),
+                            new OA\Property(property: 'success', type: 'boolean', example: true),
                         ]
                     ),
                 ],

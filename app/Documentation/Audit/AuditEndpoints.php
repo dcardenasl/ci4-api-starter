@@ -19,7 +19,31 @@ use OpenApi\Attributes as OA;
             schema: new OA\Schema(type: 'integer', minimum: 1)
         ),
         new OA\Parameter(
-            name: 'limit',
+            name: 'perPage',
+            in: 'query',
+            required: false,
+            schema: new OA\Schema(type: 'integer', minimum: 1)
+        ),
+        new OA\Parameter(
+            name: 'search',
+            in: 'query',
+            required: false,
+            schema: new OA\Schema(type: 'string')
+        ),
+        new OA\Parameter(
+            name: 'entityType',
+            in: 'query',
+            required: false,
+            schema: new OA\Schema(type: 'string')
+        ),
+        new OA\Parameter(
+            name: 'entityId',
+            in: 'query',
+            required: false,
+            schema: new OA\Schema(type: 'integer', minimum: 1)
+        ),
+        new OA\Parameter(
+            name: 'userId',
             in: 'query',
             required: false,
             schema: new OA\Schema(type: 'integer', minimum: 1)
@@ -33,7 +57,18 @@ use OpenApi\Attributes as OA;
                 properties: [
                     new OA\Property(property: 'status', type: 'string', example: 'success'),
                     new OA\Property(property: 'data', type: 'array', items: new OA\Items(ref: '#/components/schemas/AuditResponse')),
-                    new OA\Property(property: 'meta', type: 'object'),
+                    new OA\Property(
+                        property: 'meta',
+                        type: 'object',
+                        properties: [
+                            new OA\Property(property: 'total', type: 'integer', example: 120),
+                            new OA\Property(property: 'perPage', type: 'integer', example: 20),
+                            new OA\Property(property: 'page', type: 'integer', example: 1),
+                            new OA\Property(property: 'lastPage', type: 'integer', example: 6),
+                            new OA\Property(property: 'from', type: 'integer', example: 1),
+                            new OA\Property(property: 'to', type: 'integer', example: 20),
+                        ]
+                    ),
                 ],
                 type: 'object'
             )

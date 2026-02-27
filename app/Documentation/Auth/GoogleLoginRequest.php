@@ -18,12 +18,6 @@ use OpenApi\Attributes as OA;
                 type: 'string',
                 description: 'Google ID token from frontend OAuth flow'
             ),
-            new OA\Property(
-                property: 'clientBaseUrl',
-                type: 'string',
-                nullable: true,
-                description: 'Optional frontend base URL used for email links'
-            ),
         ]
     )
 )]

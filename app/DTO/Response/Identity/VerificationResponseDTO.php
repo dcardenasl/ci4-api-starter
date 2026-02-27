@@ -5,16 +5,27 @@ declare(strict_types=1);
 namespace App\DTO\Response\Identity;
 
 use App\Interfaces\DataTransferObjectInterface;
+use OpenApi\Attributes as OA;
 
 /**
  * Verification Response DTO
  */
+#[OA\Schema(
+    schema: 'VerificationResponse',
+    title: 'Verification Response',
+    description: 'Email verification result',
+    required: ['message', 'userId', 'email', 'verifiedAt']
+)]
 readonly class VerificationResponseDTO implements DataTransferObjectInterface
 {
     public function __construct(
+        #[OA\Property(description: 'Result message', example: 'Email verified successfully')]
         public string $message,
+        #[OA\Property(property: 'userId', description: 'Verified user id', example: 1)]
         public int $userId,
+        #[OA\Property(description: 'Verified email', example: 'user@example.com')]
         public string $email,
+        #[OA\Property(property: 'verifiedAt', description: 'Verification timestamp', example: '2026-02-26 12:00:00')]
         public string $verifiedAt
     ) {
     }

@@ -11,6 +11,20 @@ use OpenApi\Attributes as OA;
     tags: ['Files'],
     summary: 'List files for current user',
     security: [['bearerAuth' => []]],
+    parameters: [
+        new OA\Parameter(
+            name: 'page',
+            in: 'query',
+            required: false,
+            schema: new OA\Schema(type: 'integer', minimum: 1)
+        ),
+        new OA\Parameter(
+            name: 'perPage',
+            in: 'query',
+            required: false,
+            schema: new OA\Schema(type: 'integer', minimum: 1)
+        ),
+    ],
     responses: [
         new OA\Response(
             response: 200,
@@ -22,6 +36,18 @@ use OpenApi\Attributes as OA;
                         property: 'data',
                         type: 'array',
                         items: new OA\Items(ref: '#/components/schemas/FileResponse')
+                    ),
+                    new OA\Property(
+                        property: 'meta',
+                        type: 'object',
+                        properties: [
+                            new OA\Property(property: 'total', type: 'integer', example: 45),
+                            new OA\Property(property: 'perPage', type: 'integer', example: 20),
+                            new OA\Property(property: 'page', type: 'integer', example: 1),
+                            new OA\Property(property: 'lastPage', type: 'integer', example: 3),
+                            new OA\Property(property: 'from', type: 'integer', example: 1),
+                            new OA\Property(property: 'to', type: 'integer', example: 20),
+                        ]
                     ),
                 ],
                 type: 'object'
@@ -84,16 +110,25 @@ use OpenApi\Attributes as OA;
         new OA\Response(
             response: 200,
             description: 'File metadata (or file download for local storage)',
-            content: new OA\JsonContent(
-                properties: [
-                    new OA\Property(property: 'status', type: 'string', example: 'success'),
-                    new OA\Property(
-                        property: 'data',
-                        ref: '#/components/schemas/FileResponse'
-                    ),
-                ],
-                type: 'object'
-            )
+            content: [
+                new OA\MediaType(
+                    mediaType: 'application/json',
+                    schema: new OA\Schema(
+                        properties: [
+                            new OA\Property(property: 'status', type: 'string', example: 'success'),
+                            new OA\Property(
+                                property: 'data',
+                                ref: '#/components/schemas/FileDownloadResponse'
+                            ),
+                        ],
+                        type: 'object'
+                    )
+                ),
+                new OA\MediaType(
+                    mediaType: 'application/octet-stream',
+                    schema: new OA\Schema(type: 'string', format: 'binary')
+                ),
+            ]
         ),
         new OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse'),
         new OA\Response(response: 404, description: 'File not found'),

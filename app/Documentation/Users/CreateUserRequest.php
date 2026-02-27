@@ -10,7 +10,7 @@ use OpenApi\Attributes as OA;
  * Create User Request Body
  *
  * Request schema for creating a new user via the admin/superadmin endpoint.
- * Requires email; password optional when sending invitation.
+ * Requires email; password is not accepted on this endpoint.
  */
 #[OA\RequestBody(
     request: 'CreateUserRequest',
@@ -45,24 +45,23 @@ use OpenApi\Attributes as OA;
                 example: 'user'
             ),
             new OA\Property(
-                property: 'password',
+                property: 'oauthProvider',
                 type: 'string',
-                format: 'password',
-                description: 'User password',
-                example: 'Password123'
+                description: 'Optional OAuth provider for externally managed accounts',
+                example: 'google'
             ),
             new OA\Property(
-                property: 'sendInvite',
-                type: 'boolean',
-                description: 'Send invitation email and allow user to set password',
-                example: true
+                property: 'oauthProviderId',
+                type: 'string',
+                description: 'Provider-specific identifier',
+                example: '113337022221111122223'
             ),
             new OA\Property(
-                property: 'clientBaseUrl',
+                property: 'avatarUrl',
                 type: 'string',
                 format: 'uri',
-                description: 'Optional client app base URL used to build invitation/reset links',
-                example: 'https://admin.example.com'
+                description: 'Optional avatar URL',
+                example: 'https://example.com/avatar.png'
             ),
         ]
     )

@@ -5,19 +5,30 @@ declare(strict_types=1);
 namespace App\DTO\Response\Common;
 
 use App\Interfaces\DataTransferObjectInterface;
+use OpenApi\Attributes as OA;
 
 /**
  * Generic Paginated Response DTO
  */
+#[OA\Schema(
+    schema: 'PaginatedResponse',
+    title: 'Paginated Response',
+    description: 'Generic pagination payload',
+    required: ['data', 'total', 'page', 'perPage']
+)]
 readonly class PaginatedResponseDTO implements DataTransferObjectInterface
 {
     /**
      * @param array<int, mixed> $data
      */
     public function __construct(
+        #[OA\Property(description: 'Result set', type: 'array', items: new OA\Items(type: 'object'))]
         public array $data,
+        #[OA\Property(description: 'Total number of records', example: 120)]
         public int $total,
+        #[OA\Property(description: 'Current page', example: 1)]
         public int $page,
+        #[OA\Property(property: 'perPage', description: 'Items per page', example: 20)]
         public int $perPage
     ) {
     }

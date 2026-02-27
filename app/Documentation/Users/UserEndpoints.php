@@ -20,7 +20,7 @@ use OpenApi\Attributes as OA;
             schema: new OA\Schema(type: 'integer', minimum: 1)
         ),
         new OA\Parameter(
-            name: 'limit',
+            name: 'perPage',
             in: 'query',
             required: false,
             schema: new OA\Schema(type: 'integer', minimum: 1)
@@ -30,6 +30,30 @@ use OpenApi\Attributes as OA;
             in: 'query',
             required: false,
             schema: new OA\Schema(type: 'string')
+        ),
+        new OA\Parameter(
+            name: 'role',
+            in: 'query',
+            required: false,
+            schema: new OA\Schema(type: 'string', enum: ['user', 'admin', 'superadmin'])
+        ),
+        new OA\Parameter(
+            name: 'status',
+            in: 'query',
+            required: false,
+            schema: new OA\Schema(type: 'string', enum: ['active', 'inactive', 'pending_approval', 'invited'])
+        ),
+        new OA\Parameter(
+            name: 'orderBy',
+            in: 'query',
+            required: false,
+            schema: new OA\Schema(type: 'string', enum: ['id', 'email', 'created_at', 'role', 'status', 'first_name', 'last_name'])
+        ),
+        new OA\Parameter(
+            name: 'orderDir',
+            in: 'query',
+            required: false,
+            schema: new OA\Schema(type: 'string', enum: ['ASC', 'DESC', 'asc', 'desc'])
         ),
     ],
     responses: [

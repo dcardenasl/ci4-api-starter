@@ -17,13 +17,6 @@ use OpenApi\Attributes as OA;
             required: ['email'],
             properties: [
                 new OA\Property(property: 'email', type: 'string', format: 'email'),
-                new OA\Property(
-                    property: 'clientBaseUrl',
-                    type: 'string',
-                    format: 'uri',
-                    description: 'Optional client app base URL used to build reset link',
-                    example: 'https://admin.example.com'
-                ),
             ]
         )
     ),
@@ -34,12 +27,11 @@ use OpenApi\Attributes as OA;
             content: new OA\JsonContent(
                 properties: [
                     new OA\Property(property: 'status', type: 'string', example: 'success'),
-                    new OA\Property(property: 'message', type: 'string'),
                     new OA\Property(
                         property: 'data',
                         type: 'object',
                         properties: [
-                            new OA\Property(property: 'message', type: 'string'),
+                            new OA\Property(property: 'success', type: 'boolean', example: true),
                         ]
                     ),
                 ],
@@ -78,10 +70,9 @@ use OpenApi\Attributes as OA;
                         property: 'data',
                         type: 'object',
                         properties: [
-                            new OA\Property(property: 'valid', type: 'boolean', example: true),
+                            new OA\Property(property: 'success', type: 'boolean', example: true),
                         ]
                     ),
-                    new OA\Property(property: 'message', type: 'string'),
                 ],
                 type: 'object'
             )
@@ -112,12 +103,11 @@ use OpenApi\Attributes as OA;
             content: new OA\JsonContent(
                 properties: [
                     new OA\Property(property: 'status', type: 'string', example: 'success'),
-                    new OA\Property(property: 'message', type: 'string'),
                     new OA\Property(
                         property: 'data',
                         type: 'object',
                         properties: [
-                            new OA\Property(property: 'message', type: 'string'),
+                            new OA\Property(property: 'success', type: 'boolean', example: true),
                         ]
                     ),
                 ],

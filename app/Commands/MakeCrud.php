@@ -432,15 +432,16 @@ declare(strict_types=1);
 
 namespace App\Interfaces;
 
+use App\DTO\SecurityContext;
 use App\Interfaces\DataTransferObjectInterface;
 
 interface {$resource}ServiceInterface
 {
-    public function index(DataTransferObjectInterface \$request): array;
-    public function show(int \$id): DataTransferObjectInterface;
-    public function store(DataTransferObjectInterface \$request): DataTransferObjectInterface;
-    public function update(int \$id, DataTransferObjectInterface \$request): DataTransferObjectInterface;
-    public function destroy(int \$id): array;
+    public function index(DataTransferObjectInterface \$request, ?SecurityContext \$context = null): array;
+    public function show(int \$id, ?SecurityContext \$context = null): DataTransferObjectInterface;
+    public function store(DataTransferObjectInterface \$request, ?SecurityContext \$context = null): DataTransferObjectInterface;
+    public function update(int \$id, DataTransferObjectInterface \$request, ?SecurityContext \$context = null): DataTransferObjectInterface;
+    public function destroy(int \$id, ?SecurityContext \$context = null): bool;
 }
 PHP;
     }
@@ -454,6 +455,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\DTO\SecurityContext;
 use App\Exceptions\BadRequestException;
 use App\Interfaces\DataTransferObjectInterface;
 use App\Interfaces\{$resource}ServiceInterface;
@@ -472,7 +474,7 @@ class {$resource}Service extends BaseCrudService implements {$resource}ServiceIn
         \$this->model = \${$resourceLower}Model;
     }
 
-    public function store(DataTransferObjectInterface \$request): DataTransferObjectInterface
+    public function store(DataTransferObjectInterface \$request, ?SecurityContext \$context = null): DataTransferObjectInterface
     {
         return \$this->wrapInTransaction(function() use (\$request) {
             \$id = \$this->model->insert(\$request->toArray());
@@ -483,7 +485,7 @@ class {$resource}Service extends BaseCrudService implements {$resource}ServiceIn
         });
     }
 
-    public function update(int \$id, DataTransferObjectInterface \$request): DataTransferObjectInterface
+    public function update(int \$id, DataTransferObjectInterface \$request, ?SecurityContext \$context = null): DataTransferObjectInterface
     {
         return \$this->wrapInTransaction(function() use (\$id, \$request) {
             if (!\$this->model->find(\$id)) {
@@ -521,6 +523,9 @@ use CodeIgniter\HTTP\ResponseInterface;
 class {$resource}Controller extends ApiController
 {
     protected string \$serviceName = '{$resourceLower}Service';
+    protected array \$statusCodes = [
+        'store' => 201,
+    ];
 
     public function index(): ResponseInterface
     {
@@ -535,19 +540,19 @@ class {$resource}Controller extends ApiController
     public function update(int \$id): ResponseInterface
     {
         return \$this->handleRequest(
-            fn(\$dto) => \$this->getService()->update(\$id, \$dto),
+            fn(\$dto, \$context) => \$this->getService()->update(\$id, \$dto, \$context),
             {$resource}UpdateRequestDTO::class
         );
     }
 
     public function show(int \$id): ResponseInterface
     {
-        return \$this->handleRequest(fn() => \$this->getService()->show(\$id));
+        return \$this->handleRequest(fn(\$dto, \$context) => \$this->getService()->show(\$id, \$context));
     }
 
     public function delete(int \$id): ResponseInterface
     {
-        return \$this->handleRequest(fn() => \$this->getService()->destroy(\$id));
+        return \$this->handleRequest(fn(\$dto, \$context) => \$this->getService()->destroy(\$id, \$context));
     }
 }
 PHP;

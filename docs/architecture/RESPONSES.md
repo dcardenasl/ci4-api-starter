@@ -6,10 +6,22 @@ The API follows a strict, predictable response format. All business endpoints re
 
 ## Automatic Normalization
 
-The `ApiController` handles the final response structure. Services return pure data (DTOs, Entities, or Arrays), and the controller automatically:
+The `ApiController` handles the final response structure. Services return pure data (DTOs, Entities, arrays, or `OperationResult`), and the controller automatically:
 1. Wraps the result in `ApiResponse::success()`.
 2. Recursively converts all DTOs to associative arrays.
 3. Maps property names from camelCase (backend) to snake_case (frontend contract).
+
+## OperationResult Mapping
+
+For command-like flows, services can return `App\Support\OperationResult`.
+
+`ApiController` maps states explicitly:
+
+1. `OperationResult::success(...)` -> HTTP success (default `200`, or explicit override).
+2. `OperationResult::accepted(...)` -> HTTP `202` by default.
+3. `OperationResult::error(...)` -> standard error envelope with explicit status.
+
+Accepted/pending behavior is not inferred from message text.
 
 ---
 

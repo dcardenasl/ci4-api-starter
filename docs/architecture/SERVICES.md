@@ -9,7 +9,7 @@ The Service layer contains all business logic and orchestrates domain operations
 Services should NOT have any knowledge of HTTP, JSON, or `ApiResponse`.
 
 - **Input:** Specific DTOs or scalar types.
-- **Output:** DTOs, Entities, or pure arrays.
+- **Output:** DTOs, Entities, or `OperationResult` for command-like workflows.
 - **Errors:** Thrown as custom Exceptions (e.g., `AuthenticationException`).
 
 ### Example
@@ -24,6 +24,17 @@ public function store(UserCreateRequestDTO $request): UserResponseDTO
     return UserResponseDTO::fromArray($this->userModel->find($userId)->toArray());
 }
 ```
+
+## Command Outcomes (`OperationResult`)
+
+For command-style operations that are not plain CRUD reads (e.g. token revoke, external auth decisions),
+services should return `App\Support\OperationResult` instead of ad-hoc arrays.
+
+Rules:
+
+1. Use `OperationResult::success()` for regular command success.
+2. Use `OperationResult::accepted()` for domain-accepted asynchronous/pending flows.
+3. Use exceptions for failures (do not return HTTP-like error payloads from services).
 
 ---
 

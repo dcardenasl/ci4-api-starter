@@ -14,6 +14,7 @@ Este proyecto sigue una arquitectura de capas avanzada diseñada para la escalab
 
 - **DTOs Inmutables:** Utiliza clases `readonly` de PHP 8.2 para todo el transporte de datos entre capas.
 - **Servicios Puros:** La lógica de negocio está 100% desacoplada de las preocupaciones de HTTP/API.
+- **Resultados de Comando Explícitos:** Los flujos no-CRUD usan `OperationResult` sin heurísticas basadas en mensajes.
 - **Auto-Validación:** Los datos se validan en la frontera (al construir el DTO).
 - **Documentación Viva:** Los esquemas de Swagger están integrados directamente en los contratos de código.
 - **Normalización de Salida:** Conversión recursiva automática de objetos complejos a JSON estandarizado.

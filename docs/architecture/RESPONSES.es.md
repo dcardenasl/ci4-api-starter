@@ -6,10 +6,22 @@ La API sigue un formato de respuesta estricto y predecible. Todos los endpoints 
 
 ## Normalización Automática
 
-El `ApiController` maneja la estructura final de la respuesta. Los servicios retornan datos puros (DTOs, Entidades o Arreglos), y el controlador automáticamente:
+El `ApiController` maneja la estructura final de la respuesta. Los servicios retornan datos puros (DTOs, Entidades, arreglos u `OperationResult`), y el controlador automáticamente:
 1. Envuelve el resultado en `ApiResponse::success()`.
 2. Convierte recursivamente todos los DTOs en arreglos asociativos.
 3. Mapea los nombres de propiedades de camelCase (backend) a snake_case (contrato frontend).
+
+## Mapeo de `OperationResult`
+
+Para flujos tipo comando, los servicios pueden retornar `App\Support\OperationResult`.
+
+`ApiController` mapea explícitamente:
+
+1. `OperationResult::success(...)` -> éxito HTTP (por defecto `200` o override explícito).
+2. `OperationResult::accepted(...)` -> HTTP `202` por defecto.
+3. `OperationResult::error(...)` -> envoltura estándar de error con status explícito.
+
+El comportamiento accepted/pending no se infiere desde texto de mensajes.
 
 ---
 

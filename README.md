@@ -14,6 +14,7 @@ This project follows an advanced layered architecture designed for scalability a
 
 - **Immutable DTOs:** Uses PHP 8.2 `readonly` classes for all data transfer between layers.
 - **Pure Services:** Business logic is 100% decoupled from HTTP/API concerns.
+- **Explicit Command Outcomes:** Non-CRUD command flows use `OperationResult` instead of message-based heuristics.
 - **Auto-Validation:** Data is validated at the boundary (DTO construction).
 - **Living Documentation:** Swagger schemas are integrated directly into code contracts.
 - **Output Normalization:** Automatic recursive conversion of complex objects to standardized JSON.

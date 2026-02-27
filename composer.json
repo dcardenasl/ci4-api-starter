@@ -61,10 +61,12 @@
         "cs-fix": "php-cs-fixer fix",
         "cs-check": "php-cs-fixer fix --dry-run --diff --sequential",
         "i18n-check": "php scripts/i18n-check.php",
+        "docs-i18n-check": "php scripts/docs-i18n-parity-check.php",
         "quality": [
             "@cs-check",
             "@phpstan",
             "@i18n-check",
+            "@docs-i18n-check",
             "@test"
         ]
     },

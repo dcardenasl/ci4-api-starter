@@ -26,22 +26,14 @@ A hands-on tutorial (~30 minutes) that walks you through:
 ### **[AGENT_QUICK_REFERENCE.md](AGENT_QUICK_REFERENCE.md)**
 **Primary reference for AI agents creating CRUD resources**
 
-Condensed guide (~600 lines) optimized for AI context usage:
-- Complete CRUD implementation checklist (10 steps with code)
-- Request flow diagrams
-- Exception reference table
-- ApiResponse method reference
-- Common validation patterns
-- Query features (filtering, searching, sorting, pagination)
-- Security checklist
-- Testing patterns (Unit, Integration, Feature)
-- Common pitfalls to avoid
-- File naming conventions
+Condensed guide for AI context usage:
+- CRUD implementation checklist
+- Request flow and exception reference
+- Validation and testing patterns
+- Security and architecture guardrails
 
 **When to use:** AI agents implementing new resources should read this FIRST before writing any code.
 **CRUD rule:** Start with `php spark make:crud ...` before manual CRUD file creation.
-
-**Optimization:** 75% smaller than reading full architecture docs (600 vs 2,400 lines).
 
 ---
 
@@ -77,7 +69,7 @@ Condensed guide (~600 lines) optimized for AI context usage:
 
 **Full roadmap:** See [`architecture/README.md`](architecture/README.md)
 
-**En español:** Todos los documentos de arquitectura están disponibles en español (sufijo `.es.md`)
+**En español:** all architecture docs are available with `.es.md` files.
 
 ---
 
@@ -86,7 +78,7 @@ Condensed guide (~600 lines) optimized for AI context usage:
 ### **[architecture/](architecture/)**
 **Organized, focused documents by topic (bilingual EN/ES)**
 
-The architecture documentation is organized into 14 focused documents (~100-300 lines each), available in both English and Spanish:
+The architecture documentation is organized into focused documents available in both English and Spanish:
 
 | Document | Topic | Audience | Lines |
 |----------|-------|----------|-------|
@@ -111,6 +103,18 @@ The architecture documentation is organized into 14 focused documents (~100-300 
 - ✅ Clear learning progression (beginner → advanced)
 - ✅ Faster navigation (direct links to topics)
 - ✅ 100% bilingual coverage (English + Spanish)
+
+---
+
+## 📐 Template Governance
+
+Template adoption and quality governance live in:
+
+1. [`template/ARCHITECTURE_CONTRACT.md`](template/ARCHITECTURE_CONTRACT.md)
+2. [`template/MODULE_BOOTSTRAP_CHECKLIST.md`](template/MODULE_BOOTSTRAP_CHECKLIST.md)
+3. [`template/QUALITY_GATES.md`](template/QUALITY_GATES.md)
+
+All markdown docs in `docs/` must keep EN/ES parity (`.md` and `.es.md`).
 
 ---
 

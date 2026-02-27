@@ -24,11 +24,12 @@ Este skill define el estándar de oro para crear recursos en este repositorio, p
    - Implementar **Servicio** heredando de `BaseCrudService`.
    - Usar el trait `HandlesTransactions` para operaciones de escritura.
    - **Regla de Oro:** El servicio no conoce la capa HTTP. Recibe DTOs y devuelve DTOs/Arrays.
+   - **Propagación de Identidad:** Inyectar automáticamente `SecurityContext` en los métodos del servicio vía `handleRequest`.
    - Registrar en `app/Config/Services.php`.
 
 4. **Capa de Transporte (Controller Declarativo):**
    - Crear **Controller** extendiendo `ApiController`.
-   - Usar `handleRequest('serviceMethod', RequestDTO::class)` para orquestación automática.
+   - Usar `handleRequest('serviceMethod', RequestDTO::class)` para orquestación automática e inyección de contexto de seguridad.
    - Definir **Rutas** en `app/Config/Routes.php`.
 
 5. **Infraestructura:**
@@ -37,8 +38,9 @@ Este skill define el estándar de oro para crear recursos en este repositorio, p
    - Generar Swagger: `php spark swagger:generate`.
 
 6. **Validación de Calidad:**
-   - **Pruebas Unitarias:** Validar lógica del servicio.
-   - **Pruebas Feature:** Validar respuesta JSON (clave `data`) y códigos HTTP semánticos (201, 202, 422).
+   - **Pruebas Unitarias:** Validar lógica del servicio con mocks de dependencias.
+   - **Pruebas Feature:** Usar `actAs()` y `ContextHolder` para simular identidad. Validar respuesta JSON (clave `data`) y códigos HTTP semánticos (201, 202, 422).
+   - **Base de Datos:** Usar SQLite para tests rápidos e independientes.
    - `composer quality` debe pasar al 100%.
 
 ## Reglas Inquebrantables (Nuevos Estándares)

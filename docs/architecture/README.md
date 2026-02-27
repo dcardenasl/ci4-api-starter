@@ -56,8 +56,14 @@ Welcome to the architecture documentation. This directory contains detailed, foc
    - Response structure standards
    - Success, error, and paginated responses
 
-**Time investment:** ~45 minutes
-**You'll know:** How to handle input, validate, and respond
+8. **[TESTING.md](TESTING.md)** (~15 min read)
+   - Three-layer testing pyramid
+   - SQLite integration and speed
+   - Identity propagation with ContextHolder
+   - Writing your first test
+
+**Time investment:** ~60 minutes
+**You'll know:** How to handle input, validate, respond, and test
 
 ---
 

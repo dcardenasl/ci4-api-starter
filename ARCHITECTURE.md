@@ -34,6 +34,7 @@ class UserController extends ApiController
 
     public function create(): ResponseInterface {
         // Validation happens automatically inside the DTO constructor
+        // SecurityContext is automatically injected into the service method
         return $this->handleRequest('store', UserStoreRequestDTO::class);
     }
 }
@@ -41,6 +42,7 @@ class UserController extends ApiController
 
 **Benefits:**
 - ✅ **Zero-Boilerplate:** Automatic request-to-DTO mapping.
+- ✅ **Security Injection:** Automated propagation of `SecurityContext` (user ID, role, and metadata).
 - ✅ **Centralized Error Handling:** Global exception-to-JSON transformation.
 - ✅ **Standardized Contract:** Automated `{"status": "success", "data": ...}` wrapping.
 - ✅ **Semantic Codes:** Automated mapping of actions to status codes (201 for creation, 202 for pending).
@@ -75,10 +77,12 @@ php spark swagger:generate  # Scans app/DTO/ and app/Documentation/
 **Decision:** Tests are organized by integration level to maximize speed and coverage.
 
 1.  **Unit (Fast):** Mocked dependencies. Tests logic in Services, DTOs, and Libraries.
-2.  **Integration (DB):** Tests real Database/Model interactions.
+2.  **Integration (DB):** Tests real Database/Model interactions using **SQLite**.
 3.  **Feature (E2E):** Full HTTP request/response cycle, filters, and authorization.
 
 **Key Rule:** Service unit tests should verify DTO return types and logic without caring about HTTP status codes or JSON structures.
+
+**Test Stability:** The project uses a dedicated `ci4_test.sqlite` database and `ContextHolder` for identity propagation, ensuring tests are fast, isolated, and easy to run in CI environments without external dependencies.
 
 ---
 

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Exceptions;
 
+use App\Interfaces\HasStatusCode;
 use Exception;
 use Throwable;
 
@@ -13,7 +14,7 @@ use Throwable;
  * Abstract base class for all custom API exceptions.
  * Provides structured error information with HTTP status codes.
  */
-abstract class ApiException extends Exception
+abstract class ApiException extends Exception implements HasStatusCode
 {
     /**
      * HTTP status code for this exception

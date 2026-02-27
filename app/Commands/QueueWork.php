@@ -2,9 +2,9 @@
 
 namespace App\Commands;
 
-use App\Libraries\Queue\QueueManager;
 use CodeIgniter\CLI\BaseCommand;
 use CodeIgniter\CLI\CLI;
+use Config\Services;
 
 class QueueWork extends BaseCommand
 {
@@ -74,7 +74,7 @@ class QueueWork extends BaseCommand
         $maxJobs  = (int) $this->resolveOption('max-jobs', '0');
         $jobDelay = (int) $this->resolveOption('job-delay', '0');
 
-        $queueManager = new QueueManager();
+        $queueManager = Services::queueManager(false);
         $processedJobs = 0;
 
         CLI::write("Queue worker started for queue: {$queue}", 'green');

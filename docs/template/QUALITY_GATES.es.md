@@ -7,6 +7,7 @@ Checklist de calidad obligatoria para cada PR.
 1. `composer cs-check`
 2. `composer phpstan`
 3. `php scripts/i18n-check.php`
+4. `php scripts/docs-i18n-parity-check.php`
 
 ## 2. Pruebas
 
@@ -23,6 +24,7 @@ Deben pasar los tests de `tests/Unit/Architecture/`:
 3. contratos `OperationResult`
 4. contratos DTO paginados para CRUD
 5. uso de DTOs en pipeline de controladores
+6. convenciones de instanciación runtime (sin `new *Model()` en Commands/Filters)
 
 ## 4. Contratos mínimos
 
@@ -31,3 +33,9 @@ Deben pasar los tests de `tests/Unit/Architecture/`:
 3. `CrudServiceContract::index()` retorna `DataTransferObjectInterface`.
 4. Comandos retornan `OperationResult`.
 5. Paridad i18n (`en` + `es`) para nuevas claves.
+
+## 5. Checklist de release
+
+1. `git status` limpio después de tests.
+2. Documentación actualizada cuando cambian contratos o convenciones.
+3. El scaffold de módulos nuevos genera archivos compatibles con guardrails de contrato.

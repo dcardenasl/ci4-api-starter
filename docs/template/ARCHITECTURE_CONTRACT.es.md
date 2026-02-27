@@ -27,4 +27,5 @@ Reglas obligatorias para cualquier módulo construido sobre este template.
 1. Registrar servicios en `app/Config/Services.php`.
 2. Mantener i18n en `en` y `es`.
 3. Mantener pruebas Unit/Feature/Integration según alcance.
-4. `composer quality` debe pasar antes de merge.
+4. En clases runtime (`Commands`, `Filters`) resolver dependencias con contenedor/helpers de modelo, evitando `new *Model()` directo.
+5. `composer quality` debe pasar antes de merge.

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Commands;
 
-use App\Models\UserModel;
 use CodeIgniter\CLI\BaseCommand;
 use CodeIgniter\CLI\CLI;
 
@@ -38,7 +37,8 @@ class BootstrapSuperadmin extends BaseCommand
             return EXIT_ERROR;
         }
 
-        $userModel = new UserModel();
+        /** @var \App\Models\UserModel $userModel */
+        $userModel = model(\App\Models\UserModel::class);
         $existingSuperadmin = $userModel->where('role', 'superadmin')->first();
         if ($existingSuperadmin !== null) {
             CLI::error('A superadmin already exists. Bootstrap can only run once.');

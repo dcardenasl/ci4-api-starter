@@ -55,13 +55,12 @@ class ApiKeyService extends BaseCrudService implements ApiKeyServiceInterface
 
             /** @var object $apiKey */
             $apiKey = $this->model->find($id);
-            $response = $this->mapToResponse($apiKey);
 
             // Return full key only at creation time.
-            $responseData = $response->toArray();
-            $responseData['key'] = $rawKey;
+            $apiKeyData = $apiKey->toArray();
+            $apiKeyData['key'] = $rawKey;
 
-            return (\App\DTO\Response\ApiKeys\ApiKeyResponseDTO::class)::fromArray($responseData);
+            return \App\DTO\Response\ApiKeys\ApiKeyResponseDTO::fromArray($apiKeyData);
         });
     }
 

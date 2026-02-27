@@ -23,7 +23,7 @@ class AuditService extends BaseCrudService implements \App\Interfaces\System\Aud
     protected string $responseDtoClass;
 
     private const SENSITIVE_FIELDS = [
-        'password', 'password_confirmation', 'token', 'access_token', 'refresh_token', 'api_key', 'key_hash'
+        'password', 'password_confirmation', 'token', 'accesstoken', 'refreshtoken', 'apikey', 'access_token', 'refresh_token', 'api_key', 'key_hash'
     ];
 
     /**

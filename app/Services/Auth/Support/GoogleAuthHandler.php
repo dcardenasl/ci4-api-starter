@@ -30,13 +30,13 @@ class GoogleAuthHandler
     {
         $userId = $this->userModel->insert([
             'email' => strtolower(trim((string) $identity['email'])),
-            'first_name' => $identity['first_name'] ?? null,
-            'last_name' => $identity['last_name'] ?? null,
-            'avatar_url' => $identity['avatar_url'] ?? null,
+            'first_name' => $identity['firstName'] ?? null,
+            'last_name' => $identity['lastName'] ?? null,
+            'avatar_url' => $identity['avatarUrl'] ?? null,
             'role' => 'user',
             'status' => 'pending_approval',
             'oauth_provider' => 'google',
-            'oauth_provider_id' => $identity['provider_id'],
+            'oauth_provider_id' => $identity['providerId'],
             'email_verified_at' => date('Y-m-d H:i:s'),
         ]);
 
@@ -59,7 +59,7 @@ class GoogleAuthHandler
                 'deleted_at' => null,
                 'status' => 'pending_approval',
                 'oauth_provider' => 'google',
-                'oauth_provider_id' => $identity['provider_id'],
+                'oauth_provider_id' => $identity['providerId'],
                 'email_verified_at' => date('Y-m-d H:i:s'),
             ]);
 
@@ -85,13 +85,13 @@ class GoogleAuthHandler
         $updateData = [];
 
         if (empty($currentUser->first_name)) {
-            $updateData['first_name'] = $identity['first_name'] ?? null;
+            $updateData['first_name'] = $identity['firstName'] ?? null;
         }
         if (empty($currentUser->last_name)) {
-            $updateData['last_name'] = $identity['last_name'] ?? null;
+            $updateData['last_name'] = $identity['lastName'] ?? null;
         }
         if (empty($currentUser->avatar_url)) {
-            $updateData['avatar_url'] = $identity['avatar_url'] ?? null;
+            $updateData['avatar_url'] = $identity['avatarUrl'] ?? null;
         }
 
         if ($updateData !== []) {

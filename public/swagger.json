@@ -2255,8 +2255,8 @@
                 "required": [
                     "id",
                     "name",
-                    "key_prefix",
-                    "is_active"
+                    "keyPrefix",
+                    "isActive"
                 ],
                 "properties": {
                     "id": {
@@ -2269,32 +2269,32 @@
                         "type": "string",
                         "example": "My Mobile App"
                     },
-                    "key_prefix": {
+                    "keyPrefix": {
                         "description": "First characters of the key (safe to display)",
                         "type": "string",
                         "example": "apk_a3f9c2b1"
                     },
-                    "is_active": {
+                    "isActive": {
                         "description": "Whether the key is currently active",
                         "type": "boolean",
                         "example": true
                     },
-                    "rate_limit_requests": {
+                    "rateLimitRequests": {
                         "description": "Max requests per window",
                         "type": "integer",
                         "example": 600
                     },
-                    "rate_limit_window": {
+                    "rateLimitWindow": {
                         "description": "Window in seconds",
                         "type": "integer",
                         "example": 60
                     },
-                    "user_rate_limit": {
+                    "userRateLimit": {
                         "description": "Per-user limit",
                         "type": "integer",
                         "example": 60
                     },
-                    "ip_rate_limit": {
+                    "ipRateLimit": {
                         "description": "Per-IP limit",
                         "type": "integer",
                         "example": 200
@@ -2305,13 +2305,13 @@
                         "example": "apk_a3f9...",
                         "nullable": true
                     },
-                    "created_at": {
+                    "createdAt": {
                         "description": "Creation timestamp",
                         "type": "string",
                         "example": "2026-02-26 12:00:00",
                         "nullable": true
                     },
-                    "updated_at": {
+                    "updatedAt": {
                         "description": "Last update timestamp",
                         "type": "string",
                         "example": "2026-02-26 12:00:00",
@@ -2326,8 +2326,8 @@
                 "required": [
                     "id",
                     "action",
-                    "entity_type",
-                    "created_at"
+                    "entityType",
+                    "createdAt"
                 ],
                 "properties": {
                     "id": {
@@ -2347,52 +2347,52 @@
                         ],
                         "example": "update"
                     },
-                    "entity_type": {
+                    "entityType": {
                         "description": "Affected entity type",
                         "type": "string",
                         "example": "users"
                     },
-                    "entity_id": {
+                    "entityId": {
                         "description": "Affected entity ID",
                         "type": "integer",
                         "example": 5,
                         "nullable": true
                     },
-                    "old_values": {
+                    "oldValues": {
                         "description": "Values before the change",
                         "type": "object",
                         "nullable": true
                     },
-                    "new_values": {
+                    "newValues": {
                         "description": "Values after the change",
                         "type": "object",
                         "nullable": true
                     },
-                    "user_id": {
+                    "userId": {
                         "description": "ID of user who performed the action",
                         "type": "integer",
                         "example": 1,
                         "nullable": true
                     },
-                    "user_email": {
+                    "userEmail": {
                         "description": "Email of user who performed the action",
                         "type": "string",
                         "example": "admin@example.com",
                         "nullable": true
                     },
-                    "ip_address": {
+                    "ipAddress": {
                         "description": "IP address of the requester",
                         "type": "string",
                         "example": "127.0.0.1",
                         "nullable": true
                     },
-                    "user_agent": {
+                    "userAgent": {
                         "description": "User-Agent of the requester",
                         "type": "string",
                         "example": "Mozilla/5.0...",
                         "nullable": true
                     },
-                    "created_at": {
+                    "createdAt": {
                         "description": "Log timestamp",
                         "type": "string",
                         "example": "2026-02-26 12:00:00"
@@ -2404,23 +2404,23 @@
                 "title": "Login Response",
                 "description": "Successful authentication response containing JWT tokens and user data",
                 "required": [
-                    "access_token",
-                    "refresh_token",
-                    "expires_in",
+                    "accessToken",
+                    "refreshToken",
+                    "expiresIn",
                     "user"
                 ],
                 "properties": {
-                    "access_token": {
+                    "accessToken": {
                         "description": "JWT access token",
                         "type": "string",
                         "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
                     },
-                    "refresh_token": {
+                    "refreshToken": {
                         "description": "Opaque refresh token",
                         "type": "string",
                         "example": "apk_a1b2c3d4e5f6g7h8i9j0..."
                     },
-                    "expires_in": {
+                    "expiresIn": {
                         "description": "Token expiration time in seconds",
                         "type": "integer",
                         "example": 3600
@@ -2436,8 +2436,8 @@
                 "description": "File metadata and access URL",
                 "required": [
                     "id",
-                    "original_name",
-                    "mime_type",
+                    "originalName",
+                    "mimeType",
                     "size",
                     "url"
                 ],
@@ -2447,7 +2447,7 @@
                         "type": "integer",
                         "example": 1
                     },
-                    "original_name": {
+                    "originalName": {
                         "description": "Original filename",
                         "type": "string",
                         "example": "document.pdf"
@@ -2457,7 +2457,7 @@
                         "type": "string",
                         "example": "abc123_document.pdf"
                     },
-                    "mime_type": {
+                    "mimeType": {
                         "description": "MIME type",
                         "type": "string",
                         "example": "application/pdf"
@@ -2467,12 +2467,12 @@
                         "type": "integer",
                         "example": 102400
                     },
-                    "human_size": {
+                    "humanSize": {
                         "description": "Human readable file size",
                         "type": "string",
                         "example": "100 KB"
                     },
-                    "is_image": {
+                    "isImage": {
                         "description": "Whether the file is an image",
                         "type": "boolean",
                         "example": false
@@ -2482,7 +2482,7 @@
                         "type": "string",
                         "example": "https://example.com/storage/file.pdf"
                     },
-                    "uploaded_at": {
+                    "uploadedAt": {
                         "description": "Upload timestamp",
                         "type": "string",
                         "example": "2026-02-26 12:00:00",
@@ -2511,13 +2511,13 @@
                         "type": "string",
                         "example": "user@example.com"
                     },
-                    "first_name": {
+                    "firstName": {
                         "description": "User first name",
                         "type": "string",
                         "example": "John",
                         "nullable": true
                     },
-                    "last_name": {
+                    "lastName": {
                         "description": "User last name",
                         "type": "string",
                         "example": "Doe",
@@ -2543,19 +2543,19 @@
                         ],
                         "example": "active"
                     },
-                    "avatar_url": {
+                    "avatarUrl": {
                         "description": "URL to user avatar",
                         "type": "string",
                         "example": "https://example.com/avatar.png",
                         "nullable": true
                     },
-                    "created_at": {
+                    "createdAt": {
                         "description": "Creation timestamp",
                         "type": "string",
                         "example": "2026-02-26 12:00:00",
                         "nullable": true
                     },
-                    "updated_at": {
+                    "updatedAt": {
                         "description": "Last update timestamp",
                         "type": "string",
                         "example": "2026-02-26 12:00:00",

@@ -1,6 +1,6 @@
-# CORS
+# CORS (Compartición entre orígenes)
 
-CORS se maneja con un filtro que procesa preflight y agrega headers.
+El filtro `CorsFilter` atiende preflight y agrega las cabeceras necesarias.
 
 Archivos clave:
 - `app/Filters/CorsFilter.php`
@@ -11,5 +11,5 @@ Variables de entorno:
 - `CORS_ALLOWED_ORIGINS`
 
 Notas:
-- Los origenes se validan contra `CORS_ALLOWED_ORIGINS`.
-- En produccion, si no hay origenes configurados, usa el URL de la app.
+- Los orígenes se validan contra `CORS_ALLOWED_ORIGINS`.
+- En producción, si no hay orígenes configurados, se usa la URL de la app.

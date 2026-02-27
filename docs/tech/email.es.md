@@ -1,6 +1,6 @@
-# Envio de emails
+# Envío de correos electrónicos
 
-El sistema de email usa Symfony Mailer y soporta mensajes con plantilla. El envio normalmente se encola para no ralentizar las requests.
+El sistema de correos usa Symfony Mailer y soporta mensajes con plantillas. El envío normalmente se encola para no ralentizar las solicitudes.
 
 Archivos clave:
 - `app/Services/EmailService.php`
@@ -24,4 +24,4 @@ Cola:
 
 Plantillas:
 - Las plantillas viven en `app/Views/emails/`.
-- `queueTemplate()` renderiza un view y lo envia via cola.
+- `queueTemplate()` renderiza una vista y la envía vía cola.

@@ -1,6 +1,6 @@
-# Revocacion de tokens
+# Revocación de tokens
 
-Los access tokens pueden revocarse via blacklist de JTI.
+Los access tokens pueden revocarse vía blacklist de JTI.
 
 Archivos clave:
 - `app/Services/TokenRevocationService.php`
@@ -13,4 +13,4 @@ Variables de entorno:
 
 Notas:
 - Los JTIs revocados se guardan en `token_blacklist`.
-- El filtro JWT valida revocacion cuando `JWT_REVOCATION_CHECK=true`.
+- El filtro JWT valida revocación cuando `JWT_REVOCATION_CHECK=true`.

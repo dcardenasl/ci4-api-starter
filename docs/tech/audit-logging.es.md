@@ -1,6 +1,6 @@
-# Audit logging
+# Registro de auditoría
 
-Los audit logs registran acciones de create, update y delete sobre entidades.
+Los registros de auditoría capturan acciones de creación, actualización y eliminación sobre entidades.
 
 Archivos clave:
 - `app/Services/AuditService.php`
@@ -9,5 +9,5 @@ Archivos clave:
 
 Notas:
 - Los registros se guardan en `audit_logs`.
-- Los endpoints estan en `app/Controllers/Api/V1/AuditController.php`.
-- La validacion de entrada para acciones de auditoria (`index`, `show`, `by_entity`) esta centralizada y la consume `AuditService`.
+- Los endpoints están en `app/Controllers/Api/V1/AuditController.php`.
+- La validación de entrada para acciones de auditoría (`index`, `show`, `by_entity`) está centralizada y la consume `AuditService`.

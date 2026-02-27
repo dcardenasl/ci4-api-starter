@@ -1,6 +1,6 @@
-# Restablecimiento de contrasena
+# Restablecimiento de contraseña
 
-El reset de contrasena usa una tabla de tokens dedicada y reglas centralizadas de validacion de auth.
+El restablecimiento de contraseña usa una tabla de tokens dedicada y reglas centralizadas de validación de auth.
 
 Archivos clave:
 - `app/Services/PasswordResetService.php`
@@ -14,17 +14,17 @@ Endpoints:
 - `GET /api/v1/auth/validate-reset-token`
 - `POST /api/v1/auth/reset-password`
 
-Acciones de validacion usadas:
+Acciones de validación usadas:
 - `auth:forgot_password`
 - `auth:password_reset_validate_token`
 - `auth:password_reset`
 
 Resumen de comportamiento:
-- Input faltante/invalido ahora responde `ValidationException` (HTTP 422).
+- Input faltante/ inválido ahora responde `ValidationException` (HTTP 422).
 - Token bien formado pero inexistente/expirado responde `NotFoundException` (HTTP 404).
-- La politica de contrasena se aplica con la regla `strong_password` (sin validacion manual en el servicio).
+- La política de contraseña se aplica con la regla `strong_password` (sin validación manual en el servicio).
 
 Notas:
 - Los tokens se guardan en `password_resets` con email y timestamp.
 - Los tokens expirados se limpian con `cleanExpired(60)`.
-- Los emails se encolan via `EmailService::queueTemplate()`.
+- Los emails se encolan vía `EmailService::queueTemplate()`.

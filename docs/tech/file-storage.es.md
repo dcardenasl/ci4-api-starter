@@ -1,6 +1,6 @@
 # Almacenamiento de archivos
 
-Las cargas de archivos usan una abstraccion de storage con drivers local y S3.
+Las cargas de archivos usan una abstracción de storage con drivers local y S3.
 
 Archivos clave:
 - `app/Services/FileService.php`
@@ -18,7 +18,7 @@ Variables de entorno:
 Notas:
 - El storage local usa `writable/uploads/`.
 - S3 usa Flysystem y los valores AWS en `.env`.
-- La validacion de entrada para acciones de archivos (`upload`, `index`, `show`, `delete`) esta centralizada en `FileValidation` y la consume `FileService`.
+- La validación de entrada para acciones de archivos (`upload`, `index`, `show`, `delete`) está centralizada en `FileValidation` y la consume `FileService`.
 - Comportamiento de `GET /api/v1/files/{id}`:
   - Driver local: el controlador devuelve descarga binaria.
   - Driver S3: la API devuelve JSON con metadata y URL/path.

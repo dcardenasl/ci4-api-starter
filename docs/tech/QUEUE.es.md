@@ -71,7 +71,7 @@ php spark queue:work --queue=emails --max-jobs=10
 4. Confirma que el job se elimina de `jobs` y el email se envía.
 5. Si falla, se reintenta y luego pasa a `failed_jobs`.
 
-## Troubleshooting
+## Solución de problemas
 
 - No hay jobs en `jobs`:
   - La acción que debía encolar el job no se ejecutó o falló antes del enqueue.
@@ -82,11 +82,10 @@ php spark queue:work --queue=emails --max-jobs=10
 - Estado de la cola:
   - `app/Libraries/Monitoring/HealthChecker.php` valida `jobs` y reporta conteos.
 
-## Recomendado (Dev/Prod)
+## Recomendado (Desarrollo/Producción)
 
 Desarrollo:
 - Correr el worker en otra terminal mientras se prueban features.
 
 Producción:
 - Ejecutar `php spark queue:work --queue=emails` bajo un supervisor (systemd, supervisor, PM2, etc.).
-

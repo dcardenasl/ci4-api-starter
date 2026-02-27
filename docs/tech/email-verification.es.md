@@ -1,6 +1,6 @@
-# Verificacion de correo
+# Verificación de correo
 
-La verificacion de correo usa un token en el usuario y expira despues de un tiempo.
+La verificación de correo usa un token asociado al usuario y expira después de un tiempo.
 
 Archivos clave:
 - `app/Services/VerificationService.php`
@@ -16,4 +16,4 @@ Notas:
   - `GET /api/v1/auth/verify-email` (token en query)
   - `POST /api/v1/auth/verify-email` (token en body/form)
   - `POST /api/v1/auth/resend-verification` (ruta protegida)
-- Cuando esta desactivado, login y rutas protegidas no exigen verificacion.
+- Cuando está desactivado, el inicio de sesión y las rutas protegidas no exigen verificación.

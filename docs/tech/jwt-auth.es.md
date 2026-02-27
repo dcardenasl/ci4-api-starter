@@ -1,6 +1,6 @@
-# Autenticacion JWT
+# Autenticación JWT
 
-Los tokens de acceso JWT se generan en login y se validan con un filtro.
+Los tokens de acceso JWT se generan durante el inicio de sesión y se validan con un filtro.
 
 Archivos clave:
 - `app/Services/JwtService.php`
@@ -14,5 +14,5 @@ Variables de entorno:
 - `JWT_REVOCATION_CHECK`
 
 Notas:
-- Los tokens se envian en `Authorization: Bearer <token>`.
-- El filtro inyecta `userId` y `userRole` en el request.
+- Los tokens se envían en `Authorization: Bearer <token>`.
+- El filtro inyecta `userId` y `userRole` en la petición.

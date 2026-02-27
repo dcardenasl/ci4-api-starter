@@ -1,6 +1,6 @@
-# Rate limiting
+# Límite de velocidad (Rate limiting)
 
-El rate limiting se aplica con filtros HTTP para rutas generales y de auth.
+El límite de velocidad se aplica con filtros HTTP para rutas generales y de autenticación.
 
 Archivos clave:
 - `app/Filters/ThrottleFilter.php`
@@ -20,7 +20,7 @@ Variables de entorno:
 - `API_KEY_WINDOW_DEFAULT`
 
 Notas:
-- `authThrottle` se aplica a endpoints de auth.
+- `authThrottle` se aplica a endpoints de autenticación.
 - `throttle` se aplica a rutas generales de la API.
-- Las respuestas incluyen headers de rate limit (`X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset`).
+- Las respuestas incluyen cabeceras de límite (`X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset`).
 - Si llega `X-App-Key`, se aplican límites de API key tras validar la clave.

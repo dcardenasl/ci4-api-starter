@@ -1,6 +1,6 @@
 # Monitoreo y salud
 
-Los endpoints de salud exponen checks de readiness y liveness.
+Los endpoints de salud exponen `readiness` y `liveness`.
 
 Archivos clave:
 - `app/Controllers/Api/V1/HealthController.php`
@@ -9,11 +9,11 @@ Archivos clave:
 
 Endpoints:
 - `GET /health` (resumen completo)
-- `GET /ping` (ok simple)
-- `GET /ready` (readiness de base de datos)
-- `GET /live` (liveness)
+- `GET /ping` (OK rápido)
+- `GET /ready` (`readiness` de base de datos)
+- `GET /live` (`liveness`)
 
 Notas:
-- `checkAll()` incluye base de datos, espacio en disco y carpetas writable.
+- `checkAll()` incluye base de datos, espacio en disco y carpetas `writable`.
 - Existen checks para cola, email y Redis, pero no se incluyen por defecto en `checkAll()`.
 - Estos endpoints son operativos/de monitoreo y deliberadamente usan un payload propio (no `ApiResponse`).

@@ -1,6 +1,6 @@
-# Request logging
+# Registro de solicitudes
 
-Las requests pueden registrarse de forma asincrona via un job en cola.
+Las solicitudes pueden registrarse de forma asíncrona vía un job en cola.
 
 Archivos clave:
 - `app/Filters/RequestLoggingFilter.php`

@@ -1,6 +1,6 @@
-# Refresh tokens
+# Tokens de refresco
 
-Los refresh tokens se almacenan en base de datos y se rotan al usarse.
+Los tokens de refresco se almacenan en base de datos y se rotan al usarse.
 
 Archivos clave:
 - `app/Services/RefreshTokenService.php`
@@ -11,11 +11,11 @@ Archivos clave:
 Variables de entorno:
 - `JWT_REFRESH_TOKEN_TTL`
 
-Validacion:
+Validación:
 - Las acciones `token:refresh` y `token:revoke` requieren `refresh_token` con la regla `valid_token[64]`.
-- Un formato invalido del token se trata como error de validacion del request.
+- Un formato inválido del token se trata como error de validación de la solicitud.
 
 Notas:
 - Los tokens viven en la tabla `refresh_tokens`.
-- El refresh usa transaccion y bloqueo para evitar carreras.
+- El refresh usa transacción y bloqueo para evitar carreras.
 - Los tokens revocados se marcan con `revoked_at`.

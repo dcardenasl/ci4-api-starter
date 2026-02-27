@@ -56,7 +56,8 @@ class ApiSmokeTest extends BaseCommand
 
     private function getSuperAdminToken(): ?string
     {
-        $userModel = new \App\Models\UserModel();
+        /** @var \App\Models\UserModel $userModel */
+        $userModel = model(\App\Models\UserModel::class);
         $admin = $userModel->where('role', 'superadmin')->first();
 
         if (!$admin) {

@@ -20,6 +20,7 @@ class ServiceOperationResultContractsTest extends CIUnitTestCase
         return [
             \App\Services\AuthService::class => ['loginWithGoogleToken'],
             \App\Services\AuthTokenService::class => ['revokeToken', 'revokeAllUserTokens'],
+            \App\Services\MetricsService::class => ['record'],
             \App\Services\RefreshTokenService::class => ['revoke', 'revokeAllUserTokens'],
         ];
     }

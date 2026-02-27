@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Interfaces;
 
 use App\DTO\SecurityContext;
+use App\Support\OperationResult;
 
 /**
  * Metrics Service Interface
@@ -19,20 +20,20 @@ interface MetricsServiceInterface
     /**
      * Get list of slow requests
      */
-    public function getSlowRequests(int $threshold, int $limit, ?SecurityContext $context = null): array;
+    public function getSlowRequests(\App\Interfaces\DataTransferObjectInterface $request, ?SecurityContext $context = null): \App\Interfaces\DataTransferObjectInterface;
 
     /**
      * Get raw request stats
      */
-    public function getRequestStats(string $period, ?SecurityContext $context = null): array;
+    public function getRequestStats(\App\Interfaces\DataTransferObjectInterface $request, ?SecurityContext $context = null): \App\Interfaces\DataTransferObjectInterface;
 
     /**
      * Get custom metrics by name
      */
-    public function getCustomMetric(string $name, string $period, bool $aggregate = false, ?SecurityContext $context = null): array;
+    public function getCustomMetric(\App\Interfaces\DataTransferObjectInterface $request, ?SecurityContext $context = null): \App\Interfaces\DataTransferObjectInterface;
 
     /**
      * Record a custom metric
      */
-    public function record(\App\DTO\Request\Metrics\RecordMetricRequestDTO $request, ?SecurityContext $context = null): bool;
+    public function record(\App\DTO\Request\Metrics\RecordMetricRequestDTO $request, ?SecurityContext $context = null): OperationResult;
 }

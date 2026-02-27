@@ -8,6 +8,7 @@ use App\Controllers\ApiController;
 use App\DTO\Request\Files\FileGetRequestDTO;
 use App\DTO\Request\Files\FileIndexRequestDTO;
 use App\DTO\Request\Files\FileUploadRequestDTO;
+use App\DTO\Response\Files\FileDownloadResponseDTO;
 use App\Libraries\ApiResponse;
 use CodeIgniter\HTTP\ResponseInterface;
 
@@ -51,19 +52,21 @@ class FileController extends ApiController
     public function show(int $id): ResponseInterface
     {
         return $this->handleRequest(function ($dto, $context) {
+            /** @var FileDownloadResponseDTO $result */
             $result = $this->getService()->download($dto, $context);
+            $payload = $result->toArray();
 
             // For local storage, send file for direct download
-            if (isset($result['storage_driver']) && $result['storage_driver'] === 'local') {
-                $filePath = FCPATH . env('FILE_UPLOAD_PATH', 'writable/uploads/') . $result['path'];
+            if ($result->storageDriver === 'local') {
+                $filePath = FCPATH . env('FILE_UPLOAD_PATH', 'writable/uploads/') . $result->path;
 
                 if (file_exists($filePath)) {
-                    return $this->response->download($filePath, null)->setFileName($result['original_name']);
+                    return $this->response->download($filePath, null)->setFileName($result->originalName);
                 }
             }
 
             // For external storage like S3, just return the data (with URL)
-            return ApiResponse::success($result);
+            return ApiResponse::success($payload);
         }, FileGetRequestDTO::class, ['id' => $id]);
     }
 

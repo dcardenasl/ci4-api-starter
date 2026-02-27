@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace App\Controllers\Api\V1\Admin;
 
 use App\Controllers\ApiController;
+use App\DTO\Request\Metrics\CustomMetricQueryRequestDTO;
 use App\DTO\Request\Metrics\MetricsQueryRequestDTO;
 use App\DTO\Request\Metrics\RecordMetricRequestDTO;
+use App\DTO\Request\Metrics\SlowRequestsQueryRequestDTO;
 use App\Libraries\ApiResponse;
 use CodeIgniter\HTTP\ResponseInterface;
 
@@ -43,10 +45,7 @@ class MetricsController extends ApiController
      */
     public function requests(): ResponseInterface
     {
-        return $this->handleRequest(
-            fn ($dto, $context) => $this->getService()->getRequestStats($dto->period, $context),
-            MetricsQueryRequestDTO::class
-        );
+        return $this->handleRequest('getRequestStats', MetricsQueryRequestDTO::class);
     }
 
     /**
@@ -54,18 +53,7 @@ class MetricsController extends ApiController
      */
     public function slowRequests(): ResponseInterface
     {
-        return $this->handleRequest(function ($dto, $context) {
-            /** @var \App\HTTP\ApiRequest $request */
-            $request = $this->request;
-
-            $thresholdVal = $request->getVar('threshold');
-            $threshold = is_numeric($thresholdVal) ? (int) $thresholdVal : (int) env('SLOW_QUERY_THRESHOLD', 1000);
-
-            $limitVal = $request->getVar('limit');
-            $limit = min(is_numeric($limitVal) ? (int) $limitVal : 10, 100);
-
-            return $this->getService()->getSlowRequests($threshold, $limit, $context);
-        });
+        return $this->handleRequest('getSlowRequests', SlowRequestsQueryRequestDTO::class);
     }
 
 
@@ -74,10 +62,11 @@ class MetricsController extends ApiController
      */
     public function custom(string $name): ResponseInterface
     {
-        return $this->handleRequest(function ($dto, $context) use ($name) {
-            $aggregate = $this->request->getGet('aggregate') === 'true';
-            return $this->getService()->getCustomMetric($name, $dto->period, $aggregate, $context);
-        }, MetricsQueryRequestDTO::class);
+        return $this->handleRequest(
+            'getCustomMetric',
+            CustomMetricQueryRequestDTO::class,
+            ['name' => $name]
+        );
     }
 
     /**

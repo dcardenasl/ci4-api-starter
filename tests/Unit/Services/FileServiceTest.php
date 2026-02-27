@@ -316,11 +316,12 @@ class FileServiceTest extends CIUnitTestCase
 
         $request = new \App\DTO\Request\Files\FileIndexRequestDTO(['user_id' => 1]);
         $result = $this->service->index($request);
+        $payload = $result->toArray();
 
-        $this->assertIsArray($result);
-        $this->assertArrayHasKey('data', $result);
-        $this->assertArrayHasKey('total', $result);
-        $this->assertCount(2, $result['data']);
+        $this->assertInstanceOf(\App\DTO\Response\Common\PaginatedResponseDTO::class, $result);
+        $this->assertArrayHasKey('data', $payload);
+        $this->assertArrayHasKey('total', $payload);
+        $this->assertCount(2, $payload['data']);
     }
 
     // ==================== DOWNLOAD TESTS ====================
@@ -383,9 +384,11 @@ class FileServiceTest extends CIUnitTestCase
 
         $request = new \App\DTO\Request\Files\FileGetRequestDTO(['id' => 1, 'user_id' => 1]);
         $result = $this->service->download($request);
+        $payload = $result->toArray();
 
-        $this->assertEquals('myfile.pdf', $result['original_name']);
-        $this->assertEquals('http://example.com/myfile.pdf', $result['url']);
+        $this->assertInstanceOf(\App\DTO\Response\Files\FileDownloadResponseDTO::class, $result);
+        $this->assertEquals('myfile.pdf', $payload['original_name']);
+        $this->assertEquals('http://example.com/myfile.pdf', $payload['url']);
     }
 
     // ==================== DELETE TESTS ====================

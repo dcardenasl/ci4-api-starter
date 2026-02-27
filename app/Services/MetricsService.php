@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\DTO\Response\Metrics\MetricsPayloadResponseDTO;
 use App\DTO\SecurityContext;
 use App\Interfaces\DataTransferObjectInterface;
 use App\Interfaces\MetricsServiceInterface;
 use App\Models\MetricModel;
 use App\Models\RequestLogModel;
+use App\Support\OperationResult;
 
 /**
  * Modernized Metrics Service
@@ -51,28 +53,49 @@ class MetricsService implements MetricsServiceInterface
         ]);
     }
 
-    public function getRequestStats(string $period, ?SecurityContext $context = null): array
+    public function getRequestStats(DataTransferObjectInterface $request, ?SecurityContext $context = null): DataTransferObjectInterface
     {
-        return $this->requestLogModel->getStats($period);
+        /** @var \App\DTO\Request\Metrics\MetricsQueryRequestDTO $request */
+        return MetricsPayloadResponseDTO::fromArray(
+            $this->requestLogModel->getStats($request->period)
+        );
     }
 
     /**
      * Get slow requests with configurable threshold and limit.
      */
-    public function getSlowRequests(int $threshold, int $limit, ?SecurityContext $context = null): array
+    public function getSlowRequests(DataTransferObjectInterface $request, ?SecurityContext $context = null): DataTransferObjectInterface
     {
-        return $this->requestLogModel->getSlowRequests($threshold, $limit);
+        /** @var \App\DTO\Request\Metrics\SlowRequestsQueryRequestDTO $request */
+        return MetricsPayloadResponseDTO::fromArray(
+            $this->requestLogModel->getSlowRequests($request->threshold, $request->limit)
+        );
     }
 
-    public function record(\App\DTO\Request\Metrics\RecordMetricRequestDTO $request, ?SecurityContext $context = null): bool
+    public function record(\App\DTO\Request\Metrics\RecordMetricRequestDTO $request, ?SecurityContext $context = null): OperationResult
     {
-        return (bool) $this->metricModel->record($request->name, $request->value, $request->tags);
+        $recorded = (bool) $this->metricModel->record($request->name, $request->value, $request->tags);
+
+        if (!$recorded) {
+            return OperationResult::error(
+                message: lang('Api.requestFailed'),
+                errors: ['metric' => lang('Api.requestFailed')]
+            );
+        }
+
+        return OperationResult::success(
+            data: ['name' => $request->name],
+            message: lang('Metrics.recordedSuccessfully')
+        );
     }
 
-    public function getCustomMetric(string $name, string $period, bool $aggregate = false, ?SecurityContext $context = null): array
+    public function getCustomMetric(DataTransferObjectInterface $request, ?SecurityContext $context = null): DataTransferObjectInterface
     {
-        return $aggregate
-            ? $this->metricModel->getAggregated($name, $period)
-            : $this->metricModel->getByName($name, $period);
+        /** @var \App\DTO\Request\Metrics\CustomMetricQueryRequestDTO $request */
+        $payload = $request->aggregate
+            ? $this->metricModel->getAggregated($request->name, $request->period)
+            : $this->metricModel->getByName($request->name, $request->period);
+
+        return MetricsPayloadResponseDTO::fromArray($payload);
     }
 }

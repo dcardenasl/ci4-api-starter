@@ -118,7 +118,18 @@ abstract class ApiController extends Controller
             }
 
             if ($result instanceof \App\Interfaces\DataTransferObjectInterface) {
-                $finalResult = ApiResponse::success($result->toArray());
+                $dtoData = $result->toArray();
+
+                if (isset($dtoData['data'], $dtoData['total'], $dtoData['page'], $dtoData['perPage'])) {
+                    $finalResult = ApiResponse::paginated(
+                        (array) $dtoData['data'],
+                        (int) $dtoData['total'],
+                        (int) $dtoData['page'],
+                        (int) $dtoData['perPage']
+                    );
+                } else {
+                    $finalResult = ApiResponse::success($dtoData);
+                }
             } elseif (is_bool($result) && $result === true) {
                 // Handle success boolean (usually from destroy)
                 if (in_array($methodName, ['destroy', 'delete'], true)) {

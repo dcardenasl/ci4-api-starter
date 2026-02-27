@@ -21,12 +21,12 @@ interface FileServiceInterface
     /**
      * List user's files
      */
-    public function index(\App\Interfaces\DataTransferObjectInterface $request, ?SecurityContext $context = null): array;
+    public function index(\App\Interfaces\DataTransferObjectInterface $request, ?SecurityContext $context = null): \App\Interfaces\DataTransferObjectInterface;
 
     /**
      * Download a file
      */
-    public function download(\App\Interfaces\DataTransferObjectInterface $request, ?SecurityContext $context = null): array;
+    public function download(\App\Interfaces\DataTransferObjectInterface $request, ?SecurityContext $context = null): \App\Interfaces\DataTransferObjectInterface;
 
     /**
      * Delete a file

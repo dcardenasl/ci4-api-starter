@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\DTO\Response\Common\PaginatedResponseDTO;
+use App\DTO\Response\Files\FileDownloadResponseDTO;
 use App\DTO\SecurityContext;
 use App\Exceptions\AuthorizationException;
 use App\Exceptions\BadRequestException;
@@ -283,10 +285,8 @@ class FileService implements FileServiceInterface
 
     /**
      * List user's files
-     *
-     * @return array{data: array, total: int, page: int, perPage: int}
      */
-    public function index(\App\Interfaces\DataTransferObjectInterface $request, ?SecurityContext $context = null): array
+    public function index(\App\Interfaces\DataTransferObjectInterface $request, ?SecurityContext $context = null): \App\Interfaces\DataTransferObjectInterface
     {
         /** @var \App\DTO\Request\Files\FileIndexRequestDTO $request */
         $userId = $context?->userId ?? (int) ($request->userId ?? 0);
@@ -321,18 +321,18 @@ class FileService implements FileServiceInterface
             'is_image' => $file->isImage(),
         ], $files);
 
-        return [
+        return PaginatedResponseDTO::fromArray([
             'data'    => $formattedData,
             'total'   => $result['total'],
             'page'    => $result['page'],
             'perPage' => $result['perPage'],
-        ];
+        ]);
     }
 
     /**
      * Download a file
      */
-    public function download(\App\Interfaces\DataTransferObjectInterface $request, ?SecurityContext $context = null): array
+    public function download(\App\Interfaces\DataTransferObjectInterface $request, ?SecurityContext $context = null): \App\Interfaces\DataTransferObjectInterface
     {
         /** @var \App\DTO\Request\Files\FileGetRequestDTO $request */
         $userId = $context?->userId ?? (int) ($request->userId ?? 0);
@@ -345,13 +345,13 @@ class FileService implements FileServiceInterface
             throw new AuthorizationException(lang('Files.unauthorized'));
         }
 
-        return [
+        return FileDownloadResponseDTO::fromArray([
             'id' => $file->id,
             'original_name' => $file->original_name,
             'url' => $file->url,
             'path' => $file->path,
             'storage_driver' => $file->storage_driver,
-        ];
+        ]);
     }
 
     /**

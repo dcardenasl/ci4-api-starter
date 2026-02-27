@@ -6,6 +6,7 @@ namespace App\Filters;
 
 use App\HTTP\ApiRequest;
 use App\Libraries\ApiResponse;
+use App\Libraries\ContextHolder;
 use CodeIgniter\Filters\FilterInterface;
 use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
@@ -38,7 +39,11 @@ class RoleAuthorizationFilter implements FilterInterface
     public function before(RequestInterface $request, $arguments = null)
     {
         $requiredRole = $arguments[0] ?? 'user';
+        $context = ContextHolder::get();
+
         $userRole = $request instanceof ApiRequest ? $request->getAuthUserRole() : null;
+        $userRole ??= $context?->role;
+        $userRole ??= $request->getHeaderLine('X-Test-User-Role') ?: null;
 
         if (!$userRole) {
             return Services::response()

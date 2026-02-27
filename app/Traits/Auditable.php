@@ -3,7 +3,7 @@
 namespace App\Traits;
 
 use App\Libraries\ContextHolder;
-use App\Services\AuditService;
+use App\Services\System\AuditService;
 
 /**
  * Auditable Trait

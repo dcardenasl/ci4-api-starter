@@ -39,6 +39,7 @@ class TestAuthFilter implements FilterInterface
         $testUserId = $request->getHeaderLine('X-Test-User-Id');
         if ($testUserId !== '') {
             $testUserRole = $request->getHeaderLine('X-Test-User-Role') ?: 'user';
+            \App\Libraries\ContextHolder::set(new \App\DTO\SecurityContext((int) $testUserId, (string) $testUserRole));
             if ($request instanceof ApiRequest) {
                 $request->setAuthContext((int) $testUserId, $testUserRole);
             }
@@ -47,7 +48,7 @@ class TestAuthFilter implements FilterInterface
 
         $authHeader = $request->getHeaderLine('Authorization');
         if ($authHeader !== '') {
-            return Services::jwtAuthFilter()->before($request, $arguments);
+            return (new JwtAuthFilter())->before($request, $arguments);
         }
 
         // If no identity found, return 401

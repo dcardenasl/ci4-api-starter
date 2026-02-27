@@ -7,7 +7,7 @@ namespace App\Filters;
 use App\HTTP\ApiRequest;
 use App\Libraries\ApiResponse;
 use App\Libraries\ContextHolder;
-use App\Services\UserAccessPolicyService;
+use App\Services\Users\UserAccountGuard;
 use CodeIgniter\Filters\FilterInterface;
 use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
@@ -110,7 +110,7 @@ class JwtAuthFilter implements FilterInterface
             ->setStatusCode(403);
     }
 
-    private function checkAccessPolicyViolation(UserAccessPolicyService $policy, object $user): ?ResponseInterface
+    private function checkAccessPolicyViolation(UserAccountGuard $policy, object $user): ?ResponseInterface
     {
         try {
             $policy->assertCanAuthenticate($user);

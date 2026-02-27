@@ -2,267 +2,85 @@
 
 namespace Config;
 
-use App\HTTP\ApiRequest;
 use CodeIgniter\Config\BaseService;
-use CodeIgniter\HTTP\UserAgent;
 
 /**
  * Services Configuration file.
  *
- * Services are simply other classes/libraries that the system uses
- * to do its job. This is used by CodeIgniter to allow the core of the
- * framework to be swapped out easily without affecting the usage within
- * the rest of your application.
- *
- * This file holds any application-specific services, or service overrides
- * that you might need. An example has been included with the general
- * method format you should use for your service methods. For more examples,
- * see the core Services file at system/Config/Services.php.
+ * Services are simply other objects/libraries that the system may
+ * need to use. Core CodeIgniter services are located in the
+ * system directory, but others can be found here.
  */
 class Services extends BaseService
 {
-    /**
-     * The IncomingRequest class models an HTTP request.
-     *
-     * @return ApiRequest
+    /*
+     |--------------------------------------------------------------------------
+     | DOMAIN: AUTH & IDENTITY
+     |--------------------------------------------------------------------------
      */
-    public static function incomingrequest(?App $config = null, bool $getShared = true)
-    {
-        if ($getShared) {
-            return static::getSharedInstance('request', $config);
-        }
 
-        $config ??= config(App::class);
-
-        return new ApiRequest(
-            $config,
-            static::get('uri'),
-            'php://input',
-            new UserAgent(),
-        );
-    }
-
-    /**
-     * User Model
-     *
-     * Provides UserModel instance
-     *
-     * @param bool $getShared
-     * @return \App\Models\UserModel
-     */
-    public static function userModel(bool $getShared = true)
-    {
-        if ($getShared) {
-            return static::getSharedInstance('userModel');
-        }
-
-        return new \App\Models\UserModel();
-    }
-
-    /**
-     * User Service
-     *
-     * Proporciona UserService con todas sus dependencias inyectadas
-     *
-     * @param bool $getShared
-     * @return \App\Services\UserService
-     */
-    public static function userService(bool $getShared = true)
-    {
-        if ($getShared) {
-            return static::getSharedInstance('userService');
-        }
-
-        return new \App\Services\UserService(
-            static::userModel(),
-            static::emailService(),
-            new \App\Models\PasswordResetModel(),
-            static::auditService()
-        );
-    }
-
-    /**
-     * Auth Service
-     *
-     * Provides authentication and registration functionality
-     *
-     * @param bool $getShared
-     * @return \App\Services\AuthService
-     */
     public static function authService(bool $getShared = true)
     {
         if ($getShared) {
             return static::getSharedInstance('authService');
         }
 
-        return new \App\Services\AuthService(
-            new \App\Models\UserModel(),
-            static::jwtService(),
-            static::refreshTokenService(),
+        return new \App\Services\Auth\AuthService(
+            static::userModel(),
             static::verificationService(),
             static::auditService(),
-            static::userAccessPolicyService(),
-            static::googleIdentityService(),
-            static::emailService()
+            new \App\Services\Auth\Support\AuthUserMapper(),
+            new \App\Services\Auth\Support\GoogleAuthHandler(
+                static::userModel(),
+                static::refreshTokenService()
+            ),
+            new \App\Services\Auth\Support\SessionManager(
+                static::jwtService(),
+                static::refreshTokenService()
+            ),
+            static::userAccountGuard()
         );
     }
 
-    /**
-     * Google Identity Service
-     *
-     * Verifies Google ID tokens and normalized claims.
-     *
-     * @param bool $getShared
-     * @return \App\Services\GoogleIdentityService
-     */
+    public static function userService(bool $getShared = true)
+    {
+        if ($getShared) {
+            return static::getSharedInstance('userService');
+        }
+
+        return new \App\Services\Users\UserService(
+            static::userModel(),
+            static::emailService(),
+            static::auditService(),
+            new \App\Libraries\Security\UserRoleGuard(),
+            new \App\Services\Auth\UserInvitationService(
+                new \App\Models\PasswordResetModel(),
+                static::emailService()
+            )
+        );
+    }
+
     public static function googleIdentityService(bool $getShared = true)
     {
         if ($getShared) {
             return static::getSharedInstance('googleIdentityService');
         }
 
-        return new \App\Services\GoogleIdentityService();
-    }
-
-    /**
-     * User Access Policy Service
-     *
-     * Centralizes account-state checks for authentication flows.
-     *
-     * @param bool $getShared
-     * @return \App\Services\UserAccessPolicyService
-     */
-    public static function userAccessPolicyService(bool $getShared = true)
-    {
-        if ($getShared) {
-            return static::getSharedInstance('userAccessPolicyService');
-        }
-
-        return new \App\Services\UserAccessPolicyService();
-    }
-
-    /**
-     * Bearer Token Service
-     *
-     * Shared helper to parse Authorization Bearer tokens.
-     *
-     * @param bool $getShared
-     * @return \App\Services\BearerTokenService
-     */
-    public static function bearerTokenService(bool $getShared = true)
-    {
-        if ($getShared) {
-            return static::getSharedInstance('bearerTokenService');
-        }
-
-        return new \App\Services\BearerTokenService();
-    }
-
-    /**
-     * JWT Service
-     *
-     * Provides JWT token encoding and decoding functionality
-     *
-     * @param bool $getShared
-     * @return \App\Services\JwtService
-     */
-    public static function jwtService(bool $getShared = true)
-    {
-        if ($getShared) {
-            return static::getSharedInstance('jwtService');
-        }
-
-        return new \App\Services\JwtService();
-    }
-
-    /**
-     * Email Service
-     *
-     * Provides email functionality using Symfony Mailer
-     *
-     * @param bool $getShared
-     * @return \App\Services\EmailService
-     */
-    public static function emailService(bool $getShared = true)
-    {
-        if ($getShared) {
-            return static::getSharedInstance('emailService');
-        }
-
-        return new \App\Services\EmailService();
-    }
-
-    /**
-     * Queue Manager
-     *
-     * Provides queue management functionality
-     *
-     * @param bool $getShared
-     * @return \App\Libraries\Queue\QueueManager
-     */
-    public static function queueManager(bool $getShared = true)
-    {
-        if ($getShared) {
-            return static::getSharedInstance('queueManager');
-        }
-
-        return new \App\Libraries\Queue\QueueManager();
-    }
-
-    /**
-     * JWT Auth Filter
-     *
-     * Provides JwtAuthFilter instance for composition in TestAuthFilter.
-     *
-     * @param bool $getShared
-     * @return \App\Filters\JwtAuthFilter
-     */
-    public static function jwtAuthFilter(bool $getShared = true)
-    {
-        if ($getShared) {
-            return static::getSharedInstance('jwtAuthFilter');
-        }
-
-        return new \App\Filters\JwtAuthFilter();
-    }
-
-    /**
-     * Verification Service
-     *
-     * Provides email verification functionality
-     *
-     * @param bool $getShared
-     * @return \App\Services\VerificationService
-     */
-    public static function verificationService(bool $getShared = true)
-    {
-        if ($getShared) {
-            return static::getSharedInstance('verificationService');
-        }
-
-        return new \App\Services\VerificationService(
-            new \App\Models\UserModel(),
-            static::emailService(),
+        return new \App\Services\Auth\GoogleIdentityService(
+            static::userModel(),
+            static::jwtService(),
             static::auditService()
         );
     }
 
-    /**
-     * Password Reset Service
-     *
-     * Provides password reset functionality
-     *
-     * @param bool $getShared
-     * @return \App\Services\PasswordResetService
-     */
     public static function passwordResetService(bool $getShared = true)
     {
         if ($getShared) {
             return static::getSharedInstance('passwordResetService');
         }
 
-        return new \App\Services\PasswordResetService(
-            new \App\Models\UserModel(),
+        return new \App\Services\Auth\PasswordResetService(
+            static::userModel(),
             new \App\Models\PasswordResetModel(),
             static::emailService(),
             static::refreshTokenService(),
@@ -270,108 +88,179 @@ class Services extends BaseService
         );
     }
 
-    /**
-     * Token Revocation Service
-     *
-     * Provides token revocation and blacklist functionality
-     *
-     * @param bool $getShared
-     * @return \App\Services\TokenRevocationService
-     */
-    public static function tokenRevocationService(bool $getShared = true)
+    public static function verificationService(bool $getShared = true)
     {
         if ($getShared) {
-            return static::getSharedInstance('tokenRevocationService');
+            return static::getSharedInstance('verificationService');
         }
 
-        return new \App\Services\TokenRevocationService(
-            new \App\Models\TokenBlacklistModel(),
-            new \App\Models\RefreshTokenModel(),
-            static::jwtService(),
-            static::auditService(),
-            static::cache(),
-            static::bearerTokenService()
+        return new \App\Services\Auth\VerificationService(
+            static::userModel(),
+            static::emailService(),
+            static::auditService()
         );
     }
 
-    /**
-     * Refresh Token Service
-     *
-     * Manages refresh token lifecycle
-     *
-     * @param bool $getShared
-     * @return \App\Services\RefreshTokenService
+    public static function userAccountGuard(bool $getShared = true)
+    {
+        if ($getShared) {
+            return static::getSharedInstance('userAccountGuard');
+        }
+
+        return new \App\Services\Users\UserAccountGuard();
+    }
+
+    public static function userAccessPolicyService(bool $getShared = true)
+    {
+        return static::userAccountGuard($getShared);
+    }
+
+    /*
+     |--------------------------------------------------------------------------
+     | DOMAIN: TOKENS & SECURITY
+     |--------------------------------------------------------------------------
      */
+
+    public static function jwtService(bool $getShared = true)
+    {
+        if ($getShared) {
+            return static::getSharedInstance('jwtService');
+        }
+
+        $secretKey = trim((string) (getenv('JWT_SECRET_KEY') ?: env('JWT_SECRET_KEY', '')));
+        $ttl = (int) (getenv('JWT_ACCESS_TOKEN_TTL') ?: env('JWT_ACCESS_TOKEN_TTL', 3600));
+        $issuer = (string) env('app.baseURL', 'http://localhost:8080');
+
+        return new \App\Services\Tokens\JwtService(
+            $secretKey,
+            $ttl,
+            $issuer
+        );
+    }
+
     public static function refreshTokenService(bool $getShared = true)
     {
         if ($getShared) {
             return static::getSharedInstance('refreshTokenService');
         }
 
-        return new \App\Services\RefreshTokenService(
+        return new \App\Services\Tokens\RefreshTokenService(
             new \App\Models\RefreshTokenModel(),
             static::jwtService(),
-            new \App\Models\UserModel(),
-            static::userAccessPolicyService()
+            static::userModel(),
+            static::userAccountGuard()
         );
     }
 
-    /**
-     * Auth Token Service
-     *
-     * Facade for refresh + revoke token operations used by TokenController.
-     *
-     * @param bool $getShared
-     * @return \App\Services\AuthTokenService
-     */
+    public static function tokenRevocationService(bool $getShared = true)
+    {
+        if ($getShared) {
+            return static::getSharedInstance('tokenRevocationService');
+        }
+
+        return new \App\Services\Tokens\TokenRevocationService(
+            new \App\Models\TokenBlacklistModel(),
+            new \App\Models\RefreshTokenModel(),
+            static::jwtService(),
+            static::auditService(),
+            static::cache(),
+            static::bearerTokenService(),
+            (int) (getenv('JWT_ACCESS_TOKEN_TTL') ?: 3600),
+            (int) (getenv('JWT_REVOCATION_CACHE_TTL') ?: 60)
+        );
+    }
+
+    public static function bearerTokenService(bool $getShared = true)
+    {
+        if ($getShared) {
+            return static::getSharedInstance('bearerTokenService');
+        }
+
+        return new \App\Services\Tokens\BearerTokenService();
+    }
+
+    public static function apiKeyService(bool $getShared = true)
+    {
+        if ($getShared) {
+            return static::getSharedInstance('apiKeyService');
+        }
+
+        return new \App\Services\Tokens\ApiKeyService(
+            new \App\Models\ApiKeyModel()
+        );
+    }
+
     public static function authTokenService(bool $getShared = true)
     {
         if ($getShared) {
             return static::getSharedInstance('authTokenService');
         }
 
-        return new \App\Services\AuthTokenService(
+        return new \App\Services\Tokens\AuthTokenService(
             static::refreshTokenService(),
             static::tokenRevocationService()
         );
     }
 
-    /**
-     * File Service
-     *
-     * Provides file upload, download, and deletion with storage abstraction
-     *
-     * @param bool $getShared
-     * @return \App\Services\FileService
+    /*
+     |--------------------------------------------------------------------------
+     | DOMAIN: FILES
+     |--------------------------------------------------------------------------
      */
+
     public static function fileService(bool $getShared = true)
     {
         if ($getShared) {
             return static::getSharedInstance('fileService');
         }
 
-        return new \App\Services\FileService(
+        $storage = static::storageManager();
+
+        return new \App\Services\Files\FileService(
             new \App\Models\FileModel(),
-            new \App\Libraries\Storage\StorageManager(),
-            static::auditService()
+            $storage,
+            static::auditService(),
+            new \App\Libraries\Files\FilenameGenerator($storage),
+            new \App\Libraries\Files\MultipartProcessor(),
+            new \App\Libraries\Files\Base64Processor()
         );
     }
 
-    /**
-     * Audit Service
-     *
-     * Provides audit logging functionality
-     *
-     * @param bool $getShared
-     * @return \App\Services\AuditService
+    public static function storageManager(bool $getShared = true)
+    {
+        if ($getShared) {
+            return static::getSharedInstance('storageManager');
+        }
+
+        return new \App\Libraries\Storage\StorageManager();
+    }
+
+    /*
+     |--------------------------------------------------------------------------
+     | DOMAIN: SYSTEM & MONITORING
+     |--------------------------------------------------------------------------
      */
+
+    public static function emailService(bool $getShared = true)
+    {
+        if ($getShared) {
+            return static::getSharedInstance('emailService');
+        }
+
+        // EmailService requires MailerInterface (null for now) and QueueManager
+        return new \App\Services\System\EmailService(
+            null,
+            new \App\Libraries\Queue\QueueManager()
+        );
+    }
+
     public static function auditService(bool $getShared = true)
     {
         if ($getShared) {
             return static::getSharedInstance('auditService');
         }
 
-        return new \App\Services\AuditService(
+        return new \App\Services\System\AuditService(
             new \App\Models\AuditLogModel()
         );
     }
@@ -382,37 +271,27 @@ class Services extends BaseService
             return static::getSharedInstance('metricsService');
         }
 
-        return new \App\Services\MetricsService(
+        return new \App\Services\System\MetricsService(
             new \App\Models\RequestLogModel(),
             new \App\Models\MetricModel()
         );
     }
 
-    /**
-     * Storage Manager
-     *
-     * Provides unified file storage interface
-     *
-     * @param bool $getShared
-     * @return \App\Libraries\Storage\StorageManager
+    /*
+     |--------------------------------------------------------------------------
+     | MODELS (Shorthands)
+     |--------------------------------------------------------------------------
      */
-    public static function storageManager(bool $getShared = true)
+
+    public static function userModel(bool $getShared = true)
     {
         if ($getShared) {
-            return static::getSharedInstance('storageManager');
+            return static::getSharedInstance('userModel');
         }
 
-        return new \App\Libraries\Storage\StorageManager();
+        return new \App\Models\UserModel();
     }
 
-    /**
-     * API Key Model
-     *
-     * Provides ApiKeyModel instance
-     *
-     * @param bool $getShared
-     * @return \App\Models\ApiKeyModel
-     */
     public static function apiKeyModel(bool $getShared = true)
     {
         if ($getShared) {
@@ -420,24 +299,5 @@ class Services extends BaseService
         }
 
         return new \App\Models\ApiKeyModel();
-    }
-
-    /**
-     * API Key Service
-     *
-     * Provides ApiKeyService with all dependencies injected
-     *
-     * @param bool $getShared
-     * @return \App\Services\ApiKeyService
-     */
-    public static function apiKeyService(bool $getShared = true)
-    {
-        if ($getShared) {
-            return static::getSharedInstance('apiKeyService');
-        }
-
-        return new \App\Services\ApiKeyService(
-            static::apiKeyModel()
-        );
     }
 }

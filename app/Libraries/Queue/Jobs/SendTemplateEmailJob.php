@@ -3,7 +3,7 @@
 namespace App\Libraries\Queue\Jobs;
 
 use App\Libraries\Queue\Job;
-use App\Services\EmailService;
+use App\Services\System\EmailService;
 
 class SendTemplateEmailJob extends Job
 {

@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\DTO\SecurityContext;
 use App\Exceptions\AuthorizationException;
 use App\Exceptions\BadRequestException;
 use App\Exceptions\NotFoundException;
 use App\Exceptions\ValidationException;
 use App\Interfaces\AuditServiceInterface;
 use App\Interfaces\FileServiceInterface;
-use App\Libraries\ApiResponse;
 use App\Libraries\Query\QueryBuilder;
 use App\Libraries\Storage\StorageManager;
 use App\Models\FileModel;
@@ -36,16 +36,21 @@ class FileService implements FileServiceInterface
     /**
      * Upload a file
      */
-    public function upload(\App\Interfaces\DataTransferObjectInterface $request): \App\Interfaces\DataTransferObjectInterface
+    public function upload(\App\Interfaces\DataTransferObjectInterface $request, ?SecurityContext $context = null): \App\Interfaces\DataTransferObjectInterface
     {
         /** @var \App\DTO\Request\Files\FileUploadRequestDTO $request */
+        $userId = $context?->userId ?? (int) ($request->userId ?? 0);
+
+        if ($userId === 0) {
+            throw new AuthorizationException(lang('Api.unauthorized'));
+        }
 
         if ($request->isBase64()) {
             $fileData = $request->file;
             if (!is_string($fileData)) {
                 throw new BadRequestException(lang('Files.invalidFileObject'));
             }
-            return $this->handleBase64Upload($fileData, $request->userId, $request->toArray());
+            return $this->handleBase64Upload($fileData, $userId, $request->toArray());
         }
 
         $file = $request->file;
@@ -53,7 +58,7 @@ class FileService implements FileServiceInterface
             throw new BadRequestException(lang('Files.invalidFileObject'));
         }
 
-        return $this->handleMultipartUpload($file, $request->userId);
+        return $this->handleMultipartUpload($file, $userId);
     }
 
     /**
@@ -278,14 +283,22 @@ class FileService implements FileServiceInterface
 
     /**
      * List user's files
+     *
+     * @return array{data: array, total: int, page: int, perPage: int}
      */
-    public function index(\App\Interfaces\DataTransferObjectInterface $request): array
+    public function index(\App\Interfaces\DataTransferObjectInterface $request, ?SecurityContext $context = null): array
     {
         /** @var \App\DTO\Request\Files\FileIndexRequestDTO $request */
+        $userId = $context?->userId ?? (int) ($request->userId ?? 0);
+
+        if ($userId === 0) {
+            throw new AuthorizationException(lang('Api.unauthorized'));
+        }
+
         $builder = new QueryBuilder($this->fileModel);
 
-        // SECURITY: Always filter by current user_id
-        $builder->filter(['user_id' => $request->userId]);
+        // SECURITY: Always filter by current user identity from context
+        $builder->filter(['user_id' => $userId]);
 
         $this->applyQueryOptions($builder, $request->toArray(), function (): void {
             $this->fileModel->orderBy('uploaded_at', 'DESC');
@@ -308,24 +321,27 @@ class FileService implements FileServiceInterface
             'is_image' => $file->isImage(),
         ], $files);
 
-        return ApiResponse::paginated(
-            $formattedData,
-            $result['total'],
-            $result['page'],
-            $result['perPage']
-        );
+        return [
+            'data'    => $formattedData,
+            'total'   => $result['total'],
+            'page'    => $result['page'],
+            'perPage' => $result['perPage'],
+        ];
     }
 
     /**
      * Download a file
      */
-    public function download(\App\Interfaces\DataTransferObjectInterface $request): array
+    public function download(\App\Interfaces\DataTransferObjectInterface $request, ?SecurityContext $context = null): array
     {
         /** @var \App\DTO\Request\Files\FileGetRequestDTO $request */
+        $userId = $context?->userId ?? (int) ($request->userId ?? 0);
+
         $file = $this->ensureFileEntity($this->fileModel->find($request->id));
 
-        if ($file->user_id !== $request->userId) {
-            $this->auditService->log('unauthorized_file_download', 'files', $file->id, [], ['requested_by' => $request->userId], $request->userId);
+        if ($file->user_id !== $userId) {
+            $userContext = new SecurityContext($userId, null, $context?->metadata ?? []);
+            $this->auditService->log('unauthorized_file_download', 'files', $file->id, [], ['requested_by' => $userId], $userContext);
             throw new AuthorizationException(lang('Files.unauthorized'));
         }
 
@@ -341,13 +357,16 @@ class FileService implements FileServiceInterface
     /**
      * Delete a file
      */
-    public function delete(\App\Interfaces\DataTransferObjectInterface $request): array
+    public function delete(\App\Interfaces\DataTransferObjectInterface $request, ?SecurityContext $context = null): bool
     {
         /** @var \App\DTO\Request\Files\FileGetRequestDTO $request */
+        $userId = $context?->userId ?? (int) ($request->userId ?? 0);
+
         $file = $this->ensureFileEntity($this->fileModel->find($request->id));
 
-        if ($file->user_id !== $request->userId) {
-            $this->auditService->log('unauthorized_file_delete', 'files', $file->id, [], ['requested_by' => $request->userId], $request->userId);
+        if ($file->user_id !== $userId) {
+            $userContext = new SecurityContext($userId, null, $context?->metadata ?? []);
+            $this->auditService->log('unauthorized_file_delete', 'files', $file->id, [], ['requested_by' => $userId], $userContext);
             throw new AuthorizationException(lang('Files.unauthorized'));
         }
 
@@ -355,19 +374,32 @@ class FileService implements FileServiceInterface
             $this->storage->delete($file->path);
             $this->fileModel->delete($file->id);
 
-            return ApiResponse::deleted(lang('Files.deleteSuccess'));
+            return true;
         });
     }
 
     /**
-     * Destroy a file (alias for delete)
+     * Destroy a file (alias for delete to match CRUD contract)
      */
-    public function destroy(int $id): array
+    public function destroy(int $id, ?SecurityContext $context = null): bool
     {
         // This is a generic bypass for the BaseCrudService interface requirements,
-        // but FileService requires user context. It should ideally be overridden
-        // to prevent direct ID destruction without context, but we satisfy the interface.
-        throw new \BadMethodCallException(lang('Files.useDeleteWithContext'));
+        // but FileService requires user context.
+        if ($context === null || $context->userId === null) {
+            throw new AuthorizationException(lang('Api.unauthorized'));
+        }
+
+        $file = $this->ensureFileEntity($this->fileModel->find($id));
+
+        if ($file->user_id !== $context->userId && !$context->isAdmin()) {
+            throw new AuthorizationException(lang('Files.unauthorized'));
+        }
+
+        return $this->wrapInTransaction(function () use ($file) {
+            $this->storage->delete($file->path);
+            $this->fileModel->delete($file->id);
+            return true;
+        });
     }
     /**
      * Generate unique filename by checking existence in storage

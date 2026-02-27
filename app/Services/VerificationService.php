@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\DTO\SecurityContext;
 use App\Exceptions\BadRequestException;
 use App\Exceptions\ConflictException;
 use App\Exceptions\NotFoundException;
@@ -33,7 +34,7 @@ class VerificationService implements VerificationServiceInterface
     /**
      * Send verification email to user
      */
-    public function sendVerificationEmail(int $userId, array $data = []): array
+    public function sendVerificationEmail(int $userId, ?SecurityContext $context = null): bool
     {
         $user = $this->userModel->find($userId);
 
@@ -57,10 +58,9 @@ class VerificationService implements VerificationServiceInterface
             'verification_token_expires' => $expiresAt,
         ]);
 
-        $this->auditService->log('verification_email_sent', 'users', (int) $user->id, [], ['email' => $user->email]);
+        $this->auditService->log('verification_email_sent', 'users', (int) $user->id, [], ['email' => $user->email], $context);
 
-        $clientBaseUrl = isset($data['client_base_url']) ? (string) $data['client_base_url'] : null;
-        $verificationLink = $this->buildVerificationUrl($token, $clientBaseUrl);
+        $verificationLink = $this->buildVerificationUrl($token);
 
         $this->emailService->queueTemplate('verification', (string) $user->email, [
             'subject' => lang('Email.verification.subject'),
@@ -69,15 +69,15 @@ class VerificationService implements VerificationServiceInterface
             'expires_at' => date('F j, Y g:i A', strtotime($expiresAt)),
         ]);
 
-        return ['status' => 'success', 'message' => lang('Verification.sentMessage')];
+        return true;
     }
 
-    public function verifyEmail(DataTransferObjectInterface $request): DataTransferObjectInterface
+    public function verifyEmail(DataTransferObjectInterface $request, ?SecurityContext $context = null): bool
     {
         /** @var \App\DTO\Request\Identity\VerificationRequestDTO $request */
         $user = $this->userModel->where('email_verification_token', $request->token)->first();
 
-        if (!$user) {
+        if (! $user) {
             throw new NotFoundException(lang('Verification.invalidToken'));
         }
 
@@ -101,29 +101,24 @@ class VerificationService implements VerificationServiceInterface
 
         $now = date('Y-m-d H:i:s');
 
-        return $this->wrapInTransaction(function () use ($user, $now) {
+        $this->wrapInTransaction(function () use ($user, $now, $context) {
             $this->userModel->update($user->id, [
                 'email_verified_at' => $now,
                 'email_verification_token' => null,
                 'verification_token_expires' => null,
             ]);
 
-            $this->auditService->log('email_verified', 'users', (int) $user->id, [], ['email' => $user->email]);
-
-            return \App\DTO\Response\Identity\VerificationResponseDTO::fromArray([
-                'message' => lang('Verification.success'),
-                'user_id' => $user->id,
-                'email' => $user->email,
-                'verified_at' => $now,
-            ]);
+            $this->auditService->log('email_verified', 'users', (int) $user->id, [], ['email' => $user->email], $context);
         });
+
+        return true;
     }
 
     /**
      * Resend verification email
      */
-    public function resendVerification(int $userId, array $data = []): array
+    public function resendVerification(int $userId, ?SecurityContext $context = null): bool
     {
-        return $this->sendVerificationEmail($userId, $data);
+        return $this->sendVerificationEmail($userId, $context);
     }
 }

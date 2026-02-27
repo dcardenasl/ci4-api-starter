@@ -2,7 +2,7 @@
 
 namespace App\Traits;
 
-use App\HTTP\ApiRequest;
+use App\Libraries\ContextHolder;
 use App\Services\AuditService;
 
 /**
@@ -99,13 +99,13 @@ trait Auditable
         }
 
         $auditService = $this->getAuditService();
-        $userId = $this->getCurrentUserId();
+        $context = ContextHolder::get();
 
         $auditService->logCreate(
             $this->getEntityType(),
             is_array($data['id']) ? (int) $data['id'][0] : (int) $data['id'],
             $data['data'] ?? [],
-            $userId
+            $context
         );
     }
 
@@ -135,14 +135,14 @@ trait Auditable
         unset($this->auditOldValues[$id]);
 
         $auditService = $this->getAuditService();
-        $userId = $this->getCurrentUserId();
+        $context = ContextHolder::get();
 
         $auditService->logUpdate(
             $this->getEntityType(),
             $id,
             $oldValues,
             $newValues,
-            $userId
+            $context
         );
     }
 
@@ -171,13 +171,13 @@ trait Auditable
         unset($this->auditOldValues[$id]);
 
         $auditService = $this->getAuditService();
-        $userId = $this->getCurrentUserId();
+        $context = ContextHolder::get();
 
         $auditService->logDelete(
             $this->getEntityType(),
             $id,
             $deletedData,
-            $userId
+            $context
         );
     }
 
@@ -189,22 +189,6 @@ trait Auditable
     protected function getAuditService(): AuditService
     {
         return \Config\Services::auditService();
-    }
-
-    /**
-     * Get current user ID from request
-     *
-     * @return int|null
-     */
-    protected function getCurrentUserId(): ?int
-    {
-        $request = \Config\Services::request();
-
-        if ($request instanceof ApiRequest) {
-            return $request->getAuthUserId();
-        }
-
-        return null;
     }
 
     /**

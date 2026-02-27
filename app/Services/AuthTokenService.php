@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\DTO\SecurityContext;
 use App\Exceptions\AuthenticationException;
 use App\Interfaces\AuthTokenServiceInterface;
 use App\Interfaces\RefreshTokenServiceInterface;
@@ -25,7 +26,7 @@ class AuthTokenService implements AuthTokenServiceInterface
     /**
      * Refresh access token using refresh token
      */
-    public function refreshAccessToken(\App\DTO\Request\Identity\RefreshTokenRequestDTO $request): \App\Interfaces\DataTransferObjectInterface
+    public function refreshAccessToken(\App\DTO\Request\Identity\RefreshTokenRequestDTO $request, ?SecurityContext $context = null): \App\Interfaces\DataTransferObjectInterface
     {
         return $this->refreshTokenService->refreshAccessToken($request);
     }
@@ -33,22 +34,22 @@ class AuthTokenService implements AuthTokenServiceInterface
     /**
      * Revoke current access token from authorization header
      */
-    public function revokeToken(string $authorizationHeader): array
+    public function revokeToken(string $authorizationHeader, ?SecurityContext $context = null): bool
     {
         return $this->tokenRevocationService->revokeAccessToken([
             'authorization_header' => $authorizationHeader
-        ]);
+        ], $context);
     }
 
     /**
      * Revoke all user tokens
      */
-    public function revokeAllUserTokens(int $userId): array
+    public function revokeAllUserTokens(int $userId, ?SecurityContext $context = null): bool
     {
         if ($userId <= 0) {
             throw new AuthenticationException(lang('Auth.authRequired'));
         }
 
-        return $this->tokenRevocationService->revokeAllUserTokens($userId);
+        return $this->tokenRevocationService->revokeAllUserTokens($userId, $context);
     }
 }

@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\DTO\SecurityContext;
 use App\Exceptions\NotFoundException;
 use App\Interfaces\CrudServiceContract;
 use App\Interfaces\DataTransferObjectInterface;
-use App\Libraries\ApiResponse;
 use App\Libraries\Query\QueryBuilder;
 use CodeIgniter\Model;
 
@@ -33,8 +33,10 @@ abstract class BaseCrudService implements CrudServiceContract
 
     /**
      * Get a paginated list of resources
+     *
+     * @return array{data: array, total: int, page: int, perPage: int}
      */
-    public function index(DataTransferObjectInterface $request): array
+    public function index(DataTransferObjectInterface $request, ?SecurityContext $context = null): array
     {
         $builder = new QueryBuilder($this->model);
 
@@ -61,18 +63,18 @@ abstract class BaseCrudService implements CrudServiceContract
             (array) $result['data']
         );
 
-        return ApiResponse::paginated(
-            $result['data'],
-            $result['total'],
-            $result['page'],
-            $result['perPage']
-        );
+        return [
+            'data'    => $result['data'],
+            'total'   => $result['total'],
+            'page'    => $result['page'],
+            'perPage' => $result['perPage'],
+        ];
     }
 
     /**
      * Get a single resource by ID
      */
-    public function show(int $id): DataTransferObjectInterface
+    public function show(int $id, ?SecurityContext $context = null): DataTransferObjectInterface
     {
         /** @var object|null $entity */
         $entity = $this->model->find($id);
@@ -87,7 +89,7 @@ abstract class BaseCrudService implements CrudServiceContract
     /**
      * Delete a resource (soft delete by default)
      */
-    public function destroy(int $id): array
+    public function destroy(int $id, ?SecurityContext $context = null): bool
     {
         if (!$this->model->find($id)) {
             throw new NotFoundException(lang('Api.resourceNotFound'));
@@ -97,7 +99,7 @@ abstract class BaseCrudService implements CrudServiceContract
             if (!$this->model->delete($id)) {
                 throw new \RuntimeException(lang('Api.deleteError'));
             }
-            return ApiResponse::deleted();
+            return true;
         });
     }
 

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\DTO\SecurityContext;
 use App\Exceptions\NotFoundException;
 use App\Interfaces\AuditServiceInterface;
 use App\Interfaces\DataTransferObjectInterface;
@@ -34,20 +35,20 @@ class PasswordResetService implements PasswordResetServiceInterface
     /**
      * Send password reset link to email
      */
-    public function sendResetLink(DataTransferObjectInterface $request): array
+    public function sendResetLink(DataTransferObjectInterface $request, ?SecurityContext $context = null): bool
     {
         /** @var \App\DTO\Request\Identity\ForgotPasswordRequestDTO $request */
         $email = $request->email;
         $user = $this->userModel->where('email', $email)->first();
 
         if ($user instanceof \App\Entities\UserEntity) {
-            $this->auditService->log('password_reset_request', 'users', (int) $user->id, [], ['email' => $email]);
+            $this->auditService->log('password_reset_request', 'users', (int) $user->id, [], ['email' => $email], $context);
 
             $token = bin2hex(random_bytes(32));
             $this->passwordResetModel->where('email', $email)->delete();
             $this->passwordResetModel->insert(['email' => $email, 'token' => $token, 'created_at' => date('Y-m-d H:i:s')]);
 
-            $resetLink = $this->buildResetPasswordUrl($token, $email, null);
+            $resetLink = $this->buildResetPasswordUrl($token, $email);
             $this->emailService->queueTemplate('password-reset', $email, [
                 'subject' => lang('Email.passwordReset.subject'),
                 'reset_link' => $resetLink,
@@ -56,17 +57,17 @@ class PasswordResetService implements PasswordResetServiceInterface
         } else {
             $deletedUser = $this->userModel->withDeleted()->where('email', $email)->first();
             if ($deletedUser instanceof \App\Entities\UserEntity && $deletedUser->deleted_at !== null) {
-                $this->reactivateDeletedUserForApproval($deletedUser, $email);
+                $this->reactivateDeletedUserForApproval($deletedUser, $email, $context);
             }
         }
 
-        return ['status' => 'success', 'message' => lang('PasswordReset.sentMessage')];
+        return true;
     }
 
     /**
      * Validate reset token
      */
-    public function validateToken(DataTransferObjectInterface $request): array
+    public function validateToken(DataTransferObjectInterface $request, ?SecurityContext $context = null): bool
     {
         /** @var \App\DTO\Request\Identity\PasswordResetTokenValidationDTO $request */
         $this->passwordResetModel->cleanExpired(60);
@@ -75,13 +76,13 @@ class PasswordResetService implements PasswordResetServiceInterface
             throw new NotFoundException(lang('PasswordReset.invalidToken'));
         }
 
-        return ['status' => 'success', 'valid' => true, 'message' => lang('PasswordReset.tokenValid')];
+        return true;
     }
 
     /**
      * Reset password using token
      */
-    public function resetPassword(DataTransferObjectInterface $request): DataTransferObjectInterface
+    public function resetPassword(DataTransferObjectInterface $request, ?SecurityContext $context = null): bool
     {
         /** @var \App\DTO\Request\Identity\ResetPasswordRequestDTO $request */
         $this->passwordResetModel->cleanExpired(60);
@@ -95,7 +96,7 @@ class PasswordResetService implements PasswordResetServiceInterface
             throw new NotFoundException(lang('PasswordReset.userNotFound'));
         }
 
-        return $this->wrapInTransaction(function () use ($user, $request) {
+        $this->wrapInTransaction(function () use ($user, $request, $context) {
             $updateData = ['password' => password_hash($request->password, PASSWORD_BCRYPT)];
 
             if (($user->status ?? null) === 'invited') {
@@ -106,16 +107,20 @@ class PasswordResetService implements PasswordResetServiceInterface
             }
 
             $this->userModel->update($user->id, $updateData);
-            $this->auditService->log('password_reset_success', 'users', (int) $user->id, [], ['email' => $user->email], (int) $user->id);
-            $this->passwordResetModel->where('email', $request->email)->where('token', $request->token)->delete();
 
-            return \App\DTO\Response\Identity\PasswordResetResponseDTO::fromArray(['message' => lang('PasswordReset.resetMessage')]);
+            // Elevate context on success
+            $userContext = new SecurityContext((int) $user->id, (string) $user->role, $context?->metadata ?? []);
+            $this->auditService->log('password_reset_success', 'users', (int) $user->id, [], ['email' => $user->email], $userContext);
+
+            $this->passwordResetModel->where('email', $request->email)->where('token', $request->token)->delete();
         });
+
+        return true;
     }
 
-    private function reactivateDeletedUserForApproval(\App\Entities\UserEntity $user, string $email): void
+    private function reactivateDeletedUserForApproval(\App\Entities\UserEntity $user, string $email, ?SecurityContext $context = null): void
     {
-        $this->wrapInTransaction(function () use ($user, $email) {
+        $this->wrapInTransaction(function () use ($user, $email, $context) {
             $db = \Config\Database::connect();
             $db->table('users')->where('id', (int) $user->id)->update([
                 'deleted_at'  => null,
@@ -125,7 +130,7 @@ class PasswordResetService implements PasswordResetServiceInterface
             ]);
             $this->refreshTokenService->revokeAllUserTokens((int) $user->id);
             $this->passwordResetModel->where('email', $email)->delete();
-            $this->auditService->log('account_reactivation_requested', 'users', (int) $user->id, [], ['email' => $email]);
+            $this->auditService->log('account_reactivation_requested', 'users', (int) $user->id, [], ['email' => $email], $context);
         });
     }
 }

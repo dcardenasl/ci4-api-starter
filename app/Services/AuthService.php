@@ -6,6 +6,7 @@ namespace App\Services;
 
 use App\DTO\Request\Auth\LoginRequestDTO;
 use App\DTO\Request\Auth\RegisterRequestDTO;
+use App\DTO\SecurityContext;
 use App\Exceptions\AuthenticationException;
 use App\Exceptions\ValidationException;
 use App\Interfaces\AuditServiceInterface;
@@ -45,7 +46,7 @@ class AuthService implements AuthServiceInterface
     /**
      * Authenticate user with credentials
      */
-    public function login(DataTransferObjectInterface $request): DataTransferObjectInterface
+    public function login(DataTransferObjectInterface $request, ?SecurityContext $context = null): DataTransferObjectInterface
     {
         /** @var LoginRequestDTO $request */
         /** @var \App\Entities\UserEntity|null $user */
@@ -59,11 +60,13 @@ class AuthService implements AuthServiceInterface
             : password_verify($request->password, $storedHash);
 
         if (!$user || !$passwordValid) {
-            $this->auditService->log('login_failure', 'users', $user ? (int) $user->id : null, ['email' => $request->email], ['reason' => 'invalid_credentials']);
+            $this->auditService->log('login_failure', 'users', $user ? (int) $user->id : null, ['email' => $request->email], ['reason' => 'invalid_credentials'], $context);
             throw new AuthenticationException(lang('Users.auth.invalidCredentials'), ['credentials' => lang('Users.auth.invalidCredentials')]);
         }
 
-        $this->auditService->log('login_success', 'users', (int) $user->id, [], ['email' => (string) $user->email], (int) $user->id);
+        // Elevate context for successful login audit
+        $userContext = new SecurityContext((int) $user->id, (string) $user->role, $context?->metadata ?? []);
+        $this->auditService->log('login_success', 'users', (int) $user->id, [], ['email' => (string) $user->email], $userContext);
 
         $this->userAccessPolicy->assertCanAuthenticate($user);
 
@@ -74,7 +77,7 @@ class AuthService implements AuthServiceInterface
     /**
      * Authenticate user with Google ID token
      */
-    public function loginWithGoogleToken(DataTransferObjectInterface $request): array
+    public function loginWithGoogleToken(DataTransferObjectInterface $request, ?SecurityContext $context = null): array
     {
         /** @var \App\DTO\Request\Auth\GoogleLoginRequestDTO $request */
         $identity = $this->googleIdentityService->verifyIdToken($request->idToken);
@@ -88,7 +91,9 @@ class AuthService implements AuthServiceInterface
         if (!$user) {
             $user = $this->createPendingGoogleUser($identity->toArray());
             $this->sendPendingApprovalEmail($user);
-            $this->auditService->log('google_registration_pending', 'users', (int) $user->id, [], ['email' => $email, 'provider' => 'google'], (int) $user->id);
+
+            $userContext = new SecurityContext((int) $user->id, (string) $user->role, $context?->metadata ?? []);
+            $this->auditService->log('google_registration_pending', 'users', (int) $user->id, [], ['email' => $email, 'provider' => 'google'], $userContext);
 
             return [
                 'status' => 'success',
@@ -113,7 +118,9 @@ class AuthService implements AuthServiceInterface
         $this->syncGoogleProfileIfEmptyFromDb((int) $user->id, $identity->toArray());
 
         $user = $this->userModel->find((int) $user->id);
-        $this->auditService->log('google_login_success', 'users', (int) $user->id, [], ['email' => $email, 'provider' => 'google'], (int) $user->id);
+
+        $userContext = new SecurityContext((int) $user->id, (string) $user->role, $context?->metadata ?? []);
+        $this->auditService->log('google_login_success', 'users', (int) $user->id, [], ['email' => $email, 'provider' => 'google'], $userContext);
 
         /** @var \App\Entities\UserEntity $user */
         return $this->generateTokensResponse($user, $this->buildAuthUserData($user));
@@ -122,7 +129,7 @@ class AuthService implements AuthServiceInterface
     /**
      * Get current authenticated user profile
      */
-    public function me(int $userId): array
+    public function me(int $userId, ?SecurityContext $context = null): array
     {
         if ($userId <= 0) {
             throw new AuthenticationException(lang('Users.auth.notAuthenticated'));
@@ -137,10 +144,10 @@ class AuthService implements AuthServiceInterface
     /**
      * Register a new user with password
      */
-    public function register(DataTransferObjectInterface $request): DataTransferObjectInterface
+    public function register(DataTransferObjectInterface $request, ?SecurityContext $context = null): DataTransferObjectInterface
     {
         /** @var RegisterRequestDTO $request */
-        return $this->wrapInTransaction(function () use ($request) {
+        return $this->wrapInTransaction(function () use ($request, $context) {
             $userId = $this->userModel->insert([
                 'email'      => $request->email,
                 'first_name' => $request->firstName,
@@ -157,7 +164,7 @@ class AuthService implements AuthServiceInterface
             $user = $this->userModel->find($userId);
 
             try {
-                $this->verificationService->sendVerificationEmail((int) $userId);
+                $this->verificationService->sendVerificationEmail((int) $userId, $context);
             } catch (\Throwable $e) {
                 log_message('error', 'Failed to send verification email: ' . $e->getMessage());
             }

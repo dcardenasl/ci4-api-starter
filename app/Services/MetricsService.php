@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\DTO\SecurityContext;
 use App\Interfaces\DataTransferObjectInterface;
 use App\Interfaces\MetricsServiceInterface;
 use App\Models\MetricModel;
@@ -27,7 +28,7 @@ class MetricsService implements MetricsServiceInterface
     /**
      * Get system performance overview
      */
-    public function getOverview(DataTransferObjectInterface $request): \App\DTO\Response\Metrics\MetricsOverviewResponseDTO
+    public function getOverview(DataTransferObjectInterface $request, ?SecurityContext $context = null): \App\DTO\Response\Metrics\MetricsOverviewResponseDTO
     {
         /** @var \App\DTO\Request\Metrics\MetricsQueryRequestDTO $request */
         $period = $request->period;
@@ -50,7 +51,7 @@ class MetricsService implements MetricsServiceInterface
         ]);
     }
 
-    public function getRequestStats(string $period): array
+    public function getRequestStats(string $period, ?SecurityContext $context = null): array
     {
         return $this->requestLogModel->getStats($period);
     }
@@ -58,17 +59,17 @@ class MetricsService implements MetricsServiceInterface
     /**
      * Get slow requests with configurable threshold and limit.
      */
-    public function getSlowRequests(int $threshold, int $limit): array
+    public function getSlowRequests(int $threshold, int $limit, ?SecurityContext $context = null): array
     {
         return $this->requestLogModel->getSlowRequests($threshold, $limit);
     }
 
-    public function record(\App\DTO\Request\Metrics\RecordMetricRequestDTO $request): bool
+    public function record(\App\DTO\Request\Metrics\RecordMetricRequestDTO $request, ?SecurityContext $context = null): bool
     {
         return (bool) $this->metricModel->record($request->name, $request->value, $request->tags);
     }
 
-    public function getCustomMetric(string $name, string $period, bool $aggregate = false): array
+    public function getCustomMetric(string $name, string $period, bool $aggregate = false, ?SecurityContext $context = null): array
     {
         return $aggregate
             ? $this->metricModel->getAggregated($name, $period)

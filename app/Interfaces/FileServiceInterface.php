@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Interfaces;
 
+use App\DTO\SecurityContext;
+
 /**
  * File Service Interface
  *
@@ -14,25 +16,25 @@ interface FileServiceInterface
     /**
      * Upload a file
      */
-    public function upload(\App\Interfaces\DataTransferObjectInterface $request): \App\Interfaces\DataTransferObjectInterface;
+    public function upload(\App\Interfaces\DataTransferObjectInterface $request, ?SecurityContext $context = null): \App\Interfaces\DataTransferObjectInterface;
 
     /**
      * List user's files
      */
-    public function index(\App\Interfaces\DataTransferObjectInterface $request): array;
+    public function index(\App\Interfaces\DataTransferObjectInterface $request, ?SecurityContext $context = null): array;
 
     /**
      * Download a file
      */
-    public function download(\App\Interfaces\DataTransferObjectInterface $request): array;
+    public function download(\App\Interfaces\DataTransferObjectInterface $request, ?SecurityContext $context = null): array;
 
     /**
      * Delete a file
      */
-    public function delete(\App\Interfaces\DataTransferObjectInterface $request): array;
+    public function delete(\App\Interfaces\DataTransferObjectInterface $request, ?SecurityContext $context = null): bool;
 
     /**
      * Destroy a file (alias for delete to match CRUD contract)
      */
-    public function destroy(int $id): array;
+    public function destroy(int $id, ?SecurityContext $context = null): bool;
 }

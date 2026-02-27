@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Interfaces;
 
+use App\DTO\SecurityContext;
+
 /**
  * User Service Interface
  *
@@ -14,30 +16,30 @@ interface UserServiceInterface
     /**
      * Get all users with pagination and filtering
      */
-    public function index(\App\Interfaces\DataTransferObjectInterface $request): array;
+    public function index(\App\Interfaces\DataTransferObjectInterface $request, ?SecurityContext $context = null): array;
 
     /**
      * Get a single user by ID
      */
-    public function show(int $id): \App\Interfaces\DataTransferObjectInterface;
+    public function show(int $id, ?SecurityContext $context = null): \App\Interfaces\DataTransferObjectInterface;
 
     /**
      * Create a new user (Admin only)
      */
-    public function store(\App\Interfaces\DataTransferObjectInterface $request): \App\Interfaces\DataTransferObjectInterface;
+    public function store(\App\Interfaces\DataTransferObjectInterface $request, ?SecurityContext $context = null): \App\Interfaces\DataTransferObjectInterface;
 
     /**
      * Update an existing user
      */
-    public function update(int $id, \App\Interfaces\DataTransferObjectInterface $request): \App\Interfaces\DataTransferObjectInterface;
+    public function update(int $id, \App\Interfaces\DataTransferObjectInterface $request, ?SecurityContext $context = null): \App\Interfaces\DataTransferObjectInterface;
 
     /**
      * Delete a user (Soft delete)
      */
-    public function destroy(int $id): array;
+    public function destroy(int $id, ?SecurityContext $context = null): bool;
 
     /**
      * Approve a pending user
      */
-    public function approve(int $id, ?int $adminId = null, ?string $clientBaseUrl = null): \App\Interfaces\DataTransferObjectInterface;
+    public function approve(int $id, ?SecurityContext $context = null, ?string $clientBaseUrl = null): \App\Interfaces\DataTransferObjectInterface;
 }

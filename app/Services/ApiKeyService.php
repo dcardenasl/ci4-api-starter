@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\DTO\SecurityContext;
 use App\Exceptions\BadRequestException;
 use App\Exceptions\ValidationException;
 use App\Interfaces\ApiKeyServiceInterface;
@@ -31,7 +32,7 @@ class ApiKeyService extends BaseCrudService implements ApiKeyServiceInterface
     /**
      * Create a new API key
      */
-    public function store(DataTransferObjectInterface $request): DataTransferObjectInterface
+    public function store(DataTransferObjectInterface $request, ?SecurityContext $context = null): DataTransferObjectInterface
     {
         return $this->wrapInTransaction(function () use ($request) {
             $data = $request->toArray();
@@ -72,7 +73,7 @@ class ApiKeyService extends BaseCrudService implements ApiKeyServiceInterface
     /**
      * Update an existing API key
      */
-    public function update(int $id, DataTransferObjectInterface $request): DataTransferObjectInterface
+    public function update(int $id, DataTransferObjectInterface $request, ?SecurityContext $context = null): DataTransferObjectInterface
     {
         return $this->wrapInTransaction(function () use ($id, $request) {
             /** @var object|null $apiKey */
@@ -81,7 +82,7 @@ class ApiKeyService extends BaseCrudService implements ApiKeyServiceInterface
                 throw new \App\Exceptions\NotFoundException(lang('ApiKeys.notFound'));
             }
 
-            $updateData = $request->toArray();
+            $updateData = array_filter($request->toArray(), fn ($val) => $val !== null);
 
             if (empty($updateData)) {
                 throw new BadRequestException(lang('Api.invalidRequest'), ['fields' => lang('ApiKeys.fieldRequired')]);

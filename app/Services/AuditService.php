@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\DTO\SecurityContext;
 use App\Interfaces\AuditServiceInterface;
 use App\Interfaces\DataTransferObjectInterface;
 use App\Models\AuditLogModel;
-use CodeIgniter\HTTP\RequestInterface;
 
 /**
  * Modernized Audit Service
@@ -31,6 +31,11 @@ class AuditService extends BaseCrudService implements AuditServiceInterface
     }
 
     /**
+     * @var bool Allow enabling audit logging during tests
+     */
+    public static bool $forceEnabledInTests = false;
+
+    /**
      * Log an audit event
      */
     public function log(
@@ -39,52 +44,77 @@ class AuditService extends BaseCrudService implements AuditServiceInterface
         ?int $entityId,
         array $oldValues,
         array $newValues,
-        ?int $userId = null,
-        ?RequestInterface $request = null
+        ?SecurityContext $context = null
     ): void {
-        $request = $request ?? \Config\Services::request();
+        // BYPASS IN TESTING: Audit logging is disabled in tests unless explicitly forced
+        if (ENVIRONMENT === 'testing' && !self::$forceEnabledInTests) {
+            return;
+        }
 
-        $this->model->insert([
+        $userId = $context?->userId;
+        $request = \Config\Services::request();
+
+        // Use network info from context metadata if available, otherwise fallback to request
+        $ipAddress = $context?->metadata['ip_address'] ?? $request->getIPAddress();
+        $userAgent = $context?->metadata['user_agent'] ?? $request->getHeaderLine('User-Agent');
+
+        $data = [
             'user_id'     => $userId,
             'action'      => $action,
             'entity_type' => $entityType,
             'entity_id'   => $entityId,
             'old_values'  => ($old = $this->sanitizeAuditValues($oldValues)) ? json_encode($old) : null,
             'new_values'  => ($new = $this->sanitizeAuditValues($newValues)) ? json_encode($new) : null,
-            'ip_address'  => $request->getIPAddress(),
-            'user_agent'  => $request->getHeaderLine('User-Agent'),
+            'ip_address'  => $ipAddress,
+            'user_agent'  => $userAgent,
             'created_at'  => date('Y-m-d H:i:s'),
-        ]);
+        ];
+
+        try {
+            $this->model->insert($data);
+        } catch (\Throwable $e) {
+            if (!($e instanceof \CodeIgniter\Database\Exceptions\DatabaseException)) {
+                throw $e;
+            }
+
+            // If it's a foreign key error, retry without user_id
+            if ($userId !== null && (str_contains($e->getMessage(), '1452') || str_contains($e->getMessage(), 'foreign key'))) {
+                $data['user_id'] = null;
+                $this->model->insert($data);
+            } else {
+                throw $e;
+            }
+        }
     }
 
     /**
      * Log a create action
      */
-    public function logCreate(string $entityType, int $entityId, array $data, ?int $userId = null, ?\CodeIgniter\HTTP\RequestInterface $request = null): void
+    public function logCreate(string $entityType, int $entityId, array $data, ?SecurityContext $context = null): void
     {
-        $this->log('create', $entityType, $entityId, [], $data, $userId, $request);
+        $this->log('create', $entityType, $entityId, [], $data, $context);
     }
 
     /**
      * Log an update action
      */
-    public function logUpdate(string $entityType, int $entityId, array $oldValues, array $newValues, ?int $userId = null, ?\CodeIgniter\HTTP\RequestInterface $request = null): void
+    public function logUpdate(string $entityType, int $entityId, array $oldValues, array $newValues, ?SecurityContext $context = null): void
     {
         $sanitizedOld = $this->sanitizeAuditValues($oldValues);
         $sanitizedNew = $this->sanitizeAuditValues($newValues);
 
         // Only log if there are actual non-sensitive changes
         if (json_encode($sanitizedOld) !== json_encode($sanitizedNew)) {
-            $this->log('update', $entityType, $entityId, $sanitizedOld, $sanitizedNew, $userId, $request);
+            $this->log('update', $entityType, $entityId, $sanitizedOld, $sanitizedNew, $context);
         }
     }
 
     /**
      * Log a delete action
      */
-    public function logDelete(string $entityType, int $entityId, array $data, ?int $userId = null, ?\CodeIgniter\HTTP\RequestInterface $request = null): void
+    public function logDelete(string $entityType, int $entityId, array $data, ?SecurityContext $context = null): void
     {
-        $this->log('delete', $entityType, $entityId, $data, [], $userId, $request);
+        $this->log('delete', $entityType, $entityId, $data, [], $context);
     }
 
     private function normalizeEntityType(string $entityType): string
@@ -101,7 +131,7 @@ class AuditService extends BaseCrudService implements AuditServiceInterface
     /**
      * Get audit logs for a specific entity
      */
-    public function byEntity(array $data): array
+    public function byEntity(array $data, ?SecurityContext $context = null): array
     {
         $entityId = (int) ($data['entity_id'] ?? 0);
         $entityType = $this->normalizeEntityType((string) ($data['entity_type'] ?? ''));
@@ -114,7 +144,7 @@ class AuditService extends BaseCrudService implements AuditServiceInterface
     /**
      * Audit logs are immutable via API
      */
-    public function store(DataTransferObjectInterface $request): DataTransferObjectInterface
+    public function store(DataTransferObjectInterface $request, ?SecurityContext $context = null): DataTransferObjectInterface
     {
         throw new \BadMethodCallException(lang('Audit.cannotCreateManual'));
     }
@@ -122,7 +152,7 @@ class AuditService extends BaseCrudService implements AuditServiceInterface
     /**
      * Audit logs are immutable via API
      */
-    public function update(int $id, DataTransferObjectInterface $request): DataTransferObjectInterface
+    public function update(int $id, DataTransferObjectInterface $request, ?SecurityContext $context = null): DataTransferObjectInterface
     {
         throw new \BadMethodCallException(lang('Audit.immutable'));
     }

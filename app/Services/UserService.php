@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\DTO\SecurityContext;
 use App\Exceptions\AuthorizationException;
 use App\Exceptions\NotFoundException;
 use App\Exceptions\ValidationException;
@@ -49,14 +50,13 @@ class UserService extends BaseCrudService implements UserServiceInterface
     /**
      * Create a new user (Overriding store because it has specific business logic)
      */
-    public function store(\App\Interfaces\DataTransferObjectInterface $request): \App\Interfaces\DataTransferObjectInterface
+    public function store(\App\Interfaces\DataTransferObjectInterface $request, ?SecurityContext $context = null): \App\Interfaces\DataTransferObjectInterface
     {
         /** @var \App\DTO\Request\Users\UserStoreRequestDTO $request */
         try {
-            return $this->wrapInTransaction(function () use ($request) {
-                $apiRequest = \Config\Services::request();
-                $actorRole = $apiRequest instanceof \App\HTTP\ApiRequest ? (string) $apiRequest->getAuthUserRole() : '';
-                $adminId = $apiRequest instanceof \App\HTTP\ApiRequest ? $apiRequest->getAuthUserId() : null;
+            return $this->wrapInTransaction(function () use ($request, $context) {
+                $actorRole = $context?->role ?? '';
+                $adminId = $context?->userId;
 
                 $requestedRole = (string) $request->role;
 
@@ -102,8 +102,6 @@ class UserService extends BaseCrudService implements UserServiceInterface
                 return $this->mapToResponse($user);
             });
         } catch (\Throwable $e) {
-            echo "\nFATAL ERROR IN USER SERVICE STORE: " . $e->getMessage() . "\n";
-            echo $e->getTraceAsString() . "\n";
             throw $e;
         }
     }
@@ -111,11 +109,11 @@ class UserService extends BaseCrudService implements UserServiceInterface
     /**
      * Update an existing user (Specific logic for roles and permissions)
      */
-    public function update(int $id, \App\Interfaces\DataTransferObjectInterface $request): \App\Interfaces\DataTransferObjectInterface
+    public function update(int $id, \App\Interfaces\DataTransferObjectInterface $request, ?SecurityContext $context = null): \App\Interfaces\DataTransferObjectInterface
     {
         $data = $request->toArray();
-        $actorRole = (string) ($data['user_role'] ?? '');
-        $actorId = isset($data['user_id']) ? (int) $data['user_id'] : null;
+        $actorRole = $context?->role ?? '';
+        $actorId = $context?->userId;
 
         // Check if the user exists
         /** @var \App\Entities\UserEntity|null $targetUser */
@@ -153,7 +151,7 @@ class UserService extends BaseCrudService implements UserServiceInterface
     /**
      * Approve a pending user
      */
-    public function approve(int $id, ?int $adminId = null, ?string $clientBaseUrl = null): \App\Interfaces\DataTransferObjectInterface
+    public function approve(int $id, ?SecurityContext $context = null, ?string $clientBaseUrl = null): \App\Interfaces\DataTransferObjectInterface
     {
         /** @var \App\Entities\UserEntity|null $user */
         $user = $this->model->find($id);
@@ -175,7 +173,9 @@ class UserService extends BaseCrudService implements UserServiceInterface
             throw new \App\Exceptions\ConflictException(lang('Users.invalidApprovalState'));
         }
 
-        return $this->wrapInTransaction(function () use ($id, $adminId, $status, $user, $clientBaseUrl) {
+        return $this->wrapInTransaction(function () use ($id, $context, $status, $user, $clientBaseUrl) {
+            $adminId = $context?->userId;
+
             $this->model->update($id, [
                 'status' => 'active',
                 'approved_at' => date('Y-m-d H:i:s'),
@@ -189,7 +189,7 @@ class UserService extends BaseCrudService implements UserServiceInterface
                 $id,
                 ['status' => $status],
                 ['status' => 'active'],
-                $adminId
+                $context
             );
 
             $this->emailService->queueTemplate('account-approved', (string) $user->email, [
@@ -205,13 +205,25 @@ class UserService extends BaseCrudService implements UserServiceInterface
     }
 
     /**
-     * Delete a user
+     * Get a single resource by ID with authorization checks
      */
-    public function destroy(int $id): array
+    public function show(int $id, ?SecurityContext $context = null): \App\Interfaces\DataTransferObjectInterface
     {
-        $request = \Config\Services::request();
-        $actorRole = $request instanceof \App\HTTP\ApiRequest ? (string) $request->getAuthUserRole() : '';
-        $actorId = $request instanceof \App\HTTP\ApiRequest ? (int) $request->getAuthUserId() : 0;
+        // Authorization: Non-admins can only see their own profile
+        if ($context !== null && !$context->isAdmin() && !$context->isUser($id)) {
+            throw new \App\Exceptions\AuthorizationException(lang('Auth.insufficientPermissions'));
+        }
+
+        return parent::show($id, $context);
+    }
+
+    /**
+     * Delete a user with authorization checks
+     */
+    public function destroy(int $id, ?SecurityContext $context = null): bool
+    {
+        $actorRole = $context?->role ?? '';
+        $actorId = $context?->userId;
 
         $targetUser = $this->model->find($id);
         if (!$targetUser) {
@@ -220,7 +232,7 @@ class UserService extends BaseCrudService implements UserServiceInterface
 
         $this->assertAdminCanManageTarget($actorRole, $actorId, $id, (string) $targetUser->role);
 
-        return parent::destroy($id);
+        return parent::destroy($id, $context);
     }
 
     /**

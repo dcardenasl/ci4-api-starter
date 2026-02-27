@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\DTO\SecurityContext;
 use App\Exceptions\AuthenticationException;
 use App\Exceptions\BadRequestException;
 use App\Interfaces\AuditServiceInterface;
@@ -39,7 +40,7 @@ class TokenRevocationService implements TokenRevocationServiceInterface
     /**
      * Revoke an access token by adding its JTI to blacklist
      */
-    public function revokeToken(string $jti, int $expiresAt): array
+    public function revokeToken(string $jti, int $expiresAt, ?SecurityContext $context = null): bool
     {
         $added = $this->blacklistModel->addToBlacklist($jti, $expiresAt);
 
@@ -61,16 +62,17 @@ class TokenRevocationService implements TokenRevocationServiceInterface
             'tokens',
             null,
             [],
-            ['jti' => $jti]
+            ['jti' => $jti],
+            $context
         );
 
-        return ['status' => 'success', 'message' => lang('Tokens.tokenRevokedSuccess')];
+        return true;
     }
 
     /**
      * Revoke an access token from authorization header
      */
-    public function revokeAccessToken(array $data): array
+    public function revokeAccessToken(array $data, ?SecurityContext $context = null): bool
     {
         $this->validateRequiredFields($data, [
             'authorization_header' => lang('Tokens.authorizationHeaderRequired'),
@@ -102,7 +104,7 @@ class TokenRevocationService implements TokenRevocationServiceInterface
         }
 
         // Revocar token agregando JTI a blacklist
-        return $this->revokeToken($payload->jti, (int) $payload->exp);
+        return $this->revokeToken($payload->jti, (int) $payload->exp, $context);
     }
 
     /**
@@ -135,7 +137,7 @@ class TokenRevocationService implements TokenRevocationServiceInterface
     /**
      * Revoke all tokens for a user
      */
-    public function revokeAllUserTokens(int $userId): array
+    public function revokeAllUserTokens(int $userId, ?SecurityContext $context = null): bool
     {
         // Revoke all refresh tokens
         $this->refreshTokenModel->revokeAllUserTokens($userId);
@@ -147,10 +149,10 @@ class TokenRevocationService implements TokenRevocationServiceInterface
             $userId,
             [],
             [],
-            $userId
+            $context
         );
 
-        return ['status' => 'success', 'message' => lang('Tokens.allUserTokensRevoked')];
+        return true;
     }
 
     /**

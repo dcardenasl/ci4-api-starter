@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Interfaces;
 
+use App\DTO\SecurityContext;
+
 /**
  * Token Revocation Service Interface
  *
@@ -13,41 +15,26 @@ interface TokenRevocationServiceInterface
 {
     /**
      * Revoke an access token by adding its JTI to blacklist
-     *
-     * @param string $jti Token JTI (unique identifier)
-     * @param int $expiresAt Token expiration timestamp
-     * @return array
      */
-    public function revokeToken(string $jti, int $expiresAt): array;
+    public function revokeToken(string $jti, int $expiresAt, ?SecurityContext $context = null): bool;
 
     /**
      * Revoke an access token from authorization header
-     *
-     * @param array $data Request data with 'authorization_header'
-     * @return array
      */
-    public function revokeAccessToken(array $data): array;
+    public function revokeAccessToken(array $data, ?SecurityContext $context = null): bool;
 
     /**
      * Check if a token is revoked
-     *
-     * @param string $jti Token JTI
-     * @return bool
      */
     public function isRevoked(string $jti): bool;
 
     /**
      * Revoke all tokens for a user
-     *
-     * @param int $userId
-     * @return array
      */
-    public function revokeAllUserTokens(int $userId): array;
+    public function revokeAllUserTokens(int $userId, ?SecurityContext $context = null): bool;
 
     /**
      * Clean up expired blacklisted tokens
-     *
-     * @return int Number of deleted tokens
      */
     public function cleanupExpired(): int;
 }

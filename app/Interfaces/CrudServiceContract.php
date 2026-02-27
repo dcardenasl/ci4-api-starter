@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Interfaces;
 
+use App\DTO\SecurityContext;
+
 /**
  * Modernized CRUD Service Contract
  *
@@ -15,25 +17,25 @@ interface CrudServiceContract
     /**
      * Get a paginated list of resources
      */
-    public function index(\App\Interfaces\DataTransferObjectInterface $request): array;
+    public function index(\App\Interfaces\DataTransferObjectInterface $request, ?SecurityContext $context = null): array;
 
     /**
      * Get a single resource by ID
      */
-    public function show(int $id): \App\Interfaces\DataTransferObjectInterface;
+    public function show(int $id, ?SecurityContext $context = null): \App\Interfaces\DataTransferObjectInterface;
 
     /**
      * Create a new resource
      */
-    public function store(\App\Interfaces\DataTransferObjectInterface $request): \App\Interfaces\DataTransferObjectInterface;
+    public function store(\App\Interfaces\DataTransferObjectInterface $request, ?SecurityContext $context = null): \App\Interfaces\DataTransferObjectInterface;
 
     /**
      * Update an existing resource
      */
-    public function update(int $id, \App\Interfaces\DataTransferObjectInterface $request): \App\Interfaces\DataTransferObjectInterface;
+    public function update(int $id, \App\Interfaces\DataTransferObjectInterface $request, ?SecurityContext $context = null): \App\Interfaces\DataTransferObjectInterface;
 
     /**
      * Remove a resource (soft or hard delete)
      */
-    public function destroy(int $id): array;
+    public function destroy(int $id, ?SecurityContext $context = null): bool;
 }

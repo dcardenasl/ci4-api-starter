@@ -11,6 +11,8 @@ The `ApiController` handles the final response structure. Services return pure d
 2. Recursively converts all DTOs to associative arrays.
 3. Maps property names from camelCase (backend) to snake_case (frontend contract).
 
+For CRUD services extending `BaseCrudService`, `index()` returns a `PaginatedResponseDTO`. The controller detects this DTO shape and emits the canonical paginated envelope (`data` + `meta`).
+
 ## OperationResult Mapping
 
 For command-like flows, services can return `App\Support\OperationResult`.

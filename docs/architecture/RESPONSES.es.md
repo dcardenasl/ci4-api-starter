@@ -11,6 +11,8 @@ El `ApiController` maneja la estructura final de la respuesta. Los servicios ret
 2. Convierte recursivamente todos los DTOs en arreglos asociativos.
 3. Mapea los nombres de propiedades de camelCase (backend) a snake_case (contrato frontend).
 
+Para servicios CRUD que extienden `BaseCrudService`, `index()` retorna un `PaginatedResponseDTO`. El controlador detecta esa forma DTO y emite la envoltura paginada canónica (`data` + `meta`).
+
 ## Mapeo de `OperationResult`
 
 Para flujos tipo comando, los servicios pueden retornar `App\Support\OperationResult`.

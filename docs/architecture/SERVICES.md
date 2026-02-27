@@ -12,6 +12,14 @@ Services should NOT have any knowledge of HTTP, JSON, or `ApiResponse`.
 - **Output:** DTOs, Entities, or `OperationResult` for command-like workflows.
 - **Errors:** Thrown as custom Exceptions (e.g., `AuthenticationException`).
 
+### Base CRUD Contract
+
+For services implementing `CrudServiceContract` via `BaseCrudService`:
+
+1. `index()` receives a Request DTO and returns `PaginatedResponseDTO`.
+2. `show()`, `store()`, and `update()` return resource Response DTOs.
+3. `destroy()` returns `bool` and is normalized by `ApiController`.
+
 ### Example
 
 ```php

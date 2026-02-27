@@ -30,7 +30,7 @@ class AuditController extends ApiController
      */
     public function show(int $id): ResponseInterface
     {
-        return $this->handleRequest(fn () => $this->getService()->show($id));
+        return $this->handleRequest(fn ($dto, $context) => $this->getService()->show($id, $context));
     }
 
 
@@ -40,7 +40,7 @@ class AuditController extends ApiController
     public function byEntity(string $type, int $id): ResponseInterface
     {
         return $this->handleRequest(
-            fn () => $this->getService()->byEntity(['entity_type' => $type, 'entity_id' => $id])
+            fn ($dto, $context) => $this->getService()->byEntity(['entity_type' => $type, 'entity_id' => $id], $context)
         );
     }
 }

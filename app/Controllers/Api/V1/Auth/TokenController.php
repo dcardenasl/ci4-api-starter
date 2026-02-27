@@ -20,9 +20,7 @@ class TokenController extends ApiController
      */
     public function refresh(): ResponseInterface
     {
-        return $this->handleRequest(function ($dto) {
-            return $this->getService()->refreshAccessToken($dto);
-        }, RefreshTokenRequestDTO::class);
+        return $this->handleRequest('refreshAccessToken', RefreshTokenRequestDTO::class);
     }
 
     /**
@@ -30,9 +28,10 @@ class TokenController extends ApiController
      */
     public function revoke(): ResponseInterface
     {
-        return $this->handleRequest(function () {
+        return $this->handleRequest(function ($dto, $context) {
             return $this->getService()->revokeToken(
-                $this->request->getHeaderLine('Authorization')
+                $this->request->getHeaderLine('Authorization'),
+                $context
             );
         });
     }
@@ -42,8 +41,6 @@ class TokenController extends ApiController
      */
     public function revokeAll(): ResponseInterface
     {
-        return $this->handleRequest(function () {
-            return $this->getService()->revokeAllUserTokens($this->getUserId());
-        });
+        return $this->handleRequest('revokeAllUserTokens');
     }
 }

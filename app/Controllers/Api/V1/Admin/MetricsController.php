@@ -43,9 +43,10 @@ class MetricsController extends ApiController
      */
     public function requests(): ResponseInterface
     {
-        return $this->handleRequest(function ($dto) {
-            return $this->getService()->getRequestStats($dto->period);
-        }, MetricsQueryRequestDTO::class);
+        return $this->handleRequest(
+            fn ($dto, $context) => $this->getService()->getRequestStats($dto->period, $context),
+            MetricsQueryRequestDTO::class
+        );
     }
 
     /**
@@ -53,7 +54,7 @@ class MetricsController extends ApiController
      */
     public function slowRequests(): ResponseInterface
     {
-        return $this->handleRequest(function () {
+        return $this->handleRequest(function ($dto, $context) {
             /** @var \App\HTTP\ApiRequest $request */
             $request = $this->request;
 
@@ -63,7 +64,7 @@ class MetricsController extends ApiController
             $limitVal = $request->getVar('limit');
             $limit = min(is_numeric($limitVal) ? (int) $limitVal : 10, 100);
 
-            return $this->getService()->getSlowRequests($threshold, $limit);
+            return $this->getService()->getSlowRequests($threshold, $limit, $context);
         });
     }
 
@@ -73,9 +74,9 @@ class MetricsController extends ApiController
      */
     public function custom(string $name): ResponseInterface
     {
-        return $this->handleRequest(function ($dto) use ($name) {
+        return $this->handleRequest(function ($dto, $context) use ($name) {
             $aggregate = $this->request->getGet('aggregate') === 'true';
-            return $this->getService()->getCustomMetric($name, $dto->period, $aggregate);
+            return $this->getService()->getCustomMetric($name, $dto->period, $aggregate, $context);
         }, MetricsQueryRequestDTO::class);
     }
 

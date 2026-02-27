@@ -50,8 +50,8 @@ class FileController extends ApiController
      */
     public function show(int $id): ResponseInterface
     {
-        return $this->handleRequest(function ($dto) {
-            $result = $this->getService()->download($dto);
+        return $this->handleRequest(function ($dto, $context) {
+            $result = $this->getService()->download($dto, $context);
 
             // For local storage, send file for direct download
             if (isset($result['storage_driver']) && $result['storage_driver'] === 'local') {

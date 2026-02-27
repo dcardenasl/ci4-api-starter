@@ -32,15 +32,7 @@ class UserController extends ApiController
      */
     public function show(int $id): ResponseInterface
     {
-        $currentUserId = $this->getUserId();
-        $currentUserRole = $this->getUserRole();
-
-        // Security: Non-admins can only see their own profile
-        if ($currentUserRole !== 'admin' && $currentUserRole !== 'superadmin' && $id !== $currentUserId) {
-            return $this->respondForbidden(lang('Auth.insufficientPermissions'));
-        }
-
-        return $this->handleRequest(fn () => $this->getService()->show($id));
+        return $this->handleRequest(fn ($dto, $context) => $this->getService()->show($id, $context));
     }
 
     /**
@@ -57,7 +49,7 @@ class UserController extends ApiController
     public function update(int $id): ResponseInterface
     {
         return $this->handleRequest(
-            fn ($dto) => $this->getService()->update($id, $dto),
+            fn ($dto, $context) => $this->getService()->update($id, $dto, $context),
             UserUpdateRequestDTO::class
         );
     }
@@ -67,17 +59,16 @@ class UserController extends ApiController
      */
     public function approve(int $id): ResponseInterface
     {
-        return $this->handleRequest(function () use ($id) {
-            /** @var \App\HTTP\ApiRequest $request */
-            $request = $this->request;
-            $clientBaseUrl = $request->getVar('client_base_url');
-
-            return $this->getService()->approve(
-                $id,
-                $this->getUserId(),
-                is_string($clientBaseUrl) ? $clientBaseUrl : null
-            );
-        });
+        return $this->handleRequest(
+            function ($dto, $context) use ($id) {
+                $clientBaseUrl = $this->request->getVar('client_base_url');
+                return $this->getService()->approve(
+                    $id,
+                    $context,
+                    is_string($clientBaseUrl) ? $clientBaseUrl : null
+                );
+            }
+        );
     }
 
     /**
@@ -85,7 +76,7 @@ class UserController extends ApiController
      */
     public function delete(int $id): ResponseInterface
     {
-        return $this->handleRequest(fn () => $this->getService()->destroy($id));
+        return $this->handleRequest(fn ($dto, $context) => $this->getService()->destroy($id, $context));
     }
 
 }

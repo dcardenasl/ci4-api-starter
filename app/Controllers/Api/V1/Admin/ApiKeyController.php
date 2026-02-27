@@ -34,7 +34,7 @@ class ApiKeyController extends ApiController
     public function show(int $id): ResponseInterface
     {
         return $this->handleRequest(
-            fn () => $this->getService()->show($id)
+            fn ($dto, $context) => $this->getService()->show($id, $context)
         );
     }
 
@@ -52,7 +52,13 @@ class ApiKeyController extends ApiController
     public function update(int $id): ResponseInterface
     {
         return $this->handleRequest(
-            fn ($dto) => $this->getService()->update($id, $dto),
+            function ($dto, $context) use ($id) {
+                $data = array_filter($dto->toArray(), fn ($v) => $v !== null);
+                if (empty($data)) {
+                    return $this->fail(lang('Api.invalidRequest'), 400);
+                }
+                return $this->getService()->update($id, $dto, $context);
+            },
             ApiKeyUpdateRequestDTO::class
         );
     }
@@ -63,7 +69,7 @@ class ApiKeyController extends ApiController
     public function delete(int $id): ResponseInterface
     {
         return $this->handleRequest(
-            fn () => $this->getService()->destroy($id)
+            fn ($dto, $context) => $this->getService()->destroy($id, $context)
         );
     }
 }

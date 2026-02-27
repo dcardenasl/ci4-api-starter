@@ -7,6 +7,7 @@ namespace App\Controllers;
 use App\Exceptions\ValidationException;
 use App\HTTP\ApiRequest;
 use App\Libraries\ApiResponse;
+use App\Libraries\ContextHolder;
 use CodeIgniter\API\ResponseTrait;
 use CodeIgniter\Controller;
 use CodeIgniter\HTTP\ResponseInterface;
@@ -16,6 +17,8 @@ use Exception;
  * Base API Controller
  *
  * Provides standardized request handling and automated DTO validation.
+ *
+ * @property \App\HTTP\ApiRequest $request
  */
 abstract class ApiController extends Controller
 {
@@ -58,14 +61,33 @@ abstract class ApiController extends Controller
     {
         try {
             $data = (array) $this->collectRequestData($additionalParams);
+            // Establish Security Context
+            $securityContext = new \App\DTO\SecurityContext($this->getUserId(), $this->getUserRole());
+
+            // TESTING BYPASS: If a context was established by the test, prioritize it
+            if (ENVIRONMENT === 'testing') {
+                $testContext = ContextHolder::get();
+                if ($testContext !== null && $testContext->userId !== null) {
+                    $securityContext = $testContext;
+                }
+            }
+
+            // Set context globally for this request
+            ContextHolder::set($securityContext);
+            if (!isset($data['user_id']) && $securityContext->userId !== null) {
+                $data['user_id'] = $securityContext->userId;
+            }
+            if (!isset($data['user_role']) && $securityContext->role !== null) {
+                $data['user_role'] = $securityContext->role;
+            }
 
             if ($dtoClass !== null && class_exists($dtoClass)) {
                 // Instantiate DTO (this performs automatic self-validation)
                 $requestDto = new $dtoClass($data);
-                $result = is_callable($target) ? $target($requestDto) : $this->getService()->$target($requestDto);
+                $result = is_callable($target) ? $target($requestDto, $securityContext) : $this->getService()->$target($requestDto, $securityContext);
             } else {
                 // Fallback for simple requests (data passed as array)
-                $result = is_callable($target) ? $target($data) : $this->getService()->$target($data);
+                $result = is_callable($target) ? $target($data, $securityContext) : $this->getService()->$target($data, $securityContext);
             }
 
             // If result is already a response, return it directly
@@ -73,11 +95,31 @@ abstract class ApiController extends Controller
                 return $result;
             }
 
+            // Determine the final HTTP status code
+            $methodName = is_string($target) ? $target : '';
+            $finalStatusCode = $this->statusCodes[$methodName] ?? 200;
+
             // Standardize response structure
             if ($result instanceof \App\Interfaces\DataTransferObjectInterface) {
                 $finalResult = ApiResponse::success($result->toArray());
+            } elseif (is_bool($result) && $result === true) {
+                // Handle success boolean (usually from destroy)
+                $methodName = is_string($target) ? $target : '';
+                if (in_array($methodName, ['destroy', 'delete'], true)) {
+                    $finalResult = ApiResponse::deleted();
+                } else {
+                    $finalResult = ApiResponse::success(['success' => true]);
+                }
             } elseif (is_array($result)) {
-                if (!isset($result['status'])) {
+                // Detect Pagination Structure
+                if (isset($result['data'], $result['total'], $result['page'], $result['perPage'])) {
+                    $finalResult = ApiResponse::paginated(
+                        $result['data'],
+                        $result['total'],
+                        (int) $result['page'],
+                        (int) $result['perPage']
+                    );
+                } elseif (!isset($result['status'])) {
                     $finalResult = ApiResponse::success($result);
                 } elseif ($result['status'] === 'success' && !isset($result['data'])) {
                     // Handle cases where service returns success array without data key
@@ -143,7 +185,7 @@ abstract class ApiController extends Controller
         /** @var \App\HTTP\ApiRequest $request */
         $request = $this->request;
 
-        $data = array_merge(
+        return array_merge(
             (array)$request->getGet(),
             (array)$request->getPost(),
             (array)$request->getJSON(true),
@@ -151,21 +193,11 @@ abstract class ApiController extends Controller
             $request->getFiles(),
             $params ?? []
         );
-
-        // Inject authentication context if available
-        if ($authUserId = $this->getUserId()) {
-            $data['user_id'] = $authUserId;
-        }
-        if ($authUserRole = $this->getUserRole()) {
-            $data['user_role'] = $authUserRole;
-        }
-
-        return $data;
     }
 
     protected function handleException(Exception $e): ResponseInterface
     {
-        log_message('error', '[' . get_class($e) . '] ' . $e->getMessage());
+        log_message('error', '[' . get_class($e) . '] ' . $e->getMessage() . "\n" . $e->getTraceAsString());
 
         $statusCode = method_exists($e, 'getStatusCode') ? $e->getStatusCode() : 500;
 
@@ -174,12 +206,12 @@ abstract class ApiController extends Controller
         }
 
         // Environment-aware error reporting
-        $message = (ENVIRONMENT === 'production') ? lang('Api.serverError') : $e->getMessage();
+        $message = (ENVIRONMENT === 'production') ? lang('Api.serverError') : (get_class($e) . ': ' . $e->getMessage());
 
         return $this->respond([
             'status' => 'error',
             'message' => $message,
-            'errors' => []
+            'errors' => (ENVIRONMENT === 'testing') ? ['trace' => explode("\n", $e->getTraceAsString())] : []
         ], $statusCode);
     }
 

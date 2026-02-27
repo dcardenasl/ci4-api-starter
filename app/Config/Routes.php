@@ -55,7 +55,9 @@ $routes->group('api/v1', function ($routes) {
     });
 
     // Protected routes (require JWT authentication)
-    $routes->group('', ['filter' => 'jwtauth'], function ($routes) {
+    $authFilter = 'jwtauth';
+
+    $routes->group('', ['filter' => $authFilter], function ($routes) {
         // Auth routes
         $routes->get('auth/me', '\App\Controllers\Api\V1\Auth\AuthController::me');
 

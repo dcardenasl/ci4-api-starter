@@ -19,8 +19,30 @@ abstract readonly class BaseRequestDTO implements DataTransferObjectInterface
      */
     public function __construct(array $data)
     {
-        $this->validate($data);
-        $this->map($data);
+        $enrichedData = $this->enrichWithContext($data);
+        $this->validate($enrichedData);
+        $this->map($enrichedData);
+    }
+
+    /**
+     * Enrich input data with values from global ContextHolder if missing
+     */
+    private function enrichWithContext(array $data): array
+    {
+        $context = \App\Libraries\ContextHolder::get();
+        if ($context === null) {
+            return $data;
+        }
+
+        if (!isset($data['user_id']) && $context->userId !== null) {
+            $data['user_id'] = $context->userId;
+        }
+
+        if (!isset($data['user_role']) && $context->role !== null) {
+            $data['user_role'] = $context->role;
+        }
+
+        return $data;
     }
 
     /**

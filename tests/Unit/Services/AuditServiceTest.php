@@ -110,9 +110,9 @@ class AuditServiceTest extends CIUnitTestCase
         $newValues = [
             'email' => 'new@example.com',
             'password' => 'new-secret',
-            'access_token' => 'jwt-token',
+            'accessToken' => 'jwt-token',
             'profile' => [
-                'refresh_token' => 'refresh-token',
+                'refreshToken' => 'refresh-token',
                 'timezone' => 'America/Mexico_City',
             ],
         ];
@@ -127,8 +127,8 @@ class AuditServiceTest extends CIUnitTestCase
                 return !isset($old['password'])
                     && !isset($old['profile']['token'])
                     && !isset($new['password'])
-                    && !isset($new['access_token'])
-                    && !isset($new['profile']['refresh_token'])
+                    && !isset($new['accessToken'])
+                    && !isset($new['profile']['refreshToken'])
                     && ($old['email'] ?? null) === 'old@example.com'
                     && ($new['email'] ?? null) === 'new@example.com';
             }));

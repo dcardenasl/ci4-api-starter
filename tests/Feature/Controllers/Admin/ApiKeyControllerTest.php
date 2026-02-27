@@ -80,7 +80,7 @@ class ApiKeyControllerTest extends ApiTestCase
         $this->assertArrayHasKey('data', $json);
         $this->assertArrayHasKey('key', $json['data'], 'Raw key must be returned at creation');
         $this->assertStringStartsWith('apk_', $json['data']['key']);
-        $this->assertArrayHasKey('key_prefix', $json['data']);
+        $this->assertArrayHasKey('keyPrefix', $json['data']);
         $this->assertEquals('My Integration App', $json['data']['name']);
     }
 
@@ -97,9 +97,9 @@ class ApiKeyControllerTest extends ApiTestCase
         $result->assertStatus(201);
 
         $json = $this->getResponseJson($result);
-        $this->assertEquals(1200, $json['data']['rate_limit_requests']);
-        $this->assertEquals(120, $json['data']['user_rate_limit']);
-        $this->assertEquals(400, $json['data']['ip_rate_limit']);
+        $this->assertEquals(1200, $json['data']['rateLimitRequests']);
+        $this->assertEquals(120, $json['data']['userRateLimit']);
+        $this->assertEquals(400, $json['data']['ipRateLimit']);
     }
 
     public function testCreateApiKeyWithoutNameReturns422(): void
@@ -172,7 +172,7 @@ class ApiKeyControllerTest extends ApiTestCase
 
         $json = $this->getResponseJson($updateResult);
         $this->assertEquals('Updated Name', $json['data']['name']);
-        $this->assertFalse((bool) $json['data']['is_active']);
+        $this->assertFalse((bool) $json['data']['isActive']);
     }
 
     public function testUpdateWithNoFieldsReturns400(): void

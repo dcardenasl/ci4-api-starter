@@ -171,9 +171,9 @@ class FileServiceTest extends CIUnitTestCase
 
         $this->assertInstanceOf(\App\DTO\Response\Files\FileResponseDTO::class, $result);
         $data = $result->toArray();
-        $this->assertEquals('photo.jpg', $data['original_name']);
-        $this->assertEquals(1024, $data['file_size']);
-        $this->assertEquals('image/jpeg', $data['mime_type']);
+        $this->assertEquals('photo.jpg', $data['originalName']);
+        $this->assertEquals(1024, $data['size']);
+        $this->assertEquals('image/jpeg', $data['mimeType']);
 
         // Clean up temp file
         @unlink($tempFile);
@@ -402,7 +402,7 @@ class FileServiceTest extends CIUnitTestCase
         $payload = $result->toArray();
 
         $this->assertInstanceOf(\App\DTO\Response\Files\FileDownloadResponseDTO::class, $result);
-        $this->assertEquals('myfile.pdf', $payload['original_name']);
+        $this->assertEquals('myfile.pdf', $payload['originalName']);
         $this->assertEquals('http://example.com/myfile.pdf', $payload['url']);
     }
 
@@ -521,7 +521,7 @@ class FileServiceTest extends CIUnitTestCase
         ]));
 
         $this->assertInstanceOf(\App\DTO\Response\Files\FileResponseDTO::class, $result);
-        $this->assertEquals($filename, $result->toArray()['original_name']);
+        $this->assertEquals($filename, $result->toArray()['originalName']);
         @unlink($tempFile);
         // The fact that storage->put was called with logo_1.png validates the logic
     }

@@ -104,6 +104,6 @@ trait AuthTestTrait
         $result->assertStatus(200);
 
         $json = json_decode($result->getJSON(), true);
-        return $json['access_token'] ?? ($json['data']['access_token'] ?? '');
+        return $json['accessToken'] ?? ($json['data']['accessToken'] ?? '');
     }
 }

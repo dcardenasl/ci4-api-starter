@@ -66,7 +66,7 @@ class FileUploadTest extends ApiTestCase
 
         $response->assertStatus(201);
         $json = $this->getResponseJson($response);
-        $this->assertEquals('test_success.png', $json['data']['original_name']);
+        $this->assertEquals('test_success.png', $json['data']['originalName']);
     }
 
     public function testUploadPhpLimit(): void

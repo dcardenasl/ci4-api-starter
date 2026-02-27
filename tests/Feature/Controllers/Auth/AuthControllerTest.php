@@ -107,7 +107,7 @@ class AuthControllerTest extends ApiTestCase
 
         $result->assertStatus(200);
         $json = $this->getResponseJson($result);
-        $this->assertArrayHasKey('access_token', $json['data']);
+        $this->assertArrayHasKey('accessToken', $json['data']);
     }
 
     public function testLoginWithEmptyCredentialsReturns422(): void

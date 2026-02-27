@@ -26,7 +26,7 @@ interface AuditServiceInterface
     /**
      * List audit logs (API)
      */
-    public function index(\App\Interfaces\DataTransferObjectInterface $request, ?SecurityContext $context = null): array;
+    public function index(\App\Interfaces\DataTransferObjectInterface $request, ?SecurityContext $context = null): \App\Interfaces\DataTransferObjectInterface;
 
     /**
      * Get single log (API)

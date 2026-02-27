@@ -17,7 +17,7 @@ interface CrudServiceContract
     /**
      * Get a paginated list of resources
      */
-    public function index(\App\Interfaces\DataTransferObjectInterface $request, ?SecurityContext $context = null): array;
+    public function index(\App\Interfaces\DataTransferObjectInterface $request, ?SecurityContext $context = null): \App\Interfaces\DataTransferObjectInterface;
 
     /**
      * Get a single resource by ID

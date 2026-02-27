@@ -16,7 +16,7 @@ interface ApiKeyServiceInterface
     /**
      * List all API keys with pagination and filtering
      */
-    public function index(\App\Interfaces\DataTransferObjectInterface $request, ?SecurityContext $context = null): array;
+    public function index(\App\Interfaces\DataTransferObjectInterface $request, ?SecurityContext $context = null): \App\Interfaces\DataTransferObjectInterface;
 
     /**
      * Get a single API key by ID

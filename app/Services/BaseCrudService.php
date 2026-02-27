@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\DTO\Response\Common\PaginatedResponseDTO;
 use App\DTO\SecurityContext;
 use App\Exceptions\NotFoundException;
 use App\Interfaces\CrudServiceContract;
@@ -33,10 +34,8 @@ abstract class BaseCrudService implements CrudServiceContract
 
     /**
      * Get a paginated list of resources
-     *
-     * @return array{data: array, total: int, page: int, perPage: int}
      */
-    public function index(DataTransferObjectInterface $request, ?SecurityContext $context = null): array
+    public function index(DataTransferObjectInterface $request, ?SecurityContext $context = null): DataTransferObjectInterface
     {
         $builder = new QueryBuilder($this->model);
 
@@ -63,12 +62,12 @@ abstract class BaseCrudService implements CrudServiceContract
             (array) $result['data']
         );
 
-        return [
+        return PaginatedResponseDTO::fromArray([
             'data'    => $result['data'],
             'total'   => $result['total'],
             'page'    => $result['page'],
             'perPage' => $result['perPage'],
-        ];
+        ]);
     }
 
     /**

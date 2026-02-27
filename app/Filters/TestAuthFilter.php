@@ -46,7 +46,7 @@ class TestAuthFilter implements FilterInterface
 
         $authHeader = $request->getHeaderLine('Authorization');
         if ($authHeader !== '') {
-            return (new JwtAuthFilter())->before($request, $arguments);
+            return Services::jwtAuthFilter()->before($request, $arguments);
         }
 
         // If no identity found, return 401

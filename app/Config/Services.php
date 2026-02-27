@@ -210,6 +210,23 @@ class Services extends BaseService
     }
 
     /**
+     * JWT Auth Filter
+     *
+     * Provides JwtAuthFilter instance for composition in TestAuthFilter.
+     *
+     * @param bool $getShared
+     * @return \App\Filters\JwtAuthFilter
+     */
+    public static function jwtAuthFilter(bool $getShared = true)
+    {
+        if ($getShared) {
+            return static::getSharedInstance('jwtAuthFilter');
+        }
+
+        return new \App\Filters\JwtAuthFilter();
+    }
+
+    /**
      * Verification Service
      *
      * Provides email verification functionality

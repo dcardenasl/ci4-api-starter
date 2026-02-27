@@ -3,10 +3,10 @@
 namespace App\Filters;
 
 use App\HTTP\ApiRequest;
-use App\Libraries\Queue\QueueManager;
 use CodeIgniter\Filters\FilterInterface;
 use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
+use Config\Services;
 
 class RequestLoggingFilter implements FilterInterface
 {
@@ -57,7 +57,7 @@ class RequestLoggingFilter implements FilterInterface
 
         // Queue the log entry (async to not slow down response)
         try {
-            $queueManager = new QueueManager();
+            $queueManager = Services::queueManager(false);
             $queueManager->push(
                 \App\Libraries\Queue\Jobs\LogRequestJob::class,
                 [

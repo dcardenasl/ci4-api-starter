@@ -4,27 +4,37 @@ declare(strict_types=1);
 
 namespace App\DTO\Request\Metrics;
 
-use App\Interfaces\DataTransferObjectInterface;
+use App\DTO\Request\BaseRequestDTO;
 
 /**
  * Record Metric Request DTO
  */
-readonly class RecordMetricRequestDTO implements DataTransferObjectInterface
+readonly class RecordMetricRequestDTO extends BaseRequestDTO
 {
     public string $name;
     public float $value;
     public array $tags;
 
-    public function __construct(array $data)
+    protected function rules(): array
     {
-        // REUSE: 'metrics.record' validation
-        if (empty($data['name'])) {
-            throw new \App\Exceptions\ValidationException(
-                lang('Api.validationFailed'),
-                ['name' => lang('Metrics.nameRequired')]
-            );
-        }
+        return [
+            'name' => 'required|string|max_length[100]',
+            'value' => 'permit_empty|decimal',
+            'tags' => 'permit_empty',
+        ];
+    }
 
+    protected function messages(): array
+    {
+        return [
+            'name' => [
+                'required' => lang('Metrics.nameRequired'),
+            ],
+        ];
+    }
+
+    protected function map(array $data): void
+    {
         $this->name = (string) $data['name'];
         $this->value = (float) ($data['value'] ?? 0);
         $this->tags = (array) ($data['tags'] ?? []);

@@ -29,7 +29,7 @@ class EmailService implements EmailServiceInterface
 
         // Use injected mailer or create default
         $this->mailer = $mailer ?? $this->createDefaultMailer();
-        $this->queueManager = $queueManager ?? new QueueManager();
+        $this->queueManager = $queueManager ?? \Config\Services::queueManager(false);
     }
 
     /**

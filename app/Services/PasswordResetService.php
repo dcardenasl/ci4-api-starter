@@ -49,11 +49,15 @@ class PasswordResetService implements PasswordResetServiceInterface
             $this->passwordResetModel->insert(['email' => $email, 'token' => $token, 'created_at' => date('Y-m-d H:i:s')]);
 
             $resetLink = $this->buildResetPasswordUrl($token, $email);
-            $this->emailService->queueTemplate('password-reset', $email, [
-                'subject' => lang('Email.passwordReset.subject'),
-                'reset_link' => $resetLink,
-                'expires_in' => '60 minutes',
-            ]);
+            try {
+                $this->emailService->queueTemplate('password-reset', $email, [
+                    'subject' => lang('Email.passwordReset.subject'),
+                    'reset_link' => $resetLink,
+                    'expires_in' => '60 minutes',
+                ]);
+            } catch (\Throwable $e) {
+                log_message('error', 'Failed to queue password reset email: ' . $e->getMessage());
+            }
         } else {
             $deletedUser = $this->userModel->withDeleted()->where('email', $email)->first();
             if ($deletedUser instanceof \App\Entities\UserEntity && $deletedUser->deleted_at !== null) {

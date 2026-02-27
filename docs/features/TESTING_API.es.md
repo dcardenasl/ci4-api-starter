@@ -1,18 +1,18 @@
-# Testing de API
+# Testing de API (Playbook)
 
-Guía rápida de pruebas para endpoints HTTP.
+Este documento es un playbook funcional para ejecutar pruebas API en nuevos módulos.
 
-## Objetivos
+## Propósito
 
-1. Validar contratos de respuesta.
-2. Validar autenticación y autorización.
-3. Validar estados semánticos (200/201/202/4xx/5xx).
+Asegurar que cada funcionalidad entregue contratos HTTP estables y comportamiento alineado con la arquitectura.
 
-## Enfoque recomendado
+## Checklist de implementación
 
-1. Feature tests para JSON final.
-2. Unit tests para lógica de servicio/DTOs.
-3. Integration tests para modelos y persistencia.
+1. Usar `Tests\Support\ApiTestCase` para pruebas de endpoints.
+2. Cubrir caminos de éxito y error en unit tests de servicios.
+3. Agregar integration tests cuando haya lógica de persistencia/consultas.
+4. Validar explícitamente autenticación y autorización.
+5. Asegurar contrato JSON (`status`, `message`, `data/errors`).
 
 ## Comandos
 
@@ -22,6 +22,14 @@ vendor/bin/phpunit --configuration=phpunit.xml --no-coverage --testdox
 composer quality
 ```
 
-## Referencia
+## Criterios de aceptación
 
-Documento completo en inglés: `TESTING_API.md`.
+1. Feature tests validan la forma final del payload API.
+2. Unit tests validan comportamiento de dominio sin acoplar HTTP.
+3. Integration tests validan comportamiento de DB/model cuando aplique.
+4. Los tests de arquitectura permanecen en verde.
+
+## Referencia técnica canónica
+
+1. Estrategia de testing y constraints de arquitectura: `../architecture/TESTING.md`.
+2. Reglas y patrones prácticos de pruebas: `../tech/TESTING_GUIDELINES.md`.

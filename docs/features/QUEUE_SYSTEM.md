@@ -1,60 +1,27 @@
-# Queue System
+# Queue System (Feature Playbook)
 
-Background processing is essential for long-running tasks like sending emails, processing images, or communicating with external APIs.
+This document is a feature playbook for queue-enabled capabilities.
 
-## Supported Drivers
+## Purpose
 
-Configure your preferred driver in `.env`:
+Use queues for asynchronous tasks (email, request logging, infrastructure jobs) without blocking HTTP requests.
 
-```env
-# Options: database, redis, sync
-QUEUE_DRIVER=database
-# For database driver
-QUEUE_DATABASE_CONNECTION=default
-# For redis driver
-QUEUE_REDIS_HOST=127.0.0.1
-QUEUE_REDIS_PORT=6379
-```
+## Implementation Checklist
 
-### Drivers Explained
-- **`database`**: Recommended for most applications. Jobs are stored in the `queue_jobs` table. Easy to set up and monitor.
-- **`redis`**: Best for high-performance requirements. Requires a Redis server.
-- **`sync`**: Executes jobs immediately (synchronously). Useful for local development and testing.
+1. Confirm job class is idempotent.
+2. Confirm retry strategy (`QUEUE_MAX_ATTEMPTS`, `QUEUE_RETRY_AFTER`).
+3. Confirm queue name conventions (`emails`, `logs`, or domain queue).
+4. Add/adjust tests (unit for job logic, integration for queue execution).
+5. Run `composer quality`.
 
----
+## Acceptance Criteria
 
-## Running the Worker
+1. Triggering flow enqueues the expected job.
+2. Worker processes the job successfully with `queue:work`.
+3. Failed jobs are traceable in failure storage.
+4. No business logic leaks into controllers.
 
-To process jobs, you must run the worker command. In production, this should be managed by a process monitor like **Supervisor**.
+## Canonical Technical Reference
 
-```bash
-php spark queue:work --queue default
-```
-
-**Options**:
-- `--queue`: Specific queue to process (defaults to `default`).
-- `--rest`: Seconds to sleep when no jobs are available (defaults to 1).
-- `--max-runtime`: Seconds the worker should run before exiting (useful for preventing memory leaks).
-
----
-
-## Dispatching Jobs
-
-You can dispatch jobs using the `QueueManager` library:
-
-```php
-use App\Libraries\Queue\QueueManager;
-
-$queue = service('queue');
-$queue->push('App\Jobs\SendWelcomeEmail', [
-    'email' => 'user@example.com',
-    'user_id' => 123
-]);
-```
-
-## Error Handling & Retries
-
-The system automatically handles failures:
-- **Max Attempts**: Configurable via `QUEUE_MAX_ATTEMPTS` (default: 3).
-- **Retry Delay**: Configurable via `QUEUE_RETRY_AFTER` (default: 90 seconds).
-- **Failed Jobs**: If all attempts fail, the job is moved to the `queue_failed_jobs` table for manual inspection.
+1. Runtime setup, workers, migrations, and troubleshooting: `../tech/QUEUE.md`.
+2. Related subsystem docs: `../tech/email.md`, `../tech/request-logging.md`.

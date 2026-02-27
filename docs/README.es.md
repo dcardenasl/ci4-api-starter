@@ -21,6 +21,16 @@ Este directorio contiene la documentación técnica para desarrolladores y agent
 
 La documentación activa debe existir en ambos idiomas (`.md` y `.es.md`).
 
+## Alcance de documentación
+
+Usar `DOCUMENTATION_SCOPE.md` para evitar duplicidad entre secciones.
+
+Regla canónica:
+
+1. `architecture/` = contratos e invariantes
+2. `tech/` = detalle técnico/runtime
+3. `features/` = playbooks de implementación y criterios de aceptación
+
 ## Secciones principales
 
 1. `architecture/`: arquitectura de capas, validación, respuestas, servicios, etc.

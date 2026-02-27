@@ -121,6 +121,19 @@ All markdown docs in `docs/` must keep EN/ES parity (`.md` and `.es.md`).
 
 ---
 
+## 🧭 Documentation Scope
+
+Use the scope matrix to avoid duplicated content across sections:
+
+1. [`DOCUMENTATION_SCOPE.md`](DOCUMENTATION_SCOPE.md)
+
+Canonical rule:
+1. `architecture/` = contracts/invariants
+2. `tech/` = implementation/runtime details
+3. `features/` = implementation playbooks and acceptance checklists
+
+---
+
 ## 📋 Feature Playbooks
 
 ### **[PLAYBOOK_FEATURES.md](PLAYBOOK_FEATURES.md)** / **[PLAYBOOK_FEATURES.es.md](PLAYBOOK_FEATURES.es.md)**
@@ -234,7 +247,9 @@ Rule: use php spark make:crud first for new CRUD resources
 
 ### For Specific Features
 ```
-Read: tech/{feature}.md (detailed feature docs)
+Read in this order:
+1. features/{feature}.md (playbook/checklist)
+2. tech/{feature}.md (canonical technical detail)
 ```
 
 ### For Flow Diagrams
@@ -255,10 +270,12 @@ When adding new features:
 
 1. **Update quick reference** - `AGENT_QUICK_REFERENCE.md` if it affects CRUD patterns
 2. **Update architecture docs** - Add/update relevant file in `architecture/`
-3. **Create feature doc** - `tech/{feature}.md` for feature-specific details
-4. **Update both languages** - English (`.md`) and Spanish (`.es.md`)
-5. **Add examples** - Update Postman collections
-6. **Update this README** - Add links to new documentation
+3. **Create feature playbook** - `features/{feature}.md` with scope/checklist/acceptance
+4. **Create or update technical canonical doc** - `tech/{feature}.md`
+5. **Validate section ownership** - Align with `DOCUMENTATION_SCOPE.md`
+6. **Update both languages** - English (`.md`) and Spanish (`.es.md`)
+7. **Add examples** - Update Postman collections
+8. **Update this README** - Add links to new documentation
 
 ---
 

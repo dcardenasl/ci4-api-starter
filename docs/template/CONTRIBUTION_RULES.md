@@ -15,6 +15,7 @@ These rules define the minimum contribution standard for this repository and dow
 2. EN/ES language parity where applicable (`app/Language/en`, `app/Language/es`).
 3. EN/ES documentation parity for any new or modified docs in `docs/`.
 4. Tests updated in the relevant suite (`Unit`, `Feature`, `Integration`).
+5. Documentation placement follows `docs/DOCUMENTATION_SCOPE.md` (no cross-section duplication).
 
 ## 3. Quality Gates Before Merge
 

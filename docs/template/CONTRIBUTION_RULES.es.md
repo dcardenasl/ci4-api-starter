@@ -15,6 +15,7 @@ Estas reglas definen el estándar mínimo de contribución para este repositorio
 2. Paridad de idioma en `app/Language/en` y `app/Language/es` cuando aplique.
 3. Paridad EN/ES en documentación nueva o modificada dentro de `docs/`.
 4. Tests actualizados en la suite correspondiente (`Unit`, `Feature`, `Integration`).
+5. Ubicación documental alineada con `docs/DOCUMENTATION_SCOPE.md` (sin duplicación entre secciones).
 
 ## 3. Quality gates antes de merge
 

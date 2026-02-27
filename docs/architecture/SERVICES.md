@@ -1,76 +1,91 @@
 # Service Layer & IoC
 
-The Service layer contains all business logic and orchestrates domain operations. In this architecture, services are **"Pure"** and **Decoupled**.
+The Service layer contains all business logic and orchestrates domain operations. In this architecture, services are **organized into domains** and follow a **composition pattern**.
+
+---
+
+## Domain-Driven Organization
+
+Services are grouped by functional domain to ensure high cohesion and prevent "God Classes".
+
+- `app/Services/Auth/`: Login, Registration, OAuth.
+- `app/Services/Tokens/`: JWT, Refresh Tokens, Revocation.
+- `app/Services/Users/`: Identity and RBAC.
+- `app/Services/Files/`: Storage and File Processing.
+- `app/Services/System/`: Infrastructure (Audit, Email, Metrics).
+
+---
+
+## Service Composition Pattern
+
+Large services are decomposed into specialized components injected via constructor. This keeps orchestrators thin and logic testable.
+
+### Support Components:
+- **Handlers**: Encapsulate multi-step logic (e.g., `GoogleAuthHandler`).
+- **Guards**: Centralize security assertions (e.g., `UserRoleGuard`).
+- **Mappers**: Handle entity-to-DTO transformations (e.g., `AuthUserMapper`).
 
 ---
 
 ## Pure Service Pattern
 
-Services should NOT have any knowledge of HTTP, JSON, or `ApiResponse`.
+Services are **Pure** and **Stateless**. They should NOT have knowledge of HTTP or JSON.
 
-- **Input:** Specific DTOs or scalar types.
-- **Output:** DTOs, Entities, or `OperationResult` for command-like workflows.
-- **Errors:** Thrown as custom Exceptions (e.g., `AuthenticationException`).
+- **Input:** Specific DTOs or Scalar types.
+- **Output:** DTOs, Entities, or `OperationResult`.
+- **Errors:** Thrown as custom Exceptions implementing `HasStatusCode`.
 
-### Base CRUD Contract
-
-For services implementing `CrudServiceContract` via `BaseCrudService`:
-
-1. `index()` receives a Request DTO and returns `PaginatedResponseDTO`.
-2. `show()`, `store()`, and `update()` return resource Response DTOs.
-3. `destroy()` returns `bool` and is normalized by `ApiController`.
-
-### Example
+### Example (Composition)
 
 ```php
-// app/Services/UserService.php
-public function store(UserCreateRequestDTO $request): UserResponseDTO
+// app/Services/Auth/AuthService.php
+public function login(LoginRequestDTO $request): LoginResponseDTO
 {
-    $userId = $this->userModel->insert($request->toArray());
+    $user = $this->userModel->where('email', $request->email)->first();
     
-    // Return typed object
-    return UserResponseDTO::fromArray($this->userModel->find($userId)->toArray());
+    // Delegate security to Guard
+    $this->userAccessPolicy->assertCanAuthenticate($user);
+    
+    // Delegate session creation to Manager
+    $session = $this->sessionManager->generateSessionResponse(
+        $this->userMapper->mapAuthenticated($user)
+    );
+    
+    return LoginResponseDTO::fromArray($session);
 }
 ```
-
-## Command Outcomes (`OperationResult`)
-
-For command-style operations that are not plain CRUD reads (e.g. token revoke, external auth decisions),
-services should return `App\Support\OperationResult` instead of ad-hoc arrays.
-
-Rules:
-
-1. Use `OperationResult::success()` for regular command success.
-2. Use `OperationResult::accepted()` for domain-accepted asynchronous/pending flows.
-3. Use exceptions for failures (do not return HTTP-like error payloads from services).
 
 ---
 
 ## Registering Services (IoC)
 
-Services are registered in the CodeIgniter 4 Service Container for dependency injection.
+All services and their dependencies must be registered in `app/Config/Services.php`.
 
 ```php
 // app/Config/Services.php
-public static function userService(bool $getShared = true)
+public static function authService(bool $getShared = true)
 {
     if ($getShared) {
-        return static::getSharedInstance('userService');
+        return static::getSharedInstance('authService');
     }
     
-    return new \App\Services\UserService(
-        new \App\Models\UserModel(),
-        static::emailService(),
-        new \App\Models\PasswordResetModel(),
-        static::auditService()
+    return new \App\Services\Auth\AuthService(
+        static::userModel(),
+        static::jwtService(),
+        static::refreshTokenService(),
+        new \App\Services\Auth\Support\AuthUserMapper(),
+        new \App\Services\Auth\Support\SessionManager(
+            static::jwtService(),
+            static::refreshTokenService()
+        )
     );
 }
 ```
 
 ---
 
-## Benefits of Decoupling
+## Benefits
 
-1. **Testability:** You can test services with simple object assertions, without mocking `ApiResponse`.
-2. **Reusability:** The same service can be used by a Web Controller, a CLI Command, or a Cron Job.
-3. **Clarity:** The interface clearly defines the data contract.
+1. **Testability:** Mock support components to test orchestrators in isolation.
+2. **Immutability:** Most services are `readonly class` (PHP 8.2+), preventing side effects.
+3. **Discoverability:** Clear domain folders make it easy to find relevant logic.

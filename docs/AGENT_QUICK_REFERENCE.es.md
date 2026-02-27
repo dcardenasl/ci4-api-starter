@@ -1,49 +1,81 @@
-# Referencia Rápida para Agentes - CI4 API Starter
+# Referencia Rápida para Agentes - CI4 API Starter (Arquitectura Orientada a Dominios)
 
-**Objetivo**: guía corta para agentes que implementan CRUD en esta base.
+**Propósito**: Patrones y restricciones esenciales para que los agentes de IA mantengan la consistencia arquitectónica.
 
-## 1. Flujo DTO-First
+---
+
+## 1. Organización Orientada a Dominios
+
+Cada nuevo componente **debe** residir en un subdirectorio de dominio:
+- `app/Services/{Domain}/`
+- `app/Interfaces/{Domain}/`
+- `app/DTO/Request/{Domain}/`
+- `app/DTO/Response/{Domain}/`
+
+---
+
+## 2. Flujo de Solicitud (Inmutable y Descompuesto)
 
 ```
-HTTP Request → Controller → [RequestDTO] → Service → Model → Entity → [ResponseDTO] → ApiController::respond() → JSON
+Solicitud HTTP → Controlador → [RequestDTO] → Servicio de Dominio (Guards/Handlers) → Modelo → Entidad → [ResponseDTO] → ApiResult → JSON
 ```
 
-## 2. Checklist CRUD
+### Innovaciones Clave:
+- **`BaseRequestDTO`**: Enriquece automáticamente `user_id` y `role` desde el `ContextHolder`.
+- **`ApiResult`**: Estandarización de `body` y `status` entre capas.
+- **`ExceptionFormatter`**: Gestión de errores centralizada y consciente del entorno.
 
-1. Ejecutar scaffold:
+---
+
+## 3. Checklist de Implementación
+
+### Paso 0: Scaffold Primero
 ```bash
-php spark make:crud {Name} --domain {Domain} --route {endpoint}
+php spark make:crud {Nombre} --domain {Dominio} --route {endpoint}
 ```
-2. Completar migración, entidad y modelo.
-3. Completar Request DTOs (`rules/messages/map`).
-4. Completar Response DTO.
-5. Servicio puro:
-   - lecturas -> DTOs
-   - comandos -> `OperationResult`
-6. Registrar servicio en `app/Config/Services.php`.
-7. Controlador delgado con `handleRequest('method', RequestDTO::class)`.
-8. Rutas + filtros + i18n (`en` y `es`).
-9. Tests Unit/Feature/Integration según corresponda.
-10. Ejecutar `composer quality`.
 
-## 3. Reglas de arquitectura
+### Paso 1: DTOs Inmutables
+- Extender de `BaseRequestDTO`.
+- Usar **`readonly class`** para todos los DTOs y Servicios.
+- Los DTOs de respuesta deben incluir atributos OpenAPI `#[OA\Property]`.
 
-1. No retornar `ApiResponse` desde servicios.
-2. No pasar arrays crudos entre controller y service.
-3. No reimplementar pipeline HTTP en controladores.
-4. `CrudServiceContract::index()` debe retornar DTO paginado.
+### Paso 2: Servicios Compuestos
+- Heredar de `BaseCrudService` para CRUD estándar.
+- Descomponer la lógica en componentes `Support/` (Handlers, Mappers, Guards).
+- Usar **inyección por constructor** para todas las dependencias (Sin llamadas estáticas).
+- Registrar en `app/Config/Services.php`.
 
-## 4. Excepciones comunes
+### Paso 3: Controlador Declarativo
+- Extender de `ApiController`.
+- Usar `handleRequest()` para mapeo automático y propagación de contexto.
 
+---
+
+## 4. Referencia de Excepciones (HasStatusCode)
+
+Las excepciones deben implementar `HasStatusCode`:
 - `NotFoundException` (404)
 - `AuthenticationException` (401)
 - `AuthorizationException` (403)
 - `ValidationException` (422)
 - `BadRequestException` (400)
-- `ConflictException` (409)
 
-## 5. Fuente de verdad
+---
 
-1. `docs/template/ARCHITECTURE_CONTRACT.md`
-2. `docs/template/MODULE_BOOTSTRAP_CHECKLIST.md`
-3. `docs/template/QUALITY_GATES.md`
+## 5. Seguridad y Estilo
+
+- ✅ **Inmutabilidad:** PHP 8.2 `readonly class` obligatorio.
+- ✅ **Atómico:** Usar `HandlesTransactions` para cambios de estado.
+- ✅ **Contexto:** Acceder a la identidad vía `SecurityContext` inyectado en los métodos del servicio.
+- ✅ **i18n:** Usar el helper `lang()`. Proveer archivos `en` y `es`.
+
+---
+
+## Comandos Rápidos
+
+```bash
+php spark make:crud {Nombre} --domain {Dominio} --route {endpoint}
+php spark swagger:generate
+composer quality
+vendor/bin/phpunit
+```

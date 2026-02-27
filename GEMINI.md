@@ -27,28 +27,29 @@ A production-ready REST API starter template for CodeIgniter 4 (v4.6+) with an a
 
 ## Development Workflows
 
-### 1. DTO-First Development (The "Shield" Pattern)
+### 1. Domain-Driven Services (New Standard)
+**All services must reside in a domain subdirectory.**
+- **Composition over Inheritance:** Decompose logic into `Support/` classes (Handlers, Mappers, Guards).
+- **Immutability:** Use PHP 8.2 `readonly class` for all new services and DTOs.
+- **Strict DI:** Injected dependencies must be typed via Interfaces. No static calls to `Config\Services`.
+
+### 2. DTO-First Development (The "Shield" Pattern)
 **All data transfer must use PHP 8.2 `readonly` classes.**
-- **Request DTOs:** Must extend `BaseRequestDTO`. Perform all validation in the `rules()` method. The constructor handles automatic validation. 
-- **NO Manual Validation:** The `InputValidationService` has been removed. Never use it.
-- **Response DTOs:** Define exactly what the client receives. Include OpenAPI `#[OA\Property]` attributes here.
+- **Automatic Context:** `BaseRequestDTO` now automatically enriches `user_id` and `user_role` from `ContextHolder`. Never inject these manually in controllers.
+- **NO Manual Validation:** Handled by DTO constructor.
 
-### 2. Controller Standards (The Orchestrator)
+### 3. Controller Standards (The Orchestrator)
 - Extend `ApiController`.
-- Use `handleRequest('serviceMethod', RequestDTO::class)` for declarative handling.
-- **Indirection:** Never handle business logic or validation in the controller.
-- **Normalization:** `ApiController` automatically wraps responses in `ApiResponse::success()` and handles `data` keying.
+- **Pure Orchestration:** `ApiController` now uses `ApiResponse::fromResult()` and `ExceptionFormatter` to normalize all outputs via the `ApiResult` value object.
+- **Standard Return:** Service results are automatically wrapped in `ApiResponse::success()` or `ApiResponse::paginated()`.
 
-### 3. Pure Service Layer (The Engine)
-- Services MUST be "pure" (agnostic to HTTP/API).
-- **Inheritance:** Standard CRUD services should extend `BaseCrudService`.
-- **Atomic Operations:** Use `HandlesTransactions` trait for any method that modifies state.
-- **NO `ApiResponse` inside services.**
-- **Error Handling:** Throw custom exceptions (`NotFoundException`, `ValidationException`, etc.).
+### 4. Pure Service Layer (The Engine)
+- **Domain Logic Only:** Services must not touch global request state.
+- **Atomic Operations:** Use `HandlesTransactions` trait for state changes.
+- **Error Handling:** Throw exceptions implementing `HasStatusCode`.
 
-### 4. Living Documentation (OpenAPI)
+### 5. Living Documentation (OpenAPI)
 - **Schemas:** Defined as attributes in DTO classes (`#[OA\Schema]`).
-- **Endpoints:** Defined in `app/Documentation/{Domain}/`.
 - **Sync:** Documentation must always match the DTO properties.
 
 ### 5. Testing Strategy

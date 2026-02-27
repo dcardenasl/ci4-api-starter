@@ -1,18 +1,19 @@
 # Autenticación JWT
 
-Los tokens de acceso JWT se generan durante el inicio de sesión y se validan con un filtro.
+Los tokens de acceso JWT se emiten al iniciar sesión y son validados por un filtro de solicitud. El sistema utiliza una arquitectura de gestión de tokens inmutable y orientada a dominios.
 
-Archivos clave:
-- `app/Services/JwtService.php`
-- `app/Filters/JwtAuthFilter.php`
-- `app/Controllers/Api/V1/AuthController.php`
-- `app/Config/Services.php`
+Componentes Clave:
+- **`app/Services/Tokens/JwtService.php`**: Orquestador inmutable `readonly` para la codificación/decodificación de tokens.
+- **`app/Services/Tokens/TokenRevocationService.php`**: Gestiona la lista negra de tokens y el caché de revocación.
+- **`app/Filters/JwtAuthFilter.php`**: Intercepta las solicitudes para validar los tokens y establecer el contexto de seguridad inicial.
 
-Variables de entorno:
-- `JWT_SECRET_KEY`
-- `JWT_ACCESS_TOKEN_TTL`
-- `JWT_REVOCATION_CHECK`
+Variables de Entorno:
+- `JWT_SECRET_KEY`: Secreto de mínimo 32 caracteres.
+- `JWT_ACCESS_TOKEN_TTL`: Expiración del token de acceso en segundos.
+- `JWT_REVOCATION_CACHE_TTL`: Duración del caché de rendimiento para tokens revocados.
 
-Notas:
-- Los tokens se envían en `Authorization: Bearer <token>`.
-- El filtro inyecta `userId` y `userRole` en la petición.
+Flujo Estándar:
+1. Se esperan los tokens en el encabezado `Authorization: Bearer <token>`.
+2. El `JwtAuthFilter` extrae y valida el token.
+3. Si es válido, comprueba si el claim `jti` está en la lista negra a través del `TokenRevocationService`.
+4. Si está autorizado, puebla el `SecurityContext` para su propagación automática.

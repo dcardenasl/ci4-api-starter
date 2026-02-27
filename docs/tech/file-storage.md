@@ -1,24 +1,22 @@
 # File Storage
 
-File uploads use a storage abstraction with local and S3 drivers.
+File management follows a decomposed architecture to handle multiple input types and storage drivers seamlessly.
 
-Key files:
-- `app/Services/FileService.php`
-- `app/Libraries/Storage/StorageManager.php`
-- `app/Libraries/Storage/Drivers/LocalDriver.php`
-- `app/Libraries/Storage/Drivers/S3Driver.php`
+Key Components:
+- **`app/Services/Files/FileService.php`**: Orchestrates storage and database persistence.
+- **`app/Libraries/Files/MultipartProcessor.php`**: Handles standard HTTP file uploads.
+- **`app/Libraries/Files/Base64Processor.php`**: Decodes and validates Data URIs and raw Base64.
+- **`app/Libraries/Files/FilenameGenerator.php`**: Sanitizes names and prevents storage collisions.
+- **`app/Support/Files/ProcessedFile.php`**: Standardized value object for stream-based transfers.
 
-Environment variables:
-- `FILE_STORAGE_DRIVER` (local, s3)
-- `FILE_MAX_SIZE`
-- `FILE_ALLOWED_TYPES`
-- `FILE_UPLOAD_PATH`
-- `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_DEFAULT_REGION`, `AWS_BUCKET`, `AWS_URL`
+Storage Drivers (`app/Libraries/Storage/`):
+- **LocalDriver**: Stores files in `writable/uploads/`.
+- **S3Driver**: Integrates with AWS S3 using flysystem.
 
-Notes:
-- Local storage defaults to `writable/uploads/`.
-- S3 uses Flysystem and the AWS config values from `.env`.
-- Input validation for file actions (`upload`, `index`, `show`, `delete`) is centralized in `FileValidation` and consumed from `FileService`.
-- `GET /api/v1/files/{id}` behavior:
-  - Local driver: controller returns binary download response.
-  - S3 driver: API returns JSON metadata including URL/path.
+Environment Variables:
+- `FILE_STORAGE_DRIVER`: `local` or `s3`.
+- `FILE_MAX_SIZE`: Limit in bytes.
+- `FILE_ALLOWED_TYPES`: Comma-separated extensions (e.g., `jpg,png,pdf`).
+
+Validation:
+All file operations use DTO-based validation. The processors ensure that files are structurally sound and safe before the `FileService` attempts persistence.

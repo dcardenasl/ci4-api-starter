@@ -1,187 +1,118 @@
-# Flujo de Peticiones
+# Flujo de Solicitud
 
-Este documento recorre una petición HTTP completa de principio a fin.
+Este documento describe el recorrido de una solicitud HTTP completa desde el inicio hasta el final.
 
 ---
 
 ## Diagrama de Flujo Completo
 
 ```
-HTTP Request
+Solicitud HTTP
      │
      ▼
 ┌─────────────────────────────────────────┐
-│ 1. ROUTING                              │
-│    - Coincidir URL con controller/método│
-│    - Extraer parámetros de ruta         │
+│ 1. ENRUTAMIENTO                         │
+│    - Mapear URL al controlador/método   │
 │    - Asignar filtros                    │
 └─────────────────────────────────────────┘
      │
      ▼
 ┌─────────────────────────────────────────┐
-│ 2. FILTERS (Pipeline de Middleware)     │
+│ 2. FILTROS (Middleware)                 │
 │    Throttle → JwtAuth → RoleAuth        │
 └─────────────────────────────────────────┘
      │
      ▼
 ┌─────────────────────────────────────────┐
-│ 3. CONTROLLER (Mapeo)                   │
-│    - getDTO() instancia el DTO          │
-│    - Constructor DTO valida entrada     │
-│    - handleRequest() usa closure        │
+│ 3. CONTROLADOR (Orquestación)           │
+│    - collectRequestData() mezcla inputs │
+│    - establishSecurityContext()         │
+│    - handleRequest() ejecuta destino    │
 └─────────────────────────────────────────┘
      │
      ▼
 ┌─────────────────────────────────────────┐
-│ 4. SERVICE (Lógica Pura de Negocio)     │
-│    - Opera sobre DTOs tipados           │
-│    - Coordina Modelos                   │
-│    - Retorna Entity o ResponseDTO       │
+│ 4. CAPA DTO (El Escudo)                 │
+│    - Autovalidación en constructor      │
+│    - Enriquecimiento con Contexto       │
 └─────────────────────────────────────────┘
      │
      ▼
 ┌─────────────────────────────────────────┐
-│ 5. MODEL & ENTITY                       │
-│    - Operaciones estándar de BD         │
-│    - Retorna Entities hidratadas        │
+│ 5. SERVICIO DE DOMINIO (Lógica)         │
+│    - Descompuesto en Handlers/Guards    │
+│    - Lógica de dominio pura             │
+│    - Devuelve DTO u OperationResult     │
 └─────────────────────────────────────────┘
      │
      ▼
 ┌─────────────────────────────────────────┐
-│ 6. NORMALIZACIÓN DE RESPUESTA           │
-│    - ApiController::respond()           │
-│    - Convierte DTO a array recursivo    │
-│    - ApiResponse envuelve en 'data'     │
+│ 6. PIPELINE DE RESPUESTA                │
+│    - ApiResponse::fromResult()          │
+│    - Normalización en ApiResult         │
+│    - Controlador renderiza JSON         │
 └─────────────────────────────────────────┘
      │
      ▼
-HTTP Response (JSON)
+Respuesta HTTP (JSON)
 ```
-
----
-
-## Invariantes de Controllers (Obligatorio)
-
-Estas reglas son obligatorias para controllers API que extienden `ApiController`.
-
-1. Usar `getDTO()` para capturar y validar los datos de entrada temprano.
-2. Usar `handleRequest(fn() => ...)` para delegar a los servicios.
-3. Los servicios deben permanecer "puros" (sin conocimiento de HTTP).
-4. Si el status de éxito depende del payload, sobrescribir `resolveSuccessStatus($method, $result)`.
-5. Usar `handleException()` para mantener el mapeo de errores consistente.
 
 ---
 
 ## Ejemplo: Crear Usuario (POST /api/v1/users)
 
-### 1. Mapeo en el Controller
+### 1. Controlador y DTO
 
 ```php
-public function create(): ResponseInterface
-{
-    // La instanciación del DTO falla si la entrada es inválida
-    $dto = new UserCreateRequestDTO($this->collectRequestData());
+// ApiController::handleRequest
+$data = $this->collectRequestData();
+$context = $this->establishSecurityContext();
 
-    return $this->handleRequest(
-        fn() => $this->getService()->store($dto)
-    );
-}
+// BaseRequestDTO::__construct
+$enrichedData = $this->enrichWithContext($data); // Añade user_id/role
+$this->validate($enrichedData);
 ```
 
-### 2. Lógica del Servicio (Pura)
+### 2. Lógica de Servicio (Compuesta)
 
 ```php
-public function store(UserCreateRequestDTO $request): UserResponseDTO
+public function store(UserStoreRequestDTO $request): UserResponseDTO
 {
-    // Lógica de negocio usando $request->email tipado, etc.
-    $userId = $this->userModel->insert($request->toArray());
-    $user = $this->userModel->find($userId);
+    // Delegar seguridad
+    $this->roleGuard->assertCanAssignRole(...);
 
-    return UserResponseDTO::fromArray($user->toArray());
+    $userId = $this->model->insert($request->toArray());
+    
+    // Delegar procesos secundarios
+    $this->invitationService->sendInvitation($user);
+
+    return $this->mapToResponse($user);
 }
 ```
 
 ### 3. Normalización Automática
 
-El `ApiController` detecta que el servicio retornó un `UserResponseDTO`.
-1. Llama a `ApiResponse::convertDataToArrays()` recursivamente.
-2. La propiedad `firstName` (camelCase) se mapea a `first_name` (snake_case).
-3. Envuelve el resultado en `ApiResponse::success()`.
-4. Envía la respuesta JSON.
+1.  `ApiResponse::fromResult()` recibe `UserResponseDTO`.
+2.  Convierte recursivamente a array.
+3.  Envuelve en `ApiResult` con estado `201`.
+4.  `ApiController` renderiza el JSON final.
 
 ---
 
-## Desglose de Tiempos
+## Flujo de Error
 
-Tiempos típicos de petición (desarrollo):
-
-| Paso | Operación | Tiempo |
-|------|-----------|------|
-| 1 | Routing | ~1ms |
-| 2a | CorsFilter | ~0.5ms |
-| 2b | ThrottleFilter (búsqueda en cache) | ~2ms |
-| 2c | JwtAuthFilter (decodificar + blacklist) | ~3ms |
-| 2d | RoleAuthFilter | ~0.5ms |
-| 3 | Controller (recopilar + sanitizar) | ~1ms |
-| 4 | Service (validación + lógica) | ~5ms |
-| 5 | Model (consulta insert) | ~8ms |
-| 6 | Model (consulta select) | ~5ms |
-| 7 | Entity (toArray) | ~0.5ms |
-| 8 | Formateo ApiResponse | ~0.5ms |
-| **Total** | | **~27ms** |
-
-Producción (cache optimizado, OpCache habilitado): **~15-20ms**
+Si ocurre una excepción:
+1.  `ApiController::handleException()` la captura.
+2.  `ExceptionFormatter::format()` determina el entorno y seguridad.
+3.  Devuelve un `ApiResult` con el estado y la carga útil de error.
+4.  El controlador renderiza el JSON.
 
 ---
 
-## Flujo de Errores
+## Conclusiones Clave
 
-Si la validación falla en el paso 4:
-
-```php
-// Service lanza
-throw new ValidationException('Validation failed', [
-    'email' => 'Email is already registered'
-]);
-
-// Controller captura
-catch (Exception $e) {
-    return $this->handleException($e);
-}
-
-// handleException() retorna
-HTTP/1.1 422 Unprocessable Entity
-Content-Type: application/json
-
-{
-  "status": "error",
-  "message": "Validation failed",
-  "errors": {
-    "email": "Email is already registered"
-  }
-}
-```
-
-Mapeo Exception → estado HTTP:
-- `ValidationException` → 422
-- `NotFoundException` → 404
-- `AuthenticationException` → 401
-- `AuthorizationException` → 403
-- `BadRequestException` → 400
-- Otras → 500
-
----
-
-## Puntos Clave
-
-1. **Flujo lineal** - La petición fluye a través de las capas en orden
-2. **Fallar rápido** - Los filtros detienen peticiones malas temprano
-3. **Separación** - Cada capa tiene un trabajo
-4. **Excepciones para flujo de control** - Los errores suben en cascada al controller
-5. **Respuestas consistentes** - ApiResponse asegura el formato
-6. **Seguridad integrada** - Autenticación, sanitización, validación en todos los niveles
-7. **Rápido** - Las peticiones típicas se completan en 15-30ms
-
----
-
-**Siguiente:** Aprende sobre [FILTERS.es.md](FILTERS.es.md) para entender el pipeline de middleware en profundidad.
+1. **Flujo Lineal** - Transición ordenada a través de las capas.
+2. **Composición** - Los servicios delegan tareas especializadas.
+3. **Falla Rápido** - Los DTOs detienen datos inválidos antes de la lógica.
+4. **Respuestas Consistentes** - `ApiResult` garantiza un formato universal.
+5. **Conciencia Contextual** - El `SecurityContext` se propaga automáticamente.

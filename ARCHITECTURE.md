@@ -1,160 +1,67 @@
 # Architecture Decision Records (ADR)
 
-This document explains the architectural decisions made in this project and the reasoning behind them. When in doubt about whether something is an inconsistency or a deliberate design choice, consult this document.
+This document explains the architectural decisions made in this project.
 
-## Table of Contents
+## 1. Domain-Driven Service Layer
 
-1. [Controller Architecture](#controller-architecture)
-2. [Documentation Strategy](#documentation-strategy)
-3. [Testing Strategy](#testing-strategy)
-4. [Security Patterns](#security-patterns)
-5. [Service Layer Patterns](#service-layer-patterns)
-6. [Data Validation Architecture](#data-validation-architecture)
-7. [Observability and Governance](#observability-and-governance)
+**Decision:** Services are organized into functional domains to prevent "God Classes" and improve maintainability.
 
----
+### Directory Structure
+- `app/Services/{Domain}/`: Primary orchestrators.
+- `app/Services/{Domain}/Support/`: Specialized logic (Mappers, Handlers, Managers).
+- `app/Interfaces/{Domain}/`: Strict contracts for each domain.
 
-## Controller Architecture
+### Domains defined:
+- **Auth**: Login, Registration, OAuth, and Invitations.
+- **Tokens**: JWT creation, Refresh Token rotation, and Revocation.
+- **Users**: Identity management and RBAC.
+- **Files**: Storage orchestration and file processing.
+- **System**: Infrastructure (Audit, Email, Metrics).
+- **Core**: Shared base classes.
 
-### ADR-001: Standardized API Controllers
+## 2. Service Composition Pattern
 
-**Decision:** The project uses a declarative controller pattern via `ApiController`.
+**Decision:** Large services must be decomposed into specialized, single-responsibility components injected via constructor.
 
-#### Business API Controllers
+### Patterns in use:
+- **Handlers**: Encapsulate complex multi-step processes (e.g., `GoogleAuthHandler`, `MultipartProcessor`).
+- **Guards**: Centralize security and account policy assertions (e.g., `UserRoleGuard`, `UserAccountGuard`).
+- **Mappers**: Handle transformation of entities to specific output arrays (e.g., `AuthUserMapper`).
+- **Managers**: Orchestrate cross-service sessions or complex state (e.g., `SessionManager`).
 
-**Pattern:** Extend `ApiController`
+## 3. Immutable Infrastructure (PHP 8.2+)
 
-**Purpose:** Act as thin orchestrators between HTTP requests and the Service Layer.
-
-**Characteristics:**
-```php
-class UserController extends ApiController
-{
-    protected string $serviceName = 'userService';
-
-    public function create(): ResponseInterface {
-        // Validation happens automatically inside the DTO constructor
-        // SecurityContext is automatically injected into the service method
-        return $this->handleRequest('store', UserStoreRequestDTO::class);
-    }
-}
-```
+**Decision:** All Services and DTOs should be `readonly class` whenever possible.
 
 **Benefits:**
-- ✅ **Zero-Boilerplate:** Automatic request-to-DTO mapping.
-- ✅ **Security Injection:** Automated propagation of `SecurityContext` (user ID, role, and metadata).
-- ✅ **Centralized Error Handling:** Global exception-to-JSON transformation.
-- ✅ **Standardized Contract:** Automated `{"status": "success", "data": ...}` wrapping.
-- ✅ **Semantic Codes:** Automated mapping of actions to status codes (201 for creation, 202 for pending).
+- Prevents side effects during request execution.
+- Ensures strict dependency injection via constructor.
+- Improves static analysis (PHPStan).
 
-#### Infrastructure Controllers
+## 4. Response Orchestration
 
-**Pattern:** Extend base `Controller`
+**Decision:** The path from Service to HTTP Response is standardized via `ApiResult`.
 
-**Purpose:** System monitoring, health checks, metrics that follow external standards (Kubernetes/Docker).
+### Flow:
+`Service Method -> Returns DTO/OperationResult -> ApiController delegates to ApiResponse::fromResult() -> Returns ApiResult -> Controller renders JSON.`
 
----
+- **`ApiResult`**: A Value Object carrying the `body` and `status`.
+- **`ExceptionFormatter`**: Environment-aware transformation of exceptions into `ApiResult`.
 
-## Documentation Strategy
+## 5. DTO-First Development (The "Shield" Pattern)
 
-### ADR-002: Integrated Living Documentation
+**Decision:** Validation and Context Enrichment happen at the edge.
 
-**Decision:** OpenAPI schemas live directly within DTO classes as PHP 8 attributes. Endpoint definitions remain in `app/Documentation/`.
-
-**Generation:**
-```bash
-php spark swagger:generate  # Scans app/DTO/ and app/Documentation/
-```
-
-**Single Source of Truth:** The code *is* the documentation. Property types and constraints in DTOs are automatically reflected in the Swagger UI.
+- **Self-Validation**: Handled in `BaseRequestDTO::__construct`.
+- **Context Enrichment**: `BaseRequestDTO` automatically pulls `user_id` and `role` from `ContextHolder` if missing from input data.
+- **Immutability**: All DTOs are `readonly`.
 
 ---
 
-## Testing Strategy
+## Summary of Modern Engineering Standards
 
-### ADR-003: Three Test Layers
-
-**Decision:** Tests are organized by integration level to maximize speed and coverage.
-
-1.  **Unit (Fast):** Mocked dependencies. Tests logic in Services, DTOs, and Libraries.
-2.  **Integration (DB):** Tests real Database/Model interactions using **SQLite**.
-3.  **Feature (E2E):** Full HTTP request/response cycle, filters, and authorization.
-
-**Key Rule:** Service unit tests should verify DTO return types and logic without caring about HTTP status codes or JSON structures.
-
-**Test Stability:** The project uses a dedicated `ci4_test.sqlite` database and `ContextHolder` for identity propagation, ensuring tests are fast, isolated, and easy to run in CI environments without external dependencies.
-
----
-
-## Security Patterns
-
-### ADR-004: Transactional Integrity
-
-**Decision:** All state-changing operations in the Service Layer must be atomic.
-
-**Implementation:** Use the `HandlesTransactions` trait in services.
-```php
-return $this->wrapInTransaction(function() use ($dto) {
-    $id = $this->model->insert($dto->toArray());
-    $this->auditService->log('create', ...);
-    return $this->mapToResponse($this->model->find($id));
-});
-```
-
----
-
-## Service Layer Patterns
-
-### ADR-005: Generic Base CRUD Service
-
-**Decision:** Reduce boilerplate by using a genric `BaseCrudService` for standard operations.
-
-**Key Features:**
-- **Automated Mapping:** Converts Entities to Response DTOs automatically using `$responseDtoClass`.
-- **Global Security Hook:** `applyBaseCriteria()` allows services to enforce universal filters (e.g., exclude superadmins).
-- **Pure Logic:** Services are agnostic to HTTP. They throw exceptions and return DTOs.
-
----
-
-## Data Validation Architecture
-
-### ADR-006: DTO-First Auto-Validation
-
-**Decision:** **Validation is no longer a separate service.** It is an intrinsic property of the Data Transfer Object.
-
-**The "Shield" Pattern:**
-- **Request DTOs** must extend `BaseRequestDTO`.
-- Validation happens in the **constructor**. 
-- If a DTO is instantiated, the data is **guaranteed to be valid**.
-
-**Example:**
-```php
-readonly class UserStoreRequestDTO extends BaseRequestDTO {
-    protected function rules(): array {
-        return ['email' => 'required|valid_email|is_unique[users.email]'];
-    }
-}
-```
-
-**Why this is superior:**
-1. **Safety:** Prevents "dirty data" from ever reaching the Service Layer.
-2. **Clarity:** The contract (what data is needed) and the validation (what format) are in the same file.
-3. **Efficiency:** No need to manually call `validate()` in every service method.
-
----
-
-## Summary of Design Principles
-
-1. **DTOs as Guardians:** Never pass raw arrays to services.
-2. **Thin Controllers:** Controllers only orchestrate; they don't validate or calculate.
-3. **Pure Services:** Agnostic to HTTP, focus on business rules.
-4. **Declarative Code:** Favour configuration over manual implementation (e.g., `handleRequest`).
-5. **Fail Early:** Let the DTO constructor throw the exception.
-
----
-
-## Observability and Governance
-
-This project tracks reliability through request-level indicators (SLOs) and enforces a strict quality gates via `composer quality`.
-
-See the decision record at `docs/architecture/ADR-004-OBSERVABILITY-GOVERNANCE.md`.
+1. **Dependency Injection**: No static service calls inside business logic. Use `Config/Services.php`.
+2. **Domain Isolation**: Services from one domain should interact with others via Interfaces.
+3. **Atomic Operations**: Use `HandlesTransactions` for any state change.
+4. **Zero-Trust Input**: Every input must be a DTO.
+5. **Observability**: Every state change is logged via `AuditService`.

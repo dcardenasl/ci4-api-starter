@@ -1,24 +1,22 @@
-# Almacenamiento de archivos
+# Almacenamiento de Archivos
 
-Las cargas de archivos usan una abstracción de storage con drivers local y S3.
+La gestión de archivos sigue una arquitectura descompuesta para manejar múltiples tipos de entrada y drivers de almacenamiento sin fisuras.
 
-Archivos clave:
-- `app/Services/FileService.php`
-- `app/Libraries/Storage/StorageManager.php`
-- `app/Libraries/Storage/Drivers/LocalDriver.php`
-- `app/Libraries/Storage/Drivers/S3Driver.php`
+Componentes Clave:
+- **`app/Services/Files/FileService.php`**: Orquesta el almacenamiento y la persistencia en base de datos.
+- **`app/Libraries/Files/MultipartProcessor.php`**: Maneja las cargas de archivos HTTP estándar.
+- **`app/Libraries/Files/Base64Processor.php`**: Decodifica y valida Data URIs y Base64 puro.
+- **`app/Libraries/Files/FilenameGenerator.php`**: Sanea nombres y previene colisiones de almacenamiento.
+- **`app/Support/Files/ProcessedFile.php`**: Value Object estandarizado para transferencias basadas en streams.
 
-Variables de entorno:
-- `FILE_STORAGE_DRIVER` (local, s3)
-- `FILE_MAX_SIZE`
-- `FILE_ALLOWED_TYPES`
-- `FILE_UPLOAD_PATH`
-- `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_DEFAULT_REGION`, `AWS_BUCKET`, `AWS_URL`
+Drivers de Almacenamiento (`app/Libraries/Storage/`):
+- **LocalDriver**: Almacena archivos en `writable/uploads/`.
+- **S3Driver**: Se integra con AWS S3 usando flysystem.
 
-Notas:
-- El storage local usa `writable/uploads/`.
-- S3 usa Flysystem y los valores AWS en `.env`.
-- La validación de entrada para acciones de archivos (`upload`, `index`, `show`, `delete`) está centralizada en `FileValidation` y la consume `FileService`.
-- Comportamiento de `GET /api/v1/files/{id}`:
-  - Driver local: el controlador devuelve descarga binaria.
-  - Driver S3: la API devuelve JSON con metadata y URL/path.
+Variables de Entorno:
+- `FILE_STORAGE_DRIVER`: `local` o `s3`.
+- `FILE_MAX_SIZE`: Límite en bytes.
+- `FILE_ALLOWED_TYPES`: Extensiones separadas por comas (ej. `jpg,png,pdf`).
+
+Validación:
+Todas las operaciones de archivos utilizan validación basada en DTOs. Los procesadores garantizan que los archivos sean estructuralmente sólidos y seguros antes de que el `FileService` intente la persistencia.

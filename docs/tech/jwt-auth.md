@@ -1,18 +1,19 @@
 # JWT Authentication
 
-JWT access tokens are issued on login and validated by a request filter.
+JWT access tokens are issued on login and validated by a request filter. The system uses an immutable, domain-driven token management architecture.
 
-Key files:
-- `app/Services/JwtService.php`
-- `app/Filters/JwtAuthFilter.php`
-- `app/Controllers/Api/V1/AuthController.php`
-- `app/Config/Services.php`
+Key Components:
+- **`app/Services/Tokens/JwtService.php`**: Immutable `readonly` orchestrator for token encoding/decoding.
+- **`app/Services/Tokens/TokenRevocationService.php`**: Manages the token blacklist and revocation cache.
+- **`app/Filters/JwtAuthFilter.php`**: Intercepts requests to validate tokens and establish the initial security context.
 
-Environment variables:
-- `JWT_SECRET_KEY`
-- `JWT_ACCESS_TOKEN_TTL`
-- `JWT_REVOCATION_CHECK`
+Environment Variables:
+- `JWT_SECRET_KEY`: Minimum 32-character secret.
+- `JWT_ACCESS_TOKEN_TTL`: Access token expiration in seconds.
+- `JWT_REVOCATION_CACHE_TTL`: Performance cache duration for revoked tokens.
 
-Notes:
-- Tokens are expected in `Authorization: Bearer <token>` headers.
-- The filter injects `userId` and `userRole` into the request.
+Standard Workflow:
+1. Tokens are expected in the `Authorization: Bearer <token>` header.
+2. The `JwtAuthFilter` extracts and validates the token.
+3. If valid, it checks if the `jti` claim is blacklisted via `TokenRevocationService`.
+4. If authorized, it populates the `SecurityContext` for automatic downstream propagation.

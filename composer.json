@@ -4,7 +4,7 @@
     "type": "project",
     "license": "MIT",
     "require": {
-        "php": "^8.1",
+        "php": "^8.2",
         "aws/aws-sdk-php": "^3.369",
         "codeigniter4/framework": "^4.5",
         "firebase/php-jwt": "^7.0",
@@ -40,7 +40,11 @@
         }
     },
     "scripts": {
-        "test": "phpunit",
+        "test:prepare-db": "php spark tests:prepare-db",
+        "test:unit": "composer test:prepare-db && phpunit --testsuite=Unit --configuration=phpunit.xml --no-coverage --testdox",
+        "test:integration": "composer test:prepare-db && phpunit --testsuite=Integration --configuration=phpunit.xml --no-coverage --testdox",
+        "test:feature": "composer test:prepare-db && phpunit --testsuite=Feature --configuration=phpunit.xml --no-coverage --testdox",
+        "test": "@test:prepare-db && phpunit --configuration=phpunit.xml --no-coverage --testdox",
         "phpstan": "phpstan analyse --memory-limit=512M",
         "cs-fix": "php-cs-fixer fix",
         "cs-check": "php-cs-fixer fix --dry-run --diff",

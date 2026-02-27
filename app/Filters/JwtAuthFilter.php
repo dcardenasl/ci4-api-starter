@@ -6,6 +6,7 @@ namespace App\Filters;
 
 use App\HTTP\ApiRequest;
 use App\Libraries\ApiResponse;
+use App\Libraries\ContextHolder;
 use App\Services\UserAccessPolicyService;
 use CodeIgniter\Filters\FilterInterface;
 use CodeIgniter\HTTP\RequestInterface;
@@ -16,6 +17,14 @@ class JwtAuthFilter implements FilterInterface
 {
     public function before(RequestInterface $request, $arguments = null)
     {
+        $context = ContextHolder::get();
+        if ($context !== null && $context->userId !== null) {
+            if ($request instanceof ApiRequest) {
+                $request->setAuthContext((int) $context->userId, (string) $context->role);
+            }
+            return $request;
+        }
+
         // Use service container instead of direct instantiation
         $jwtService = Services::jwtService();
         $bearerTokenService = Services::bearerTokenService();

@@ -9,6 +9,13 @@ parameters:
         - app/Libraries
         - app/Entities
         - app/Filters
+        - app/Interfaces
+    parallel:
+        jobSize: 20
+        processTimeout: 600.0
+        maximumNumberOfProcesses: 0
+        minimumNumberOfJobsPerProcess: 2
+        buffer: 134217728
     excludePaths:
         - vendor
         - writable

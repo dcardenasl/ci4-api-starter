@@ -36,5 +36,5 @@ interface AuditServiceInterface
     /**
      * Get logs by entity (Internal/API)
      */
-    public function byEntity(array $data, ?SecurityContext $context = null): array;
+    public function byEntity(\App\Interfaces\DataTransferObjectInterface $request, ?SecurityContext $context = null): \App\Interfaces\DataTransferObjectInterface;
 }

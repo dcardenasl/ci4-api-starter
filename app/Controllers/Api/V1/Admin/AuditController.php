@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers\Api\V1\Admin;
 
 use App\Controllers\ApiController;
+use App\DTO\Request\Audit\AuditByEntityRequestDTO;
 use App\DTO\Request\Audit\AuditIndexRequestDTO;
 use CodeIgniter\HTTP\ResponseInterface;
 
@@ -40,7 +41,9 @@ class AuditController extends ApiController
     public function byEntity(string $type, int $id): ResponseInterface
     {
         return $this->handleRequest(
-            fn ($dto, $context) => $this->getService()->byEntity(['entity_type' => $type, 'entity_id' => $id], $context)
+            'byEntity',
+            AuditByEntityRequestDTO::class,
+            ['entity_type' => $type, 'entity_id' => $id]
         );
     }
 }

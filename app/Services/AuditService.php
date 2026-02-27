@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\DTO\Response\Common\PayloadResponseDTO;
 use App\DTO\SecurityContext;
 use App\Interfaces\AuditServiceInterface;
 use App\Interfaces\DataTransferObjectInterface;
@@ -131,14 +132,20 @@ class AuditService extends BaseCrudService implements AuditServiceInterface
     /**
      * Get audit logs for a specific entity
      */
-    public function byEntity(array $data, ?SecurityContext $context = null): array
+    public function byEntity(DataTransferObjectInterface $request, ?SecurityContext $context = null): DataTransferObjectInterface
     {
-        $entityId = (int) ($data['entity_id'] ?? 0);
-        $entityType = $this->normalizeEntityType((string) ($data['entity_type'] ?? ''));
+        /** @var \App\DTO\Request\Audit\AuditByEntityRequestDTO $request */
+        $entityId = $request->entityId;
+        $entityType = $this->normalizeEntityType($request->entityType);
 
         $logs = $this->auditLogModel->getByEntity($entityType, $entityId);
 
-        return array_map(fn ($log) => $this->mapToResponse($log), $logs);
+        $payload = array_map(
+            fn ($log) => $this->mapToResponse($log)->toArray(),
+            $logs
+        );
+
+        return PayloadResponseDTO::fromArray($payload);
     }
 
     /**

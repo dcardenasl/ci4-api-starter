@@ -307,14 +307,16 @@ class AuditServiceTest extends CIUnitTestCase
             ->with('users', 5)
             ->willReturn($logs);
 
-        $result = $this->service->byEntity([
+        $result = $this->service->byEntity(new \App\DTO\Request\Audit\AuditByEntityRequestDTO([
             'entity_type' => 'users',
             'entity_id' => 5,
-        ]);
+        ]));
+        $payload = $result->toArray();
 
-        $this->assertIsArray($result);
-        $this->assertCount(2, $result);
-        $this->assertInstanceOf(\App\Interfaces\DataTransferObjectInterface::class, $result[0]);
+        $this->assertInstanceOf(\App\DTO\Response\Common\PayloadResponseDTO::class, $result);
+        $this->assertCount(2, $payload);
+        $this->assertIsArray($payload[0]);
+        $this->assertSame('create', $payload[0]['action'] ?? null);
     }
 
     public function testByEntityNormalizesSingularEntityType(): void
@@ -325,18 +327,18 @@ class AuditServiceTest extends CIUnitTestCase
             ->with('users', 5)
             ->willReturn([]);
 
-        $result = $this->service->byEntity([
+        $result = $this->service->byEntity(new \App\DTO\Request\Audit\AuditByEntityRequestDTO([
             'entity_type' => 'user',
             'entity_id' => 5,
-        ]);
+        ]));
 
-        $this->assertSame([], $result);
+        $this->assertSame([], $result->toArray());
     }
 
-    public function testByEntityWithMissingParamsReturnsEmptyArray(): void
+    public function testByEntityWithMissingParamsThrowsValidationException(): void
     {
-        $result = $this->service->byEntity(['entity_type' => 'users']);
-        $this->assertSame([], $result);
+        $this->expectException(\App\Exceptions\ValidationException::class);
+        new \App\DTO\Request\Audit\AuditByEntityRequestDTO(['entity_type' => 'users']);
     }
 
     // ==================== HELPER METHODS ====================

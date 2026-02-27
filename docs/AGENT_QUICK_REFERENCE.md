@@ -35,12 +35,14 @@ php spark make:crud {Name} --domain {Domain} --route {endpoint}
 
 ### Step 4: Pure Service Layer
 - **Interface:** `app/Interfaces/{Name}ServiceInterface.php`.
-- **Implementation:** Return DTOs or Entities. **NO `ApiResponse`**.
+- **Implementation:** Return DTOs (for reads) or `OperationResult` (for command-style outcomes). **NO `ApiResponse`**.
 - Register in `app/Config/Services.php`.
+- For standard CRUD resources, extend `CrudServiceContract` and `BaseCrudService`.
 
 ### Step 5: Controller
 - Extend `ApiController`.
-- Use `getDTO()` and `handleRequest(fn() => ...)` pattern.
+- Use `handleRequest('methodName', RequestDTO::class)` for standard endpoints.
+- Use closure form only when route params must be combined with service calls (`show`, `update`, `delete` by id).
 
 ### Step 6: Testing
 - **Unit:** Assert against DTO return types. Mock dependencies.
@@ -65,6 +67,7 @@ The `ApiController` automatically:
 1. Wraps service results in `ApiResponse::success()`.
 2. Recursively converts DTOs to arrays.
 3. Maps camelCase properties to snake_case JSON keys.
+4. Detects paginated DTO shape (`data`, `total`, `page`, `perPage`) and emits canonical paginated response with `meta`.
 
 ---
 

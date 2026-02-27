@@ -14,7 +14,7 @@ This document explains each layer in detail: Controller, DTO, Service, Model, an
 
 All API controllers extend `ApiController.php`. It provides a declarative `handleRequest` method that automates:
 1. Data collection from all sources (GET, POST, JSON, Files).
-2. DTO instantiation and self-validation.
+2. Request DTO instantiation and self-validation (when DTO class is provided).
 3. Exception handling and transformation to JSON.
 4. Response normalization (success/error wrapping and `data` keying).
 
@@ -23,7 +23,7 @@ All API controllers extend `ApiController.php`. It provides a declarative `handl
 ```php
 public function create(): ResponseInterface
 {
-    // The controller declares WHAT to do, ApiController handles HOW to construct it.
+    // The controller declares WHAT to execute and WHICH DTO validates input.
     return $this->handleRequest('store', UserStoreRequestDTO::class);
 }
 ```
@@ -73,9 +73,15 @@ class UserService extends BaseCrudService implements UserServiceInterface
 }
 ```
 
+`BaseCrudService` contract:
+- `index()` returns `PaginatedResponseDTO` (`DataTransferObjectInterface`).
+- `show()/store()/update()` return resource Response DTOs.
+- `destroy()` returns `bool` and is normalized by `ApiController`.
+
 ### Mandates
 - ✅ **Atomic:** Use `HandlesTransactions` trait for state changes.
-- ✅ **Typed:** Always accept and return `DataTransferObjectInterface`.
+- ✅ **Typed:** Always accept request DTOs and return DTOs for reads.
+- ✅ **Command Outcomes:** Use `OperationResult` for command-style outcomes (accepted, revoke, etc.).
 - ✅ **HTTP Agnostic:** No knowledge of JSON, status codes, or sessions.
 
 ---

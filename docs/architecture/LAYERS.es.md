@@ -12,42 +12,18 @@ Este documento explica cada capa en detalle: Controller, DTO, Service, Model y E
 
 ### ApiController (Clase Base)
 
-Todos los controllers API extienden `ApiController.php`:
+Todos los controllers API extienden `ApiController.php`. Este provee `handleRequest(...)` para:
+1. Recolectar datos de entrada (GET/POST/JSON/Files).
+2. Instanciar y validar Request DTOs cuando se pasa `DTO::class`.
+3. Capturar excepciones y normalizar respuesta JSON.
+4. Estandarizar salida (incluyendo paginación canónica cuando aplica).
+
+### Patrón: Orquestación Declarativa
 
 ```php
-abstract class ApiController extends Controller
+public function create(): ResponseInterface
 {
-    protected function handleRequest(string|callable $target, ?array $params = null): ResponseInterface
-    {
-        try {
-            if (is_callable($target)) {
-                $result = $target();
-            } else {
-                $data = $this->collectRequestData($params);
-                $result = $this->getService()->$target($data);
-            }
-
-            // La normalización ocurre aquí automáticamente
-            return $this->respond($result);
-        } catch (Exception $e) {
-            return $this->handleException($e);
-        }
-    }
-}
-```
-
-### Patrón: DTO-First
-
-```php
-public function login(): ResponseInterface
-{
-    // 1. Obtener DTO validado desde la petición
-    $dto = $this->getDTO(LoginRequestDTO::class);
-
-    // 2. Delegar al servicio usando un closure
-    return $this->handleRequest(
-        fn() => $this->getService()->login($dto)
-    );
+    return $this->handleRequest('store', UserStoreRequestDTO::class);
 }
 ```
 
@@ -80,23 +56,25 @@ public function login(): ResponseInterface
 ### Patrón de Servicio Puro
 
 ```php
-class UserService implements UserServiceInterface
+class UserService extends BaseCrudService implements UserServiceInterface
 {
-    public function store(array $data): UserResponseDTO
+    public function store(DataTransferObjectInterface $request): DataTransferObjectInterface
     {
-        // 1. Lógica
-        $userId = $this->userModel->insert($data);
-        $user = $this->userModel->find($userId);
-
-        // 2. Retornar objeto tipado (¡SIN ApiResponse aquí!)
-        return UserResponseDTO::fromArray($user->toArray());
+        // Lógica de negocio + transacción
+        // Retorno DTO tipado (sin ApiResponse aquí)
     }
 }
 ```
 
+Contrato base de `BaseCrudService`:
+- `index()` retorna `PaginatedResponseDTO` (`DataTransferObjectInterface`).
+- `show()/store()/update()` retornan DTOs de recurso.
+- `destroy()` retorna `bool` y `ApiController` normaliza la respuesta.
+
 ### Reglas
 - ✅ **Desacoplado:** SIN conocimiento de `ApiResponse`, códigos `status` o JSON.
-- ✅ **Tipado:** Usa DTOs para parámetros y valores de retorno.
+- ✅ **Tipado:** Usa Request DTOs como entrada y DTOs como salida en lecturas.
+- ✅ **Comandos:** Usa `OperationResult` para outcomes tipo comando.
 - ✅ **Excepcional:** Usa excepciones personalizadas para todos los estados de error.
 - ❌ NO manejo directo de petición/respuesta.
 
@@ -119,7 +97,7 @@ class UserService implements UserServiceInterface
 |-------|----------------|-------|--------|
 | **Controller** | E/S HTTP y Mapeo | Request | Respuesta JSON |
 | **DTO** | Contrato y Validación | Arreglo Raw | Objeto Tipado |
-| **Service** | Lógica de Negocio | DTO/Objeto | DTO/Entidad |
+| **Service** | Lógica de Negocio | DTO/Objeto | DTO/OperationResult/bool |
 | **Model** | Operaciones de BD | Arreglo/Entidad | Entidad/Objeto |
 | **Entity** | Representación de Fila | Fila de BD | Propiedades Tipadas |
 

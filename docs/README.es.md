@@ -13,11 +13,13 @@ Este directorio contiene la documentación técnica para desarrolladores y agent
 1. `template/ARCHITECTURE_CONTRACT.md`
 2. `template/MODULE_BOOTSTRAP_CHECKLIST.md`
 3. `template/QUALITY_GATES.md`
+4. `template/VERSIONING_POLICY.md`
+5. `template/CONTRIBUTION_RULES.md`
+6. `release/TEMPLATE_AUDIT_CLOSEOUT.md`
 
 ## Cobertura EN/ES
 
-La documentación activa debe existir en ambos idiomas (`.md` y `.es.md`).  
-Para documentos históricos extensos, la versión en español puede ser un resumen enlazado al documento fuente completo.
+La documentación activa debe existir en ambos idiomas (`.md` y `.es.md`).
 
 ## Secciones principales
 

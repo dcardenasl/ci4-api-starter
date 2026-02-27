@@ -113,6 +113,9 @@ Template adoption and quality governance live in:
 1. [`template/ARCHITECTURE_CONTRACT.md`](template/ARCHITECTURE_CONTRACT.md)
 2. [`template/MODULE_BOOTSTRAP_CHECKLIST.md`](template/MODULE_BOOTSTRAP_CHECKLIST.md)
 3. [`template/QUALITY_GATES.md`](template/QUALITY_GATES.md)
+4. [`template/VERSIONING_POLICY.md`](template/VERSIONING_POLICY.md)
+5. [`template/CONTRIBUTION_RULES.md`](template/CONTRIBUTION_RULES.md)
+6. [`release/TEMPLATE_AUDIT_CLOSEOUT.md`](release/TEMPLATE_AUDIT_CLOSEOUT.md)
 
 All markdown docs in `docs/` must keep EN/ES parity (`.md` and `.es.md`).
 

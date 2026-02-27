@@ -70,6 +70,14 @@ php spark users:bootstrap-superadmin --email superadmin@example.com --password '
 php spark serve
 ```
 
+## Template Adoption
+
+For new projects created from this repository, follow these docs first:
+
+1. [Architecture Contract](docs/template/ARCHITECTURE_CONTRACT.md)
+2. [Module Bootstrap Checklist](docs/template/MODULE_BOOTSTRAP_CHECKLIST.md)
+3. [Quality Gates](docs/template/QUALITY_GATES.md)
+
 ## API Endpoints
 
 ### Authentication (Public)

@@ -34,12 +34,12 @@ abstract readonly class BaseRequestDTO implements DataTransferObjectInterface
             return $data;
         }
 
-        if (!isset($data['user_id']) && $context->userId !== null) {
-            $data['user_id'] = $context->userId;
+        if (!isset($data['userId']) && $context->userId !== null) {
+            $data['userId'] = $context->userId;
         }
 
-        if (!isset($data['user_role']) && $context->role !== null) {
-            $data['user_role'] = $context->role;
+        if (!isset($data['userRole']) && $context->role !== null) {
+            $data['userRole'] = $context->role;
         }
 
         return $data;

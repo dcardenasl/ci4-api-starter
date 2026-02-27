@@ -51,7 +51,7 @@ use OpenApi\Attributes as OA;
         content: new OA\JsonContent(
             properties: [
                 new OA\Property(
-                    property: 'client_base_url',
+                    property: 'clientBaseUrl',
                     type: 'string',
                     format: 'uri',
                     description: 'Optional client app base URL used to build verification link',

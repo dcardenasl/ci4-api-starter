@@ -59,7 +59,7 @@ class UserControllerTest extends ApiTestCase
         $this->resetRequest();
 
         $updateResult = $this->withBodyFormat('json')->put("/api/v1/users/{$createdId}", [
-            'first_name' => 'Updated',
+            'firstName' => 'Updated',
         ]);
 
         $updateResult->assertStatus(200);

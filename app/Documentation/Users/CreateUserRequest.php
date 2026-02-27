@@ -20,13 +20,13 @@ use OpenApi\Attributes as OA;
         required: ['email'],
         properties: [
             new OA\Property(
-                property: 'first_name',
+                property: 'firstName',
                 type: 'string',
                 description: 'First name',
                 example: 'Alex'
             ),
             new OA\Property(
-                property: 'last_name',
+                property: 'lastName',
                 type: 'string',
                 description: 'Last name',
                 example: 'Doe'
@@ -52,13 +52,13 @@ use OpenApi\Attributes as OA;
                 example: 'Password123'
             ),
             new OA\Property(
-                property: 'send_invite',
+                property: 'sendInvite',
                 type: 'boolean',
                 description: 'Send invitation email and allow user to set password',
                 example: true
             ),
             new OA\Property(
-                property: 'client_base_url',
+                property: 'clientBaseUrl',
                 type: 'string',
                 format: 'uri',
                 description: 'Optional client app base URL used to build invitation/reset links',

@@ -42,8 +42,8 @@ class AuthControllerTest extends ApiTestCase
             ->post('/api/v1/auth/register', [
                 'email' => 'new@example.com',
                 'password' => 'ValidPass123!',
-                'first_name' => 'New',
-                'last_name' => 'User',
+                'firstName' => 'New',
+                'lastName' => 'User',
             ]);
 
         // Returns 201 Created

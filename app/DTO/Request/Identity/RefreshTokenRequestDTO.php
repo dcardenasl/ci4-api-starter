@@ -18,19 +18,19 @@ readonly class RefreshTokenRequestDTO extends BaseRequestDTO
     protected function rules(): array
     {
         return [
-            'refresh_token' => 'required|string|min_length[10]',
+            'refreshToken' => 'required|string|min_length[10]',
         ];
     }
 
     protected function map(array $data): void
     {
-        $this->refreshToken = (string) ($data['refresh_token'] ?? '');
+        $this->refreshToken = (string) ($data['refreshToken'] ?? '');
     }
 
     public function toArray(): array
     {
         return [
-            'refresh_token' => $this->refreshToken,
+            'refreshToken' => $this->refreshToken,
         ];
     }
 }

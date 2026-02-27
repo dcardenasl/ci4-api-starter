@@ -11,15 +11,15 @@ use OpenApi\Attributes as OA;
     description: 'Google login request with ID token',
     required: true,
     content: new OA\JsonContent(
-        required: ['id_token'],
+        required: ['idToken'],
         properties: [
             new OA\Property(
-                property: 'id_token',
+                property: 'idToken',
                 type: 'string',
                 description: 'Google ID token from frontend OAuth flow'
             ),
             new OA\Property(
-                property: 'client_base_url',
+                property: 'clientBaseUrl',
                 type: 'string',
                 nullable: true,
                 description: 'Optional frontend base URL used for email links'

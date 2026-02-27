@@ -18,19 +18,19 @@ readonly class GoogleLoginRequestDTO extends BaseRequestDTO
     protected function rules(): array
     {
         return [
-            'id_token' => 'required|string',
+            'idToken' => 'required|string',
         ];
     }
 
     protected function map(array $data): void
     {
-        $this->idToken = (string) $data['id_token'];
+        $this->idToken = (string) ($data['idToken'] ?? '');
     }
 
     public function toArray(): array
     {
         return [
-            'id_token' => $this->idToken,
+            'idToken' => $this->idToken,
         ];
     }
 }

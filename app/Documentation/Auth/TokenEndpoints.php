@@ -13,10 +13,10 @@ use OpenApi\Attributes as OA;
     requestBody: new OA\RequestBody(
         required: true,
         content: new OA\JsonContent(
-            required: ['refresh_token'],
+            required: ['refreshToken'],
             properties: [
                 new OA\Property(
-                    property: 'refresh_token',
+                    property: 'refreshToken',
                     type: 'string',
                     description: 'Refresh token issued at login/register'
                 ),

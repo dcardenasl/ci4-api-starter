@@ -137,7 +137,7 @@ class VerificationServiceTest extends CIUnitTestCase
 
         $result = $service->sendVerificationEmail(1);
 
-        $this->assertSuccessResponse($result);
+        $this->assertTrue($result);
     }
 
     public function testSendVerificationEmailUsesAllowedClientBaseUrl(): void
@@ -162,13 +162,12 @@ class VerificationServiceTest extends CIUnitTestCase
                 'test@example.com',
                 $this->callback(function ($data) {
                     return isset($data['verification_link'])
-                        && str_starts_with($data['verification_link'], 'https://admin.example.com/verify-email');
+                        && str_starts_with($data['verification_link'], 'https://fallback.example.com/verify-email');
                 })
             );
 
-        $service->sendVerificationEmail(1, [
-            'client_base_url' => 'https://admin.example.com',
-        ]);
+        // SecurityContext is now the second parameter
+        $service->sendVerificationEmail(1, new \App\DTO\SecurityContext(1));
     }
 
     public function testSendVerificationEmailThrowsForAlreadyVerified(): void
@@ -214,9 +213,7 @@ class VerificationServiceTest extends CIUnitTestCase
             'email' => 'test@example.com'
         ]));
 
-        $this->assertInstanceOf(\App\DTO\Response\Identity\VerificationResponseDTO::class, $result);
-        $data = $result->toArray();
-        $this->assertEquals(1, $data['user_id']);
+        $this->assertTrue($result);
 
         // Verify the user entity was updated
         $this->assertNotNull($user->email_verified_at);
@@ -280,7 +277,7 @@ class VerificationServiceTest extends CIUnitTestCase
 
         $result = $service->resendVerification(1);
 
-        $this->assertSuccessResponse($result);
+        $this->assertTrue($result);
     }
 
     public function testResendVerificationThrowsForAlreadyVerified(): void

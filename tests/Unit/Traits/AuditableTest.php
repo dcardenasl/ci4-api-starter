@@ -27,6 +27,7 @@ class AuditableTest extends CIUnitTestCase
     protected function setUp(): void
     {
         parent::setUp();
+        \App\Services\AuditService::$forceEnabledInTests = true;
         $this->userModel = new UserModel();
     }
 

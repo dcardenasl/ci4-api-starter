@@ -317,7 +317,9 @@ class FileServiceTest extends CIUnitTestCase
         $request = new \App\DTO\Request\Files\FileIndexRequestDTO(['user_id' => 1]);
         $result = $this->service->index($request);
 
-        $this->assertPaginatedResponse($result);
+        $this->assertIsArray($result);
+        $this->assertArrayHasKey('data', $result);
+        $this->assertArrayHasKey('total', $result);
         $this->assertCount(2, $result['data']);
     }
 
@@ -443,7 +445,7 @@ class FileServiceTest extends CIUnitTestCase
         $request = new \App\DTO\Request\Files\FileGetRequestDTO(['id' => 1, 'user_id' => 1]);
         $result = $this->service->delete($request);
 
-        $this->assertSuccessResponse($result);
+        $this->assertTrue($result);
     }
 
     public function testUploadWithDuplicateFilenameGeneratesNumericSeries(): void

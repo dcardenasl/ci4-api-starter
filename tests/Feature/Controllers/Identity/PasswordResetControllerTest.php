@@ -5,21 +5,13 @@ declare(strict_types=1);
 namespace Tests\Feature\Controllers;
 
 use App\Models\UserModel;
-use CodeIgniter\Test\CIUnitTestCase;
-use CodeIgniter\Test\DatabaseTestTrait;
-use CodeIgniter\Test\FeatureTestTrait;
+use Tests\Support\ApiTestCase;
 
 /**
  * PasswordResetController Feature Tests
  */
-class PasswordResetControllerTest extends CIUnitTestCase
+class PasswordResetControllerTest extends ApiTestCase
 {
-    use DatabaseTestTrait;
-    use FeatureTestTrait;
-
-    protected $migrate     = true;
-    protected $namespace   = 'App';
-
     protected UserModel $userModel;
 
     protected function setUp(): void
@@ -99,7 +91,7 @@ class PasswordResetControllerTest extends CIUnitTestCase
         $json = json_decode($result->getJSON(), true);
         $this->assertIsArray($json);
         $this->assertArrayHasKey('data', $json);
-        $this->assertTrue($json['data']['valid']);
+        $this->assertTrue($json['data']['success']);
     }
 
     public function testValidateTokenReturns404ForInvalidToken(): void

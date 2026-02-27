@@ -5,21 +5,12 @@ declare(strict_types=1);
 namespace Tests\Feature\Controllers;
 
 use App\Models\AuditLogModel;
-use CodeIgniter\Test\CIUnitTestCase;
-use CodeIgniter\Test\DatabaseTestTrait;
-use CodeIgniter\Test\FeatureTestTrait;
+use Tests\Support\ApiTestCase;
 use Tests\Support\Traits\AuthTestTrait;
 
-class AuditControllerTest extends CIUnitTestCase
+class AuditControllerTest extends ApiTestCase
 {
     use AuthTestTrait;
-    use DatabaseTestTrait;
-    use FeatureTestTrait;
-
-    protected $migrate     = true;
-    protected $migrateOnce = false;
-    protected $refresh     = true;
-    protected $namespace   = 'App';
 
     protected AuditLogModel $auditLogModel;
 
@@ -27,65 +18,43 @@ class AuditControllerTest extends CIUnitTestCase
     {
         parent::setUp();
         $this->auditLogModel = new AuditLogModel();
+        $this->actAs('admin');
+
+        // Ensure static context is set for background model operations (Auditable trait)
+        \App\Libraries\ContextHolder::set(new \App\DTO\SecurityContext($this->currentUserId, $this->currentUserRole));
     }
 
     public function testAuditRequiresAdmin(): void
     {
-        $email = 'audit-user@example.com';
-        $password = 'ValidPass123!';
-        $this->createUser($email, $password, 'user');
+        $this->actAs('user');
 
-        $token = $this->loginAndGetToken($email, $password);
-
-        $result = $this->withHeaders([
-            'Authorization' => "Bearer {$token}",
-        ])->get('/api/v1/audit');
+        $result = $this->get('/api/v1/audit');
 
         $result->assertStatus(403);
     }
 
     public function testAuditEndpointsReturnSuccessForAdmin(): void
     {
-        $email = 'audit-admin@example.com';
-        $password = 'ValidPass123!';
-        $adminId = $this->createUser($email, $password, 'admin');
+        $logId = $this->createAuditLog($this->currentUserId);
 
-        $logId = $this->createAuditLog($adminId);
-
-        $token = $this->loginAndGetToken($email, $password);
-
-        $listResult = $this->withHeaders([
-            'Authorization' => "Bearer {$token}",
-        ])->get('/api/v1/audit');
+        $listResult = $this->get('/api/v1/audit');
 
         $listResult->assertStatus(200);
 
-        $showResult = $this->withHeaders([
-            'Authorization' => "Bearer {$token}",
-        ])->get("/api/v1/audit/{$logId}");
+        $showResult = $this->get("/api/v1/audit/{$logId}");
 
         $showResult->assertStatus(200);
 
-        $entityResult = $this->withHeaders([
-            'Authorization' => "Bearer {$token}",
-        ])->get("/api/v1/audit/entity/users/{$adminId}");
+        $entityResult = $this->get("/api/v1/audit/entity/users/{$this->currentUserId}");
 
         $entityResult->assertStatus(200);
     }
 
     public function testAuditByEntityAcceptsSingularAlias(): void
     {
-        $email = 'audit-admin-alias@example.com';
-        $password = 'ValidPass123!';
-        $adminId = $this->createUser($email, $password, 'admin');
+        $this->createAuditLog($this->currentUserId);
 
-        $this->createAuditLog($adminId);
-
-        $token = $this->loginAndGetToken($email, $password);
-
-        $entityResult = $this->withHeaders([
-            'Authorization' => "Bearer {$token}",
-        ])->get("/api/v1/audit/entity/user/{$adminId}");
+        $entityResult = $this->get("/api/v1/audit/entity/user/{$this->currentUserId}");
 
         $entityResult->assertStatus(200);
 

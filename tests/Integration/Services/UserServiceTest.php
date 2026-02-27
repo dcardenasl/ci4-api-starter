@@ -96,7 +96,7 @@ class UserServiceTest extends CIUnitTestCase
         ]);
 
         $result = $this->userService->destroy((int) $userId);
-        $this->assertSuccessResponse($result);
+        $this->assertTrue($result);
 
         $this->assertNull($this->userModel->find($userId));
         $this->assertNotNull($this->userModel->withDeleted()->find($userId));

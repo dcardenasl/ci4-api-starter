@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Services;
 
+use App\DTO\SecurityContext;
 use App\Exceptions\NotFoundException;
 use App\Models\AuditLogModel;
 use App\Services\AuditService;
-use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\Test\CIUnitTestCase;
 use Tests\Support\Traits\CustomAssertionsTrait;
 
@@ -22,17 +22,19 @@ class AuditServiceTest extends CIUnitTestCase
 
     protected AuditService $service;
     protected AuditLogModel $mockAuditLogModel;
-    protected RequestInterface $mockRequest;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        $this->mockAuditLogModel = $this->createMock(AuditLogModel::class);
-        $this->mockRequest = $this->createMock(RequestInterface::class);
+        \App\Services\AuditService::$forceEnabledInTests = true;
 
-        $this->mockRequest->method('getIPAddress')->willReturn('127.0.0.1');
-        $this->mockRequest->method('getHeaderLine')->willReturn('PHPUnit/Test');
+        $this->mockAuditLogModel = $this->createMock(AuditLogModel::class);
+
+        // Mock UserModel via factory to satisfy defensive existence checks
+        $mockUserModel = $this->createMock(\App\Models\UserModel::class);
+        $mockUserModel->method('find')->willReturn((object)['id' => 99]);
+        \CodeIgniter\Config\Factories::injectMock('models', \App\Models\UserModel::class, $mockUserModel);
 
         $this->service = new AuditService($this->mockAuditLogModel);
     }
@@ -41,6 +43,8 @@ class AuditServiceTest extends CIUnitTestCase
 
     public function testLogInsertsAuditRecord(): void
     {
+        $context = new SecurityContext(99, 'admin', ['ip_address' => '127.0.0.1']);
+
         $this->mockAuditLogModel
             ->expects($this->once())
             ->method('insert')
@@ -58,13 +62,13 @@ class AuditServiceTest extends CIUnitTestCase
             1,
             [],
             ['email' => 'newuser@example.com'],
-            99,
-            $this->mockRequest
+            $context
         );
     }
 
     public function testLogEncodesValuesAsJson(): void
     {
+        $context = new SecurityContext(99);
         $oldValues = ['email' => 'old@example.com'];
         $newValues = ['email' => 'new@example.com'];
 
@@ -82,13 +86,13 @@ class AuditServiceTest extends CIUnitTestCase
             1,
             $oldValues,
             $newValues,
-            99,
-            $this->mockRequest
+            $context
         );
     }
 
     public function testLogRemovesSensitiveFieldsFromAuditPayload(): void
     {
+        $context = new SecurityContext(99);
         $oldValues = [
             'email' => 'old@example.com',
             'password' => 'old-secret',
@@ -129,8 +133,7 @@ class AuditServiceTest extends CIUnitTestCase
             1,
             $oldValues,
             $newValues,
-            99,
-            $this->mockRequest
+            $context
         );
     }
 
@@ -138,6 +141,7 @@ class AuditServiceTest extends CIUnitTestCase
 
     public function testLogCreateLogsWithEmptyOldValues(): void
     {
+        $context = new SecurityContext(99);
         $newData = ['first_name' => 'New', 'email' => 'new@example.com'];
 
         $this->mockAuditLogModel
@@ -149,13 +153,14 @@ class AuditServiceTest extends CIUnitTestCase
                     && $data['new_values'] === json_encode($newData);
             }));
 
-        $this->service->logCreate('users', 1, $newData, 99, $this->mockRequest);
+        $this->service->logCreate('users', 1, $newData, $context);
     }
 
     // ==================== LOG UPDATE TESTS ====================
 
     public function testLogUpdateOnlyLogsIfValuesChanged(): void
     {
+        $context = new SecurityContext(99);
         $oldValues = ['email' => 'same@example.com'];
         $newValues = ['email' => 'same@example.com'];
 
@@ -164,11 +169,12 @@ class AuditServiceTest extends CIUnitTestCase
             ->expects($this->never())
             ->method('insert');
 
-        $this->service->logUpdate('users', 1, $oldValues, $newValues, 99, $this->mockRequest);
+        $this->service->logUpdate('users', 1, $oldValues, $newValues, $context);
     }
 
     public function testLogUpdateLogsWhenValuesAreDifferent(): void
     {
+        $context = new SecurityContext(99);
         $oldValues = ['email' => 'old@example.com'];
         $newValues = ['email' => 'new@example.com'];
 
@@ -179,11 +185,12 @@ class AuditServiceTest extends CIUnitTestCase
                 return $data['action'] === 'update';
             }));
 
-        $this->service->logUpdate('users', 1, $oldValues, $newValues, 99, $this->mockRequest);
+        $this->service->logUpdate('users', 1, $oldValues, $newValues, $context);
     }
 
     public function testLogUpdateDoesNotLogWhenOnlySensitiveValuesChanged(): void
     {
+        $context = new SecurityContext(99);
         $oldValues = [
             'email' => 'same@example.com',
             'password' => 'old-secret',
@@ -199,13 +206,14 @@ class AuditServiceTest extends CIUnitTestCase
             ->expects($this->never())
             ->method('insert');
 
-        $this->service->logUpdate('users', 1, $oldValues, $newValues, 99, $this->mockRequest);
+        $this->service->logUpdate('users', 1, $oldValues, $newValues, $context);
     }
 
     // ==================== LOG DELETE TESTS ====================
 
     public function testLogDeleteLogsWithEmptyNewValues(): void
     {
+        $context = new SecurityContext(99);
         $oldData = ['first_name' => 'Deleted', 'email' => 'deleted@example.com'];
 
         $this->mockAuditLogModel
@@ -217,7 +225,7 @@ class AuditServiceTest extends CIUnitTestCase
                     && $data['new_values'] === null;
             }));
 
-        $this->service->logDelete('users', 1, $oldData, 99, $this->mockRequest);
+        $this->service->logDelete('users', 1, $oldData, $context);
     }
 
     // ==================== SHOW TESTS ====================

@@ -4,20 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Controllers;
 
-use CodeIgniter\Test\CIUnitTestCase;
-use CodeIgniter\Test\DatabaseTestTrait;
-use CodeIgniter\Test\FeatureTestTrait;
+use Tests\Support\ApiTestCase;
 
-class HealthControllerTest extends CIUnitTestCase
+class HealthControllerTest extends ApiTestCase
 {
-    use DatabaseTestTrait;
-    use FeatureTestTrait;
-
-    protected $migrate     = true;
-    protected $migrateOnce = false;
-    protected $refresh     = true;
-    protected $namespace   = 'App';
-
     public function testReadyEndpointResponds(): void
     {
         $result = $this->get('/ready');

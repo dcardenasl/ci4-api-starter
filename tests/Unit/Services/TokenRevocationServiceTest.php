@@ -74,8 +74,7 @@ class TokenRevocationServiceTest extends CIUnitTestCase
             'authorization_header' => 'Bearer valid-token-here',
         ]);
 
-        $this->assertIsArray($result);
-        $this->assertEquals('success', $result['status']);
+        $this->assertTrue($result);
     }
 
     public function testRevokeAccessTokenWithoutHeaderThrowsException(): void
@@ -162,8 +161,7 @@ class TokenRevocationServiceTest extends CIUnitTestCase
 
         $result = $this->service->revokeToken($jti, $exp);
 
-        $this->assertIsArray($result);
-        $this->assertEquals('success', $result['status']);
+        $this->assertTrue($result);
     }
 
     public function testRevokeTokenFailureThrowsException(): void
@@ -258,7 +256,6 @@ class TokenRevocationServiceTest extends CIUnitTestCase
 
         $result = $this->service->revokeAllUserTokens($userId);
 
-        $this->assertIsArray($result);
-        $this->assertEquals('success', $result['status']);
+        $this->assertTrue($result);
     }
 }

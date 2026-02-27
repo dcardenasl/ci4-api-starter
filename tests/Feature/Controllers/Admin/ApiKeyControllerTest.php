@@ -26,12 +26,18 @@ class ApiKeyControllerTest extends ApiTestCase
     {
         parent::setUp();
         $this->apiKeyModel = new ApiKeyModel();
+        $this->actAs('admin');
+
+        // Ensure static context is set for background model operations (Auditable trait)
+        \App\Libraries\ContextHolder::set(new \App\DTO\SecurityContext($this->currentUserId, $this->currentUserRole));
     }
 
     // ==================== AUTH GUARD TESTS ====================
 
     public function testListApiKeysRequiresAuth(): void
     {
+        \App\Libraries\ContextHolder::flush();
+        $this->clearTestRequestHeaders();
         $result = $this->get('/api/v1/api-keys');
 
         $result->assertStatus(401);
@@ -39,15 +45,9 @@ class ApiKeyControllerTest extends ApiTestCase
 
     public function testListApiKeysRequiresAdminRole(): void
     {
-        $email    = 'user-apikeys@example.com';
-        $password = 'ValidPass123!';
-        $this->createUser($email, $password, 'user');
+        $this->actAs('user');
 
-        $token = $this->loginAndGetToken($email, $password);
-
-        $result = $this->withHeaders([
-            'Authorization' => "Bearer {$token}",
-        ])->get('/api/v1/api-keys');
+        $result = $this->get('/api/v1/api-keys');
 
         $result->assertStatus(403);
     }
@@ -56,15 +56,7 @@ class ApiKeyControllerTest extends ApiTestCase
 
     public function testAdminCanListApiKeys(): void
     {
-        $adminEmail    = 'admin-list-keys@example.com';
-        $adminPassword = 'ValidPass123!';
-        $this->createUser($adminEmail, $adminPassword, 'admin');
-
-        $token = $this->loginAndGetToken($adminEmail, $adminPassword);
-
-        $result = $this->withHeaders([
-            'Authorization' => "Bearer {$token}",
-        ])->get('/api/v1/api-keys');
+        $result = $this->get('/api/v1/api-keys');
 
         $result->assertStatus(200);
 
@@ -77,15 +69,7 @@ class ApiKeyControllerTest extends ApiTestCase
 
     public function testAdminCanCreateApiKey(): void
     {
-        $adminEmail    = 'admin-create-key@example.com';
-        $adminPassword = 'ValidPass123!';
-        $this->createUser($adminEmail, $adminPassword, 'admin');
-
-        $token = $this->loginAndGetToken($adminEmail, $adminPassword);
-
-        $result = $this->withHeaders([
-            'Authorization' => "Bearer {$token}",
-        ])->withBodyFormat('json')->post('/api/v1/api-keys', [
+        $result = $this->withBodyFormat('json')->post('/api/v1/api-keys', [
             'name' => 'My Integration App',
         ]);
 
@@ -102,15 +86,7 @@ class ApiKeyControllerTest extends ApiTestCase
 
     public function testCreateApiKeyWithCustomRateLimits(): void
     {
-        $adminEmail    = 'admin-custom-limits@example.com';
-        $adminPassword = 'ValidPass123!';
-        $this->createUser($adminEmail, $adminPassword, 'admin');
-
-        $token = $this->loginAndGetToken($adminEmail, $adminPassword);
-
-        $result = $this->withHeaders([
-            'Authorization' => "Bearer {$token}",
-        ])->withBodyFormat('json')->post('/api/v1/api-keys', [
+        $result = $this->withBodyFormat('json')->post('/api/v1/api-keys', [
             'name'                => 'High Volume App',
             'rate_limit_requests' => 1200,
             'rate_limit_window'   => 60,
@@ -128,15 +104,7 @@ class ApiKeyControllerTest extends ApiTestCase
 
     public function testCreateApiKeyWithoutNameReturns422(): void
     {
-        $adminEmail    = 'admin-noname-key@example.com';
-        $adminPassword = 'ValidPass123!';
-        $this->createUser($adminEmail, $adminPassword, 'admin');
-
-        $token = $this->loginAndGetToken($adminEmail, $adminPassword);
-
-        $result = $this->withHeaders([
-            'Authorization' => "Bearer {$token}",
-        ])->withBodyFormat('json')->post('/api/v1/api-keys', []);
+        $result = $this->withBodyFormat('json')->post('/api/v1/api-keys', []);
 
         $result->assertStatus(422);
 
@@ -146,15 +114,9 @@ class ApiKeyControllerTest extends ApiTestCase
 
     public function testNonAdminCannotCreateApiKey(): void
     {
-        $email    = 'user-create-key@example.com';
-        $password = 'ValidPass123!';
-        $this->createUser($email, $password, 'user');
+        $this->actAs('user');
 
-        $token = $this->loginAndGetToken($email, $password);
-
-        $result = $this->withHeaders([
-            'Authorization' => "Bearer {$token}",
-        ])->withBodyFormat('json')->post('/api/v1/api-keys', [
+        $result = $this->withBodyFormat('json')->post('/api/v1/api-keys', [
             'name' => 'Blocked App',
         ]);
 
@@ -165,25 +127,15 @@ class ApiKeyControllerTest extends ApiTestCase
 
     public function testAdminCanGetApiKeyById(): void
     {
-        $adminEmail    = 'admin-show-key@example.com';
-        $adminPassword = 'ValidPass123!';
-        $this->createUser($adminEmail, $adminPassword, 'admin');
-
-        $token = $this->loginAndGetToken($adminEmail, $adminPassword);
-
         // Create one first
-        $createResult = $this->withHeaders([
-            'Authorization' => "Bearer {$token}",
-        ])->withBodyFormat('json')->post('/api/v1/api-keys', [
+        $createResult = $this->withBodyFormat('json')->post('/api/v1/api-keys', [
             'name' => 'Showable Key',
         ]);
         $createResult->assertStatus(201);
         $createdId = $this->getResponseJson($createResult)['data']['id'];
 
         // Now fetch it
-        $showResult = $this->withHeaders([
-            'Authorization' => "Bearer {$token}",
-        ])->get("/api/v1/api-keys/{$createdId}");
+        $showResult = $this->get("/api/v1/api-keys/{$createdId}");
 
         $showResult->assertStatus(200);
 
@@ -196,15 +148,7 @@ class ApiKeyControllerTest extends ApiTestCase
 
     public function testShowNonExistentApiKeyReturns404(): void
     {
-        $adminEmail    = 'admin-404-key@example.com';
-        $adminPassword = 'ValidPass123!';
-        $this->createUser($adminEmail, $adminPassword, 'admin');
-
-        $token = $this->loginAndGetToken($adminEmail, $adminPassword);
-
-        $result = $this->withHeaders([
-            'Authorization' => "Bearer {$token}",
-        ])->get('/api/v1/api-keys/99999');
+        $result = $this->get('/api/v1/api-keys/99999');
 
         $result->assertStatus(404);
     }
@@ -213,23 +157,13 @@ class ApiKeyControllerTest extends ApiTestCase
 
     public function testAdminCanUpdateApiKey(): void
     {
-        $adminEmail    = 'admin-update-key@example.com';
-        $adminPassword = 'ValidPass123!';
-        $this->createUser($adminEmail, $adminPassword, 'admin');
-
-        $token = $this->loginAndGetToken($adminEmail, $adminPassword);
-
-        $createResult = $this->withHeaders([
-            'Authorization' => "Bearer {$token}",
-        ])->withBodyFormat('json')->post('/api/v1/api-keys', [
+        $createResult = $this->withBodyFormat('json')->post('/api/v1/api-keys', [
             'name' => 'Original Name',
         ]);
         $createResult->assertStatus(201);
         $createdId = $this->getResponseJson($createResult)['data']['id'];
 
-        $updateResult = $this->withHeaders([
-            'Authorization' => "Bearer {$token}",
-        ])->withBodyFormat('json')->put("/api/v1/api-keys/{$createdId}", [
+        $updateResult = $this->withBodyFormat('json')->put("/api/v1/api-keys/{$createdId}", [
             'name'      => 'Updated Name',
             'is_active' => false,
         ]);
@@ -243,13 +177,7 @@ class ApiKeyControllerTest extends ApiTestCase
 
     public function testUpdateWithNoFieldsReturns400(): void
     {
-        $adminEmail    = 'admin-noop-key@example.com';
-        $adminPassword = 'ValidPass123!';
-        $this->createUser($adminEmail, $adminPassword, 'admin');
-
-        $token = $this->loginAndGetToken($adminEmail, $adminPassword);
-
-        // Insert directly via model to prevent CI4 FeatureTest payload caching bugs
+        // Insert directly via model
         $createdId = $this->apiKeyModel->insert([
             'name' => 'Immutable Key',
             'key_prefix' => 'apk_abc',
@@ -257,9 +185,9 @@ class ApiKeyControllerTest extends ApiTestCase
             'is_active' => 1
         ]);
 
-        $updateResult = $this->withHeaders([
-            'Authorization' => "Bearer {$token}",
-        ])->withBodyFormat('json')->put("/api/v1/api-keys/{$createdId}", []);
+        $updateResult = $this->withBodyFormat('json')->put("/api/v1/api-keys/{$createdId}", [
+            'name' => null, // Explicitly sending null should result in an empty filtered array
+        ]);
 
         $updateResult->assertStatus(400);
     }
@@ -268,23 +196,13 @@ class ApiKeyControllerTest extends ApiTestCase
 
     public function testAdminCanDeleteApiKey(): void
     {
-        $adminEmail    = 'admin-delete-key@example.com';
-        $adminPassword = 'ValidPass123!';
-        $this->createUser($adminEmail, $adminPassword, 'admin');
-
-        $token = $this->loginAndGetToken($adminEmail, $adminPassword);
-
-        $createResult = $this->withHeaders([
-            'Authorization' => "Bearer {$token}",
-        ])->withBodyFormat('json')->post('/api/v1/api-keys', [
+        $createResult = $this->withBodyFormat('json')->post('/api/v1/api-keys', [
             'name' => 'To Be Deleted',
         ]);
         $createResult->assertStatus(201);
         $createdId = $this->getResponseJson($createResult)['data']['id'];
 
-        $deleteResult = $this->withHeaders([
-            'Authorization' => "Bearer {$token}",
-        ])->delete("/api/v1/api-keys/{$createdId}");
+        $deleteResult = $this->delete("/api/v1/api-keys/{$createdId}");
 
         $deleteResult->assertStatus(200);
 
@@ -292,23 +210,13 @@ class ApiKeyControllerTest extends ApiTestCase
         $this->assertEquals('success', $json['status']);
 
         // Verify it's gone
-        $showResult = $this->withHeaders([
-            'Authorization' => "Bearer {$token}",
-        ])->get("/api/v1/api-keys/{$createdId}");
+        $showResult = $this->get("/api/v1/api-keys/{$createdId}");
         $showResult->assertStatus(404);
     }
 
     public function testDeleteNonExistentApiKeyReturns404(): void
     {
-        $adminEmail    = 'admin-del404-key@example.com';
-        $adminPassword = 'ValidPass123!';
-        $this->createUser($adminEmail, $adminPassword, 'admin');
-
-        $token = $this->loginAndGetToken($adminEmail, $adminPassword);
-
-        $result = $this->withHeaders([
-            'Authorization' => "Bearer {$token}",
-        ])->delete('/api/v1/api-keys/99999');
+        $result = $this->delete('/api/v1/api-keys/99999');
 
         $result->assertStatus(404);
     }

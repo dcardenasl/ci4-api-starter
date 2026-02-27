@@ -150,7 +150,7 @@ class ApiKeyServiceTest extends CIUnitTestCase
     {
         $this->mockApiKeyModel->returnEntity = $this->makeEntity(['id' => 1, 'name' => 'To Delete']);
         $result = $this->service->destroy(1);
-        $this->assertSuccessResponse($result);
+        $this->assertTrue($result);
     }
 
     public function testDestroyNonExistentKeyThrowsNotFoundException(): void

@@ -4,9 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Controllers;
 
-use CodeIgniter\Test\CIUnitTestCase;
-use CodeIgniter\Test\DatabaseTestTrait;
-use CodeIgniter\Test\FeatureTestTrait;
+use Tests\Support\ApiTestCase;
 use Tests\Support\Traits\AuthTestTrait;
 
 /**
@@ -14,16 +12,9 @@ use Tests\Support\Traits\AuthTestTrait;
  *
  * Tests token revocation endpoints with full HTTP request/response cycle
  */
-class TokenControllerTest extends CIUnitTestCase
+class TokenControllerTest extends ApiTestCase
 {
     use AuthTestTrait;
-    use DatabaseTestTrait;
-    use FeatureTestTrait;
-
-    protected $migrate = true;
-    protected $migrateOnce = false;
-    protected $refresh = true;
-    protected $namespace = 'App';
 
     public function testRevokeWithValidTokenReturnsSuccess(): void
     {

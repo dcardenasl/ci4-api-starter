@@ -142,6 +142,6 @@ class UserServiceTest extends CIUnitTestCase
         $this->mockUserModel->expects($this->once())->method('delete')->with($id)->willReturn(true);
 
         $result = $this->service->destroy($id);
-        $this->assertEquals('success', $result['status']);
+        $this->assertTrue($result);
     }
 }

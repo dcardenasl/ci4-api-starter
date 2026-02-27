@@ -21,14 +21,13 @@ abstract class ApiTestCase extends CIUnitTestCase
     use FeatureTestTrait;
 
     /**
-     * @var bool Whether to refresh the database for each test
+     * Database migration settings
+     * migrateOnce ensures migrations run only once per suite
      */
-    protected $refresh = true;
-
-    /**
-     * @var string The namespace for migrations
-     */
-    protected $namespace = 'App';
+    protected $migrate     = true;
+    protected $migrateOnce = true;
+    protected $refresh     = true;
+    protected $namespace   = 'App';
 
     /**
      * Reset the request and other services before each test.
@@ -36,6 +35,7 @@ abstract class ApiTestCase extends CIUnitTestCase
     protected function setUp(): void
     {
         parent::setUp();
+        \App\Libraries\ContextHolder::flush();
         $this->resetState();
     }
 
@@ -44,6 +44,7 @@ abstract class ApiTestCase extends CIUnitTestCase
      */
     protected function tearDown(): void
     {
+        \App\Libraries\ContextHolder::flush();
         $this->resetState();
         parent::tearDown();
     }
@@ -55,6 +56,7 @@ abstract class ApiTestCase extends CIUnitTestCase
     protected function resetRequest(): void
     {
         $this->resetState();
+        $this->reapplyTestRequestHeaders();
     }
 
     /**
@@ -75,6 +77,8 @@ abstract class ApiTestCase extends CIUnitTestCase
         // Reset the $request property in FeatureTestTrait to force it
         // to create a new one for the next call
         $this->request = null;
+
+        $this->reapplyTestRequestHeaders();
     }
 
     /**
@@ -83,5 +87,26 @@ abstract class ApiTestCase extends CIUnitTestCase
     protected function getResponseJson($result): array
     {
         return json_decode($result->getJSON(), true) ?? [];
+    }
+
+    protected array $testRequestHeaders = [];
+
+    protected function setTestRequestHeaders(array $headers): void
+    {
+        $this->testRequestHeaders = $headers;
+        $this->withHeaders($headers);
+    }
+
+    protected function reapplyTestRequestHeaders(): void
+    {
+        if (! empty($this->testRequestHeaders)) {
+            $this->withHeaders($this->testRequestHeaders);
+        }
+    }
+
+    protected function clearTestRequestHeaders(): void
+    {
+        $this->testRequestHeaders = [];
+        $this->withHeaders([]);
     }
 }

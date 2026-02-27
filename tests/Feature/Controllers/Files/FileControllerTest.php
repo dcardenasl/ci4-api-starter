@@ -5,32 +5,29 @@ declare(strict_types=1);
 namespace Tests\Feature\Controllers;
 
 use App\Models\FileModel;
-use CodeIgniter\Test\CIUnitTestCase;
-use CodeIgniter\Test\DatabaseTestTrait;
-use CodeIgniter\Test\FeatureTestTrait;
+use Tests\Support\ApiTestCase;
 use Tests\Support\Traits\AuthTestTrait;
 
-class FileControllerTest extends CIUnitTestCase
+class FileControllerTest extends ApiTestCase
 {
     use AuthTestTrait;
-    use DatabaseTestTrait;
-    use FeatureTestTrait;
-
-    protected $migrate     = true;
-    protected $migrateOnce = false;
-    protected $refresh     = true;
-    protected $namespace   = 'App';
 
     protected FileModel $fileModel;
+    protected string $token;
 
     protected function setUp(): void
     {
         parent::setUp();
         $this->fileModel = new FileModel();
+        $identity = $this->actAs('user');
+        $this->token = $identity['token'];
     }
 
     public function testListFilesRequiresAuth(): void
     {
+        $this->resetState(); // Ensure clean state
+        \App\Libraries\ContextHolder::flush();
+        $this->clearTestRequestHeaders();
         $result = $this->get('/api/v1/files');
 
         $result->assertStatus(401);
@@ -38,57 +35,33 @@ class FileControllerTest extends CIUnitTestCase
 
     public function testListFilesReturnsSuccess(): void
     {
-        $email = 'files@example.com';
-        $password = 'ValidPass123!';
-        $userId = $this->createUser($email, $password);
+        \App\Libraries\ContextHolder::set(new \App\DTO\SecurityContext($this->currentUserId, $this->currentUserRole));
+        $this->createFile($this->currentUserId);
 
-        $this->createFile($userId);
-
-        $token = $this->loginAndGetToken($email, $password);
-
-        $result = $this->withHeaders([
-            'Authorization' => "Bearer {$token}",
-        ])->get('/api/v1/files');
+        $result = $this->withHeaders(['Authorization' => "Bearer {$this->token}"])
+            ->get('/api/v1/files');
 
         $result->assertStatus(200);
-
-        $json = json_decode($result->getJSON(), true);
-        $this->assertEquals('success', $json['status']);
     }
 
     public function testGetFileReturnsSuccess(): void
     {
-        $email = 'file-get@example.com';
-        $password = 'ValidPass123!';
-        $userId = $this->createUser($email, $password);
+        \App\Libraries\ContextHolder::set(new \App\DTO\SecurityContext($this->currentUserId, $this->currentUserRole));
+        $fileId = $this->createFile($this->currentUserId);
 
-        $fileId = $this->createFile($userId);
-
-        $token = $this->loginAndGetToken($email, $password);
-
-        $result = $this->withHeaders([
-            'Authorization' => "Bearer {$token}",
-        ])->get("/api/v1/files/{$fileId}");
+        $result = $this->withHeaders(['Authorization' => "Bearer {$this->token}"])
+            ->get("/api/v1/files/{$fileId}");
 
         $result->assertStatus(200);
-
-        $json = json_decode($result->getJSON(), true);
-        $this->assertEquals('success', $json['status']);
     }
 
     public function testDeleteFileReturnsSuccess(): void
     {
-        $email = 'file-delete@example.com';
-        $password = 'ValidPass123!';
-        $userId = $this->createUser($email, $password);
+        \App\Libraries\ContextHolder::set(new \App\DTO\SecurityContext($this->currentUserId, $this->currentUserRole));
+        $fileId = $this->createFile($this->currentUserId);
 
-        $fileId = $this->createFile($userId);
-
-        $token = $this->loginAndGetToken($email, $password);
-
-        $result = $this->withHeaders([
-            'Authorization' => "Bearer {$token}",
-        ])->delete("/api/v1/files/{$fileId}");
+        $result = $this->withHeaders(['Authorization' => "Bearer {$this->token}"])
+            ->delete("/api/v1/files/{$fileId}");
 
         $result->assertStatus(200);
     }

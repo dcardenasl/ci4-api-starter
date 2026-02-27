@@ -18,10 +18,16 @@ class UserControllerTest extends ApiTestCase
     {
         parent::setUp();
         $this->userModel = new UserModel();
+        $this->actAs('admin');
+
+        // Ensure static context is set for background model operations (Auditable trait)
+        \App\Libraries\ContextHolder::set(new \App\DTO\SecurityContext($this->currentUserId, $this->currentUserRole));
     }
 
     public function testListUsersRequiresAuth(): void
     {
+        \App\Libraries\ContextHolder::flush();
+        $this->clearTestRequestHeaders();
         $result = $this->get('/api/v1/users');
 
         $result->assertStatus(401);
@@ -29,15 +35,7 @@ class UserControllerTest extends ApiTestCase
 
     public function testListUsersReturnsSuccess(): void
     {
-        $email = 'list-users-admin@example.com';
-        $password = 'ValidPass123!';
-        $this->createUser($email, $password, 'admin');
-
-        $token = $this->loginAndGetToken($email, $password);
-
-        $result = $this->withHeaders([
-            'Authorization' => "Bearer {$token}",
-        ])->get('/api/v1/users');
+        $result = $this->get('/api/v1/users');
 
         $result->assertStatus(200);
 
@@ -47,15 +45,7 @@ class UserControllerTest extends ApiTestCase
 
     public function testAdminCanCreateUpdateAndDeleteUser(): void
     {
-        $adminEmail = 'admin-users@example.com';
-        $adminPassword = 'ValidPass123!';
-        $this->createUser($adminEmail, $adminPassword, 'admin');
-
-        $token = $this->loginAndGetToken($adminEmail, $adminPassword);
-
-        $createResult = $this->withHeaders([
-            'Authorization' => "Bearer {$token}",
-        ])->withBodyFormat('json')->post('/api/v1/users', [
+        $createResult = $this->withBodyFormat('json')->post('/api/v1/users', [
             'email' => 'created@example.com',
             'role' => 'user',
         ]);
@@ -68,32 +58,22 @@ class UserControllerTest extends ApiTestCase
 
         $this->resetRequest();
 
-        $updateResult = $this->withHeaders([
-            'Authorization' => "Bearer {$token}",
-        ])->withBodyFormat('json')->put("/api/v1/users/{$createdId}", [
+        $updateResult = $this->withBodyFormat('json')->put("/api/v1/users/{$createdId}", [
             'first_name' => 'Updated',
         ]);
 
         $updateResult->assertStatus(200);
 
-        $deleteResult = $this->withHeaders([
-            'Authorization' => "Bearer {$token}",
-        ])->delete("/api/v1/users/{$createdId}");
+        $deleteResult = $this->delete("/api/v1/users/{$createdId}");
 
         $deleteResult->assertStatus(200);
     }
 
     public function testAdminCreateUserIsLoggedInAudit(): void
     {
-        $adminEmail = 'admin-audit-users@example.com';
-        $adminPassword = 'ValidPass123!';
-        $this->createUser($adminEmail, $adminPassword, 'admin');
+        $this->enableAudit();
 
-        $token = $this->loginAndGetToken($adminEmail, $adminPassword);
-
-        $createResult = $this->withHeaders([
-            'Authorization' => "Bearer {$token}",
-        ])->withBodyFormat('json')->post('/api/v1/users', [
+        $createResult = $this->withBodyFormat('json')->post('/api/v1/users', [
             'email' => 'audit-created@example.com',
             'role' => 'user',
         ]);
@@ -114,15 +94,7 @@ class UserControllerTest extends ApiTestCase
 
     public function testAdminCannotCreateAdminUser(): void
     {
-        $adminEmail = 'admin-create-admin@example.com';
-        $adminPassword = 'ValidPass123!';
-        $this->createUser($adminEmail, $adminPassword, 'admin');
-
-        $token = $this->loginAndGetToken($adminEmail, $adminPassword);
-
-        $result = $this->withHeaders([
-            'Authorization' => "Bearer {$token}",
-        ])->withBodyFormat('json')->post('/api/v1/users', [
+        $result = $this->withBodyFormat('json')->post('/api/v1/users', [
             'email' => 'new-admin@example.com',
             'role' => 'admin',
         ]);
@@ -132,15 +104,7 @@ class UserControllerTest extends ApiTestCase
 
     public function testAdminCannotCreateSuperadminUser(): void
     {
-        $adminEmail = 'admin-create-superadmin@example.com';
-        $adminPassword = 'ValidPass123!';
-        $this->createUser($adminEmail, $adminPassword, 'admin');
-
-        $token = $this->loginAndGetToken($adminEmail, $adminPassword);
-
-        $result = $this->withHeaders([
-            'Authorization' => "Bearer {$token}",
-        ])->withBodyFormat('json')->post('/api/v1/users', [
+        $result = $this->withBodyFormat('json')->post('/api/v1/users', [
             'email' => 'new-superadmin@example.com',
             'role' => 'superadmin',
         ]);
@@ -150,16 +114,9 @@ class UserControllerTest extends ApiTestCase
 
     public function testAdminCannotUpdateAnotherAdmin(): void
     {
-        $adminEmail = 'admin-update-admin@example.com';
-        $adminPassword = 'ValidPass123!';
-        $this->createUser($adminEmail, $adminPassword, 'admin');
         $targetAdminId = $this->createUser('target-admin@example.com', 'ValidPass123!', 'admin');
 
-        $token = $this->loginAndGetToken($adminEmail, $adminPassword);
-
-        $result = $this->withHeaders([
-            'Authorization' => "Bearer {$token}",
-        ])->withBodyFormat('json')->put("/api/v1/users/{$targetAdminId}", [
+        $result = $this->withBodyFormat('json')->put("/api/v1/users/{$targetAdminId}", [
             'first_name' => 'Blocked',
         ]);
 
@@ -168,48 +125,27 @@ class UserControllerTest extends ApiTestCase
 
     public function testAdminCannotDeleteAnotherAdmin(): void
     {
-        $adminEmail = 'admin-delete-admin@example.com';
-        $adminPassword = 'ValidPass123!';
-        $this->createUser($adminEmail, $adminPassword, 'admin');
         $targetAdminId = $this->createUser('target-delete-admin@example.com', 'ValidPass123!', 'admin');
 
-        $token = $this->loginAndGetToken($adminEmail, $adminPassword);
-
-        $result = $this->withHeaders([
-            'Authorization' => "Bearer {$token}",
-        ])->delete("/api/v1/users/{$targetAdminId}");
+        $result = $this->delete("/api/v1/users/{$targetAdminId}");
 
         $result->assertStatus(403);
     }
 
     public function testAdminCannotDeleteSuperadmin(): void
     {
-        $adminEmail = 'admin-delete-superadmin@example.com';
-        $adminPassword = 'ValidPass123!';
-        $this->createUser($adminEmail, $adminPassword, 'admin');
         $superadminId = $this->createUser('target-superadmin@example.com', 'ValidPass123!', 'superadmin');
 
-        $token = $this->loginAndGetToken($adminEmail, $adminPassword);
-
-        $result = $this->withHeaders([
-            'Authorization' => "Bearer {$token}",
-        ])->delete("/api/v1/users/{$superadminId}");
+        $result = $this->delete("/api/v1/users/{$superadminId}");
 
         $result->assertStatus(403);
     }
 
     public function testListUsersDoesNotIncludeSuperadmin(): void
     {
-        $adminEmail = 'list-admin-user@example.com';
-        $adminPassword = 'ValidPass123!';
-        $this->createUser($adminEmail, $adminPassword, 'admin');
         $this->createUser('hidden-superadmin@example.com', 'ValidPass123!', 'superadmin');
 
-        $token = $this->loginAndGetToken($adminEmail, $adminPassword);
-
-        $result = $this->withHeaders([
-            'Authorization' => "Bearer {$token}",
-        ])->get('/api/v1/users');
+        $result = $this->get('/api/v1/users');
 
         $result->assertStatus(200);
         $json = $this->getResponseJson($result);
@@ -223,15 +159,10 @@ class UserControllerTest extends ApiTestCase
 
     public function testSuperadminCanManageAdminUsers(): void
     {
-        $superadminEmail = 'root@example.com';
-        $superadminPassword = 'ValidPass123!';
-        $this->createUser($superadminEmail, $superadminPassword, 'superadmin');
+        $this->actAs('superadmin');
+        \App\Libraries\ContextHolder::set(new \App\DTO\SecurityContext($this->currentUserId, $this->currentUserRole));
 
-        $token = $this->loginAndGetToken($superadminEmail, $superadminPassword);
-
-        $createResult = $this->withHeaders([
-            'Authorization' => "Bearer {$token}",
-        ])->withBodyFormat('json')->post('/api/v1/users', [
+        $createResult = $this->withBodyFormat('json')->post('/api/v1/users', [
             'email' => 'managed-admin@example.com',
             'role' => 'admin',
         ]);
@@ -243,30 +174,20 @@ class UserControllerTest extends ApiTestCase
 
         $this->resetRequest();
 
-        $updateResult = $this->withHeaders([
-            'Authorization' => "Bearer {$token}",
-        ])->withBodyFormat('json')->put("/api/v1/users/{$createdId}", [
+        $updateResult = $this->withBodyFormat('json')->put("/api/v1/users/{$createdId}", [
             'first_name' => 'Managed',
         ]);
         $updateResult->assertStatus(200);
 
-        $deleteResult = $this->withHeaders([
-            'Authorization' => "Bearer {$token}",
-        ])->delete("/api/v1/users/{$createdId}");
+        $deleteResult = $this->delete("/api/v1/users/{$createdId}");
         $deleteResult->assertStatus(200);
     }
 
     public function testNonAdminCannotCreateUser(): void
     {
-        $email = 'non-admin@example.com';
-        $password = 'ValidPass123!';
-        $this->createUser($email, $password, 'user');
+        $this->actAs('user');
 
-        $token = $this->loginAndGetToken($email, $password);
-
-        $result = $this->withHeaders([
-            'Authorization' => "Bearer {$token}",
-        ])->withBodyFormat('json')->post('/api/v1/users', [
+        $result = $this->withBodyFormat('json')->post('/api/v1/users', [
             'email' => 'blocked@example.com',
             'role' => 'user',
         ]);
@@ -276,15 +197,7 @@ class UserControllerTest extends ApiTestCase
 
     public function testAdminCreateUserRejectsPasswordField(): void
     {
-        $adminEmail = 'admin-password-block@example.com';
-        $adminPassword = 'ValidPass123!';
-        $this->createUser($adminEmail, $adminPassword, 'admin');
-
-        $token = $this->loginAndGetToken($adminEmail, $adminPassword);
-
-        $result = $this->withHeaders([
-            'Authorization' => "Bearer {$token}",
-        ])->withBodyFormat('json')->post('/api/v1/users', [
+        $result = $this->withBodyFormat('json')->post('/api/v1/users', [
             'email' => 'blocked-password@example.com',
             'password' => 'ValidPass123!',
             'role' => 'user',
@@ -299,15 +212,7 @@ class UserControllerTest extends ApiTestCase
 
     public function testAdminCannotApproveInvitedUser(): void
     {
-        $adminEmail = 'admin-approve-invited@example.com';
-        $adminPassword = 'ValidPass123!';
-        $this->createUser($adminEmail, $adminPassword, 'admin');
-
-        $token = $this->loginAndGetToken($adminEmail, $adminPassword);
-
-        $createResult = $this->withHeaders([
-            'Authorization' => "Bearer {$token}",
-        ])->withBodyFormat('json')->post('/api/v1/users', [
+        $createResult = $this->withBodyFormat('json')->post('/api/v1/users', [
             'email' => 'already-invited@example.com',
             'role' => 'user',
         ]);
@@ -317,9 +222,7 @@ class UserControllerTest extends ApiTestCase
         $createdId = $createJson['data']['id'] ?? null;
         $this->assertNotNull($createdId);
 
-        $approveResult = $this->withHeaders([
-            'Authorization' => "Bearer {$token}",
-        ])->post("/api/v1/users/{$createdId}/approve");
+        $approveResult = $this->post("/api/v1/users/{$createdId}/approve");
 
         $approveResult->assertStatus(409);
     }

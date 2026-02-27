@@ -5,21 +5,13 @@ declare(strict_types=1);
 namespace Tests\Feature\Controllers;
 
 use App\Models\UserModel;
-use CodeIgniter\Test\CIUnitTestCase;
-use CodeIgniter\Test\DatabaseTestTrait;
-use CodeIgniter\Test\FeatureTestTrait;
+use Tests\Support\ApiTestCase;
 
 /**
  * VerificationController Feature Tests
  */
-class VerificationControllerTest extends CIUnitTestCase
+class VerificationControllerTest extends ApiTestCase
 {
-    use DatabaseTestTrait;
-    use FeatureTestTrait;
-
-    protected $migrate     = true;
-    protected $namespace   = 'App';
-
     protected UserModel $userModel;
 
     protected function setUp(): void
@@ -31,9 +23,10 @@ class VerificationControllerTest extends CIUnitTestCase
     public function testVerifyEmailReturns200Successfully(): void
     {
         $token = bin2hex(random_bytes(32));
+        $email = 'test-final-verify+' . uniqid('', true) . '@example.com';
 
         $this->userModel->insert([
-            'email' => 'test-final-verify@example.com',
+            'email' => $email,
             'password' => password_hash('Pass123!', PASSWORD_BCRYPT),
             'role' => 'user',
             'email_verified_at' => null,
@@ -60,6 +53,7 @@ class VerificationControllerTest extends CIUnitTestCase
     public function testVerifyEmailReturns422ForTooShortToken(): void
     {
         $result = $this->get('/api/v1/auth/verify-email?token=short');
+
         $result->assertStatus(422);
     }
 }

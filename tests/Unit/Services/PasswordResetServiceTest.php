@@ -174,8 +174,7 @@ class PasswordResetServiceTest extends CIUnitTestCase
 
         $result = $service->sendResetLink(new \App\DTO\Request\Identity\ForgotPasswordRequestDTO(['email' => 'test@example.com']));
 
-        $this->assertIsArray($result);
-        $this->assertEquals('success', $result['status']);
+        $this->assertTrue($result);
     }
 
     public function testSendResetLinkPreventsEmailEnumeration(): void
@@ -188,8 +187,7 @@ class PasswordResetServiceTest extends CIUnitTestCase
 
         $result = $service->sendResetLink(new \App\DTO\Request\Identity\ForgotPasswordRequestDTO(['email' => 'nonexistent@example.com']));
 
-        $this->assertIsArray($result);
-        $this->assertEquals('success', $result['status']);
+        $this->assertTrue($result);
     }
 
     public function testSendResetLinkThrowsExceptionForInvalidEmail(): void
@@ -223,8 +221,7 @@ class PasswordResetServiceTest extends CIUnitTestCase
 
         $result = $service->validateToken($request);
 
-        $this->assertIsArray($result);
-        $this->assertTrue($result['valid']);
+        $this->assertTrue($result);
     }
 
     public function testValidateTokenFailsForInvalidToken(): void
@@ -259,9 +256,7 @@ class PasswordResetServiceTest extends CIUnitTestCase
             'password' => 'NewSecure123!',
         ]));
 
-        $this->assertInstanceOf(\App\DTO\Response\Identity\PasswordResetResponseDTO::class, $result);
-        $data = $result->toArray();
-        $this->assertEquals('success', $data['status']);
+        $this->assertTrue($result);
     }
 
     public function testResetPasswordThrowsExceptionForWeakPassword(): void
@@ -300,7 +295,7 @@ class PasswordResetServiceTest extends CIUnitTestCase
             'password' => 'NewPassword123!',
         ]));
 
-        $this->assertInstanceOf(\App\DTO\Response\Identity\PasswordResetResponseDTO::class, $result);
+        $this->assertTrue($result);
     }
 
     public function testResetPasswordThrowsExceptionForMissingFields(): void

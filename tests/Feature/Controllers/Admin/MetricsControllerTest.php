@@ -4,45 +4,33 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Controllers;
 
-use CodeIgniter\Test\CIUnitTestCase;
-use CodeIgniter\Test\DatabaseTestTrait;
-use CodeIgniter\Test\FeatureTestTrait;
+use Tests\Support\ApiTestCase;
 use Tests\Support\Traits\AuthTestTrait;
 
-class MetricsControllerTest extends CIUnitTestCase
+class MetricsControllerTest extends ApiTestCase
 {
     use AuthTestTrait;
-    use DatabaseTestTrait;
-    use FeatureTestTrait;
 
-    protected $migrate     = true;
-    protected $migrateOnce = false;
-    protected $refresh     = true;
-    protected $namespace   = 'App';
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->actAs('admin');
+
+        // Ensure static context is set for background model operations (Auditable trait)
+        \App\Libraries\ContextHolder::set(new \App\DTO\SecurityContext($this->currentUserId, $this->currentUserRole));
+    }
 
     public function testMetricsRequiresAdmin(): void
     {
-        $email = 'metrics-user@example.com';
-        $password = 'ValidPass123!';
-        $this->createUser($email, $password, 'user');
+        $this->actAs('user');
 
-        $token = $this->loginAndGetToken($email, $password);
-
-        $result = $this->withHeaders([
-            'Authorization' => "Bearer {$token}",
-        ])->get('/api/v1/metrics');
+        $result = $this->get('/api/v1/metrics');
 
         $result->assertStatus(403);
     }
 
     public function testMetricsEndpointsReturnSuccessForAdmin(): void
     {
-        $email = 'metrics-admin@example.com';
-        $password = 'ValidPass123!';
-        $this->createUser($email, $password, 'admin');
-
-        $token = $this->loginAndGetToken($email, $password);
-
         $endpoints = [
             '/api/v1/metrics',
             '/api/v1/metrics/requests',
@@ -51,9 +39,7 @@ class MetricsControllerTest extends CIUnitTestCase
         ];
 
         foreach ($endpoints as $endpoint) {
-            $result = $this->withHeaders([
-                'Authorization' => "Bearer {$token}",
-            ])->get($endpoint);
+            $result = $this->get($endpoint);
 
             $result->assertStatus(200);
         }
@@ -61,23 +47,13 @@ class MetricsControllerTest extends CIUnitTestCase
 
     public function testRecordMetricValidationAndSuccess(): void
     {
-        $email = 'metrics-record@example.com';
-        $password = 'ValidPass123!';
-        $this->createUser($email, $password, 'admin');
-
-        $token = $this->loginAndGetToken($email, $password);
-
-        $invalid = $this->withHeaders([
-            'Authorization' => "Bearer {$token}",
-        ])->withBodyFormat('json')->post('/api/v1/metrics/record', [
+        $invalid = $this->withBodyFormat('json')->post('/api/v1/metrics/record', [
             'value' => 1.5,
         ]);
 
         $invalid->assertStatus(422);
 
-        $valid = $this->withHeaders([
-            'Authorization' => "Bearer {$token}",
-        ])->withBodyFormat('json')->post('/api/v1/metrics/record', [
+        $valid = $this->withBodyFormat('json')->post('/api/v1/metrics/record', [
             'name' => 'example',
             'value' => 1.5,
             'tags' => ['env' => 'test'],

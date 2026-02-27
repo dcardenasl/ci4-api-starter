@@ -8,7 +8,6 @@ use App\Exceptions\ValidationException;
 use App\HTTP\ApiRequest;
 use App\Libraries\ApiResponse;
 use App\Libraries\ContextHolder;
-use App\Support\OperationResult;
 use CodeIgniter\API\ResponseTrait;
 use CodeIgniter\Controller;
 use CodeIgniter\HTTP\ResponseInterface;
@@ -62,11 +61,18 @@ abstract class ApiController extends Controller
     {
         try {
             $data = (array) $this->collectRequestData($additionalParams);
-            $securityContext = $this->establishSecurityContext($data);
+            $securityContext = $this->establishSecurityContext();
 
             $result = $this->executeTarget($target, $dtoClass, $data, $securityContext);
+            // If result is already a response, return it directly
+            if ($result instanceof ResponseInterface) {
+                return $result;
+            }
 
-            return $this->processResult($result, $target);
+            $methodName = is_string($target) ? $target : '';
+            $resultObject = ApiResponse::fromResult($result, $methodName, $this->statusCodes);
+
+            return $this->respond($resultObject->body, $resultObject->status);
         } catch (ValidationException $e) {
             return $this->respond($e->toArray(), 422);
         } catch (Exception $e) {
@@ -75,164 +81,46 @@ abstract class ApiController extends Controller
     }
 
     /**
-     * Establish the security context and inject it into the data array
+     * Establish the security context
      */
-    private function establishSecurityContext(array &$data): \App\DTO\SecurityContext
+    private function establishSecurityContext(): \App\DTO\SecurityContext
     {
-        $securityContext = new \App\DTO\SecurityContext($this->getUserId(), $this->getUserRole());
-
-        // TESTING BYPASS: If a context was established by the test, prioritize it
-        if (ENVIRONMENT === 'testing') {
-            $testContext = ContextHolder::get();
-            if ($testContext !== null && $testContext->userId !== null) {
-                $securityContext = $testContext;
-            }
+        // If a context is already established (e.g., by a Filter or a Test), respect it
+        $existingContext = ContextHolder::get();
+        if ($existingContext !== null && $existingContext->userId !== null) {
+            return $existingContext;
         }
+
+        $securityContext = new \App\DTO\SecurityContext($this->getUserId(), $this->getUserRole());
 
         // Set context globally for this request
         ContextHolder::set($securityContext);
 
-        if (!isset($data['user_id']) && $securityContext->userId !== null) {
-            $data['user_id'] = $securityContext->userId;
-        }
-        if (!isset($data['user_role']) && $securityContext->role !== null) {
-            $data['user_role'] = $securityContext->role;
-        }
-
         return $securityContext;
     }
-
     /**
      * Execute the target service method or callable
      */
     private function executeTarget(string|callable $target, ?string $dtoClass, array $data, \App\DTO\SecurityContext $context): mixed
     {
-        if ($dtoClass !== null && class_exists($dtoClass)) {
-            // Instantiate DTO (this performs automatic self-validation)
-            $requestDto = new $dtoClass($data);
-            return is_callable($target) ? $target($requestDto, $context) : $this->getService()->$target($requestDto, $context);
-        }
-
-        // Fallback for simple requests (data passed as array)
-        return is_callable($target) ? $target($data, $context) : $this->getService()->$target($data, $context);
-    }
-
-    /**
-     * Normalize the result into a standard API response
-     */
-    private function processResult(mixed $result, string|callable $target): ResponseInterface
-    {
-        // If result is already a response, return it directly
-        if ($result instanceof ResponseInterface) {
-            return $result;
-        }
-
-        $methodName = is_string($target) ? $target : '';
-
-        // 1. Handle OperationResult
-        if ($result instanceof OperationResult) {
-            return $this->processOperationResult($result, $methodName);
-        }
-
-        // 2. Handle DTOs
-        if ($result instanceof \App\Interfaces\DataTransferObjectInterface) {
-            return $this->processDtoResult($result, $methodName);
-        }
-
-        // 3. Handle Booleans
-        if (is_bool($result)) {
-            return $this->processBooleanResult($result, $methodName);
-        }
-
-        // 4. Handle Arrays and other types
-        return $this->processGenericResult($result, $methodName);
-    }
-
-    private function processOperationResult(OperationResult $result, string $methodName): ResponseInterface
-    {
-        $status = $result->httpStatus;
-        if ($status === null) {
-            $status = $result->isAccepted()
-                ? 202
-                : ($this->statusCodes[$methodName] ?? 200);
-        }
-
-        if ($result->isError()) {
-            $message = $result->message ?? lang('Api.requestFailed');
-            $finalResult = ApiResponse::error($result->errors, $message, $status);
-        } else {
-            $finalResult = ApiResponse::success($result->data, $result->message);
-        }
-
-        return $this->respond($finalResult, $status);
-    }
-
-    private function processDtoResult(\App\Interfaces\DataTransferObjectInterface $result, string $methodName): ResponseInterface
-    {
-        $dtoData = $result->toArray();
-
-        if (isset($dtoData['data'], $dtoData['total'], $dtoData['page'], $dtoData['perPage'])) {
-            $finalResult = ApiResponse::paginated(
-                (array) $dtoData['data'],
-                (int) $dtoData['total'],
-                (int) $dtoData['page'],
-                (int) $dtoData['perPage']
-            );
-        } else {
-            $finalResult = ApiResponse::success($dtoData);
-        }
-
-        $status = $this->statusCodes[$methodName] ?? null;
-        return $this->respond($finalResult, $status);
-    }
-
-    private function processBooleanResult(bool $result, string $methodName): ResponseInterface
-    {
-        if ($result === true) {
-            if (in_array($methodName, ['destroy', 'delete'], true)) {
-                $finalResult = ApiResponse::deleted();
-            } else {
-                $finalResult = ApiResponse::success(['success' => true]);
+        // 1. Resolve Payload (DTO or Array)
+        $payload = $data;
+        if ($dtoClass !== null) {
+            if (!class_exists($dtoClass)) {
+                throw new \InvalidArgumentException("DTO class '{$dtoClass}' not found.");
             }
-        } else {
-            // Original logic for false: (array)false => []
-            $finalResult = ApiResponse::success([]);
+            $payload = new $dtoClass($data);
         }
 
-        $status = $this->statusCodes[$methodName] ?? null;
-        return $this->respond($finalResult, $status);
-    }
-
-    private function processGenericResult(mixed $result, string $methodName): ResponseInterface
-    {
-        if (is_array($result)) {
-            // Detect Pagination Structure
-            if (isset($result['data'], $result['total'], $result['page'], $result['perPage'])) {
-                $finalResult = ApiResponse::paginated(
-                    $result['data'],
-                    $result['total'],
-                    (int) $result['page'],
-                    (int) $result['perPage']
-                );
-            } elseif (!isset($result['status'])) {
-                $finalResult = ApiResponse::success($result);
-            } elseif ($result['status'] === 'success' && !isset($result['data'])) {
-                $successData = (array) $result;
-                unset($successData['status'], $successData['message']);
-                $finalResult = ApiResponse::success($successData, (string) ($result['message'] ?? ''));
-            } else {
-                $finalResult = $result;
-            }
-        } else {
-            $finalResult = ApiResponse::success((array) $result);
+        // 2. Resolve and execute target
+        // If string, assume it's a method of the associated service
+        if (is_string($target)) {
+            return $this->getService()->{$target}($payload, $context);
         }
 
-        $status = $this->statusCodes[$methodName] ?? null;
-
-        return $this->respond($finalResult, $status);
+        // Otherwise, execute as a standard callable (Closure, [$this, 'method'], etc.)
+        return $target($payload, $context);
     }
-
-
 
     /**
      * Standardize response output
@@ -247,7 +135,7 @@ abstract class ApiController extends Controller
             $data = ApiResponse::convertDataToArrays($data);
         }
 
-        // Determine status if not provided
+        // Determine status if not provided (fallback)
         if ($status === null) {
             $status = (isset($data['status']) && $data['status'] === 'error') ? 400 : 200;
             if (isset($data['code']) && is_int($data['code'])) {
@@ -258,6 +146,7 @@ abstract class ApiController extends Controller
         return $this->response->setJSON($data)->setStatusCode($status);
     }
 
+
     /**
      * Collect all incoming request data and inject auth context
      */
@@ -266,42 +155,33 @@ abstract class ApiController extends Controller
         /** @var \App\HTTP\ApiRequest $request */
         $request = $this->request;
 
-        return array_merge(
-            (array)$request->getGet(),
-            (array)$request->getPost(),
-            (array)$request->getJSON(true),
-            (array)$request->getRawInput(),
-            $request->getFiles(),
-            $params ?? []
+        // Default precedence: Params > JSON > Post > Raw > Get.
+        // For GET requests, query params must win to avoid stale body payload from prior requests in tests.
+        $data = array_merge(
+            (array) $request->getGet(),
+            (array) $request->getRawInput(),
+            (array) $request->getPost(),
+            (array) $request->getJSON(true),
+            $request->getFiles()
         );
+
+        if (strtoupper($request->getMethod()) === 'GET') {
+            $data = array_merge($data, (array) $request->getGet());
+        }
+
+        return array_merge($data, $params ?? []);
     }
 
     protected function handleException(Exception $e): ResponseInterface
     {
+        // Log the full error for server-side monitoring
         log_message('error', '[' . get_class($e) . '] ' . $e->getMessage() . "\n" . $e->getTraceAsString());
 
-        $statusCode = 500;
-        if ($e instanceof \App\Interfaces\HasStatusCode) {
-            $statusCode = $e->getStatusCode();
-        } elseif (method_exists($e, 'getStatusCode')) {
-            /** @var mixed $dynamicException */
-            $dynamicException = $e;
-            $statusCode = (int) $dynamicException->getStatusCode();
-        }
+        $resultObject = \App\Support\ExceptionFormatter::format($e);
 
-        if ($e instanceof \App\Exceptions\ApiException) {
-            return $this->respond($e->toArray(), $statusCode);
-        }
-
-        // Environment-aware error reporting
-        $message = (ENVIRONMENT === 'production') ? lang('Api.serverError') : (get_class($e) . ': ' . $e->getMessage());
-
-        return $this->respond([
-            'status' => 'error',
-            'message' => $message,
-            'errors' => (ENVIRONMENT === 'testing') ? ['trace' => explode("\n", $e->getTraceAsString())] : []
-        ], $statusCode);
+        return $this->respond($resultObject->body, $resultObject->status);
     }
+
 
     protected function getUserId(): ?int
     {

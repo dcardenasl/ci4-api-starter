@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Controllers;
 
-use App\Interfaces\EmailServiceInterface;
-use App\Interfaces\GoogleIdentityServiceInterface;
+use App\Interfaces\Auth\GoogleIdentityServiceInterface;
+use App\Interfaces\System\EmailServiceInterface;
 use App\Models\UserModel;
 use Tests\Support\ApiTestCase;
 

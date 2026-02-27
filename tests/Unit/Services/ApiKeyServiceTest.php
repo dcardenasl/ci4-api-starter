@@ -11,7 +11,7 @@ use App\Exceptions\BadRequestException;
 use App\Exceptions\NotFoundException;
 use App\Interfaces\DataTransferObjectInterface;
 use App\Models\ApiKeyModel;
-use App\Services\ApiKeyService;
+use App\Services\Tokens\ApiKeyService;
 use CodeIgniter\Test\CIUnitTestCase;
 use Tests\Support\Traits\CustomAssertionsTrait;
 
@@ -28,6 +28,7 @@ class ApiKeyServiceTest extends CIUnitTestCase
     protected function setUp(): void
     {
         parent::setUp();
+        require_once APPPATH . 'Helpers/security_helper.php';
 
         $this->mockApiKeyModel = new class () extends ApiKeyModel {
             public ?ApiKeyEntity $returnEntity = null;

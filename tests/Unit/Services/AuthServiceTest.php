@@ -5,15 +5,14 @@ declare(strict_types=1);
 namespace Tests\Unit\Services;
 
 use App\DTO\Request\Auth\LoginRequestDTO;
-use App\DTO\Request\Auth\RegisterRequestDTO;
 use App\Entities\UserEntity;
 use App\Exceptions\AuthenticationException;
-use App\Interfaces\AuditServiceInterface;
-use App\Interfaces\JwtServiceInterface;
-use App\Interfaces\RefreshTokenServiceInterface;
-use App\Interfaces\VerificationServiceInterface;
+use App\Interfaces\Auth\VerificationServiceInterface;
+use App\Interfaces\System\AuditServiceInterface;
+use App\Interfaces\Tokens\JwtServiceInterface;
+use App\Interfaces\Tokens\RefreshTokenServiceInterface;
 use App\Models\UserModel;
-use App\Services\AuthService;
+use App\Services\Auth\AuthService;
 use CodeIgniter\Test\CIUnitTestCase;
 use Tests\Support\Traits\CustomAssertionsTrait;
 
@@ -74,10 +73,11 @@ class AuthServiceTest extends CIUnitTestCase
 
         return new AuthService(
             $mockUserModel,
-            $this->mockJwtService,
-            $this->mockRefreshTokenService,
             $this->mockVerificationService,
-            $this->mockAuditService
+            $this->mockAuditService,
+            new \App\Services\Auth\Support\AuthUserMapper(),
+            new \App\Services\Auth\Support\GoogleAuthHandler($mockUserModel, $this->mockRefreshTokenService),
+            new \App\Services\Auth\Support\SessionManager($this->mockJwtService, $this->mockRefreshTokenService)
         );
     }
 
@@ -146,12 +146,23 @@ class AuthServiceTest extends CIUnitTestCase
         // but here we expect the DTO to validate.
         // For unit tests, we might need to mock the validation or ensure the email is "unique" enough.
 
-        $result = $service->register(new RegisterRequestDTO([
-            'email' => 'new-unique-'.time().'@example.com',
-            'first_name' => 'New',
-            'last_name' => 'User',
-            'password' => 'StrongPass123!',
-        ]));
+        $request = new class () implements \App\Interfaces\DataTransferObjectInterface {
+            public string $email = 'new-unique@example.com';
+            public string $firstName = 'New';
+            public string $lastName = 'User';
+            public string $password = 'StrongPass123!';
+
+            public function toArray(): array
+            {
+                return [
+                    'email' => $this->email,
+                    'first_name' => $this->firstName,
+                    'last_name' => $this->lastName,
+                ];
+            }
+        };
+
+        $result = $service->register($request);
 
         $this->assertInstanceOf(\App\Interfaces\DataTransferObjectInterface::class, $result);
     }

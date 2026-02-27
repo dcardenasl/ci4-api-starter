@@ -27,8 +27,14 @@ class AuditableTest extends CIUnitTestCase
     protected function setUp(): void
     {
         parent::setUp();
-        \App\Services\AuditService::$forceEnabledInTests = true;
+        \App\Services\System\AuditService::$forceEnabledInTests = true;
         $this->userModel = new UserModel();
+    }
+
+    protected function tearDown(): void
+    {
+        \App\Services\System\AuditService::$forceEnabledInTests = false;
+        parent::tearDown();
     }
 
     public function testAuditInsertCreatesAuditLog(): void

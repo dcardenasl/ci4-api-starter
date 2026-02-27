@@ -7,7 +7,7 @@ namespace Tests\Integration\Services;
 use App\DTO\Request\Users\UserStoreRequestDTO;
 use App\DTO\Request\Users\UserUpdateRequestDTO;
 use App\Models\UserModel;
-use App\Services\UserService;
+use App\Services\Users\UserService;
 use CodeIgniter\Test\CIUnitTestCase;
 use CodeIgniter\Test\DatabaseTestTrait;
 use Tests\Support\Traits\CustomAssertionsTrait;
@@ -34,8 +34,12 @@ class UserServiceTest extends CIUnitTestCase
         $this->userService = new UserService(
             $this->userModel,
             \Config\Services::emailService(),
-            new \App\Models\PasswordResetModel(),
-            \Config\Services::auditService()
+            \Config\Services::auditService(),
+            new \App\Libraries\Security\UserRoleGuard(),
+            new \App\Services\Auth\UserInvitationService(
+                new \App\Models\PasswordResetModel(),
+                \Config\Services::emailService()
+            )
         );
     }
 

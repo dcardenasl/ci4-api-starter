@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Services;
 
-use App\Interfaces\JwtServiceInterface;
+use App\Interfaces\Tokens\JwtServiceInterface;
 use App\Models\RefreshTokenModel;
 use App\Models\UserModel;
-use App\Services\RefreshTokenService;
+use App\Services\Tokens\RefreshTokenService;
 use CodeIgniter\Test\CIUnitTestCase;
 use Tests\Support\Traits\CustomAssertionsTrait;
 
@@ -38,10 +38,13 @@ class RefreshTokenServiceTest extends CIUnitTestCase
         $this->mockJwtService = $this->createMock(JwtServiceInterface::class);
         $this->mockUserModel = $this->createMock(UserModel::class);
 
+        $this->mockUserAccountGuard = $this->createMock(\App\Services\Users\UserAccountGuard::class);
+
         $this->service = new RefreshTokenService(
             $this->mockRefreshTokenModel,
             $this->mockJwtService,
-            $this->mockUserModel
+            $this->mockUserModel,
+            $this->mockUserAccountGuard
         );
     }
 

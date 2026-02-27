@@ -18,12 +18,12 @@ class CrudIndexContractsTest extends CIUnitTestCase
     private function indexedContracts(): array
     {
         return [
-            \App\Interfaces\CrudServiceContract::class,
-            \App\Interfaces\ApiKeyServiceInterface::class,
-            \App\Interfaces\AuditServiceInterface::class,
-            \App\Interfaces\FileServiceInterface::class,
-            \App\Interfaces\UserServiceInterface::class,
-            \App\Services\BaseCrudService::class,
+            \App\Interfaces\Core\CrudServiceContract::class,
+            \App\Interfaces\Tokens\ApiKeyServiceInterface::class,
+            \App\Interfaces\System\AuditServiceInterface::class,
+            \App\Interfaces\Files\FileServiceInterface::class,
+            \App\Interfaces\Users\UserServiceInterface::class,
+            \App\Services\Core\BaseCrudService::class,
         ];
     }
 
@@ -46,7 +46,7 @@ class CrudIndexContractsTest extends CIUnitTestCase
 
     public function testBaseCrudServiceBuildsPaginatedResponseDto(): void
     {
-        $path = rtrim((string) ROOTPATH, DIRECTORY_SEPARATOR) . '/app/Services/BaseCrudService.php';
+        $path = rtrim((string) ROOTPATH, DIRECTORY_SEPARATOR) . '/app/Services/Core/BaseCrudService.php';
         $source = file_get_contents($path);
 
         $this->assertIsString($source);

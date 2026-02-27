@@ -6,11 +6,11 @@ namespace Tests\Unit\Services;
 
 use App\Entities\UserEntity;
 use App\Exceptions\NotFoundException;
-use App\Interfaces\AuditServiceInterface;
-use App\Interfaces\EmailServiceInterface;
+use App\Interfaces\System\AuditServiceInterface;
+use App\Interfaces\System\EmailServiceInterface;
 use App\Models\PasswordResetModel;
 use App\Models\UserModel;
-use App\Services\UserService;
+use App\Services\Users\UserService;
 use CodeIgniter\Test\CIUnitTestCase;
 use Tests\Support\Traits\CustomAssertionsTrait;
 
@@ -59,8 +59,12 @@ class UserServiceTest extends CIUnitTestCase
         $this->service = new UserService(
             $this->mockUserModel,
             $this->mockEmailService,
-            $this->passwordResetModelStub,
-            $this->mockAuditService
+            $this->mockAuditService,
+            new \App\Libraries\Security\UserRoleGuard(),
+            new \App\Services\Auth\UserInvitationService(
+                $this->passwordResetModelStub,
+                $this->mockEmailService
+            )
         );
     }
 

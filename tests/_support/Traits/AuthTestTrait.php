@@ -60,7 +60,7 @@ trait AuthTestTrait
      */
     protected function enableAudit(): void
     {
-        \App\Services\AuditService::$forceEnabledInTests = true;
+        \App\Services\System\AuditService::$forceEnabledInTests = true;
     }
 
     /**
@@ -68,7 +68,7 @@ trait AuthTestTrait
      */
     protected function disableAudit(): void
     {
-        \App\Services\AuditService::$forceEnabledInTests = false;
+        \App\Services\System\AuditService::$forceEnabledInTests = false;
     }    protected function createUser(
         string $email,
         string $password,

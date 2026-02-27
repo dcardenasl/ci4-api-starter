@@ -8,10 +8,10 @@ use App\Entities\UserEntity;
 use App\Exceptions\BadRequestException;
 use App\Exceptions\ConflictException;
 use App\Exceptions\NotFoundException;
-use App\Interfaces\AuditServiceInterface;
-use App\Interfaces\EmailServiceInterface;
+use App\Interfaces\System\AuditServiceInterface;
+use App\Interfaces\System\EmailServiceInterface;
 use App\Models\UserModel;
-use App\Services\VerificationService;
+use App\Services\Auth\VerificationService;
 use CodeIgniter\Test\CIUnitTestCase;
 use Tests\Support\Traits\CustomAssertionsTrait;
 

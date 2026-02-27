@@ -9,10 +9,10 @@ use App\Exceptions\AuthorizationException;
 use App\Exceptions\BadRequestException;
 use App\Exceptions\NotFoundException;
 use App\Exceptions\ValidationException;
-use App\Interfaces\AuditServiceInterface;
+use App\Interfaces\System\AuditServiceInterface;
 use App\Libraries\Storage\StorageManager;
 use App\Models\FileModel;
-use App\Services\FileService;
+use App\Services\Files\FileService;
 use CodeIgniter\HTTP\Files\UploadedFile;
 use CodeIgniter\Test\CIUnitTestCase;
 use Tests\Support\Traits\CustomAssertionsTrait;
@@ -39,7 +39,15 @@ class FileServiceTest extends CIUnitTestCase
         $this->mockStorage = $this->createMock(StorageManager::class);
         $this->mockAuditService = $this->createMock(AuditServiceInterface::class);
 
-        $this->service = new FileService($this->mockFileModel, $this->mockStorage, $this->mockAuditService);
+        // Inject real processors and generator as they are mostly stateless and hard to mock without overhead
+        $this->service = new FileService(
+            $this->mockFileModel,
+            $this->mockStorage,
+            $this->mockAuditService,
+            new \App\Libraries\Files\FilenameGenerator($this->mockStorage),
+            new \App\Libraries\Files\MultipartProcessor(),
+            new \App\Libraries\Files\Base64Processor()
+        );
     }
 
     // ==================== UPLOAD VALIDATION TESTS ====================
@@ -312,7 +320,14 @@ class FileServiceTest extends CIUnitTestCase
             }
         };
 
-        $this->service = new FileService($this->mockFileModel, $this->mockStorage, $this->mockAuditService);
+        $this->service = new FileService(
+            $this->mockFileModel,
+            $this->mockStorage,
+            $this->mockAuditService,
+            new \App\Libraries\Files\FilenameGenerator($this->mockStorage),
+            new \App\Libraries\Files\MultipartProcessor(),
+            new \App\Libraries\Files\Base64Processor()
+        );
 
         $request = new \App\DTO\Request\Files\FileIndexRequestDTO(['user_id' => 1]);
         $result = $this->service->index($request);
@@ -443,7 +458,8 @@ class FileServiceTest extends CIUnitTestCase
         $this->mockFileModel
             ->expects($this->once())
             ->method('delete')
-            ->with(1);
+            ->with(1)
+            ->willReturn(true);
 
         $request = new \App\DTO\Request\Files\FileGetRequestDTO(['id' => 1, 'user_id' => 1]);
         $result = $this->service->delete($request);

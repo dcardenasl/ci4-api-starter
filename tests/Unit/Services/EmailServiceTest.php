@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Services;
 
 use App\Libraries\Queue\QueueManager;
-use App\Services\EmailService;
+use App\Services\System\EmailService;
 use CodeIgniter\Test\CIUnitTestCase;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Email;

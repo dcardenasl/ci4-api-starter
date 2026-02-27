@@ -18,10 +18,10 @@ class ServiceOperationResultContractsTest extends CIUnitTestCase
     private function contractMap(): array
     {
         return [
-            \App\Services\AuthService::class => ['loginWithGoogleToken'],
-            \App\Services\AuthTokenService::class => ['revokeToken', 'revokeAllUserTokens'],
-            \App\Services\MetricsService::class => ['record'],
-            \App\Services\RefreshTokenService::class => ['revoke', 'revokeAllUserTokens'],
+            \App\Services\Auth\AuthService::class => ['loginWithGoogleToken'],
+            \App\Services\Tokens\AuthTokenService::class => ['revokeToken', 'revokeAllUserTokens'],
+            \App\Services\System\MetricsService::class => ['record'],
+            \App\Services\Tokens\RefreshTokenService::class => ['revoke', 'revokeAllUserTokens'],
         ];
     }
 

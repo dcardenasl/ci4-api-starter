@@ -7,7 +7,7 @@ namespace Tests\Unit\Services;
 use App\DTO\SecurityContext;
 use App\Exceptions\NotFoundException;
 use App\Models\AuditLogModel;
-use App\Services\AuditService;
+use App\Services\System\AuditService;
 use CodeIgniter\Test\CIUnitTestCase;
 use Tests\Support\Traits\CustomAssertionsTrait;
 
@@ -27,7 +27,7 @@ class AuditServiceTest extends CIUnitTestCase
     {
         parent::setUp();
 
-        \App\Services\AuditService::$forceEnabledInTests = true;
+        \App\Services\System\AuditService::$forceEnabledInTests = true;
 
         $this->mockAuditLogModel = $this->createMock(AuditLogModel::class);
 
@@ -37,6 +37,12 @@ class AuditServiceTest extends CIUnitTestCase
         \CodeIgniter\Config\Factories::injectMock('models', \App\Models\UserModel::class, $mockUserModel);
 
         $this->service = new AuditService($this->mockAuditLogModel);
+    }
+
+    protected function tearDown(): void
+    {
+        \App\Services\System\AuditService::$forceEnabledInTests = false;
+        parent::tearDown();
     }
 
     // ==================== LOG TESTS ====================

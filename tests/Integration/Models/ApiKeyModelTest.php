@@ -141,13 +141,17 @@ class ApiKeyModelTest extends CIUnitTestCase
 
         $this->model->insert($this->validData(['key_hash' => $hash]));
 
-        // Second insert with same hash should throw a DB-level constraint violation
-        $this->expectException(\CodeIgniter\Database\Exceptions\DatabaseException::class);
+        // Depending on DB debug settings, duplicate unique key may throw or return false.
+        try {
+            $result = $this->model->insert($this->validData([
+                'key_prefix' => 'apk_differe',
+                'key_hash'   => $hash,
+            ]));
 
-        $this->model->insert($this->validData([
-            'key_prefix' => 'apk_differe',
-            'key_hash'   => $hash,
-        ]));
+            $this->assertFalse($result);
+        } catch (\CodeIgniter\Database\Exceptions\DatabaseException $e) {
+            $this->assertStringContainsString('UNIQUE', strtoupper($e->getMessage()));
+        }
     }
 
     // ==================== TRAIT TESTS ====================

@@ -6,11 +6,11 @@ namespace Tests\Unit\Services;
 
 use App\Exceptions\AuthenticationException;
 use App\Exceptions\BadRequestException;
-use App\Interfaces\AuditServiceInterface;
-use App\Interfaces\JwtServiceInterface;
+use App\Interfaces\System\AuditServiceInterface;
+use App\Interfaces\Tokens\JwtServiceInterface;
 use App\Models\RefreshTokenModel;
 use App\Models\TokenBlacklistModel;
-use App\Services\TokenRevocationService;
+use App\Services\Tokens\TokenRevocationService;
 use CodeIgniter\Cache\CacheInterface;
 use CodeIgniter\Test\CIUnitTestCase;
 use Tests\Support\Traits\CustomAssertionsTrait;
@@ -44,7 +44,10 @@ class TokenRevocationServiceTest extends CIUnitTestCase
             $this->mockRefreshTokenModel,
             $this->mockJwtService,
             $this->mockAuditService,
-            $this->mockCache
+            $this->mockCache,
+            new \App\Services\Tokens\BearerTokenService(),
+            3600,
+            60
         );
     }
 

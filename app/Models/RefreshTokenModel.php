@@ -97,16 +97,16 @@ class RefreshTokenModel extends Model
     }
 
     /**
-     * Delete expired tokens
-     *
-     * @return int Number of deleted tokens
+     * Get active refresh token with row-level lock (FOR UPDATE)
      */
-    public function deleteExpired(): int
+    public function findActiveForUpdate(string $token): ?object
     {
-        $builder = $this->builder();
-        $builder->where('expires_at <', date('Y-m-d H:i:s'));
-        $builder->delete();
+        $sql = $this->where('token', $token)
+            ->where('expires_at >', date('Y-m-d H:i:s'))
+            ->where('revoked_at', null)
+            ->builder()
+            ->getCompiledSelect() . ' FOR UPDATE';
 
-        return $this->db->affectedRows();
+        return $this->db->query($sql)->getFirstRow('object');
     }
 }

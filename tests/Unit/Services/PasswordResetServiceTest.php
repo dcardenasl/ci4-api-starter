@@ -7,12 +7,12 @@ namespace Tests\Unit\Services;
 use App\Entities\UserEntity;
 use App\Exceptions\NotFoundException;
 use App\Exceptions\ValidationException;
-use App\Interfaces\AuditServiceInterface;
-use App\Interfaces\EmailServiceInterface;
-use App\Interfaces\RefreshTokenServiceInterface;
+use App\Interfaces\System\AuditServiceInterface;
+use App\Interfaces\System\EmailServiceInterface;
+use App\Interfaces\Tokens\RefreshTokenServiceInterface;
 use App\Models\PasswordResetModel;
 use App\Models\UserModel;
-use App\Services\PasswordResetService;
+use App\Services\Auth\PasswordResetService;
 use CodeIgniter\Test\CIUnitTestCase;
 use Tests\Support\Traits\CustomAssertionsTrait;
 

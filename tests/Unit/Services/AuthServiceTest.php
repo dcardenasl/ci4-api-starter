@@ -158,10 +158,16 @@ class AuthServiceTest extends CIUnitTestCase
 
     public function testMeReturnsUserProfile(): void
     {
-        $user = new UserEntity(['id' => 1, 'email' => 'test@example.com']);
+        $user = new UserEntity([
+            'id' => 1,
+            'email' => 'test@example.com',
+            'role' => 'user',
+            'status' => 'active',
+        ]);
         $service = $this->createServiceWithUserQuery($user);
 
         $result = $service->me(1);
-        $this->assertEquals('test@example.com', $result['email']);
+        $this->assertInstanceOf(\App\Interfaces\DataTransferObjectInterface::class, $result);
+        $this->assertEquals('test@example.com', $result->toArray()['email']);
     }
 }

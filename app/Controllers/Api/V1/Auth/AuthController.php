@@ -18,6 +18,9 @@ use CodeIgniter\HTTP\ResponseInterface;
 class AuthController extends ApiController
 {
     protected string $serviceName = 'authService';
+    protected array $statusCodes = [
+        'register' => 201,
+    ];
 
     /**
      * Authenticate with email/password
@@ -40,17 +43,7 @@ class AuthController extends ApiController
      */
     public function googleLogin(): ResponseInterface
     {
-        return $this->handleRequest(function ($dto) {
-            $result = $this->getService()->loginWithGoogleToken($dto);
-
-            // Explicitly detect 202 status for pending approval
-            $status = 200;
-            if (isset($result['message']) && (str_contains($result['message'], 'pending') || str_contains($result['message'], 'pendiente'))) {
-                $status = 202;
-            }
-
-            return $this->respond($result, $status);
-        }, GoogleLoginRequestDTO::class);
+        return $this->handleRequest('loginWithGoogleToken', GoogleLoginRequestDTO::class);
     }
 
     /**

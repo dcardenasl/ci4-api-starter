@@ -97,8 +97,7 @@ class RefreshTokenServiceTest extends CIUnitTestCase
 
         $result = $this->service->revoke(['refresh_token' => self::VALID_REFRESH_TOKEN]);
 
-        $this->assertIsArray($result);
-        $this->assertEquals('success', $result['status']);
+        $this->assertSame(\App\Support\OperationResult::SUCCESS, $result->state);
     }
 
     public function testRevokeWithNonExistentTokenThrowsNotFoundException(): void
@@ -123,7 +122,6 @@ class RefreshTokenServiceTest extends CIUnitTestCase
 
         $result = $this->service->revokeAllUserTokens(1);
 
-        $this->assertIsArray($result);
-        $this->assertEquals('success', $result['status']);
+        $this->assertSame(\App\Support\OperationResult::SUCCESS, $result->state);
     }
 }

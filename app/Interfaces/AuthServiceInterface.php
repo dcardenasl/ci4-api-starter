@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Interfaces;
 
 use App\DTO\SecurityContext;
+use App\Support\OperationResult;
 
 /**
  * Modernized Authentication Service Interface
@@ -21,12 +22,12 @@ interface AuthServiceInterface
     /**
      * Authenticate user with Google ID token
      */
-    public function loginWithGoogleToken(\App\Interfaces\DataTransferObjectInterface $request, ?SecurityContext $context = null): array;
+    public function loginWithGoogleToken(\App\Interfaces\DataTransferObjectInterface $request, ?SecurityContext $context = null): OperationResult;
 
     /**
      * Get the current authenticated user profile
      */
-    public function me(int $userId, ?SecurityContext $context = null): array;
+    public function me(int $userId, ?SecurityContext $context = null): \App\Interfaces\DataTransferObjectInterface;
 
     /**
      * Register a new user with password

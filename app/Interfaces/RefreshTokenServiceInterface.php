@@ -6,6 +6,7 @@ namespace App\Interfaces;
 
 use App\DTO\Request\Identity\RefreshTokenRequestDTO;
 use App\DTO\Response\Identity\TokenResponseDTO;
+use App\Support\OperationResult;
 
 /**
  * Refresh Token Service Interface
@@ -27,10 +28,10 @@ interface RefreshTokenServiceInterface
     /**
      * Revoke a refresh token
      */
-    public function revoke(array $data): array;
+    public function revoke(array $data): OperationResult;
 
     /**
      * Revoke all user's refresh tokens
      */
-    public function revokeAllUserTokens(int $userId): array;
+    public function revokeAllUserTokens(int $userId): OperationResult;
 }

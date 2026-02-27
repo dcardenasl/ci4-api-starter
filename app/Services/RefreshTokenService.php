@@ -10,6 +10,7 @@ use App\Interfaces\JwtServiceInterface;
 use App\Interfaces\RefreshTokenServiceInterface;
 use App\Models\RefreshTokenModel;
 use App\Models\UserModel;
+use App\Support\OperationResult;
 
 /**
  * Refresh Token Service
@@ -119,7 +120,7 @@ class RefreshTokenService implements RefreshTokenServiceInterface
     /**
      * Revoke a refresh token
      */
-    public function revoke(array $data): array
+    public function revoke(array $data): OperationResult
     {
         $revoked = $this->refreshTokenModel->revokeToken($data['refresh_token'] ?? '');
 
@@ -127,16 +128,16 @@ class RefreshTokenService implements RefreshTokenServiceInterface
             throw new \App\Exceptions\NotFoundException(lang('Tokens.tokenNotFound'));
         }
 
-        return ['status' => 'success', 'message' => lang('Tokens.refreshTokenRevoked')];
+        return OperationResult::success(null, lang('Tokens.refreshTokenRevoked'));
     }
 
     /**
      * Revoke all user's refresh tokens
      */
-    public function revokeAllUserTokens(int $userId): array
+    public function revokeAllUserTokens(int $userId): OperationResult
     {
         $this->refreshTokenModel->revokeAllUserTokens($userId);
 
-        return ['status' => 'success', 'message' => lang('Tokens.allTokensRevoked')];
+        return OperationResult::success(null, lang('Tokens.allTokensRevoked'));
     }
 }

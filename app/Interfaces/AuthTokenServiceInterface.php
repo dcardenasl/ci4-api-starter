@@ -6,6 +6,7 @@ namespace App\Interfaces;
 
 use App\DTO\Request\Identity\RefreshTokenRequestDTO;
 use App\DTO\SecurityContext;
+use App\Support\OperationResult;
 
 /**
  * Modernized Auth Token Service Interface
@@ -20,10 +21,10 @@ interface AuthTokenServiceInterface
     /**
      * Revoke current access token from authorization header.
      */
-    public function revokeToken(string $authorizationHeader, ?SecurityContext $context = null): bool;
+    public function revokeToken(string $authorizationHeader, ?SecurityContext $context = null): OperationResult;
 
     /**
      * Revoke all tokens for current user.
      */
-    public function revokeAllUserTokens(int $userId, ?SecurityContext $context = null): bool;
+    public function revokeAllUserTokens(int $userId, ?SecurityContext $context = null): OperationResult;
 }

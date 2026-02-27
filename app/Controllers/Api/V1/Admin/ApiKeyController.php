@@ -52,13 +52,7 @@ class ApiKeyController extends ApiController
     public function update(int $id): ResponseInterface
     {
         return $this->handleRequest(
-            function ($dto, $context) use ($id) {
-                $data = array_filter($dto->toArray(), fn ($v) => $v !== null);
-                if (empty($data)) {
-                    return $this->fail(lang('Api.invalidRequest'), 400);
-                }
-                return $this->getService()->update($id, $dto, $context);
-            },
+            fn ($dto, $context) => $this->getService()->update($id, $dto, $context),
             ApiKeyUpdateRequestDTO::class
         );
     }

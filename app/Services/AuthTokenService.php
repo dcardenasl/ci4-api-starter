@@ -9,6 +9,7 @@ use App\Exceptions\AuthenticationException;
 use App\Interfaces\AuthTokenServiceInterface;
 use App\Interfaces\RefreshTokenServiceInterface;
 use App\Interfaces\TokenRevocationServiceInterface;
+use App\Support\OperationResult;
 
 /**
  * Modernized Auth Token Service
@@ -34,22 +35,26 @@ class AuthTokenService implements AuthTokenServiceInterface
     /**
      * Revoke current access token from authorization header
      */
-    public function revokeToken(string $authorizationHeader, ?SecurityContext $context = null): bool
+    public function revokeToken(string $authorizationHeader, ?SecurityContext $context = null): OperationResult
     {
-        return $this->tokenRevocationService->revokeAccessToken([
+        $this->tokenRevocationService->revokeAccessToken([
             'authorization_header' => $authorizationHeader
         ], $context);
+
+        return OperationResult::success(null, lang('Tokens.tokenRevokedSuccess'));
     }
 
     /**
      * Revoke all user tokens
      */
-    public function revokeAllUserTokens(int $userId, ?SecurityContext $context = null): bool
+    public function revokeAllUserTokens(int $userId, ?SecurityContext $context = null): OperationResult
     {
         if ($userId <= 0) {
             throw new AuthenticationException(lang('Auth.authRequired'));
         }
 
-        return $this->tokenRevocationService->revokeAllUserTokens($userId, $context);
+        $this->tokenRevocationService->revokeAllUserTokens($userId, $context);
+
+        return OperationResult::success(null, lang('Tokens.allUserTokensRevoked'));
     }
 }

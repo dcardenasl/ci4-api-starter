@@ -8,6 +8,7 @@ use App\Exceptions\ValidationException;
 use App\HTTP\ApiRequest;
 use App\Libraries\ApiResponse;
 use App\Libraries\ContextHolder;
+use App\Support\OperationResult;
 use CodeIgniter\API\ResponseTrait;
 use CodeIgniter\Controller;
 use CodeIgniter\HTTP\ResponseInterface;
@@ -95,16 +96,31 @@ abstract class ApiController extends Controller
                 return $result;
             }
 
-            // Determine the final HTTP status code
             $methodName = is_string($target) ? $target : '';
-            $finalStatusCode = $this->statusCodes[$methodName] ?? 200;
 
             // Standardize response structure
+            if ($result instanceof OperationResult) {
+                $status = $result->httpStatus;
+                if ($status === null) {
+                    $status = $result->isAccepted()
+                        ? 202
+                        : ($this->statusCodes[$methodName] ?? 200);
+                }
+
+                if ($result->isError()) {
+                    $message = $result->message ?? lang('Api.requestFailed');
+                    $finalResult = ApiResponse::error($result->errors, $message, $status);
+                } else {
+                    $finalResult = ApiResponse::success($result->data, $result->message);
+                }
+
+                return $this->respond($finalResult, $status);
+            }
+
             if ($result instanceof \App\Interfaces\DataTransferObjectInterface) {
                 $finalResult = ApiResponse::success($result->toArray());
             } elseif (is_bool($result) && $result === true) {
                 // Handle success boolean (usually from destroy)
-                $methodName = is_string($target) ? $target : '';
                 if (in_array($methodName, ['destroy', 'delete'], true)) {
                     $finalResult = ApiResponse::deleted();
                 } else {
@@ -133,16 +149,7 @@ abstract class ApiController extends Controller
                 $finalResult = ApiResponse::success((array) $result);
             }
 
-            $methodName = is_string($target) ? $target : '';
             $status = $methodName !== '' ? ($this->statusCodes[$methodName] ?? null) : null;
-
-            // Decision: Strict Success Codes (202 for pending)
-            if (is_array($finalResult) && isset($finalResult['message'])) {
-                $msg = strtolower((string) $finalResult['message']);
-                if (str_contains($msg, 'pending') || str_contains($msg, 'pendiente')) {
-                    $status = 202;
-                }
-            }
 
             // Standardize response structure
             return $this->respond($finalResult, $status);

@@ -18,6 +18,7 @@ use App\Interfaces\JwtServiceInterface;
 use App\Interfaces\RefreshTokenServiceInterface;
 use App\Interfaces\VerificationServiceInterface;
 use App\Models\UserModel;
+use App\Support\OperationResult;
 
 /**
  * Modernized Authentication Service
@@ -77,7 +78,7 @@ class AuthService implements AuthServiceInterface
     /**
      * Authenticate user with Google ID token
      */
-    public function loginWithGoogleToken(DataTransferObjectInterface $request, ?SecurityContext $context = null): array
+    public function loginWithGoogleToken(DataTransferObjectInterface $request, ?SecurityContext $context = null): OperationResult
     {
         /** @var \App\DTO\Request\Auth\GoogleLoginRequestDTO $request */
         $identity = $this->googleIdentityService->verifyIdToken($request->idToken);
@@ -95,22 +96,20 @@ class AuthService implements AuthServiceInterface
             $userContext = new SecurityContext((int) $user->id, (string) $user->role, $context?->metadata ?? []);
             $this->auditService->log('google_registration_pending', 'users', (int) $user->id, [], ['email' => $email, 'provider' => 'google'], $userContext);
 
-            return [
-                'status' => 'success',
-                'data' => ['user' => $this->buildPendingUserData($user)],
-                'message' => lang('Auth.googleRegistrationPendingApproval')
-            ];
+            return OperationResult::accepted(
+                ['user' => $this->buildPendingUserData($user)],
+                lang('Auth.googleRegistrationPendingApproval')
+            );
         }
 
         // 2. Reactivate deleted user
         if ($user->deleted_at !== null) {
             $user = $this->reactivateDeletedGoogleUser($user, $identity->toArray());
             $this->sendPendingApprovalEmail($user);
-            return [
-                'status' => 'success',
-                'data' => ['user' => $this->buildPendingUserData($user)],
-                'message' => lang('Auth.googleRegistrationPendingApproval')
-            ];
+            return OperationResult::accepted(
+                ['user' => $this->buildPendingUserData($user)],
+                lang('Auth.googleRegistrationPendingApproval')
+            );
         }
 
         // 3. Normal login and synchronization
@@ -123,13 +122,15 @@ class AuthService implements AuthServiceInterface
         $this->auditService->log('google_login_success', 'users', (int) $user->id, [], ['email' => $email, 'provider' => 'google'], $userContext);
 
         /** @var \App\Entities\UserEntity $user */
-        return $this->generateTokensResponse($user, $this->buildAuthUserData($user));
+        return OperationResult::success(
+            $this->generateTokensResponse($user, $this->buildAuthUserData($user))
+        );
     }
 
     /**
      * Get current authenticated user profile
      */
-    public function me(int $userId, ?SecurityContext $context = null): array
+    public function me(int $userId, ?SecurityContext $context = null): DataTransferObjectInterface
     {
         if ($userId <= 0) {
             throw new AuthenticationException(lang('Users.auth.notAuthenticated'));
@@ -138,7 +139,7 @@ class AuthService implements AuthServiceInterface
         if (!$user) {
             throw new AuthenticationException(lang('Users.auth.notAuthenticated'));
         }
-        return $user->toArray();
+        return \App\DTO\Response\Users\UserResponseDTO::fromArray($user->toArray());
     }
 
     /**

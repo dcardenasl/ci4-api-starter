@@ -149,4 +149,4 @@ jobs:
           echo "✓ Database connection successful"
 
       - name: Run tests
-        run: vendor/bin/phpunit --configuration phpunit.xml --no-coverage --testdox
+        run: composer test

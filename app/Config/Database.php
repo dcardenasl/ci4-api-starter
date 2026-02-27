@@ -162,11 +162,11 @@ class Database extends Config
      */
     public array $tests = [
         'DSN'         => '',
-        'hostname'    => '127.0.0.1',
-        'username'    => 'root',
-        'password'    => 'root',
-        'database'    => 'ci4_test',
-        'DBDriver'    => 'MySQLi',
+        'hostname'    => 'localhost',
+        'username'    => '',
+        'password'    => '',
+        'database'    => TESTPATH . 'ci4_test.sqlite',
+        'DBDriver'    => 'SQLite3',
         'DBPrefix'    => '',
         'pConnect'    => false,
         'DBDebug'     => true,
@@ -177,7 +177,7 @@ class Database extends Config
         'compress'    => false,
         'strictOn'    => false,
         'failover'    => [],
-        'port'        => 3306,
+        'port'        => 0,
         'dateFormat'  => [
             'date'     => 'Y-m-d',
             'datetime' => 'Y-m-d H:i:s',

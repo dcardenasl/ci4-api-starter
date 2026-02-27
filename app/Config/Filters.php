@@ -30,6 +30,11 @@ class Filters extends BaseFilters
         if (ENVIRONMENT === 'production') {
             array_unshift($this->required['before'], 'forcehttps');
         }
+
+        // Use TestAuthFilter instead of JwtAuthFilter during tests to simplify identity propagation
+        if (ENVIRONMENT === 'testing') {
+            $this->aliases['jwtauth'] = \App\Filters\TestAuthFilter::class;
+        }
     }
 
     /**
@@ -52,6 +57,7 @@ class Filters extends BaseFilters
         'pagecache'     => PageCache::class,
         'performance'   => PerformanceMetrics::class,
         'jwtauth'       => JwtAuthFilter::class,
+        'testauth'      => \App\Filters\TestAuthFilter::class,
         'throttle'      => ThrottleFilter::class,
         'authThrottle'  => AuthThrottleFilter::class,
         'roleauth'      => RoleAuthorizationFilter::class,

@@ -23,7 +23,7 @@ Este skill define el estándar de oro para crear recursos en este repositorio, p
    - Definir **Interface** en `app/Interfaces/`.
    - Implementar **Servicio** heredando de `BaseCrudService`.
    - Usar el trait `HandlesTransactions` para operaciones de escritura.
-   - **Regla de Oro:** El servicio no conoce la capa HTTP. Recibe DTOs y devuelve DTOs/Arrays.
+   - **Regla de Oro:** El servicio no conoce la capa HTTP. Recibe DTOs y devuelve DTOs (lecturas) u `OperationResult` (comandos).
    - **Propagación de Identidad:** Inyectar automáticamente `SecurityContext` en los métodos del servicio vía `handleRequest`.
    - Registrar en `app/Config/Services.php`.
 
@@ -54,3 +54,4 @@ Este skill define el estándar de oro para crear recursos en este repositorio, p
 ## Referencias
 - Pasos detallados: `references/crud-playbook.md`.
 - Snippets de código: `references/crud-snippets.md`.
+- Contrato del template: `docs/template/ARCHITECTURE_CONTRACT.md`.

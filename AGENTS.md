@@ -10,8 +10,8 @@
 
 ## Core Development Principles (DTO-First)
 - **Mandatory DTOs:** All data transfer between controllers and services must use PHP 8.2 `readonly` classes.
-- **Pure Services:** Services must not use `ApiResponse` or status codes. They return DTOs or Entities.
-- **Auto-Validation:** Request DTOs validate input in their constructors using `validateOrFail()`.
+- **Pure Services:** Services must not use `ApiResponse` or status codes. Read flows return DTOs; command flows return `OperationResult`.
+- **Auto-Validation:** Request DTOs validate input in their constructors through `BaseRequestDTO` rules.
 - **Living Docs:** OpenAPI schemas are defined as attributes directly in DTO classes.
 
 ## Build, Test, and Development Commands
@@ -24,7 +24,7 @@
 - `php spark swagger:generate` regenerates `public/swagger.json` from DTO and Documentation annotations.
 
 ## Agent Critical Rules
-- **Thin Controllers:** Define `protected string $serviceName` and use `getDTO()` + `handleRequest(fn() => ...)` pattern.
+- **Thin Controllers:** Define `protected string $serviceName` and use `handleRequest('method', RequestDTO::class)` as the default pattern.
 - **No Inline Annotations:** Do not add OpenAPI annotations to controllers. Use DTOs for schemas and `app/Documentation/` for endpoints.
 - **Service Registration:** Always register new services in `app/Config/Services.php`.
 - **Pure Logic:** Business decisions belong in services; HTTP decisions belong in controllers.
@@ -32,8 +32,8 @@
 ### Controller Architecture Invariants
 - API controllers must extend `ApiController`.
 - Standard endpoints must use `handleRequest()`.
-- Use `getDTO()` to ensure input data is validated before reaching the service.
-- Automatic normalization in `ApiController::respond()` ensures DTOs are converted to snake_case JSON.
+- Use `handleRequest(..., RequestDTO::class)` to ensure input data is validated before reaching the service.
+- Automatic normalization in `ApiController::respond()` ensures DTOs are converted to API JSON format.
 
 ## Testing Guidelines
 - Unit tests for services should assert against DTO return types.

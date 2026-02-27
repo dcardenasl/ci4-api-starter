@@ -1,0 +1,33 @@
+# Quality Gates del Template
+
+Checklist de calidad obligatoria para cada PR.
+
+## 1. Estático y estilo
+
+1. `composer cs-check`
+2. `composer phpstan`
+3. `php scripts/i18n-check.php`
+
+## 2. Pruebas
+
+1. `php spark tests:prepare-db`
+2. `vendor/bin/phpunit --configuration=phpunit.xml --no-coverage --testdox`
+3. Recomendado: `composer quality`
+
+## 3. Gate de arquitectura
+
+Deben pasar los tests de `tests/Unit/Architecture/`:
+
+1. convenciones de `ApiController`
+2. convenciones de controladores
+3. contratos `OperationResult`
+4. contratos DTO paginados para CRUD
+5. uso de DTOs en pipeline de controladores
+
+## 4. Contratos mínimos
+
+1. Controllers con `handleRequest(...)` + DTOs.
+2. Services sin respuestas HTTP.
+3. `CrudServiceContract::index()` retorna `DataTransferObjectInterface`.
+4. Comandos retornan `OperationResult`.
+5. Paridad i18n (`en` + `es`) para nuevas claves.

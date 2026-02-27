@@ -26,7 +26,7 @@ php spark make:crud {Name} --domain {Domain} --route {endpoint}
 
 ### Step 2: Request DTO (`app/DTO/Request/`)
 - PHP 8.2 `readonly` class.
-- Auto-validation in constructor: `validateOrFail($data, 'domain', 'action')`.
+- Auto-validation in constructor via `BaseRequestDTO` (`rules()` + `messages()` + `map()`).
 
 ### Step 3: Response DTO (`app/DTO/Response/`)
 - PHP 8.2 `readonly` class.
@@ -73,7 +73,7 @@ The `ApiController` automatically:
 
 ## 5. Security & Style
 
-- ✅ **Inmutability:** Use `readonly` for all DTOs and injected properties.
+- ✅ **Immutability:** Use `readonly` for all DTOs and injected properties.
 - ✅ **i18n:** Always use `lang()` helper. Provide `en` and `es` files.
 - ✅ **SQL Injection:** Always use CI4 Query Builder.
 - ✅ **Coding Style:** PSR-12 enforced via `composer cs-fix`.

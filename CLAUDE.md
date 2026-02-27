@@ -46,7 +46,7 @@ This is a **Declarative DTO-First Layered REST API** following the pattern: **Co
 2. **Auto-Validation:** The `BaseRequestDTO` constructor handles validation automatically via `rules()`. If an object exists, it is valid.
 3. **Pure & Transactional Services:** Services extend `BaseCrudService`, are agnostic to HTTP, and use the `HandlesTransactions` trait.
 4. **Declarative Controllers:** Controllers extend `ApiController` and use `handleRequest()` to orchestrate the flow without boilerplate.
-5. **Output Normalization:** `ApiController` automatically wraps DTOs in `ApiResponse::success()` and handles `data` keying.
+5. **Output Normalization:** `ApiController` wraps normalized service outcomes and maps paginated DTO shapes to canonical paginated responses.
 
 ## Implementation Guidelines
 
@@ -63,7 +63,7 @@ This is a **Declarative DTO-First Layered REST API** following the pattern: **Co
 ### 3. Services (`app/Services/`)
 - Extend `BaseCrudService` for standard CRUD.
 - Use `HandlesTransactions` trait for state changes.
-- Return DTOs or arrays. Throw exceptions for errors.
+- Return DTOs for read workflows and `OperationResult` for command-style workflows. Throw exceptions for errors.
 - Implement `applyBaseCriteria()` for global security filters.
 
 ### 4. Controllers (`app/Controllers/Api/V1/`)
@@ -87,3 +87,11 @@ This is a **Declarative DTO-First Layered REST API** following the pattern: **Co
 - ❌ Returning `ApiResponse` from a service.
 - ❌ Passing raw arrays to service methods.
 - ❌ Not using `wrapInTransaction` for state-changing operations.
+
+## Single Source of Truth
+
+For architecture rules and onboarding, prefer:
+
+1. `docs/template/ARCHITECTURE_CONTRACT.md`
+2. `docs/template/MODULE_BOOTSTRAP_CHECKLIST.md`
+3. `docs/template/QUALITY_GATES.md`

@@ -26,19 +26,19 @@ readonly class FileGetRequestDTO extends BaseRequestDTO
 
     protected function map(array $data): void
     {
-        if (!isset($data['user_id']) || !is_numeric($data['user_id'])) {
+        if (!isset($data['userId']) || !is_numeric($data['userId'])) {
             throw new AuthenticationException(lang('Auth.unauthorized'));
         }
 
         $this->id = (int) $data['id'];
-        $this->userId = (int) $data['user_id'];
+        $this->userId = (int) $data['userId'];
     }
 
     public function toArray(): array
     {
         return [
-            'id'      => $this->id,
-            'user_id' => $this->userId,
+            'id'     => $this->id,
+            'userId' => $this->userId,
         ];
     }
 }

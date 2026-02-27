@@ -178,7 +178,9 @@ class FileService implements FileServiceInterface
 
     protected function resolveUserId(object|array $request, ?SecurityContext $context): int
     {
-        $userId = $context?->userId ?? (int) (($request instanceof \App\Interfaces\DataTransferObjectInterface ? $request->toArray() : (array)$request)['user_id'] ?? 0);
+        $data = $request instanceof \App\Interfaces\DataTransferObjectInterface ? $request->toArray() : (array)$request;
+        $userId = $context?->userId ?? (int) ($data['userId'] ?? $data['user_id'] ?? 0);
+
         if ($userId === 0) {
             throw new AuthorizationException(lang('Api.unauthorized'));
         }

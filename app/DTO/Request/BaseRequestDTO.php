@@ -30,6 +30,20 @@ abstract readonly class BaseRequestDTO implements DataTransferObjectInterface
     private function enrichWithContext(array $data): array
     {
         $context = \App\Libraries\ContextHolder::get();
+
+        // Fallback to ApiRequest if ContextHolder is empty (e.g. if filter hasn't run or was bypassed)
+        if ($context === null) {
+            $request = \Config\Services::request();
+            if ($request instanceof \App\HTTP\ApiRequest) {
+                $userId = $request->getAuthUserId();
+                $role = $request->getAuthUserRole();
+                if ($userId !== null) {
+                    $context = new \App\DTO\SecurityContext($userId, $role);
+                    \App\Libraries\ContextHolder::set($context);
+                }
+            }
+        }
+
         if ($context === null) {
             return $data;
         }

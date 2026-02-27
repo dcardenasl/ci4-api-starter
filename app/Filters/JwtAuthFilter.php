@@ -81,6 +81,9 @@ class JwtAuthFilter implements FilterInterface
             $request->setAuthContext((int) $decoded->uid, (string) $decoded->role);
         }
 
+        // Also set global context for DTO enrichment
+        ContextHolder::set(new \App\DTO\SecurityContext((int) $decoded->uid, (string) $decoded->role));
+
         return $request;
     }
 

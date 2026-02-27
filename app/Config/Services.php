@@ -309,4 +309,25 @@ class Services extends BaseService
 
         return new \App\Models\ApiKeyModel();
     }
+
+    /**
+     * The Request Service
+     *
+     * @param \Config\App|bool $getShared
+     */
+    public static function request($getShared = true)
+    {
+        if (is_bool($getShared) && $getShared) {
+            return static::getSharedInstance('request');
+        }
+
+        $config = $getShared instanceof \Config\App ? $getShared : config('App');
+
+        return new \App\HTTP\ApiRequest(
+            $config,
+            static::uri(),
+            'php://input',
+            new \CodeIgniter\HTTP\UserAgent()
+        );
+    }
 }

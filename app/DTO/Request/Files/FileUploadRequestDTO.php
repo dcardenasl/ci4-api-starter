@@ -27,11 +27,11 @@ readonly class FileUploadRequestDTO extends BaseRequestDTO
 
     protected function map(array $data): void
     {
-        if (!isset($data['user_id']) || !is_numeric($data['user_id'])) {
+        if (!isset($data['userId']) || !is_numeric($data['userId'])) {
             throw new AuthenticationException(lang('Auth.unauthorized'));
         }
 
-        $this->userId = (int) $data['user_id'];
+        $this->userId = (int) $data['userId'];
         $this->filename = $data['filename'] ?? null;
 
         $fileData = $this->extractFileFromData($data);
@@ -66,7 +66,7 @@ readonly class FileUploadRequestDTO extends BaseRequestDTO
 
         // 4. Look for base64 in other keys as fallback
         foreach ($data as $key => $value) {
-            if (is_string($value) && !in_array($key, ['user_id', 'user_role', 'filename'], true)) {
+            if (is_string($value) && !in_array($key, ['userId', 'userRole', 'filename'], true)) {
                 if (str_starts_with($value, 'data:') || strlen($value) > 1000) {
                     return $value;
                 }
@@ -85,7 +85,7 @@ readonly class FileUploadRequestDTO extends BaseRequestDTO
     {
         return [
             'file'     => $this->file,
-            'user_id'  => $this->userId,
+            'userId'   => $this->userId,
             'filename' => $this->filename,
         ];
     }

@@ -38,5 +38,5 @@ For services implementing `CrudServiceContract`/`BaseCrudService`:
 1. New services must be registered in `app/Config/Services.php`.
 2. New modules must include `en` and `es` language files.
 3. New modules must include Unit/Feature tests (and Integration when persistence logic is relevant).
-4. Runtime classes (`Commands`, `Filters`) should resolve dependencies via container/model helpers, not direct `new *Model()` patterns.
+4. Runtime classes (`Commands`, `Filters`) should resolve dependencies via container/model helpers (`Config\Services`, `model()`), not direct `new *Model()` or `service('...')` patterns.
 5. `composer quality` must pass before merge.

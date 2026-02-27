@@ -64,10 +64,10 @@ class JwtAuthFilter implements FilterInterface
         // Enforce email verification for non-OAuth users
         $userId = (int) ($decoded->uid ?? 0);
         if ($userId > 0) {
-            $userModel = service('userModel');
+            $userModel = Services::userModel(false);
             $user = $userModel->find($userId);
 
-            if (! $user) {
+            if (! is_object($user)) {
                 return $this->unauthorized(lang('Auth.invalidToken'));
             }
 

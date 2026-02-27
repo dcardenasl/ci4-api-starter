@@ -25,6 +25,7 @@ Deben pasar los tests de `tests/Unit/Architecture/`:
 4. contratos DTO paginados para CRUD
 5. uso de DTOs en pipeline de controladores
 6. convenciones de instanciación runtime (sin `new *Model()` en Commands/Filters)
+7. convenciones de Filters (`strict_types` y uso de `Config\Services`)
 
 ## 4. Contratos mínimos
 

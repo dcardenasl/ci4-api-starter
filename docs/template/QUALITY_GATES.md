@@ -25,6 +25,7 @@ These architecture tests must remain green:
 4. `tests/Unit/Architecture/CrudIndexContractsTest.php`
 5. `tests/Unit/Architecture/ControllerDtoRequestContractsTest.php`
 6. `tests/Unit/Architecture/RuntimeInstantiationConventionsTest.php`
+7. `tests/Unit/Architecture/FilterConventionsTest.php`
 
 ## 4. Contract Expectations
 

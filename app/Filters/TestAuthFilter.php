@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Filters;
 
 use App\HTTP\ApiRequest;
+use App\Libraries\ApiResponse;
 use CodeIgniter\Filters\FilterInterface;
 use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
@@ -51,7 +52,7 @@ class TestAuthFilter implements FilterInterface
 
         // If no identity found, return 401
         return Services::response()
-            ->setJSON(['status' => 'error', 'message' => 'Unauthorized (Test Auth)'])
+            ->setJSON(ApiResponse::unauthorized(lang('Auth.authRequired')))
             ->setStatusCode(401);
     }
 

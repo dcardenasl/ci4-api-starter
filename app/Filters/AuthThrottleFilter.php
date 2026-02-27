@@ -36,7 +36,7 @@ class AuthThrottleFilter implements FilterInterface
     public function before(RequestInterface $request, $arguments = null)
     {
         $cache = Services::cache();
-        $response = service('response');
+        $response = Services::response();
 
         $maxAttempts = (int) env('AUTH_RATE_LIMIT_REQUESTS', self::MAX_AUTH_ATTEMPTS);
         $window = (int) env('AUTH_RATE_LIMIT_WINDOW', self::AUTH_WINDOW);
@@ -120,5 +120,4 @@ class AuthThrottleFilter implements FilterInterface
             [$maxAttempts, (int) ($window / 60)]
         );
     }
-
 }

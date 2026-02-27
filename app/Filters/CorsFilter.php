@@ -1,10 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Filters;
 
 use CodeIgniter\Filters\FilterInterface;
 use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
+use Config\Services;
 
 class CorsFilter implements FilterInterface
 {
@@ -19,7 +22,7 @@ class CorsFilter implements FilterInterface
     {
         // Handle preflight OPTIONS request
         if ($request->getMethod() === 'OPTIONS') {
-            $response = service('response');
+            $response = Services::response();
             $this->applyCorsHeaders($request, $response);
             $response->setStatusCode(200);
             $response->setBody('');

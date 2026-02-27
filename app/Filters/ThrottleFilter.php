@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Filters;
 
 use App\Entities\ApiKeyEntity;
@@ -37,7 +39,7 @@ class ThrottleFilter implements FilterInterface
     public function before(RequestInterface $request, $arguments = null)
     {
         $cache    = Services::cache();
-        $response = service('response');
+        $response = Services::response();
 
         $ip     = $request->getIPAddress();
         $userId = $request instanceof ApiRequest ? $request->getAuthUserId() : null;

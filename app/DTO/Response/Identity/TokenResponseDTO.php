@@ -31,10 +31,10 @@ readonly class TokenResponseDTO implements DataTransferObjectInterface
     public function toArray(): array
     {
         return [
-            'access_token' => $this->accessToken,
-            'refresh_token' => $this->refreshToken,
-            'expires_in' => $this->expiresIn,
-            'token_type' => $this->tokenType,
+            'accessToken' => $this->accessToken,
+            'refreshToken' => $this->refreshToken,
+            'expiresIn' => $this->expiresIn,
+            'tokenType' => $this->tokenType,
         ];
     }
 }

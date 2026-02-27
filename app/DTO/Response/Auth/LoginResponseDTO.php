@@ -16,16 +16,16 @@ use OpenApi\Attributes as OA;
     schema: 'LoginResponse',
     title: 'Login Response',
     description: 'Successful authentication response containing JWT tokens and user data',
-    required: ['access_token', 'refresh_token', 'expires_in', 'user']
+    required: ['accessToken', 'refreshToken', 'expiresIn', 'user']
 )]
 readonly class LoginResponseDTO implements DataTransferObjectInterface
 {
     public function __construct(
-        #[OA\Property(property: 'access_token', description: 'JWT access token', example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...')]
+        #[OA\Property(property: 'accessToken', description: 'JWT access token', example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...')]
         public string $accessToken,
-        #[OA\Property(property: 'refresh_token', description: 'Opaque refresh token', example: 'apk_a1b2c3d4e5f6g7h8i9j0...')]
+        #[OA\Property(property: 'refreshToken', description: 'Opaque refresh token', example: 'apk_a1b2c3d4e5f6g7h8i9j0...')]
         public string $refreshToken,
-        #[OA\Property(property: 'expires_in', description: 'Token expiration time in seconds', example: 3600)]
+        #[OA\Property(property: 'expiresIn', description: 'Token expiration time in seconds', example: 3600)]
         public int $expiresIn,
         #[OA\Property(description: 'Authenticated user data', ref: '#/components/schemas/UserResponse')]
         public array $user
@@ -48,9 +48,9 @@ readonly class LoginResponseDTO implements DataTransferObjectInterface
     public function toArray(): array
     {
         return [
-            'access_token' => $this->accessToken,
-            'refresh_token' => $this->refreshToken,
-            'expires_in' => $this->expiresIn,
+            'accessToken' => $this->accessToken,
+            'refreshToken' => $this->refreshToken,
+            'expiresIn' => $this->expiresIn,
             'user' => $this->user,
         ];
     }

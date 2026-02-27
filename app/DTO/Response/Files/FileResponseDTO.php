@@ -16,28 +16,28 @@ use OpenApi\Attributes as OA;
     schema: 'FileResponse',
     title: 'File Response',
     description: 'File metadata and access URL',
-    required: ['id', 'original_name', 'mime_type', 'size', 'url']
+    required: ['id', 'originalName', 'mimeType', 'size', 'url']
 )]
 readonly class FileResponseDTO implements DataTransferObjectInterface
 {
     public function __construct(
         #[OA\Property(description: 'Unique file identifier', example: 1)]
         public int $id,
-        #[OA\Property(property: 'original_name', description: 'Original filename', example: 'document.pdf')]
+        #[OA\Property(property: 'originalName', description: 'Original filename', example: 'document.pdf')]
         public string $originalName,
         #[OA\Property(description: 'Stored filename', example: 'abc123_document.pdf')]
         public string $filename,
-        #[OA\Property(property: 'mime_type', description: 'MIME type', example: 'application/pdf')]
+        #[OA\Property(property: 'mimeType', description: 'MIME type', example: 'application/pdf')]
         public string $mimeType,
         #[OA\Property(property: 'size', description: 'File size in bytes', example: 102400)]
         public int $fileSize,
-        #[OA\Property(property: 'human_size', description: 'Human readable file size', example: '100 KB')]
+        #[OA\Property(property: 'humanSize', description: 'Human readable file size', example: '100 KB')]
         public string $humanSize,
-        #[OA\Property(property: 'is_image', description: 'Whether the file is an image', example: false)]
+        #[OA\Property(property: 'isImage', description: 'Whether the file is an image', example: false)]
         public bool $isImage,
         #[OA\Property(description: 'Public or temporary access URL', example: 'https://example.com/storage/file.pdf')]
         public string $url,
-        #[OA\Property(property: 'uploaded_at', description: 'Upload timestamp', example: '2026-02-26 12:00:00', nullable: true)]
+        #[OA\Property(property: 'uploadedAt', description: 'Upload timestamp', example: '2026-02-26 12:00:00', nullable: true)]
         public ?string $createdAt = null
     ) {
     }
@@ -79,15 +79,15 @@ readonly class FileResponseDTO implements DataTransferObjectInterface
     {
         return [
             'id' => $this->id,
-            'original_name' => $this->originalName,
+            'originalName' => $this->originalName,
             'filename' => $this->filename,
-            'mime_type' => $this->mimeType,
+            'mimeType' => $this->mimeType,
             'size' => $this->fileSize,
-            'file_size' => $this->fileSize, // Added for test compatibility
-            'human_size' => $this->humanSize,
-            'is_image' => $this->isImage,
+            'fileSize' => $this->fileSize, // Kept for compatibility if needed
+            'humanSize' => $this->humanSize,
+            'isImage' => $this->isImage,
             'url' => $this->url,
-            'uploaded_at' => $this->createdAt,
+            'uploadedAt' => $this->createdAt,
         ];
     }
 }

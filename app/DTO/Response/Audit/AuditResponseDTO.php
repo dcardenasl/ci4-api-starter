@@ -16,7 +16,7 @@ use OpenApi\Attributes as OA;
     schema: 'AuditResponse',
     title: 'Audit Response',
     description: 'Audit log entry metadata',
-    required: ['id', 'action', 'entity_type', 'created_at']
+    required: ['id', 'action', 'entityType', 'createdAt']
 )]
 readonly class AuditResponseDTO implements DataTransferObjectInterface
 {
@@ -25,23 +25,23 @@ readonly class AuditResponseDTO implements DataTransferObjectInterface
         public int $id,
         #[OA\Property(description: 'Action performed', example: 'update', enum: ['create', 'update', 'delete', 'login_success', 'login_failure'])]
         public string $action,
-        #[OA\Property(property: 'entity_type', description: 'Affected entity type', example: 'users')]
+        #[OA\Property(property: 'entityType', description: 'Affected entity type', example: 'users')]
         public string $entityType,
-        #[OA\Property(property: 'entity_id', description: 'Affected entity ID', example: 5, nullable: true)]
+        #[OA\Property(property: 'entityId', description: 'Affected entity ID', example: 5, nullable: true)]
         public ?int $entityId,
-        #[OA\Property(property: 'old_values', description: 'Values before the change', type: 'object', nullable: true)]
+        #[OA\Property(property: 'oldValues', description: 'Values before the change', type: 'object', nullable: true)]
         public array $oldValues,
-        #[OA\Property(property: 'new_values', description: 'Values after the change', type: 'object', nullable: true)]
+        #[OA\Property(property: 'newValues', description: 'Values after the change', type: 'object', nullable: true)]
         public array $newValues,
-        #[OA\Property(property: 'user_id', description: 'ID of user who performed the action', example: 1, nullable: true)]
+        #[OA\Property(property: 'userId', description: 'ID of user who performed the action', example: 1, nullable: true)]
         public ?int $userId,
-        #[OA\Property(property: 'user_email', description: 'Email of user who performed the action', example: 'admin@example.com', nullable: true)]
+        #[OA\Property(property: 'userEmail', description: 'Email of user who performed the action', example: 'admin@example.com', nullable: true)]
         public ?string $userEmail,
-        #[OA\Property(property: 'ip_address', description: 'IP address of the requester', example: '127.0.0.1', nullable: true)]
+        #[OA\Property(property: 'ipAddress', description: 'IP address of the requester', example: '127.0.0.1', nullable: true)]
         public ?string $ipAddress,
-        #[OA\Property(property: 'user_agent', description: 'User-Agent of the requester', example: 'Mozilla/5.0...', nullable: true)]
+        #[OA\Property(property: 'userAgent', description: 'User-Agent of the requester', example: 'Mozilla/5.0...', nullable: true)]
         public ?string $userAgent,
-        #[OA\Property(property: 'created_at', description: 'Log timestamp', example: '2026-02-26 12:00:00')]
+        #[OA\Property(property: 'createdAt', description: 'Log timestamp', example: '2026-02-26 12:00:00')]
         public string $createdAt
     ) {
     }
@@ -73,15 +73,15 @@ readonly class AuditResponseDTO implements DataTransferObjectInterface
         return [
             'id' => $this->id,
             'action' => $this->action,
-            'entity_type' => $this->entityType,
-            'entity_id' => $this->entityId,
-            'old_values' => $this->oldValues,
-            'new_values' => $this->newValues,
-            'user_id' => $this->userId,
-            'user_email' => $this->userEmail,
-            'ip_address' => $this->ipAddress,
-            'user_agent' => $this->userAgent,
-            'created_at' => $this->createdAt,
+            'entityType' => $this->entityType,
+            'entityId' => $this->entityId,
+            'oldValues' => $this->oldValues,
+            'newValues' => $this->newValues,
+            'userId' => $this->userId,
+            'userEmail' => $this->userEmail,
+            'ipAddress' => $this->ipAddress,
+            'userAgent' => $this->userAgent,
+            'createdAt' => $this->createdAt,
         ];
     }
 }

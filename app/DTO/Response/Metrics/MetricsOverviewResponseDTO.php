@@ -32,8 +32,8 @@ readonly class MetricsOverviewResponseDTO implements DataTransferObjectInterface
     public function toArray(): array
     {
         return [
-            'request_stats' => $this->requestStats,
-            'slow_requests' => $this->slowRequests,
+            'requestStats' => $this->requestStats,
+            'slowRequests' => $this->slowRequests,
             'slo' => $this->slo,
             'timestamp' => $this->timestamp,
         ];

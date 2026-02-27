@@ -14,7 +14,7 @@ use OpenApi\Attributes as OA;
     schema: 'ApiKeyResponse',
     title: 'API Key Response',
     description: 'API key object metadata',
-    required: ['id', 'name', 'key_prefix', 'is_active']
+    required: ['id', 'name', 'keyPrefix', 'isActive']
 )]
 readonly class ApiKeyResponseDTO implements DataTransferObjectInterface
 {
@@ -23,23 +23,23 @@ readonly class ApiKeyResponseDTO implements DataTransferObjectInterface
         public int $id,
         #[OA\Property(description: 'Human-readable label for the API key', example: 'My Mobile App')]
         public string $name,
-        #[OA\Property(property: 'key_prefix', description: 'First characters of the key (safe to display)', example: 'apk_a3f9c2b1')]
+        #[OA\Property(property: 'keyPrefix', description: 'First characters of the key (safe to display)', example: 'apk_a3f9c2b1')]
         public string $keyPrefix,
-        #[OA\Property(property: 'is_active', description: 'Whether the key is currently active', example: true)]
+        #[OA\Property(property: 'isActive', description: 'Whether the key is currently active', example: true)]
         public bool $isActive,
-        #[OA\Property(property: 'rate_limit_requests', description: 'Max requests per window', example: 600)]
+        #[OA\Property(property: 'rateLimitRequests', description: 'Max requests per window', example: 600)]
         public int $rateLimitRequests,
-        #[OA\Property(property: 'rate_limit_window', description: 'Window in seconds', example: 60)]
+        #[OA\Property(property: 'rateLimitWindow', description: 'Window in seconds', example: 60)]
         public int $rateLimitWindow,
-        #[OA\Property(property: 'user_rate_limit', description: 'Per-user limit', example: 60)]
+        #[OA\Property(property: 'userRateLimit', description: 'Per-user limit', example: 60)]
         public int $userRateLimit,
-        #[OA\Property(property: 'ip_rate_limit', description: 'Per-IP limit', example: 200)]
+        #[OA\Property(property: 'ipRateLimit', description: 'Per-IP limit', example: 200)]
         public int $ipRateLimit,
         #[OA\Property(description: 'Full raw API key (only returned once)', example: 'apk_a3f9...', nullable: true)]
         public ?string $key = null,
-        #[OA\Property(property: 'created_at', description: 'Creation timestamp', example: '2026-02-26 12:00:00', nullable: true)]
+        #[OA\Property(property: 'createdAt', description: 'Creation timestamp', example: '2026-02-26 12:00:00', nullable: true)]
         public ?string $createdAt = null,
-        #[OA\Property(property: 'updated_at', description: 'Last update timestamp', example: '2026-02-26 12:00:00', nullable: true)]
+        #[OA\Property(property: 'updatedAt', description: 'Last update timestamp', example: '2026-02-26 12:00:00', nullable: true)]
         public ?string $updatedAt = null
     ) {
     }
@@ -75,14 +75,14 @@ readonly class ApiKeyResponseDTO implements DataTransferObjectInterface
         $result = [
             'id' => $this->id,
             'name' => $this->name,
-            'key_prefix' => $this->keyPrefix,
-            'is_active' => $this->isActive,
-            'rate_limit_requests' => $this->rateLimitRequests,
-            'rate_limit_window' => $this->rateLimitWindow,
-            'user_rate_limit' => $this->userRateLimit,
-            'ip_rate_limit' => $this->ipRateLimit,
-            'created_at' => $this->createdAt,
-            'updated_at' => $this->updatedAt,
+            'keyPrefix' => $this->keyPrefix,
+            'isActive' => $this->isActive,
+            'rateLimitRequests' => $this->rateLimitRequests,
+            'rateLimitWindow' => $this->rateLimitWindow,
+            'userRateLimit' => $this->userRateLimit,
+            'ipRateLimit' => $this->ipRateLimit,
+            'createdAt' => $this->createdAt,
+            'updatedAt' => $this->updatedAt,
         ];
 
         if ($this->key !== null) {

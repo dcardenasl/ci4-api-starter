@@ -25,19 +25,19 @@ readonly class UserResponseDTO implements DataTransferObjectInterface
         public int $id,
         #[OA\Property(description: 'User email address', example: 'user@example.com')]
         public string $email,
-        #[OA\Property(property: 'first_name', description: 'User first name', example: 'John', nullable: true)]
+        #[OA\Property(property: 'firstName', description: 'User first name', example: 'John', nullable: true)]
         public string $firstName,
-        #[OA\Property(property: 'last_name', description: 'User last name', example: 'Doe', nullable: true)]
+        #[OA\Property(property: 'lastName', description: 'User last name', example: 'Doe', nullable: true)]
         public string $lastName,
         #[OA\Property(description: 'User role', example: 'user', enum: ['user', 'admin', 'superadmin'])]
         public string $role,
         #[OA\Property(description: 'Account status', example: 'active', enum: ['pending_approval', 'active', 'invited'])]
         public string $status,
-        #[OA\Property(property: 'avatar_url', description: 'URL to user avatar', example: 'https://example.com/avatar.png', nullable: true)]
+        #[OA\Property(property: 'avatarUrl', description: 'URL to user avatar', example: 'https://example.com/avatar.png', nullable: true)]
         public ?string $avatarUrl = null,
-        #[OA\Property(property: 'created_at', description: 'Creation timestamp', example: '2026-02-26 12:00:00', nullable: true)]
+        #[OA\Property(property: 'createdAt', description: 'Creation timestamp', example: '2026-02-26 12:00:00', nullable: true)]
         public ?string $createdAt = null,
-        #[OA\Property(property: 'updated_at', description: 'Last update timestamp', example: '2026-02-26 12:00:00', nullable: true)]
+        #[OA\Property(property: 'updatedAt', description: 'Last update timestamp', example: '2026-02-26 12:00:00', nullable: true)]
         public ?string $updatedAt = null
     ) {
     }
@@ -72,13 +72,13 @@ readonly class UserResponseDTO implements DataTransferObjectInterface
         return [
             'id' => $this->id,
             'email' => $this->email,
-            'first_name' => $this->firstName,
-            'last_name' => $this->lastName,
+            'firstName' => $this->firstName,
+            'lastName' => $this->lastName,
             'role' => $this->role,
             'status' => $this->status,
-            'avatar_url' => $this->avatarUrl,
-            'created_at' => $this->createdAt,
-            'updated_at' => $this->updatedAt,
+            'avatarUrl' => $this->avatarUrl,
+            'createdAt' => $this->createdAt,
+            'updatedAt' => $this->updatedAt,
         ];
     }
 }

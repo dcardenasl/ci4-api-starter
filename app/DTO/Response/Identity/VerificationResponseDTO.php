@@ -34,9 +34,9 @@ readonly class VerificationResponseDTO implements DataTransferObjectInterface
         return [
             'status' => 'success',
             'message' => $this->message,
-            'user_id' => $this->userId,
+            'userId' => $this->userId,
             'email' => $this->email,
-            'verified_at' => $this->verifiedAt,
+            'verifiedAt' => $this->verifiedAt,
         ];
     }
 }

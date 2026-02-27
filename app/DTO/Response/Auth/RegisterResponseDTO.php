@@ -52,11 +52,11 @@ readonly class RegisterResponseDTO implements DataTransferObjectInterface
         return [
             'id' => $this->id,
             'email' => $this->email,
-            'first_name' => $this->firstName,
-            'last_name' => $this->lastName,
+            'firstName' => $this->firstName,
+            'lastName' => $this->lastName,
             'role' => $this->role,
             'status' => $this->status,
-            'created_at' => $this->createdAt,
+            'createdAt' => $this->createdAt,
         ];
     }
 }

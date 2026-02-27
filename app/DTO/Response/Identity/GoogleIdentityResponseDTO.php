@@ -41,11 +41,11 @@ readonly class GoogleIdentityResponseDTO implements DataTransferObjectInterface
     {
         return [
             'provider' => $this->provider,
-            'provider_id' => $this->providerId,
+            'providerId' => $this->providerId,
             'email' => $this->email,
-            'first_name' => $this->firstName,
-            'last_name' => $this->lastName,
-            'avatar_url' => $this->avatarUrl,
+            'firstName' => $this->firstName,
+            'lastName' => $this->lastName,
+            'avatarUrl' => $this->avatarUrl,
             'claims' => $this->claims,
         ];
     }

@@ -37,10 +37,10 @@ readonly class FileDownloadResponseDTO implements DataTransferObjectInterface
     {
         return [
             'id' => $this->id,
-            'original_name' => $this->originalName,
+            'originalName' => $this->originalName,
             'url' => $this->url,
             'path' => $this->path,
-            'storage_driver' => $this->storageDriver,
+            'storageDriver' => $this->storageDriver,
         ];
     }
 }

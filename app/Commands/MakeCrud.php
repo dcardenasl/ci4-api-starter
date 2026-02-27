@@ -56,7 +56,7 @@ class MakeCrud extends BaseCommand
             APPPATH . "DTO/Request/{$domain}/{$resource}CreateRequestDTO.php" => $this->createRequestDtoTemplate($resource, $domain),
             APPPATH . "DTO/Request/{$domain}/{$resource}UpdateRequestDTO.php" => $this->updateRequestDtoTemplate($resource, $domain),
             APPPATH . "DTO/Response/{$domain}/{$resource}ResponseDTO.php" => $this->responseDtoTemplate($resource, $domain),
-            APPPATH . "Interfaces/{$resource}ServiceInterface.php" => $this->interfaceTemplate($resource, $domain),
+            APPPATH . "Interfaces/{$resource}ServiceInterface.php" => $this->interfaceTemplate($resource),
             APPPATH . "Services/{$resource}Service.php" => $this->serviceTemplate($resource, $resourceLower, $domain),
             APPPATH . "Controllers/Api/V1/{$domain}/{$resource}Controller.php" => $this->controllerTemplate($resource, $resourceLower, $domain),
             APPPATH . "Documentation/{$resourcePlural}/{$resource}Endpoints.php" => $this->docEndpointsTemplate($resource, $route, $domain),
@@ -423,7 +423,7 @@ readonly class {$resource}ResponseDTO implements DataTransferObjectInterface
 PHP;
     }
 
-    private function interfaceTemplate(string $resource, string $domain): string
+    private function interfaceTemplate(string $resource): string
     {
         return <<<PHP
 <?php
@@ -432,16 +432,9 @@ declare(strict_types=1);
 
 namespace App\Interfaces;
 
-use App\DTO\SecurityContext;
-use App\Interfaces\DataTransferObjectInterface;
-
-interface {$resource}ServiceInterface
+interface {$resource}ServiceInterface extends CrudServiceContract
 {
-    public function index(DataTransferObjectInterface \$request, ?SecurityContext \$context = null): array;
-    public function show(int \$id, ?SecurityContext \$context = null): DataTransferObjectInterface;
-    public function store(DataTransferObjectInterface \$request, ?SecurityContext \$context = null): DataTransferObjectInterface;
-    public function update(int \$id, DataTransferObjectInterface \$request, ?SecurityContext \$context = null): DataTransferObjectInterface;
-    public function destroy(int \$id, ?SecurityContext \$context = null): bool;
+    // Add resource-specific service methods here if needed.
 }
 PHP;
     }
@@ -634,13 +627,16 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Services;
 
-use App\DTO\Request\\{$domain}\\{$resource}IndexRequestDTO;
 use App\Models\\{$resource}Model;
 use App\Services\\{$resource}Service;
 use CodeIgniter\Test\CIUnitTestCase;
+use ReflectionMethod;
 
 class {$resource}ServiceTest extends CIUnitTestCase
 {
+    protected {$resource}Service \$service;
+    protected {$resource}Model \$mockModel;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -648,10 +644,12 @@ class {$resource}ServiceTest extends CIUnitTestCase
         \$this->service = new {$resource}Service(\$this->mockModel);
     }
 
-    public function testIndexReturnsData(): void
+    public function testIndexContractReturnsDataTransferObjectInterface(): void
     {
-        \$dto = new {$resource}IndexRequestDTO(['page' => 1]);
-        \$this->assertTrue(true);
+        \$method = new ReflectionMethod({$resource}Service::class, 'index');
+        \$returnType = \$method->getReturnType();
+        \$this->assertNotNull(\$returnType);
+        \$this->assertSame(\App\Interfaces\DataTransferObjectInterface::class, \$returnType?->getName());
     }
 }
 PHP;
@@ -693,21 +691,16 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Controllers;
 
-use CodeIgniter\Test\CIUnitTestCase;
-use CodeIgniter\Test\DatabaseTestTrait;
-use CodeIgniter\Test\FeatureTestTrait;
+use Tests\Support\ApiTestCase;
+use Tests\Support\Traits\AuthTestTrait;
 
-class {$resource}ControllerTest extends CIUnitTestCase
+class {$resource}ControllerTest extends ApiTestCase
 {
-    use DatabaseTestTrait;
-    use FeatureTestTrait;
-
-    protected \$migrate = true;
-    protected \$namespace = 'App';
+    use AuthTestTrait;
 
     public function testPlaceholder(): void
     {
-        \$this->markTestIncomplete('Implement {$resource} feature tests for /api/v1/{$route}.');
+        \$this->markTestIncomplete('Implement {$resource} feature tests for /api/v1/{$route} with auth and role scenarios.');
     }
 }
 PHP;

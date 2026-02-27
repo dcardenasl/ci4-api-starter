@@ -46,7 +46,7 @@ abstract class BaseCrudService implements \App\Interfaces\Core\CrudServiceContra
 
         $requestData = $request->toArray();
         $page = $requestData['page'] ?? 1;
-        $perPage = $requestData['perPage'] ?? $requestData['per_page'] ?? 20;
+        $perPage = $requestData['perPage'] ?? 20;
 
         $result = $builder->paginate((int) $page, (int) $perPage);
 

@@ -41,9 +41,8 @@ readonly class UserIndexRequestDTO extends BaseRequestDTO
         $this->perPage = isset($data['perPage']) ? (int) $data['perPage'] : 20;
         $this->search = $data['search'] ?? null;
 
-        // Legacy support for QueryBuilder structure
-        $this->role = $data['role'] ?? $data['filter']['role']['eq'] ?? $data['filter']['role'] ?? null;
-        $this->status = $data['status'] ?? $data['filter']['status']['eq'] ?? $data['filter']['status'] ?? null;
+        $this->role = $data['role'] ?? null;
+        $this->status = $data['status'] ?? null;
 
         $this->orderBy = $data['orderBy'] ?? 'id';
         $this->orderDir = strtoupper($data['orderDir'] ?? 'DESC');

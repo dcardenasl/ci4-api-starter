@@ -8,21 +8,21 @@ use CodeIgniter\CLI\BaseCommand;
 use CodeIgniter\CLI\CLI;
 
 /**
- * MakeCrud Command
+ * MakeCrud Command (Modernized)
  *
- * Generates a complete CRUD resource following the Modernized DTO-First Architecture.
+ * Generates a complete CRUD resource following the Domain-Driven DTO Architecture.
  */
 class MakeCrud extends BaseCommand
 {
     protected $group = 'Scaffold';
     protected $name = 'make:crud';
-    protected $description = 'Generate CRUD skeleton files following the modernized DTO-first architecture.';
+    protected $description = 'Generate CRUD skeleton files following the domain-driven architecture.';
     protected $usage = 'make:crud <Resource> [--domain <Domain>] [--route <slug>] [--public-read <yes|no>] [--admin-write <yes|no>] [--soft-delete <yes|no>]';
     protected $arguments = [
         'Resource' => 'Resource singular name (e.g. Product, InvoiceItem)',
     ];
     protected $options = [
-        '--domain' => 'Controller and DTO domain folder (default: Catalog)',
+        '--domain' => 'Domain folder (default: Catalog)',
         '--route' => 'Route slug plural (default: kebab-case plural of resource)',
         '--public-read' => 'Generate public read routes snippet yes|no (default: yes)',
         '--admin-write' => 'Generate admin write routes snippet yes|no (default: yes)',
@@ -56,13 +56,13 @@ class MakeCrud extends BaseCommand
             APPPATH . "DTO/Request/{$domain}/{$resource}CreateRequestDTO.php" => $this->createRequestDtoTemplate($resource, $domain),
             APPPATH . "DTO/Request/{$domain}/{$resource}UpdateRequestDTO.php" => $this->updateRequestDtoTemplate($resource, $domain),
             APPPATH . "DTO/Response/{$domain}/{$resource}ResponseDTO.php" => $this->responseDtoTemplate($resource, $domain),
-            APPPATH . "Interfaces/{$resource}ServiceInterface.php" => $this->interfaceTemplate($resource),
-            APPPATH . "Services/{$resource}Service.php" => $this->serviceTemplate($resource, $resourceLower, $domain),
+            APPPATH . "Interfaces/{$domain}/{$resource}ServiceInterface.php" => $this->interfaceTemplate($resource, $domain),
+            APPPATH . "Services/{$domain}/{$resource}Service.php" => $this->serviceTemplate($resource, $resourceLower, $domain),
             APPPATH . "Controllers/Api/V1/{$domain}/{$resource}Controller.php" => $this->controllerTemplate($resource, $resourceLower, $domain),
-            APPPATH . "Documentation/{$resourcePlural}/{$resource}Endpoints.php" => $this->docEndpointsTemplate($resource, $route, $domain),
+            APPPATH . "Documentation/{$domain}/{$resource}Endpoints.php" => $this->docEndpointsTemplate($resource, $route, $domain),
             APPPATH . "Language/en/{$resourcePlural}.php" => $this->langTemplate($resource, false),
             APPPATH . "Language/es/{$resourcePlural}.php" => $this->langTemplate($resource, true),
-            ROOTPATH . "tests/Unit/Services/{$resource}ServiceTest.php" => $this->unitTestTemplate($resource, $domain),
+            ROOTPATH . "tests/Unit/Services/{$domain}/{$resource}ServiceTest.php" => $this->unitTestTemplate($resource, $domain),
             ROOTPATH . "tests/Integration/Models/{$resource}ModelTest.php" => $this->integrationTestTemplate($resource),
             ROOTPATH . "tests/Feature/Controllers/{$domain}/{$resource}ControllerTest.php" => $this->featureTestTemplate($resource, $route, $domain),
         ];
@@ -85,7 +85,7 @@ class MakeCrud extends BaseCommand
             CLI::write("Created: {$path}", 'green');
         }
 
-        $this->registerServiceMethod($resource, $resourceLower);
+        $this->registerServiceMethod($resource, $resourceLower, $domain);
 
         CLI::newLine();
         CLI::write('Next steps:', 'cyan');
@@ -112,7 +112,7 @@ class MakeCrud extends BaseCommand
         return EXIT_SUCCESS;
     }
 
-    private function registerServiceMethod(string $resource, string $resourceLower): void
+    private function registerServiceMethod(string $resource, string $resourceLower, string $domain): void
     {
         $servicesPath = APPPATH . 'Config/Services.php';
         if (!file_exists($servicesPath)) {
@@ -127,7 +127,7 @@ class MakeCrud extends BaseCommand
             return;
         }
 
-        $method = "\n    public static function {$methodName}(bool \$getShared = true)\n    {\n        if (\$getShared) {\n            return static::getSharedInstance('{$methodName}');\n        }\n\n        return new \\App\\Services\\{$resource}Service(\n            new \\App\\Models\\{$resource}Model()\n        );\n    }\n";
+        $method = "\n    public static function {$methodName}(bool \$getShared = true)\n    {\n        if (\$getShared) {\n            return static::getSharedInstance('{$methodName}');\n        }\n\n        return new \\App\\Services\\{$domain}\\{$resource}Service(\n            new \\App\\Models\\{$resource}Model()\n        );\n    }\n";
 
         $needle = "\n}\n";
         $position = strrpos($content, $needle);
@@ -423,14 +423,16 @@ readonly class {$resource}ResponseDTO implements DataTransferObjectInterface
 PHP;
     }
 
-    private function interfaceTemplate(string $resource): string
+    private function interfaceTemplate(string $resource, string $domain): string
     {
         return <<<PHP
 <?php
 
 declare(strict_types=1);
 
-namespace App\Interfaces;
+namespace App\Interfaces\\{$domain};
+
+use App\Interfaces\Core\CrudServiceContract;
 
 interface {$resource}ServiceInterface extends CrudServiceContract
 {
@@ -446,16 +448,17 @@ PHP;
 
 declare(strict_types=1);
 
-namespace App\Services;
+namespace App\Services\\{$domain};
 
 use App\DTO\SecurityContext;
 use App\Exceptions\BadRequestException;
 use App\Interfaces\DataTransferObjectInterface;
-use App\Interfaces\{$resource}ServiceInterface;
+use App\Interfaces\\{$domain}\\{$resource}ServiceInterface;
 use App\Models\\{$resource}Model;
+use App\Services\Core\BaseCrudService;
 use App\Traits\AppliesQueryOptions;
 
-class {$resource}Service extends BaseCrudService implements {$resource}ServiceInterface
+readonly class {$resource}Service extends BaseCrudService implements {$resource}ServiceInterface
 {
     use AppliesQueryOptions;
 
@@ -487,7 +490,7 @@ class {$resource}Service extends BaseCrudService implements {$resource}ServiceIn
             
             \$data = \$request->toArray();
             if (empty(\$data)) {
-                throw new BadRequestException(lang('Api.invalidRequest'));
+                throw new BadRequestException(lang('Api.noFieldsToUpdate'));
             }
 
             \$this->model->update(\$id, \$data);
@@ -560,7 +563,7 @@ PHP;
 
 declare(strict_types=1);
 
-namespace App\Documentation\\{$plural};
+namespace App\Documentation\\{$domain};
 
 use OpenApi\Attributes as OA;
 
@@ -625,10 +628,10 @@ PHP;
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Services;
+namespace Tests\Unit\Services\\{$domain};
 
 use App\Models\\{$resource}Model;
-use App\Services\\{$resource}Service;
+use App\Services\\{$domain}\\{$resource}Service;
 use CodeIgniter\Test\CIUnitTestCase;
 use ReflectionMethod;
 
@@ -689,7 +692,7 @@ PHP;
 
 declare(strict_types=1);
 
-namespace Tests\Feature\Controllers;
+namespace Tests\Feature\Controllers\\{$domain};
 
 use Tests\Support\ApiTestCase;
 use Tests\Support\Traits\AuthTestTrait;

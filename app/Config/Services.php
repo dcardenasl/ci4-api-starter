@@ -277,6 +277,15 @@ class Services extends BaseService
         );
     }
 
+    public static function queueManager(bool $getShared = true)
+    {
+        if ($getShared) {
+            return static::getSharedInstance('queueManager');
+        }
+
+        return new \App\Libraries\Queue\QueueManager();
+    }
+
     /*
      |--------------------------------------------------------------------------
      | MODELS (Shorthands)

@@ -85,6 +85,7 @@ class UserService extends BaseCrudService implements UserServiceInterface
                 throw new ValidationException(lang('Api.validationFailed'), $this->model->errors());
             }
 
+            /** @var \App\Entities\UserEntity $user */
             $user = $this->model->find($userId);
 
             // 3. Trigger Invitation Flow
@@ -107,6 +108,7 @@ class UserService extends BaseCrudService implements UserServiceInterface
         $actorRole = $context?->role ?? 'user';
         $actorId = $context?->userId;
 
+        /** @var \App\Entities\UserEntity|null $targetUser */
         $targetUser = $this->model->find($id);
         if (!$targetUser) {
             throw new NotFoundException(lang('Users.notFound'));
@@ -131,7 +133,9 @@ class UserService extends BaseCrudService implements UserServiceInterface
 
         $this->model->update($id, $updateData);
 
-        return $this->mapToResponse($this->model->find($id));
+        /** @var \App\Entities\UserEntity $updatedUser */
+        $updatedUser = $this->model->find($id);
+        return $this->mapToResponse($updatedUser);
     }
 
     /**
@@ -139,6 +143,7 @@ class UserService extends BaseCrudService implements UserServiceInterface
      */
     public function approve(int $id, ?SecurityContext $context = null, ?string $clientBaseUrl = null): \App\Interfaces\DataTransferObjectInterface
     {
+        /** @var \App\Entities\UserEntity|null $user */
         $user = $this->model->find($id);
         if (!$user) {
             throw new NotFoundException(lang('Users.notFound'));
@@ -171,7 +176,9 @@ class UserService extends BaseCrudService implements UserServiceInterface
                 'login_link' => $this->buildLoginUrl($clientBaseUrl),
             ]);
 
-            return $this->mapToResponse($this->model->find($id));
+            /** @var \App\Entities\UserEntity $approvedUser */
+            $approvedUser = $this->model->find($id);
+            return $this->mapToResponse($approvedUser);
         });
     }
 

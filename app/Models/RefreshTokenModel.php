@@ -107,6 +107,23 @@ class RefreshTokenModel extends Model
             ->builder()
             ->getCompiledSelect() . ' FOR UPDATE';
 
-        return $this->db->query($sql)->getFirstRow('object');
+        $result = $this->db->query($sql);
+
+        if (!$result instanceof \CodeIgniter\Database\ResultInterface) {
+            return null;
+        }
+
+        /** @var object|null $row */
+        $row = $result->getFirstRow('object');
+
+        return $row;
+    }
+    /**
+     * Delete expired tokens
+     */
+    public function deleteExpired(): int
+    {
+        $this->where('expires_at <', date('Y-m-d H:i:s'))->delete();
+        return $this->db->affectedRows();
     }
 }

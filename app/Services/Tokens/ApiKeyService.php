@@ -31,7 +31,7 @@ class ApiKeyService extends BaseCrudService implements ApiKeyServiceInterface
      */
     public function store(\App\Interfaces\DataTransferObjectInterface $request, ?SecurityContext $context = null): \App\Interfaces\DataTransferObjectInterface
     {
-        /** @var \App\DTO\Request\ApiKeys\ApiKeyStoreRequestDTO $request */
+        /** @var \App\DTO\Request\ApiKeys\ApiKeyCreateRequestDTO $request */
         return $this->wrapInTransaction(function () use ($request) {
             $rawKey = \generate_api_key();
             $hash = \hash_api_key($rawKey);

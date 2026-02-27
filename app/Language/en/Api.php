@@ -1,31 +1,21 @@
 <?php
 
-/**
- * API Response language strings (English)
- */
 return [
-    // Success messages
-    'resourceCreated' => 'Resource created successfully',
-    'resourceUpdated' => 'Resource updated successfully',
-    'resourceDeleted' => 'Resource deleted successfully',
-
-    // Error messages
-    'resourceNotFound' => 'Resource not found',
-    'notFound'         => 'Resource not found',
-    'validationFailed' => 'Validation failed',
-    'requestFailed'    => 'Request failed',
-    'unauthorized'     => 'Unauthorized',
-    'forbidden'        => 'Forbidden',
-    'serverError'      => 'Internal server error',
-    'invalidRequest'   => 'Invalid request',
-    'fieldRequired'    => '{0} is required',
-    'databaseError'    => 'A database error occurred',
-    'deleteError'      => 'Failed to delete resource',
-    'transactionFailed' => 'Database transaction failed',
-    'responseDtoNotDefined' => 'Response DTO class not defined for {0}',
-
-    // Log messages
-    'exception'         => 'API Exception',
-    'exceptionTrace'    => 'Exception trace',
-    'databaseException' => 'Database Exception',
+    'requestFailed' => 'Request failed.',
+    'validationFailed' => 'Validation failed.',
+    'resourceNotFound' => 'Resource not found.',
+    'resourceCreated' => 'Resource created successfully.',
+    'resourceUpdated' => 'Resource updated successfully.',
+    'resourceDeleted' => 'Resource deleted successfully.',
+    'noFieldsToUpdate' => 'No valid fields provided for update.',
+    'jwtSecretTooShort' => 'JWT_SECRET_KEY must be at least 32 characters long.',
+    'unauthorized' => 'Unauthorized access.',
+    'forbidden' => 'Insufficient permissions.',
+    'serverError' => 'An internal server error occurred.',
+    'tooManyRequests' => 'Too many requests.',
+    'invalidRequest' => 'Invalid request data.',
+    'transactionFailed' => 'Database transaction failed.',
+    'deleteError' => 'Could not delete resource.',
+    'saveFailed' => 'Could not save resource.',
+    'responseDtoNotDefined' => 'Response DTO class not defined for {0}.',    'fieldRequired' => 'The field {0} is required.',
 ];

@@ -64,6 +64,26 @@ if (!function_exists('generate_token')) {
     }
 }
 
+if (!function_exists('generate_api_key')) {
+    /**
+     * Generate an API key with app prefix.
+     */
+    function generate_api_key(): string
+    {
+        return 'apk_' . generate_token(24);
+    }
+}
+
+if (!function_exists('hash_api_key')) {
+    /**
+     * Hash API key for secure storage.
+     */
+    function hash_api_key(string $rawKey): string
+    {
+        return hash('sha256', $rawKey);
+    }
+}
+
 if (!function_exists('generate_uuid')) {
     /**
      * Generate a UUID v4

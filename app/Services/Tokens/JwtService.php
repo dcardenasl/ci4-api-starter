@@ -25,7 +25,7 @@ readonly class JwtService implements \App\Interfaces\Tokens\JwtServiceInterface
         private string $issuer = 'http://localhost:8080'
     ) {
         if (strlen($this->secretKey) < 32) {
-            throw new RuntimeException('JWT_SECRET_KEY must be at least 32 characters long for security.');
+            throw new RuntimeException(lang('Api.jwtSecretTooShort'));
         }
         $this->algorithm = 'HS256';
     }

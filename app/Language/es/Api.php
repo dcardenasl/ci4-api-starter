@@ -1,31 +1,21 @@
 <?php
 
-/**
- * Cadenas de respuesta de API (Español)
- */
 return [
-    // Mensajes de éxito
-    'resourceCreated' => 'Recurso creado exitosamente',
-    'resourceUpdated' => 'Recurso actualizado exitosamente',
-    'resourceDeleted' => 'Recurso eliminado exitosamente',
-
-    // Mensajes de error
-    'resourceNotFound' => 'Recurso no encontrado',
-    'notFound'         => 'Recurso no encontrado',
-    'validationFailed' => 'Error de validación',
-    'requestFailed'    => 'Solicitud fallida',
-    'unauthorized'     => 'No autorizado',
-    'forbidden'        => 'Prohibido',
-    'serverError'      => 'Error interno del servidor',
-    'invalidRequest'   => 'Solicitud inválida',
-    'fieldRequired'    => '{0} es obligatorio',
-    'databaseError'    => 'Ocurrió un error en la base de datos',
-    'deleteError'      => 'Error al eliminar el recurso',
-    'transactionFailed' => 'La transacción de base de datos falló',
-    'responseDtoNotDefined' => 'Clase Response DTO no definida para {0}',
-
-    // Mensajes de log
-    'exception'         => 'Excepción de API',
-    'exceptionTrace'    => 'Traza de excepción',
-    'databaseException' => 'Excepción de base de datos',
+    'requestFailed' => 'La solicitud ha fallado.',
+    'validationFailed' => 'La validación ha fallado.',
+    'resourceNotFound' => 'Recurso no encontrado.',
+    'resourceCreated' => 'Recurso creado correctamente.',
+    'resourceUpdated' => 'Recurso actualizado correctamente.',
+    'resourceDeleted' => 'Recurso eliminado correctamente.',
+    'noFieldsToUpdate' => 'No se proporcionaron campos válidos para actualizar.',
+    'jwtSecretTooShort' => 'JWT_SECRET_KEY debe tener al menos 32 caracteres.',
+    'unauthorized' => 'Acceso no autorizado.',
+    'forbidden' => 'Permisos insuficientes.',
+    'serverError' => 'Ha ocurrido un error interno en el servidor.',
+    'tooManyRequests' => 'Demasiadas solicitudes.',
+    'invalidRequest' => 'Datos de solicitud inválidos.',
+    'transactionFailed' => 'La transacción de base de datos ha fallado.',
+    'deleteError' => 'No se pudo eliminar el recurso.',
+    'saveFailed' => 'No se pudo guardar el recurso.',
+    'responseDtoNotDefined' => 'Clase Response DTO no definida para {0}.',    'fieldRequired' => 'El campo {0} es obligatorio.',
 ];

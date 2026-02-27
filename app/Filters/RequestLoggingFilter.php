@@ -8,7 +8,6 @@ use App\HTTP\ApiRequest;
 use CodeIgniter\Filters\FilterInterface;
 use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
-use Config\Services;
 
 class RequestLoggingFilter implements FilterInterface
 {
@@ -59,7 +58,8 @@ class RequestLoggingFilter implements FilterInterface
 
         // Queue the log entry (async to not slow down response)
         try {
-            $queueManager = Services::queueManager(false);
+            /** @var \App\Libraries\Queue\QueueManager $queueManager */
+            $queueManager = service('queueManager');
             $queueManager->push(
                 \App\Libraries\Queue\Jobs\LogRequestJob::class,
                 [

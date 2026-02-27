@@ -31,7 +31,7 @@ class MultipartProcessor implements FileProcessorInterface
         return new ProcessedFile(
             originalName: $input->getName(),
             mimeType: $input->getMimeType(),
-            size: $input->getSize(),
+            size: (int) $input->getSize(),
             extension: $input->getExtension(),
             contents: $stream
         );

@@ -176,9 +176,9 @@ class FileService implements FileServiceInterface
         });
     }
 
-    protected function resolveUserId($request, ?SecurityContext $context): int
+    protected function resolveUserId(object|array $request, ?SecurityContext $context): int
     {
-        $userId = $context?->userId ?? (int) ($request->userId ?? 0);
+        $userId = $context?->userId ?? (int) (($request instanceof \App\Interfaces\DataTransferObjectInterface ? $request->toArray() : (array)$request)['user_id'] ?? 0);
         if ($userId === 0) {
             throw new AuthorizationException(lang('Api.unauthorized'));
         }
@@ -187,6 +187,7 @@ class FileService implements FileServiceInterface
 
     protected function findFileAndAuthorize(int $id, int $userId, string $action, bool $bypassOwnership = false): \App\Entities\FileEntity
     {
+        /** @var \App\Entities\FileEntity|null $file */
         $file = $this->fileModel->find($id);
         if (!$file) {
             throw new NotFoundException(lang('Files.fileNotFound'));

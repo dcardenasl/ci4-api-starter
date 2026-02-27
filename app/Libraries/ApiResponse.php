@@ -149,7 +149,7 @@ class ApiResponse
             );
         } elseif (!isset($result['status'])) {
             $body = self::success($result);
-        } elseif (($result['status'] ?? '') === 'success' && !isset($result['data'])) {
+        } elseif ($result['status'] === 'success' && !isset($result['data'])) {
             $successData = $result;
             unset($successData['status'], $successData['message']);
             $body = self::success($successData, (string) ($result['message'] ?? ''));

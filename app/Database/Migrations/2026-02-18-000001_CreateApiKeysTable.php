@@ -56,8 +56,9 @@ class CreateApiKeysTable extends Migration
                 'null'    => false,
             ],
             'created_at' => [
-                'type' => 'DATETIME',
-                'null' => true,
+                'type'    => 'DATETIME',
+                'null'    => false,
+                'default' => new \CodeIgniter\Database\RawSql('CURRENT_TIMESTAMP'),
             ],
             'updated_at' => [
                 'type' => 'DATETIME',

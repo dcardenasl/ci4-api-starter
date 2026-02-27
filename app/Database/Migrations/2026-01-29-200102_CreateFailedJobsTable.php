@@ -29,8 +29,9 @@ class CreateFailedJobsTable extends Migration
                 'type' => 'TEXT',
             ],
             'failed_at' => [
-                'type' => 'TIMESTAMP',
-                'null' => false,
+                'type'    => 'DATETIME',
+                'null'    => false,
+                'default' => new \CodeIgniter\Database\RawSql('CURRENT_TIMESTAMP'),
             ],
         ]);
 

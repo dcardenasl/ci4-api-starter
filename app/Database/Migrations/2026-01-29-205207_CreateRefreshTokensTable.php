@@ -31,9 +31,9 @@ class CreateRefreshTokensTable extends Migration
                 'null' => true,
             ],
             'created_at' => [
-                'type' => 'TIMESTAMP',
-                'null' => false,
-                'default' => 'CURRENT_TIMESTAMP',
+                'type'    => 'DATETIME',
+                'null'    => false,
+                'default' => new \CodeIgniter\Database\RawSql('CURRENT_TIMESTAMP'),
             ],
         ]);
 

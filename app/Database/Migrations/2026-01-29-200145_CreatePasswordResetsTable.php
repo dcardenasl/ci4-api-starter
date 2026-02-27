@@ -24,8 +24,9 @@ class CreatePasswordResetsTable extends Migration
                 'constraint' => 255,
             ],
             'created_at' => [
-                'type' => 'TIMESTAMP',
-                'null' => false,
+                'type'    => 'DATETIME',
+                'null'    => false,
+                'default' => new \CodeIgniter\Database\RawSql('CURRENT_TIMESTAMP'),
             ],
         ]);
 

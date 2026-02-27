@@ -50,8 +50,9 @@ class CreateAuditLogsTable extends Migration
                 'null' => true,
             ],
             'created_at' => [
-                'type' => 'TIMESTAMP',
-                'null' => false,
+                'type'    => 'DATETIME',
+                'null'    => false,
+                'default' => new \CodeIgniter\Database\RawSql('CURRENT_TIMESTAMP'),
             ],
         ]);
 

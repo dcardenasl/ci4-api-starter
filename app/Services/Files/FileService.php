@@ -113,16 +113,18 @@ class FileService implements FileServiceInterface
 
         $result = $builder->paginate($request->page, $request->perPage);
 
-        $formattedData = array_map(fn ($file) => [
-            'id' => (int) $file->id,
-            'original_name' => (string) $file->original_name,
-            'size' => (int) $file->size,
-            'human_size' => $file->getHumanSize(),
-            'mime_type' => (string) $file->mime_type,
-            'url' => (string) $file->url,
-            'uploaded_at' => (string) $file->uploaded_at,
-            'is_image' => $file->isImage(),
-        ], (array) $result['data']);
+        $formattedData = array_map(function ($file) {
+            return FileResponseDTO::fromArray([
+                'id'            => $file->id,
+                'original_name' => $file->original_name,
+                'filename'      => $file->stored_name,
+                'mime_type'     => $file->mime_type,
+                'size'          => $file->size,
+                'url'           => $file->url,
+                'uploaded_at'   => $file->uploaded_at,
+                'is_image'      => $file->isImage()
+            ])->toArray();
+        }, (array) $result['data']);
 
         return PaginatedResponseDTO::fromArray([
             'data'    => $formattedData,

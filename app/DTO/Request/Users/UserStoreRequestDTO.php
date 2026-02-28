@@ -20,8 +20,6 @@ readonly class UserStoreRequestDTO extends BaseRequestDTO
     public ?string $oauthProvider;
     public ?string $oauthProviderId;
     public ?string $avatarUrl;
-    public ?int $actorId;
-    public ?string $actorRole;
 
     protected function rules(): array
     {
@@ -46,10 +44,6 @@ readonly class UserStoreRequestDTO extends BaseRequestDTO
         $this->oauthProvider = $data['oauthProvider'] ?? null;
         $this->oauthProviderId = $data['oauthProviderId'] ?? null;
         $this->avatarUrl = $data['avatarUrl'] ?? null;
-
-        // Context information from the controller/auth
-        $this->actorId = isset($data['userId']) ? (int) $data['userId'] : null;
-        $this->actorRole = $data['userRole'] ?? null;
     }
 
     public function toArray(): array
@@ -62,8 +56,6 @@ readonly class UserStoreRequestDTO extends BaseRequestDTO
             'oauthProvider' => $this->oauthProvider,
             'oauthProviderId' => $this->oauthProviderId,
             'avatarUrl' => $this->avatarUrl,
-            'userId'    => $this->actorId,
-            'userRole'  => $this->actorRole,
         ];
     }
 }

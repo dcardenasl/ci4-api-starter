@@ -9,213 +9,105 @@ use CodeIgniter\Entity\Entity;
 /**
  * User Entity
  *
- * Represents a user in the system with computed properties and proper casting.
+ * Represents a single user in the system.
+ * Handles data mapping and business logic for user attributes.
  */
 class UserEntity extends Entity
 {
     /**
-     * @var array<string, string> Field to attribute mapping
+     * Define map for attributes
+     *
+     * @var array<string, string>
      */
-    protected $datamap = [];
+    protected $datamap = [
+        'firstName' => 'first_name',
+        'lastName'  => 'last_name',
+        'avatarUrl' => 'avatar_url',
+    ];
 
     /**
-     * @var array<int, string> Date fields for automatic conversion
+     * Define date fields
+     *
+     * @var list<string>
      */
     protected $dates = [
         'created_at',
         'updated_at',
         'deleted_at',
-        'email_verified_at',
-        'verification_token_expires',
         'approved_at',
         'invited_at',
+        'last_login_at',
     ];
 
     /**
-     * @var array<string, string> Type casting for attributes
+     * Define attribute types
+     *
+     * @var array<string, string>
      */
     protected $casts = [
-        'id'   => 'integer',
-        'role' => 'string',
-        'status' => 'string',
+        'id'          => 'integer',
+        'is_active'   => 'boolean',
+        'approved_by' => 'integer',
+        'invited_by'  => 'integer',
     ];
 
     /**
-     * @var array<int, string> Fields to hide from serialization
+     * Get user full name
      */
-    protected array $hidden = [
-        'password',
-        'email_verification_token',
-        'verification_token_expires',
-    ];
-
-    /**
-     * Convert entity to array, hiding sensitive fields
-     *
-     * @param bool $onlyChanged Return only changed fields
-     * @param bool $cast        Apply casting
-     * @param bool $recursive   Recursively convert nested entities
-     * @return array
-     */
-    public function toArray(bool $onlyChanged = false, bool $cast = true, bool $recursive = false): array
+    public function getFullName(): string
     {
-        $data = parent::toArray($onlyChanged, $cast, $recursive);
+        $firstName = (string) ($this->attributes['first_name'] ?? '');
+        $lastName  = (string) ($this->attributes['last_name'] ?? '');
 
-        // Remove hidden fields
-        foreach ($this->hidden as $field) {
-            unset($data[$field]);
-        }
-
-        return $data;
+        return trim($firstName . ' ' . $lastName);
     }
 
     /**
-     * Convert to array with specific fields only
-     *
-     * @param array<string> $fields Fields to include
-     * @return array
-     */
-    public function toArrayOnly(array $fields): array
-    {
-        $data = $this->toArray();
-        return array_intersect_key($data, array_flip($fields));
-    }
-
-    /**
-     * Check if the user's email is verified
-     *
-     * @return bool
-     */
-    public function isVerified(): bool
-    {
-        return $this->email_verified_at !== null;
-    }
-
-    /**
-     * Check if the user has admin role
-     *
-     * @return bool
+     * Check if user is an admin or superadmin
      */
     public function isAdmin(): bool
     {
-        return $this->role === 'admin';
+        $role = (string) ($this->attributes['role'] ?? '');
+
+        return in_array($role, ['admin', 'superadmin'], true);
     }
 
     /**
-     * Check if the user is approved
-     *
-     * @return bool
+     * Check if user is a superadmin
      */
-    public function isApproved(): bool
+    public function isSuperAdmin(): bool
     {
-        return $this->status === 'active';
+        return ($this->attributes['role'] ?? '') === 'superadmin';
     }
 
     /**
-     * Check if the user is pending approval
-     *
-     * @return bool
+     * Check if user account is active
      */
-    public function isPendingApproval(): bool
+    public function isActive(): bool
     {
-        return $this->status === 'pending_approval';
+        return (bool) ($this->attributes['is_active'] ?? false);
     }
 
     /**
-     * Get user initials (first and last name initials)
-     *
-     * @return string
+     * Check if user email is verified
      */
-    public function getInitials(): string
+    public function isVerified(): bool
     {
-        $first = trim((string) ($this->first_name ?? ''));
-        $last = trim((string) ($this->last_name ?? ''));
-
-        if ($first === '' && $last === '') {
-            if (!empty($this->email)) {
-                return strtoupper(substr($this->email, 0, 2));
-            }
-            return '';
-        }
-
-        $initials = strtoupper(substr($first, 0, 1) . substr($last, 0, 1));
-        return trim($initials);
+        return ($this->attributes['status'] ?? '') === 'active';
     }
 
     /**
-     * Get display name (first/last name or email local part)
-     *
-     * @return string
+     * Get a displayable name for the user
      */
     public function getDisplayName(): string
     {
-        $first = trim((string) ($this->first_name ?? ''));
-        $last = trim((string) ($this->last_name ?? ''));
-        $full = trim($first . ' ' . $last);
+        $name = $this->getFullName();
 
-        if ($full !== '') {
-            return $full;
-        }
-
-        if (!empty($this->email)) {
-            return explode('@', $this->email)[0];
-        }
-
-        return '';
+        return ($name !== '') ? $name : (string) ($this->attributes['email'] ?? '');
     }
 
     /**
-     * Get masked email for display
-     *
-     * @return string
-     */
-    public function getMaskedEmail(): string
-    {
-        if (empty($this->email)) {
-            return '';
-        }
-
-        // Use helper if available, otherwise basic masking
-        if (function_exists('mask_email')) {
-            return mask_email($this->email);
-        }
-
-        [$local, $domain] = explode('@', $this->email, 2);
-        $masked = substr($local, 0, 2) . str_repeat('*', max(strlen($local) - 2, 0));
-        return $masked . '@' . $domain;
-    }
-
-    /**
-     * Check if verification token is expired
-     *
-     * @return bool
-     */
-    public function isVerificationTokenExpired(): bool
-    {
-        if (empty($this->verification_token_expires)) {
-            return true;
-        }
-
-        return strtotime($this->verification_token_expires->format('Y-m-d H:i:s')) < time();
-    }
-
-    /**
-     * Get the account age in days
-     *
-     * @return int
-     */
-    public function getAccountAgeDays(): int
-    {
-        if (empty($this->created_at)) {
-            return 0;
-        }
-
-        $created = strtotime($this->created_at->format('Y-m-d H:i:s'));
-        return (int) floor((time() - $created) / 86400);
-    }
-
-    /**
-     * Set password (hash if not already hashed)
+     * Password Mutator
      *
      * This is a mutator that automatically hashes plain text passwords.
      * If the password is already hashed (bcrypt format), it's stored as-is.
@@ -232,27 +124,16 @@ class UserEntity extends Entity
         }
 
         // Hash plain text password
-        if (function_exists('hash_password')) {
-            $this->attributes['password'] = hash_password($password);
-        } else {
-            $this->attributes['password'] = password_hash($password, PASSWORD_BCRYPT);
-        }
+        $this->attributes['password'] = password_hash($password, PASSWORD_BCRYPT);
 
         return $this;
     }
 
     /**
-     * Hash and set a new password
-     *
-     * @deprecated Use setPassword() instead. This method delegates to setPassword().
-     * Kept for backward compatibility but will be removed in future versions.
-     *
-     * @param string $plainPassword Plain text password to hash
-     * @return $this
+     * Get avatar URL or default fallback
      */
-    public function hashAndSetPassword(string $plainPassword): self
+    public function getAvatarUrl(): string
     {
-        // Delegate to setPassword mutator to avoid code duplication
-        return $this->setPassword($plainPassword);
+        return (string) ($this->attributes['avatar_url'] ?? '');
     }
 }

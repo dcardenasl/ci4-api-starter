@@ -18,8 +18,6 @@ readonly class UserUpdateRequestDTO extends BaseRequestDTO
     public ?string $lastName;
     public ?string $password;
     public ?string $role;
-    public ?int $actorId;
-    public ?string $actorRole;
 
     protected function rules(): array
     {
@@ -39,9 +37,6 @@ readonly class UserUpdateRequestDTO extends BaseRequestDTO
         $this->lastName = $data['lastName'] ?? null;
         $this->password = $data['password'] ?? null;
         $this->role = $data['role'] ?? null;
-
-        $this->actorId = isset($data['userId']) ? (int) $data['userId'] : null;
-        $this->actorRole = $data['userRole'] ?? null;
     }
 
     public function toArray(): array
@@ -52,8 +47,6 @@ readonly class UserUpdateRequestDTO extends BaseRequestDTO
             'lastName'  => $this->lastName,
             'password'  => $this->password,
             'role'      => $this->role,
-            'userId'    => $this->actorId,
-            'userRole'  => $this->actorRole,
         ], fn ($v) => $v !== null);
     }
 }

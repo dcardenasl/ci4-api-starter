@@ -19,6 +19,7 @@ return [
     'googleEmailNotVerified'  => 'Google account email is not verified',
     'googleProviderMismatch'  => 'This email is linked to a different login provider',
     'googleProviderIdentityMismatch' => 'Google identity does not match the linked account',
+    'googleUserMissing'       => 'User disappeared after Google update.',
     'googleRegistrationPendingApproval' => 'Google sign-in received. Your account is pending admin approval.',
     'googleClientNotConfigured' => 'Google authentication is not configured',
     'googleLibraryUnavailable' => 'Google authentication library is unavailable',

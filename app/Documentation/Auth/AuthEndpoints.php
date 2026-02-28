@@ -33,6 +33,7 @@ use OpenApi\Attributes as OA;
     path: '/api/v1/auth/google-login',
     tags: ['Authentication'],
     summary: 'Login with Google ID token',
+    description: 'If the user already exists, Google login succeeds immediately. If the user is new, the account is created in pending_approval and requires admin approval.',
     requestBody: new OA\RequestBody(
         ref: '#/components/requestBodies/GoogleLoginRequest'
     ),

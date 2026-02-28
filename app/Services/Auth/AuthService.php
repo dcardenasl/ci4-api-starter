@@ -114,6 +114,35 @@ class AuthService implements \App\Interfaces\Auth\AuthServiceInterface
         }
 
         // 3. Normal login and synchronization
+        if (($user->status ?? null) === 'active') {
+            $updateData = [];
+
+            if (($user->oauth_provider ?? null) === null) {
+                $updateData['oauth_provider'] = 'google';
+            }
+            if (($user->oauth_provider ?? null) === 'google' && empty($user->oauth_provider_id)) {
+                $updateData['oauth_provider_id'] = $identity->providerId;
+            }
+            if ($user->email_verified_at === null) {
+                $updateData['email_verified_at'] = date('Y-m-d H:i:s');
+            }
+            if (($user->invited_at ?? null) !== null) {
+                $updateData['invited_at'] = null;
+                $updateData['invited_by'] = null;
+            }
+
+            if ($updateData !== []) {
+                $this->userModel->update((int) $user->id, $updateData);
+                /** @var \App\Entities\UserEntity|null $refreshedUser */
+                $refreshedUser = $this->userModel->find((int) $user->id);
+                if (!$refreshedUser) {
+                    throw new \RuntimeException(lang('Auth.googleUserMissing'));
+                }
+                $user = $refreshedUser;
+            }
+        }
+
+        /** @var \App\Entities\UserEntity $user */
         $this->userAccessPolicy->assertCanAuthenticate($user);
         $this->googleHandler->syncProfileIfEmpty((int) $user->id, $identity->toArray());
 

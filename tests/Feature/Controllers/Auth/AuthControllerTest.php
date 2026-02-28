@@ -78,8 +78,8 @@ class AuthControllerTest extends ApiTestCase
             ->post('/api/v1/auth/register', [
                 'email' => $email,
                 'password' => 'ValidPass123!',
-                'first_name' => 'Name',
-                'last_name' => 'Last',
+                'firstName' => 'Name',
+                'lastName' => 'Last',
             ]);
 
         $result->assertStatus(422);
@@ -136,7 +136,7 @@ class AuthControllerTest extends ApiTestCase
 
         $result = $this->withBodyFormat('json')
             ->post('/api/v1/auth/google-login', [
-                'id_token' => 'google.id.token',
+                'idToken' => 'google.id.token',
             ]);
 
         $result->assertStatus(202);

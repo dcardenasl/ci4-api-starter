@@ -19,6 +19,7 @@ return [
     'googleEmailNotVerified'  => 'El email de la cuenta de Google no está verificado',
     'googleProviderMismatch'  => 'Este email está vinculado a otro proveedor de acceso',
     'googleProviderIdentityMismatch' => 'La identidad de Google no coincide con la cuenta vinculada',
+    'googleUserMissing' => 'El usuario desapareció después de la actualización de Google',
     'googleRegistrationPendingApproval' => 'Inicio de sesión con Google recibido. Tu cuenta está pendiente de aprobación por un administrador.',
     'googleClientNotConfigured' => 'La autenticación con Google no está configurada',
     'googleLibraryUnavailable' => 'La librería de autenticación de Google no está disponible',

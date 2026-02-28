@@ -102,7 +102,8 @@ class PasswordResetService implements \App\Interfaces\Auth\PasswordResetServiceI
         $this->wrapInTransaction(function () use ($user, $request, $context) {
             $updateData = ['password' => password_hash($request->password, PASSWORD_BCRYPT)];
 
-            if (($user->status ?? null) === 'invited') {
+            $wasInvited = ($user->status ?? null) === 'invited' || ($user->invited_at ?? null) !== null;
+            if ($wasInvited) {
                 $updateData['email_verified_at'] = date('Y-m-d H:i:s');
                 $updateData['invited_at'] = null;
                 $updateData['invited_by'] = null;

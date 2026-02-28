@@ -123,7 +123,7 @@ use OpenApi\Attributes as OA;
     path: '/api/v1/users',
     tags: ['Users'],
     summary: 'Create user (admin/superadmin)',
-    description: 'Admins can create only role=user. Creating admin/superadmin requires superadmin.',
+    description: 'Admins can create only role=user. Creating admin/superadmin requires superadmin. The account is created as active and an invitation email is sent to set the password.',
     security: [['bearerAuth' => []]],
     requestBody: new OA\RequestBody(
         ref: '#/components/requestBodies/CreateUserRequest'

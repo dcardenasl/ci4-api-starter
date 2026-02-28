@@ -11,6 +11,7 @@ use OpenApi\Attributes as OA;
  *
  * Request schema for creating a new user via the admin/superadmin endpoint.
  * Requires email; password is not accepted on this endpoint.
+ * The account is created as active and an invitation email is sent to set the password.
  */
 #[OA\RequestBody(
     request: 'CreateUserRequest',

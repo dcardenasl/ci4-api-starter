@@ -47,9 +47,9 @@ class UserServiceTest extends CIUnitTestCase
     {
         $request = new UserStoreRequestDTO([
             'email' => 'integration@example.com',
-            'first_name' => 'Integration',
-            'last_name' => 'User',
-            'user_role' => 'admin',
+            'firstName' => 'Integration',
+            'lastName' => 'User',
+            'userRole' => 'admin',
         ]);
 
         $result = $this->userService->store($request);
@@ -81,8 +81,8 @@ class UserServiceTest extends CIUnitTestCase
 
         $request = new UserUpdateRequestDTO([
             'email' => 'new@example.com',
-            'first_name' => 'New',
-            'user_role' => 'superadmin',
+            'firstName' => 'New',
+            'userRole' => 'superadmin',
         ]);
 
         $result = $this->userService->update((int) $userId, $request);

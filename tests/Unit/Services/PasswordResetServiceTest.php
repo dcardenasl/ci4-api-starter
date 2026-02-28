@@ -298,6 +298,27 @@ class PasswordResetServiceTest extends CIUnitTestCase
         $this->assertTrue($result);
     }
 
+    public function testResetPasswordActivatesActiveInvitedUser(): void
+    {
+        $user = $this->createUserEntity([
+            'id' => 1,
+            'email' => 'active-invited@example.com',
+            'status' => 'active',
+            'invited_by' => 2,
+            'invited_at' => '2024-01-01 00:00:00',
+        ]);
+
+        $service = $this->createServiceWithUser($user);
+
+        $result = $service->resetPassword(new \App\DTO\Request\Identity\ResetPasswordRequestDTO([
+            'email' => 'active-invited@example.com',
+            'token' => self::VALID_RESET_TOKEN,
+            'password' => 'NewPassword123!',
+        ]));
+
+        $this->assertTrue($result);
+    }
+
     public function testResetPasswordThrowsExceptionForMissingFields(): void
     {
         $this->expectException(ValidationException::class);

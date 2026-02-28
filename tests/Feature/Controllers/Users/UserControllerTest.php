@@ -54,7 +54,7 @@ class UserControllerTest extends ApiTestCase
         $createJson = $this->getResponseJson($createResult);
         $createdId = $createJson['data']['id'] ?? null;
         $this->assertNotNull($createdId);
-        $this->assertEquals('invited', $createJson['data']['status'] ?? null);
+        $this->assertEquals('active', $createJson['data']['status'] ?? null);
 
         $this->resetRequest();
 
@@ -117,7 +117,7 @@ class UserControllerTest extends ApiTestCase
         $targetAdminId = $this->createUser('target-admin@example.com', 'ValidPass123!', 'admin');
 
         $result = $this->withBodyFormat('json')->put("/api/v1/users/{$targetAdminId}", [
-            'first_name' => 'Blocked',
+            'firstName' => 'Blocked',
         ]);
 
         $result->assertStatus(403);
@@ -175,7 +175,7 @@ class UserControllerTest extends ApiTestCase
         $this->resetRequest();
 
         $updateResult = $this->withBodyFormat('json')->put("/api/v1/users/{$createdId}", [
-            'first_name' => 'Managed',
+            'firstName' => 'Managed',
         ]);
         $updateResult->assertStatus(200);
 

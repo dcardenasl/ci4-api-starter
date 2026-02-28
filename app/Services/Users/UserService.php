@@ -59,6 +59,8 @@ class UserService extends BaseCrudService implements UserServiceInterface
         return $this->wrapInTransaction(function () use ($request, $context) {
             $actorRole = $context?->role ?? 'user';
             $adminId = $context?->userId;
+            $isPrivilegedCreator = in_array($actorRole, ['admin', 'superadmin'], true);
+            $status = $isPrivilegedCreator ? 'active' : 'invited';
 
             // 1. Security Check
             $this->roleGuard->assertCanAssignRole($actorRole, (string) $request->role);
@@ -73,12 +75,11 @@ class UserService extends BaseCrudService implements UserServiceInterface
                 'last_name'  => $request->lastName,
                 'password'   => password_hash($generatedPassword, PASSWORD_BCRYPT),
                 'role'       => $request->role,
-                'status'     => 'invited',
-                'approved_at' => $now,
-                'approved_by' => $adminId,
+                'status'     => $status,
+                'approved_at' => $isPrivilegedCreator ? $now : null,
+                'approved_by' => $isPrivilegedCreator ? $adminId : null,
                 'invited_at'  => $now,
                 'invited_by'  => $adminId,
-                'email_verified_at' => $now,
             ]);
 
             if (!$userId) {
@@ -88,7 +89,7 @@ class UserService extends BaseCrudService implements UserServiceInterface
             /** @var \App\Entities\UserEntity $user */
             $user = $this->model->find($userId);
 
-            // 3. Trigger Invitation Flow
+            // 3. Trigger Invitation Flow (password setup is always required for admin-created users)
             try {
                 $this->invitationService->sendInvitation($user);
             } catch (\Throwable $e) {
@@ -125,11 +126,15 @@ class UserService extends BaseCrudService implements UserServiceInterface
         // 3. Process Update
         $updateData = array_filter([
             'email'      => $data['email'] ?? null,
-            'first_name' => $data['first_name'] ?? null,
-            'last_name'  => $data['last_name'] ?? null,
+            'first_name' => $data['firstName'] ?? ($data['first_name'] ?? null),
+            'last_name'  => $data['lastName'] ?? ($data['last_name'] ?? null),
             'password'   => isset($data['password']) ? password_hash($data['password'], PASSWORD_BCRYPT) : null,
             'role'       => $data['role'] ?? null,
         ], fn ($value) => $value !== null);
+
+        if ($updateData === []) {
+            throw new ValidationException(lang('Api.validationFailed'), ['update' => lang('Api.noFieldsToUpdate')]);
+        }
 
         $this->model->update($id, $updateData);
 

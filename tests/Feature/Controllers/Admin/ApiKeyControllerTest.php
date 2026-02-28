@@ -88,10 +88,10 @@ class ApiKeyControllerTest extends ApiTestCase
     {
         $result = $this->withBodyFormat('json')->post('/api/v1/api-keys', [
             'name'                => 'High Volume App',
-            'rate_limit_requests' => 1200,
-            'rate_limit_window'   => 60,
-            'user_rate_limit'     => 120,
-            'ip_rate_limit'       => 400,
+            'rateLimitRequests' => 1200,
+            'rateLimitWindow'   => 60,
+            'userRateLimit'     => 120,
+            'ipRateLimit'       => 400,
         ]);
 
         $result->assertStatus(201);
@@ -165,7 +165,7 @@ class ApiKeyControllerTest extends ApiTestCase
 
         $updateResult = $this->withBodyFormat('json')->put("/api/v1/api-keys/{$createdId}", [
             'name'      => 'Updated Name',
-            'is_active' => false,
+            'isActive' => false,
         ]);
 
         $updateResult->assertStatus(200);

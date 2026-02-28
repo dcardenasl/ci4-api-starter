@@ -15,15 +15,6 @@ readonly class GoogleLoginRequestDTO extends BaseRequestDTO
 {
     public string $idToken;
 
-    public function __construct(array $data)
-    {
-        if (isset($data['id_token']) && !isset($data['idToken'])) {
-            $data['idToken'] = $data['id_token'];
-        }
-
-        parent::__construct($data);
-    }
-
     protected function rules(): array
     {
         return [

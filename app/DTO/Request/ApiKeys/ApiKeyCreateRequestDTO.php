@@ -22,31 +22,31 @@ readonly class ApiKeyCreateRequestDTO extends BaseRequestDTO
     protected function rules(): array
     {
         return [
-            'name'                => 'required|string|max_length[100]',
-            'rate_limit_requests' => 'permit_empty|is_natural_no_zero',
-            'rate_limit_window'   => 'permit_empty|is_natural_no_zero',
-            'user_rate_limit'     => 'permit_empty|is_natural_no_zero',
-            'ip_rate_limit'       => 'permit_empty|is_natural_no_zero',
+            'name'              => 'required|string|max_length[100]',
+            'rateLimitRequests' => 'permit_empty|is_natural_no_zero',
+            'rateLimitWindow'   => 'permit_empty|is_natural_no_zero',
+            'userRateLimit'     => 'permit_empty|is_natural_no_zero',
+            'ipRateLimit'       => 'permit_empty|is_natural_no_zero',
         ];
     }
 
     protected function map(array $data): void
     {
         $this->name = trim((string) $data['name']);
-        $this->rateLimitRequests = isset($data['rate_limit_requests']) ? (int) $data['rate_limit_requests'] : null;
-        $this->rateLimitWindow = isset($data['rate_limit_window']) ? (int) $data['rate_limit_window'] : null;
-        $this->userRateLimit = isset($data['user_rate_limit']) ? (int) $data['user_rate_limit'] : null;
-        $this->ipRateLimit = isset($data['ip_rate_limit']) ? (int) $data['ip_rate_limit'] : null;
+        $this->rateLimitRequests = isset($data['rateLimitRequests']) ? (int) $data['rateLimitRequests'] : null;
+        $this->rateLimitWindow = isset($data['rateLimitWindow']) ? (int) $data['rateLimitWindow'] : null;
+        $this->userRateLimit = isset($data['userRateLimit']) ? (int) $data['userRateLimit'] : null;
+        $this->ipRateLimit = isset($data['ipRateLimit']) ? (int) $data['ipRateLimit'] : null;
     }
 
     public function toArray(): array
     {
         return array_filter([
-            'name'                => $this->name,
-            'rate_limit_requests' => $this->rateLimitRequests,
-            'rate_limit_window'   => $this->rateLimitWindow,
-            'user_rate_limit'     => $this->userRateLimit,
-            'ip_rate_limit'       => $this->ipRateLimit,
+            'name'              => $this->name,
+            'rateLimitRequests' => $this->rateLimitRequests,
+            'rateLimitWindow'   => $this->rateLimitWindow,
+            'userRateLimit'     => $this->userRateLimit,
+            'ipRateLimit'       => $this->ipRateLimit,
         ], fn ($v) => $v !== null);
     }
 }

@@ -56,7 +56,7 @@ class FileServiceTest extends CIUnitTestCase
     {
         $this->expectException(BadRequestException::class);
 
-        new \App\DTO\Request\Files\FileUploadRequestDTO(['user_id' => 1]);
+        new \App\DTO\Request\Files\FileUploadRequestDTO(['userId' => 1]);
     }
 
     public function testUploadWithoutUserIdThrowsException(): void
@@ -74,7 +74,7 @@ class FileServiceTest extends CIUnitTestCase
 
         new \App\DTO\Request\Files\FileUploadRequestDTO([
             'file' => 12345, // Integer is always invalid
-            'user_id' => 1,
+            'userId' => 1,
         ]);
     }
 
@@ -86,7 +86,7 @@ class FileServiceTest extends CIUnitTestCase
 
         $this->service->upload(new \App\DTO\Request\Files\FileUploadRequestDTO([
             'file' => $mockFile,
-            'user_id' => 1,
+            'userId' => 1,
         ]));
     }
 
@@ -100,7 +100,7 @@ class FileServiceTest extends CIUnitTestCase
 
         $this->service->upload(new \App\DTO\Request\Files\FileUploadRequestDTO([
             'file' => $mockFile,
-            'user_id' => 1,
+            'userId' => 1,
         ]));
     }
 
@@ -114,7 +114,7 @@ class FileServiceTest extends CIUnitTestCase
 
         $this->service->upload(new \App\DTO\Request\Files\FileUploadRequestDTO([
             'file' => $mockFile,
-            'user_id' => 1,
+            'userId' => 1,
         ]));
     }
 
@@ -166,7 +166,7 @@ class FileServiceTest extends CIUnitTestCase
 
         $result = $this->service->upload(new \App\DTO\Request\Files\FileUploadRequestDTO([
             'file' => $mockFile,
-            'user_id' => 1,
+            'userId' => 1,
         ]));
 
         $this->assertInstanceOf(\App\DTO\Response\Files\FileResponseDTO::class, $result);
@@ -222,7 +222,7 @@ class FileServiceTest extends CIUnitTestCase
 
         $this->service->upload(new \App\DTO\Request\Files\FileUploadRequestDTO([
             'file' => $mockFile,
-            'user_id' => 1,
+            'userId' => 1,
         ]));
 
         @unlink($tempFile);
@@ -249,7 +249,7 @@ class FileServiceTest extends CIUnitTestCase
 
         $this->service->upload(new \App\DTO\Request\Files\FileUploadRequestDTO([
             'file' => $mockFile,
-            'user_id' => 1,
+            'userId' => 1,
         ]));
 
         @unlink($tempFile);
@@ -329,7 +329,7 @@ class FileServiceTest extends CIUnitTestCase
             new \App\Libraries\Files\Base64Processor()
         );
 
-        $request = new \App\DTO\Request\Files\FileIndexRequestDTO(['user_id' => 1]);
+        $request = new \App\DTO\Request\Files\FileIndexRequestDTO(['userId' => 1]);
         $result = $this->service->index($request);
         $payload = $result->toArray();
 
@@ -344,7 +344,7 @@ class FileServiceTest extends CIUnitTestCase
     public function testDownloadWithoutIdThrowsException(): void
     {
         $this->expectException(ValidationException::class);
-        new \App\DTO\Request\Files\FileGetRequestDTO(['user_id' => 1]);
+        new \App\DTO\Request\Files\FileGetRequestDTO(['userId' => 1]);
     }
 
     public function testDownloadWithoutUserIdThrowsException(): void
@@ -361,7 +361,7 @@ class FileServiceTest extends CIUnitTestCase
 
         $this->expectException(NotFoundException::class);
 
-        $request = new \App\DTO\Request\Files\FileGetRequestDTO(['id' => 999, 'user_id' => 1]);
+        $request = new \App\DTO\Request\Files\FileGetRequestDTO(['id' => 999, 'userId' => 1]);
         $this->service->download($request);
     }
 
@@ -378,7 +378,7 @@ class FileServiceTest extends CIUnitTestCase
 
         $this->expectException(AuthorizationException::class);
 
-        $request = new \App\DTO\Request\Files\FileGetRequestDTO(['id' => 1, 'user_id' => 1]);
+        $request = new \App\DTO\Request\Files\FileGetRequestDTO(['id' => 1, 'userId' => 1]);
         $this->service->download($request);
     }
 
@@ -397,7 +397,7 @@ class FileServiceTest extends CIUnitTestCase
             ->method('find')
             ->willReturn($file);
 
-        $request = new \App\DTO\Request\Files\FileGetRequestDTO(['id' => 1, 'user_id' => 1]);
+        $request = new \App\DTO\Request\Files\FileGetRequestDTO(['id' => 1, 'userId' => 1]);
         $result = $this->service->download($request);
         $payload = $result->toArray();
 
@@ -416,7 +416,7 @@ class FileServiceTest extends CIUnitTestCase
 
         $this->expectException(NotFoundException::class);
 
-        $request = new \App\DTO\Request\Files\FileGetRequestDTO(['id' => 999, 'user_id' => 1]);
+        $request = new \App\DTO\Request\Files\FileGetRequestDTO(['id' => 999, 'userId' => 1]);
         $this->service->delete($request);
     }
 
@@ -433,7 +433,7 @@ class FileServiceTest extends CIUnitTestCase
 
         $this->expectException(AuthorizationException::class);
 
-        $request = new \App\DTO\Request\Files\FileGetRequestDTO(['id' => 1, 'user_id' => 1]);
+        $request = new \App\DTO\Request\Files\FileGetRequestDTO(['id' => 1, 'userId' => 1]);
         $this->service->delete($request);
     }
 
@@ -461,7 +461,7 @@ class FileServiceTest extends CIUnitTestCase
             ->with(1)
             ->willReturn(true);
 
-        $request = new \App\DTO\Request\Files\FileGetRequestDTO(['id' => 1, 'user_id' => 1]);
+        $request = new \App\DTO\Request\Files\FileGetRequestDTO(['id' => 1, 'userId' => 1]);
         $result = $this->service->delete($request);
 
         $this->assertTrue($result);
@@ -517,7 +517,7 @@ class FileServiceTest extends CIUnitTestCase
                 'extension' => 'png',
                 'mimeType' => 'image/png',
             ]),
-            'user_id' => 1,
+            'userId' => 1,
         ]));
 
         $this->assertInstanceOf(\App\DTO\Response\Files\FileResponseDTO::class, $result);
@@ -557,7 +557,7 @@ class FileServiceTest extends CIUnitTestCase
         $result = $this->service->upload(new \App\DTO\Request\Files\FileUploadRequestDTO([
             'file' => $base64,
             'filename' => $dirtyFilename,
-            'user_id' => 1,
+            'userId' => 1,
         ]));
 
         $this->assertInstanceOf(\App\DTO\Response\Files\FileResponseDTO::class, $result);
@@ -603,7 +603,7 @@ class FileServiceTest extends CIUnitTestCase
 
         $result = $this->service->upload(new \App\DTO\Request\Files\FileUploadRequestDTO([
             'file' => $mockFile,
-            'user_id' => 1,
+            'userId' => 1,
         ]));
 
         $this->assertInstanceOf(\App\DTO\Response\Files\FileResponseDTO::class, $result);

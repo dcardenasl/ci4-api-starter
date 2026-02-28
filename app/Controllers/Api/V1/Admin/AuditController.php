@@ -43,7 +43,7 @@ class AuditController extends ApiController
         return $this->handleRequest(
             'byEntity',
             AuditByEntityRequestDTO::class,
-            ['entity_type' => $type, 'entity_id' => $id]
+            ['entityType' => $type, 'entityId' => $id]
         );
     }
 }

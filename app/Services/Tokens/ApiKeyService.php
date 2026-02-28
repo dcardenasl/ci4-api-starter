@@ -75,7 +75,15 @@ class ApiKeyService extends BaseCrudService implements ApiKeyServiceInterface
         }
 
         return $this->wrapInTransaction(function () use ($id, $request) {
-            $data = array_filter($request->toArray(), fn ($val) => $val !== null);
+            /** @var \App\DTO\Request\ApiKeys\ApiKeyUpdateRequestDTO $request */
+            $data = array_filter([
+                'name' => $request->name,
+                'is_active' => $request->isActive,
+                'rate_limit_requests' => $request->rateLimitRequests,
+                'rate_limit_window' => $request->rateLimitWindow,
+                'user_rate_limit' => $request->userRateLimit,
+                'ip_rate_limit' => $request->ipRateLimit,
+            ], fn ($val) => $val !== null);
 
             if (empty($data)) {
                 throw new BadRequestException(lang('Api.noFieldsToUpdate'));

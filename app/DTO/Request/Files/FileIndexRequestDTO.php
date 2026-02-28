@@ -28,12 +28,11 @@ readonly class FileIndexRequestDTO extends BaseRequestDTO
 
     protected function map(array $data): void
     {
-        $userId = $data['userId'] ?? $data['user_id'] ?? null;
-        if ($userId === null || !is_numeric($userId)) {
+        if (!isset($data['userId']) || !is_numeric($data['userId'])) {
             throw new AuthenticationException(lang('Auth.unauthorized'));
         }
 
-        $this->userId = (int) $userId;
+        $this->userId = (int) $data['userId'];
         $this->page = isset($data['page']) ? (int) $data['page'] : 1;
         $this->perPage = isset($data['perPage']) ? (int) $data['perPage'] : 20;
     }

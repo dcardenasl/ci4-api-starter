@@ -20,6 +20,7 @@ abstract readonly class BaseRequestDTO implements DataTransferObjectInterface
     public function __construct(array $data)
     {
         $enrichedData = $this->enrichWithContext($data);
+        $this->assertNoSnakeCaseKeys($enrichedData);
         $this->validate($enrichedData);
         $this->map($enrichedData);
     }
@@ -95,6 +96,30 @@ abstract readonly class BaseRequestDTO implements DataTransferObjectInterface
                 lang('Api.validationFailed'),
                 $validation->getErrors()
             );
+        }
+    }
+
+    /**
+     * Reject snake_case keys in incoming request payloads.
+     */
+    private function assertNoSnakeCaseKeys(array $data, string $path = ''): void
+    {
+        $errors = [];
+
+        foreach ($data as $key => $value) {
+            if (is_string($key) && str_contains($key, '_')) {
+                $fullKey = $path === '' ? $key : $path . '.' . $key;
+                $errors[$fullKey] = 'Use camelCase for request fields.';
+            }
+
+            if (is_array($value)) {
+                $nestedPath = $path === '' ? (string) $key : $path . '.' . $key;
+                $this->assertNoSnakeCaseKeys($value, $nestedPath);
+            }
+        }
+
+        if ($errors !== []) {
+            throw new ValidationException(lang('Api.validationFailed'), $errors);
         }
     }
 }

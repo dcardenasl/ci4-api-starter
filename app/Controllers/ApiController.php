@@ -155,13 +155,20 @@ abstract class ApiController extends Controller
         /** @var \App\HTTP\ApiRequest $request */
         $request = $this->request;
 
+        $json = $request->getJSON(true);
+        $rawInput = [];
+        if (!is_array($json)) {
+            // Avoid parse_str artifacts when the body is JSON
+            $rawInput = (array) $request->getRawInput();
+        }
+
         // Default precedence: Params > JSON > Post > Raw > Get.
         // For GET requests, query params must win to avoid stale body payload from prior requests in tests.
         $data = array_merge(
             (array) $request->getGet(),
-            (array) $request->getRawInput(),
+            $rawInput,
             (array) $request->getPost(),
-            (array) $request->getJSON(true),
+            is_array($json) ? $json : [],
             $request->getFiles()
         );
 

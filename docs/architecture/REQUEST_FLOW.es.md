@@ -31,6 +31,8 @@ Solicitud HTTP
 └─────────────────────────────────────────┘
      │
      ▼
+
+> **⚠️ ADVERTENCIA CRÍTICA:** `collectRequestData()` tiene prohibido llamar a `$request->getBody()` si la petición es `multipart/form-data`. Leer el cuerpo crudo consume el stream `php://input` y PHP perderá la capacidad de procesar los archivos en `$_FILES`, rompiendo el flujo de subida.
 ┌─────────────────────────────────────────┐
 │ 4. CAPA DTO (El Escudo)                 │
 │    - Autovalidación en constructor      │

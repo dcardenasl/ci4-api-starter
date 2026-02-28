@@ -694,6 +694,7 @@
                     "Authentication"
                 ],
                 "summary": "Login with Google ID token",
+                "description": "If the user already exists, Google login succeeds immediately. If the user is new, the account is created in pending_approval and requires admin approval.",
                 "operationId": "a990b3030ee0819b83c75dc1af51684e",
                 "requestBody": {
                     "$ref": "#/components/requestBodies/GoogleLoginRequest"
@@ -2145,7 +2146,7 @@
                     "Users"
                 ],
                 "summary": "Create user (admin/superadmin)",
-                "description": "Admins can create only role=user. Creating admin/superadmin requires superadmin.",
+                "description": "Admins can create only role=user. Creating admin/superadmin requires superadmin. The account is created as active and an invitation email is sent to set the password.",
                 "operationId": "462c00c3a4c6ef2fc9646c721e9f22d7",
                 "requestBody": {
                     "$ref": "#/components/requestBodies/CreateUserRequest"

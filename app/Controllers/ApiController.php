@@ -155,26 +155,41 @@ abstract class ApiController extends Controller
         /** @var \App\HTTP\ApiRequest $request */
         $request = $this->request;
 
-        $json = $request->getJSON(true);
+        $contentType = strtolower($request->getHeaderLine('Content-Type'));
+        $filesArray = $request->getFiles();
+        $isMultipart = str_contains($contentType, 'multipart/form-data') || !empty($filesArray);
+
+        $bodyPayload = [];
+        if (!$isMultipart) {
+            $rawBody = $request->getBody();
+            $rawBodyString = is_string($rawBody) ? $rawBody : '';
+
+            if ($rawBodyString !== '') {
+                if (str_contains($contentType, 'json')) {
+                    $decodedBody = json_decode($rawBodyString, true);
+                    if (json_last_error() === JSON_ERROR_NONE && is_array($decodedBody)) {
+                        $bodyPayload = $decodedBody;
+                    } else {
+                        $bodyPayload = ['file' => $rawBodyString];
+                    }
+                } else {
+                    $bodyPayload = ['file' => $rawBodyString];
+                }
+            }
+        }
+
         $rawInput = [];
-        if (!is_array($json)) {
-            // Avoid parse_str artifacts when the body is JSON
+        if (!$isMultipart && !str_contains($contentType, 'json')) {
             $rawInput = (array) $request->getRawInput();
         }
 
-        // Default precedence: Params > JSON > Post > Raw > Get.
-        // For GET requests, query params must win to avoid stale body payload from prior requests in tests.
         $data = array_merge(
             (array) $request->getGet(),
             $rawInput,
             (array) $request->getPost(),
-            is_array($json) ? $json : [],
-            $request->getFiles()
+            $bodyPayload,
+            $filesArray
         );
-
-        if (strtoupper($request->getMethod()) === 'GET') {
-            $data = array_merge($data, (array) $request->getGet());
-        }
 
         return array_merge($data, $params ?? []);
     }

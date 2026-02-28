@@ -38,12 +38,9 @@ readonly class RegisterResponseDTO implements DataTransferObjectInterface
     ) {
     }
 
-    /**
-     * @param array $data Data from UserModel/Entity
-     */
     public static function fromArray(array $data): self
     {
-        $createdAt = $data['created_at'] ?? null;
+        $createdAt = $data['created_at'] ?? $data['createdAt'] ?? null;
 
         // Normalize date to string if it's an object (CI4 Time or DateTime)
         if ($createdAt instanceof \DateTimeInterface) {
@@ -51,12 +48,12 @@ readonly class RegisterResponseDTO implements DataTransferObjectInterface
         }
 
         return new self(
-            id: (int) $data['id'],
-            email: $data['email'],
-            firstName: $data['first_name'],
-            lastName: $data['last_name'],
-            role: $data['role'],
-            status: $data['status'],
+            id: (int) ($data['id'] ?? 0),
+            email: (string) ($data['email'] ?? ''),
+            firstName: (string) ($data['firstName'] ?? ($data['first_name'] ?? '')),
+            lastName: (string) ($data['lastName'] ?? ($data['last_name'] ?? '')),
+            role: (string) ($data['role'] ?? 'user'),
+            status: (string) ($data['status'] ?? 'pending_approval'),
             createdAt: $createdAt ? (string) $createdAt : null
         );
     }

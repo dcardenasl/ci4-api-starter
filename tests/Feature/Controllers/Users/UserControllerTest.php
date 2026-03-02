@@ -226,4 +226,34 @@ class UserControllerTest extends ApiTestCase
 
         $approveResult->assertStatus(409);
     }
+
+    public function testAdminCanApprovePendingApprovalUser(): void
+    {
+        $pendingUserId = $this->createUser(
+            'pending-approval@example.com',
+            'ValidPass123!',
+            'user',
+            'pending_approval'
+        );
+
+        $approveResult = $this->post("/api/v1/users/{$pendingUserId}/approve");
+        $approveResult->assertStatus(200);
+
+        $approveJson = $this->getResponseJson($approveResult);
+        $this->assertEquals('success', $approveJson['status'] ?? null);
+        $this->assertEquals('active', $approveJson['data']['status'] ?? null);
+    }
+
+    public function testAdminCannotApproveAlreadyActiveUser(): void
+    {
+        $activeUserId = $this->createUser(
+            'already-active-feature@example.com',
+            'ValidPass123!',
+            'user',
+            'active'
+        );
+
+        $approveResult = $this->post("/api/v1/users/{$activeUserId}/approve");
+        $approveResult->assertStatus(409);
+    }
 }

@@ -7,6 +7,7 @@ namespace Tests\Integration\Services;
 use App\DTO\Request\Users\UserStoreRequestDTO;
 use App\DTO\Request\Users\UserUpdateRequestDTO;
 use App\DTO\SecurityContext;
+use App\Exceptions\ConflictException;
 use App\Models\UserModel;
 use App\Services\Users\UserService;
 use CodeIgniter\Test\CIUnitTestCase;
@@ -95,5 +96,35 @@ class UserServiceTest extends CIUnitTestCase
 
         $this->assertNull($this->userModel->find($userId));
         $this->assertNotNull($this->userModel->withDeleted()->find($userId));
+    }
+
+    public function testApproveActivatesPendingApprovalUser(): void
+    {
+        $userId = $this->userModel->insert([
+            'email' => 'pending-approve@example.com',
+            'password' => password_hash('ValidPass123!', PASSWORD_BCRYPT),
+            'role' => 'user',
+            'status' => 'pending_approval',
+        ]);
+
+        $result = $this->userService->approve((int) $userId, new SecurityContext(1, 'admin'));
+
+        $user = $this->userModel->find($userId);
+        $this->assertEquals('active', $user->status);
+        $this->assertNotNull($user->approved_at);
+        $this->assertEquals('active', $result->toArray()['status'] ?? null);
+    }
+
+    public function testApproveThrowsConflictForAlreadyActiveUser(): void
+    {
+        $userId = $this->userModel->insert([
+            'email' => 'already-active@example.com',
+            'password' => password_hash('ValidPass123!', PASSWORD_BCRYPT),
+            'role' => 'user',
+            'status' => 'active',
+        ]);
+
+        $this->expectException(ConflictException::class);
+        $this->userService->approve((int) $userId, new SecurityContext(1, 'admin'));
     }
 }

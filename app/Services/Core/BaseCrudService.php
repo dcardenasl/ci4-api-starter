@@ -8,6 +8,7 @@ use App\DTO\Response\Common\PaginatedResponseDTO;
 use App\DTO\SecurityContext;
 use App\Exceptions\NotFoundException;
 use App\Interfaces\DataTransferObjectInterface;
+use App\Interfaces\Mappers\ResponseMapperInterface;
 use App\Libraries\Query\QueryBuilder;
 use CodeIgniter\Model;
 
@@ -27,9 +28,14 @@ abstract class BaseCrudService implements \App\Interfaces\Core\CrudServiceContra
     protected \CodeIgniter\Model $model;
 
     /**
-     * @var string The class name of the Response DTO for this service
+     * @var ResponseMapperInterface Mapper responsible for turning entities into DTOs
      */
-    protected string $responseDtoClass;
+    protected ResponseMapperInterface $responseMapper;
+
+    public function __construct(ResponseMapperInterface $responseMapper)
+    {
+        $this->responseMapper = $responseMapper;
+    }
 
     /**
      * Get a paginated list of resources
@@ -120,10 +126,6 @@ abstract class BaseCrudService implements \App\Interfaces\Core\CrudServiceContra
      */
     protected function mapToResponse(object $entity): DataTransferObjectInterface
     {
-        if (!isset($this->responseDtoClass) || !class_exists($this->responseDtoClass)) {
-            throw new \RuntimeException(lang('Api.responseDtoNotDefined', [static::class]));
-        }
-
-        return ($this->responseDtoClass)::fromArray($entity->toArray());
+        return $this->responseMapper->map($entity);
     }
 }

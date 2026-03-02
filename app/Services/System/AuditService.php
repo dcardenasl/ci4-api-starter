@@ -7,6 +7,7 @@ namespace App\Services\System;
 use App\DTO\Response\Common\PayloadResponseDTO;
 use App\DTO\SecurityContext;
 use App\Interfaces\DataTransferObjectInterface;
+use App\Interfaces\Mappers\ResponseMapperInterface;
 use App\Models\AuditLogModel;
 use App\Services\Core\BaseCrudService;
 
@@ -20,8 +21,6 @@ class AuditService extends BaseCrudService implements \App\Interfaces\System\Aud
 {
     use \App\Traits\AppliesQueryOptions;
 
-    protected string $responseDtoClass;
-
     private const SENSITIVE_FIELDS = [
         'password', 'password_confirmation', 'token', 'accesstoken', 'refreshtoken', 'apikey', 'access_token', 'refresh_token', 'api_key', 'key_hash'
     ];
@@ -31,10 +30,12 @@ class AuditService extends BaseCrudService implements \App\Interfaces\System\Aud
      */
     public static bool $forceEnabledInTests = false;
 
-    public function __construct(protected readonly AuditLogModel $auditLogModel)
-    {
+    public function __construct(
+        protected readonly AuditLogModel $auditLogModel,
+        ResponseMapperInterface $responseMapper
+    ) {
+        parent::__construct($responseMapper);
         $this->model = $auditLogModel;
-        $this->responseDtoClass = \App\DTO\Response\Audit\AuditResponseDTO::class;
     }
 
     /**

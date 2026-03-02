@@ -456,17 +456,18 @@ use App\Interfaces\DataTransferObjectInterface;
 use App\Interfaces\\{$domain}\\{$resource}ServiceInterface;
 use App\Models\\{$resource}Model;
 use App\Services\Core\BaseCrudService;
+use App\Interfaces\Mappers\ResponseMapperInterface;
 use App\Traits\AppliesQueryOptions;
 
 readonly class {$resource}Service extends BaseCrudService implements {$resource}ServiceInterface
 {
     use AppliesQueryOptions;
 
-    protected string \$responseDtoClass = \App\DTO\Response\\{$domain}\\{$resource}ResponseDTO::class;
-
     public function __construct(
-        protected {$resource}Model \${$resourceLower}Model
+        protected {$resource}Model \${$resourceLower}Model,
+        ResponseMapperInterface \$responseMapper
     ) {
+        parent::__construct(\$responseMapper);
         \$this->model = \${$resourceLower}Model;
     }
 

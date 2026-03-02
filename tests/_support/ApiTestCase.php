@@ -101,9 +101,7 @@ abstract class ApiTestCase extends CIUnitTestCase
 
     protected function reapplyTestRequestHeaders(): void
     {
-        if (! empty($this->testRequestHeaders)) {
-            $this->withHeaders($this->testRequestHeaders);
-        }
+        $this->withHeaders($this->testRequestHeaders);
     }
 
     protected function clearTestRequestHeaders(): void

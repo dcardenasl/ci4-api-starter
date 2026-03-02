@@ -6,6 +6,7 @@ namespace Tests\Integration\Services;
 
 use App\DTO\Request\Users\UserStoreRequestDTO;
 use App\DTO\Request\Users\UserUpdateRequestDTO;
+use App\DTO\SecurityContext;
 use App\Models\UserModel;
 use App\Services\Users\UserService;
 use CodeIgniter\Test\CIUnitTestCase;
@@ -31,16 +32,7 @@ class UserServiceTest extends CIUnitTestCase
         parent::setUp();
 
         $this->userModel = new UserModel();
-        $this->userService = new UserService(
-            $this->userModel,
-            \Config\Services::emailService(),
-            \Config\Services::auditService(),
-            new \App\Libraries\Security\UserRoleGuard(),
-            new \App\Services\Auth\UserInvitationService(
-                new \App\Models\PasswordResetModel(),
-                \Config\Services::emailService()
-            )
-        );
+        $this->userService = \Config\Services::userService(false);
     }
 
     public function testStoreCreatesUserInDatabase(): void
@@ -49,10 +41,10 @@ class UserServiceTest extends CIUnitTestCase
             'email' => 'integration@example.com',
             'firstName' => 'Integration',
             'lastName' => 'User',
-            'userRole' => 'admin',
+            'role' => 'user',
         ]);
 
-        $result = $this->userService->store($request);
+        $result = $this->userService->store($request, new SecurityContext(1, 'admin'));
         $data = $result->toArray();
 
         $user = $this->userModel->find($data['id']);
@@ -82,10 +74,9 @@ class UserServiceTest extends CIUnitTestCase
         $request = new UserUpdateRequestDTO([
             'email' => 'new@example.com',
             'firstName' => 'New',
-            'userRole' => 'superadmin',
         ]);
 
-        $result = $this->userService->update((int) $userId, $request);
+        $result = $this->userService->update((int) $userId, $request, new SecurityContext(1, 'admin'));
 
         $user = $this->userModel->find($userId);
         $this->assertEquals('new@example.com', $user->email);
@@ -99,7 +90,7 @@ class UserServiceTest extends CIUnitTestCase
             'role' => 'user',
         ]);
 
-        $result = $this->userService->destroy((int) $userId);
+        $result = $this->userService->destroy((int) $userId, new SecurityContext(1, 'admin'));
         $this->assertTrue($result);
 
         $this->assertNull($this->userModel->find($userId));

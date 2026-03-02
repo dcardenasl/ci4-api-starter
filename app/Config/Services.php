@@ -494,4 +494,27 @@ class Services extends BaseService
             new \CodeIgniter\HTTP\UserAgent()
         );
     }
+    public static function demoproductResponseMapper(bool $getShared = true)
+    {
+        if ($getShared) {
+            return static::getSharedInstance('demoproductResponseMapper');
+        }
+
+        return new \App\Services\Core\Mappers\DtoResponseMapper(
+            \App\DTO\Response\Catalog\DemoproductResponseDTO::class
+        );
+    }
+
+    public static function demoproductService(bool $getShared = true)
+    {
+        if ($getShared) {
+            return static::getSharedInstance('demoproductService');
+        }
+
+        return new \App\Services\Catalog\DemoproductService(
+            new \App\Models\DemoproductModel(),
+            static::demoproductResponseMapper()
+        );
+    }
+
 }

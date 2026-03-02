@@ -104,6 +104,16 @@ $routes->group('api/v1', function ($routes) {
             $routes->get('audit', '\App\Controllers\Api\V1\Admin\AuditController::index');
             $routes->get('audit/(:num)', '\App\Controllers\Api\V1\Admin\AuditController::show/$1');
             $routes->get('audit/entity/(:segment)/(:num)', '\App\Controllers\Api\V1\Admin\AuditController::byEntity/$1/$2');
+
+            $routes->group('demo-products', ['namespace' => '\App\Controllers\Api\V1\Catalog'], function ($routes) {
+                $routes->get('', 'DemoproductController::index');
+                $routes->get('(:num)', 'DemoproductController::show/$1');
+                $routes->group('', ['filter' => 'roleauth:admin'], function ($routes) {
+                    $routes->post('', 'DemoproductController::create');
+                    $routes->put('(:num)', 'DemoproductController::update/$1');
+                    $routes->delete('(:num)', 'DemoproductController::delete/$1');
+                });
+            });
         });
     });
 });

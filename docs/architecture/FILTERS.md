@@ -26,6 +26,7 @@ AuthThrottleFilter/JwtAuthFilter → RoleAuthorizationFilter → Controller
 | `RoleAuthorizationFilter` | `roleauth` | Check user role | Route arg: `roleauth:admin` |
 | `RequestLoggingFilter` | `requestLogging` | Persist request telemetry (except health probes) | `REQUEST_LOGGING_ENABLED` |
 | `SecurityHeadersFilter` | `secureheaders` | Adds secure response headers | Config-driven |
+| `FeatureToggleFilter` | `featureToggle` | Blocks disabled feature routes with 503 | `MONITORING_ENABLED`, `METRICS_ENABLED` |
 
 ## Usage in Routes
 

@@ -4,6 +4,7 @@ namespace Config;
 
 use App\Filters\AuthThrottleFilter;
 use App\Filters\CorsFilter;
+use App\Filters\FeatureToggleFilter;
 use App\Filters\JwtAuthFilter;
 use App\Filters\LocaleFilter;
 use App\Filters\RequestLoggingFilter;
@@ -63,6 +64,7 @@ class Filters extends BaseFilters
         'roleauth'      => RoleAuthorizationFilter::class,
         'requestLogging' => RequestLoggingFilter::class,
         'locale'        => LocaleFilter::class,
+        'featureToggle' => FeatureToggleFilter::class,
     ];
 
     /**

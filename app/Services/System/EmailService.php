@@ -104,6 +104,7 @@ readonly class EmailService implements EmailServiceInterface
 
         // Set locale for template rendering if not provided
         if (!isset($data['locale']) || !is_string($data['locale']) || $data['locale'] === '') {
+            /** @var \CodeIgniter\HTTP\IncomingRequest $request */
             $request = \Config\Services::request();
             $data['locale'] = method_exists($request, 'getLocale') ? (string) $request->getLocale() : (string) config('App')->defaultLocale;
         }

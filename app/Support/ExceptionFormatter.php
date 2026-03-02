@@ -49,12 +49,6 @@ class ExceptionFormatter
             return $e->getStatusCode();
         }
 
-        if (method_exists($e, 'getStatusCode')) {
-            /** @var mixed $dynamicException */
-            $dynamicException = $e;
-            return (int) $dynamicException->getStatusCode();
-        }
-
         return 500;
     }
 

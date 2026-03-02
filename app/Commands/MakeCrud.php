@@ -92,6 +92,7 @@ class MakeCrud extends BaseCommand
         CLI::write("1) Add specific validation rules to DTOs in app/DTO/Request/{$domain}/");
         CLI::write("2) Define your DB schema in a new migration.");
         CLI::write("3) Update app/Config/Routes.php with the following snippet:");
+        CLI::write("4) Run module bootstrap validation: php spark module:check {$resource} --domain {$domain}");
         CLI::newLine();
 
         $routePrefix = "\$routes->group('{$route}', ['namespace' => 'App\\Controllers\\Api\\V1\\{$domain}'], function(\$routes) {";
@@ -271,6 +272,7 @@ readonly class {$resource}IndexRequestDTO extends BaseRequestDTO
     {
         return [
             'page'     => 'permit_empty|is_natural_no_zero',
+            'perPage'  => 'permit_empty|is_natural_no_zero|less_than[101]',
             'per_page' => 'permit_empty|is_natural_no_zero|less_than[101]',
             'search'   => 'permit_empty|string|max_length[100]',
         ];
@@ -279,7 +281,9 @@ readonly class {$resource}IndexRequestDTO extends BaseRequestDTO
     protected function map(array \$data): void
     {
         \$this->page = isset(\$data['page']) ? (int) \$data['page'] : 1;
-        \$this->perPage = isset(\$data['per_page']) ? (int) \$data['per_page'] : 20;
+        \$this->perPage = isset(\$data['perPage'])
+            ? (int) \$data['perPage']
+            : (isset(\$data['per_page']) ? (int) \$data['per_page'] : 20);
         \$this->search = \$data['search'] ?? null;
     }
 
@@ -287,7 +291,7 @@ readonly class {$resource}IndexRequestDTO extends BaseRequestDTO
     {
         return [
             'page' => \$this->page,
-            'per_page' => \$this->perPage,
+            'perPage' => \$this->perPage,
             'search' => \$this->search,
         ];
     }
@@ -643,29 +647,34 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Services\\{$domain};
 
-use App\Models\\{$resource}Model;
 use App\Services\\{$domain}\\{$resource}Service;
 use CodeIgniter\Test\CIUnitTestCase;
 use ReflectionMethod;
 
 class {$resource}ServiceTest extends CIUnitTestCase
 {
-    protected {$resource}Service \$service;
-    protected {$resource}Model \$mockModel;
-
-    protected function setUp(): void
-    {
-        parent::setUp();
-        \$this->mockModel = \$this->createMock({$resource}Model::class);
-        \$this->service = new {$resource}Service(\$this->mockModel);
-    }
-
     public function testIndexContractReturnsDataTransferObjectInterface(): void
     {
         \$method = new ReflectionMethod({$resource}Service::class, 'index');
         \$returnType = \$method->getReturnType();
         \$this->assertNotNull(\$returnType);
         \$this->assertSame(\App\Interfaces\DataTransferObjectInterface::class, \$returnType?->getName());
+    }
+
+    public function testStoreAndUpdateSignaturesUseDtoAndSecurityContext(): void
+    {
+        \$store = new ReflectionMethod({$resource}Service::class, 'store');
+        \$update = new ReflectionMethod({$resource}Service::class, 'update');
+
+        \$storeParams = \$store->getParameters();
+        \$updateParams = \$update->getParameters();
+        \$storeContextType = (string) \$storeParams[1]->getType();
+        \$updateContextType = (string) \$updateParams[2]->getType();
+
+        \$this->assertSame(\App\Interfaces\DataTransferObjectInterface::class, (string) \$storeParams[0]->getType());
+        \$this->assertSame(\App\DTO\SecurityContext::class, ltrim(\$storeContextType, '?'));
+        \$this->assertSame(\App\Interfaces\DataTransferObjectInterface::class, (string) \$updateParams[1]->getType());
+        \$this->assertSame(\App\DTO\SecurityContext::class, ltrim(\$updateContextType, '?'));
     }
 }
 PHP;

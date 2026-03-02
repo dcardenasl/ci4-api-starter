@@ -6,6 +6,7 @@ Checklist para crear módulos nuevos de forma consistente.
 
 1. Ejecutar `php spark make:crud {Resource} --domain {Domain} --route {slug}`.
 2. Confirmar archivos generados en capas y tests.
+3. Ejecutar `php spark module:check {Resource} --domain {Domain}` y corregir los faltantes reportados.
 
 ## 2. Persistencia
 

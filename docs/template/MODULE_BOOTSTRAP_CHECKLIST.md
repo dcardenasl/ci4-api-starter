@@ -6,6 +6,7 @@ Use this checklist when creating a new module from this template.
 
 1. Run `php spark make:crud {Resource} --domain {Domain} --route {slug}`.
 2. Verify generated files exist in `Controllers`, `DTO`, `Interfaces`, `Services`, `Documentation`, `Language`, and `tests`.
+3. Run `php spark module:check {Resource} --domain {Domain}` and fix all reported gaps.
 
 ## 2. Persistence
 

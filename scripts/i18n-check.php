@@ -242,6 +242,10 @@ $exceptionAllowlist = [
     $root . '/app/Services/JwtService.php',
 ];
 
+$validationExceptionScanIgnoredFiles = [
+    $root . '/app/Commands/MakeCrud.php',
+];
+
 $hardcodedScanDirs = [
     $root . '/app/Services',
     $root . '/app/Controllers',
@@ -274,6 +278,49 @@ foreach ($hardcodedScanDirs as $scanDir) {
             $lineNumber = substr_count(substr($content, 0, $offset), "\n") + 1;
             $relative = str_replace($root . '/', '', $file);
             $errors[] = "Hardcoded exception message in {$relative}:{$lineNumber} ({$message})";
+        }
+    }
+}
+
+foreach (listPhpFiles($root . '/app') as $file) {
+    if (in_array($file, $validationExceptionScanIgnoredFiles, true)) {
+        continue;
+    }
+
+    $content = file_get_contents($file);
+    if ($content === false) {
+        continue;
+    }
+
+    if (!preg_match_all('/throw new\\s+[A-Za-z0-9_\\\\]*ValidationException\\s*\\((.*?)\\);/s', $content, $matches, PREG_OFFSET_CAPTURE)) {
+        continue;
+    }
+
+    foreach ($matches[1] as $match) {
+        $args = $match[0];
+        $offset = $match[1];
+
+        if (!str_contains($args, '[') || !str_contains($args, '=>')) {
+            continue;
+        }
+
+        if (!preg_match_all('/=>\\s*([\'"])([^\'"]+)\\1/', $args, $arrayValueMatches, PREG_SET_ORDER | PREG_OFFSET_CAPTURE)) {
+            continue;
+        }
+
+        foreach ($arrayValueMatches as $valueMatch) {
+            $rawValue = $valueMatch[2][0];
+            $valueOffset = $valueMatch[2][1];
+            $prefix = substr($args, 0, $valueOffset);
+
+            // Allow localized message sources only.
+            if (preg_match('/=>\\s*lang\\(/', substr($prefix, -20)) === 1) {
+                continue;
+            }
+
+            $lineNumber = substr_count(substr($content, 0, $offset + $valueOffset), "\n") + 1;
+            $relative = str_replace($root . '/', '', $file);
+            $errors[] = "Hardcoded ValidationException error message in {$relative}:{$lineNumber} ({$rawValue})";
         }
     }
 }

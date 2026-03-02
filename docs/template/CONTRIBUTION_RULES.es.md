@@ -8,6 +8,7 @@ Estas reglas definen el estándar mínimo de contribución para este repositorio
 2. Services con lógica de negocio pura; sin manejo HTTP.
 3. Transferencia entre capas con DTOs (`readonly`, request DTOs validados).
 4. Clases runtime (`Commands`, `Filters`) resuelven dependencias por contenedor/helpers (`Services::*`, `model()`).
+5. Mensajes de validación y excepciones deben usar claves `lang()` (sin textos hardcodeados visibles al usuario).
 
 ## 2. Entregables obligatorios por cambio
 

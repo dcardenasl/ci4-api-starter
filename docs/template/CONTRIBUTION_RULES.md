@@ -8,6 +8,7 @@ These rules define the minimum contribution standard for this repository and dow
 2. Services keep pure business logic; no HTTP status/response handling.
 3. Data transfer between layers uses DTOs (`readonly`, validated request DTOs).
 4. Runtime classes (`Commands`, `Filters`) resolve dependencies via container/helpers (`Services::*`, `model()`).
+5. Validation and exception messages must use `lang()` keys (no hardcoded user-facing strings).
 
 ## 2. Required Artifacts Per Change
 

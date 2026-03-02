@@ -14,7 +14,7 @@ Main code locations:
 - Queue manager: `app/Libraries/Queue/QueueManager.php`
 - Worker command: `app/Commands/QueueWork.php`
 - Email jobs: `app/Libraries/Queue/Jobs/SendEmailJob.php`, `SendTemplateEmailJob.php`
-- Email enqueuing: `app/Services/EmailService.php`
+- Email enqueuing: `app/Services/System/EmailService.php`
 
 ## Configuration (.env)
 
@@ -27,6 +27,7 @@ QUEUE_RETRY_AFTER = 90
 Notes:
 - The current `QueueManager` implementation uses **database** tables.
 - If you set `QUEUE_DRIVER=redis`, it will still use the database unless the manager is extended.
+- In `ENVIRONMENT=testing`, queue DB connection defaults to `tests` (can be overridden by `QUEUE_DATABASE_CONNECTION`).
 
 ## Required Migrations
 
@@ -89,4 +90,3 @@ Development:
 
 Production:
 - Run `php spark queue:work --queue=emails` under a process supervisor (systemd, supervisor, PM2, etc.).
-

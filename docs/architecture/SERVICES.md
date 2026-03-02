@@ -21,6 +21,7 @@ Services are grouped by functional domain to ensure high cohesion and prevent "G
 Large services are decomposed into specialized components injected via constructor. This keeps orchestrators thin and logic testable.
 
 ### Support Components:
+- **Actions**: Encapsulate command flows with write-side side effects (e.g., `RegisterUserAction`, `ApproveUserAction`, `CreateApiKeyAction`).
 - **Handlers**: Encapsulate multi-step logic (e.g., `GoogleAuthHandler`).
 - **Guards**: Centralize security assertions (e.g., `UserRoleGuard`).
 - **Mappers**: Handle entity-to-DTO transformations (e.g., `AuthUserMapper`).

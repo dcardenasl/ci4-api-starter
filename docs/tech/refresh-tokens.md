@@ -3,7 +3,7 @@
 Refresh tokens are stored in the database and rotated on use.
 
 Key files:
-- `app/Services/RefreshTokenService.php`
+- `app/Services/Tokens/RefreshTokenService.php`
 - `app/Models/RefreshTokenModel.php`
 - `app/Validations/TokenValidation.php`
 - `app/Database/Migrations/2026-01-29-205207_CreateRefreshTokensTable.php`

@@ -3,7 +3,7 @@
 El sistema de correos usa Symfony Mailer y soporta mensajes con plantillas. El envío normalmente se encola para no ralentizar las solicitudes.
 
 Archivos clave:
-- `app/Services/EmailService.php`
+- `app/Services/System/EmailService.php`
 - `app/Views/emails/`
 - `app/Libraries/Queue/Jobs/SendEmailJob.php`
 - `app/Libraries/Queue/Jobs/SendTemplateEmailJob.php`

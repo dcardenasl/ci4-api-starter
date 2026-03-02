@@ -14,7 +14,7 @@ Ubicaciones principales:
 - Queue manager: `app/Libraries/Queue/QueueManager.php`
 - Comando worker: `app/Commands/QueueWork.php`
 - Jobs de email: `app/Libraries/Queue/Jobs/SendEmailJob.php`, `SendTemplateEmailJob.php`
-- Encolado de email: `app/Services/EmailService.php`
+- Encolado de email: `app/Services/System/EmailService.php`
 
 ## Configuración (.env)
 
@@ -27,6 +27,7 @@ QUEUE_RETRY_AFTER = 90
 Notas:
 - La implementación actual de `QueueManager` usa tablas de **database**.
 - Si pones `QUEUE_DRIVER=redis`, seguirá usando database a menos que se extienda el manager.
+- En `ENVIRONMENT=testing`, la conexión de base de datos de cola usa `tests` por defecto (se puede sobrescribir con `QUEUE_DATABASE_CONNECTION`).
 
 ## Migraciones requeridas
 

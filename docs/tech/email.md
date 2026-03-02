@@ -3,7 +3,7 @@
 The email system uses Symfony Mailer and supports template-based messages. Email sending is usually queued to avoid slowing down API requests.
 
 Key files:
-- `app/Services/EmailService.php`
+- `app/Services/System/EmailService.php`
 - `app/Views/emails/`
 - `app/Libraries/Queue/Jobs/SendEmailJob.php`
 - `app/Libraries/Queue/Jobs/SendTemplateEmailJob.php`

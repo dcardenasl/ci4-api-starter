@@ -3,7 +3,7 @@
 Los tokens de refresco se almacenan en base de datos y se rotan al usarse.
 
 Archivos clave:
-- `app/Services/RefreshTokenService.php`
+- `app/Services/Tokens/RefreshTokenService.php`
 - `app/Models/RefreshTokenModel.php`
 - `app/Validations/TokenValidation.php`
 - `app/Database/Migrations/2026-01-29-205207_CreateRefreshTokensTable.php`

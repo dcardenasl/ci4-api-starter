@@ -3,7 +3,7 @@
 Database transactions are used to keep critical flows consistent.
 
 Key files:
-- `app/Services/RefreshTokenService.php`
+- `app/Services/Tokens/RefreshTokenService.php`
 
 Notes:
 - Refresh token rotation runs inside a DB transaction.

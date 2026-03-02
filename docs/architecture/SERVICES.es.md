@@ -21,6 +21,7 @@ Los servicios se agrupan por dominio funcional para garantizar una alta cohesió
 Los servicios grandes se descomponen en componentes especializados inyectados a través del constructor. Esto mantiene a los orquestadores ligeros y a la lógica testeable.
 
 ### Componentes de Soporte (Support):
+- **Actions**: Encapsulan flujos de comando con efectos de escritura (ej. `RegisterUserAction`, `ApproveUserAction`, `CreateApiKeyAction`).
 - **Handlers**: Encapsulan lógica de múltiples pasos (ej. `GoogleAuthHandler`).
 - **Guards**: Centralizan aserciones de seguridad (ej. `UserRoleGuard`).
 - **Mappers**: Manejan transformaciones de entidades a DTOs (ej. `AuthUserMapper`).

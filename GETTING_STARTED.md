@@ -562,10 +562,14 @@ Create `app/Controllers/Api/V1/ProductController.php`:
 namespace App\Controllers\Api\V1;
 
 use App\Controllers\ApiController;
+use Config\Services;
 
 class ProductController extends ApiController
 {
-    protected string $serviceName = 'productService';
+    protected function resolveDefaultService(): object
+    {
+        return Services::productService();
+    }
 
     // That's it! All CRUD methods are inherited from ApiController:
     // - index()   -> GET /products

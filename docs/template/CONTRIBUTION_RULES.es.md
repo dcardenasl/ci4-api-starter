@@ -4,7 +4,7 @@ Estas reglas definen el estándar mínimo de contribución para este repositorio
 
 ## 1. No negociables de arquitectura
 
-1. Controllers delgados (`ApiController`, `handleRequest()`, `getDTO()`).
+1. Controllers delgados (`ApiController`, `resolveDefaultService()`, `handleRequest()`).
 2. Services con lógica de negocio pura; sin manejo HTTP.
 3. Transferencia entre capas con DTOs (`readonly`, request DTOs validados).
 4. Clases runtime (`Commands`, `Filters`) resuelven dependencias por contenedor/helpers (`Services::*`, `model()`).

@@ -53,7 +53,7 @@ This document explains the architectural decisions made in this project.
 **Decision:** Validation and Context Enrichment happen at the edge.
 
 - **Self-Validation**: Handled in `BaseRequestDTO::__construct`.
-- **Context Enrichment**: `BaseRequestDTO` automatically pulls `user_id` and `role` from `ContextHolder` if missing from input data.
+- **Context Enrichment**: `ApiController` injects `userId` and `userRole` into DTO payloads via `withSecurityContext(...)` before DTO instantiation.
 - **Immutability**: All DTOs are `readonly`.
 
 ---

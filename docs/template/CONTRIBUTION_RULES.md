@@ -4,7 +4,7 @@ These rules define the minimum contribution standard for this repository and dow
 
 ## 1. Architectural Non-Negotiables
 
-1. Controllers stay thin (`ApiController`, `handleRequest()`, `getDTO()`).
+1. Controllers stay thin (`ApiController`, `resolveDefaultService()`, `handleRequest()`).
 2. Services keep pure business logic; no HTTP status/response handling.
 3. Data transfer between layers uses DTOs (`readonly`, validated request DTOs).
 4. Runtime classes (`Commands`, `Filters`) resolve dependencies via container/helpers (`Services::*`, `model()`).

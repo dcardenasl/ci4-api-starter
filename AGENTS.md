@@ -24,7 +24,7 @@
 - `php spark swagger:generate` regenerates `public/swagger.json` from DTO and Documentation annotations.
 
 ## Agent Critical Rules
-- **Thin Controllers:** Define `protected string $serviceName` and use `handleRequest('method', RequestDTO::class)` as the default pattern.
+- **Thin Controllers:** Resolve the default service explicitly in `resolveDefaultService()` and use `handleRequest('method', RequestDTO::class)` as the default pattern.
 - **No Inline Annotations:** Do not add OpenAPI annotations to controllers. Use DTOs for schemas and `app/Documentation/` for endpoints.
 - **Service Registration:** Always register new services in `app/Config/Services.php`.
 - **Pure Logic:** Business decisions belong in services; HTTP decisions belong in controllers.

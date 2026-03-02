@@ -68,6 +68,7 @@ This is a **Declarative DTO-First Layered REST API** following the pattern: **Co
 
 ### 4. Controllers (`app/Controllers/Api/V1/`)
 - Must extend `ApiController`.
+- Resolve default service explicitly in `resolveDefaultService()`.
 - Use declarative handling: `return $this->handleRequest('methodName', RequestDTO::class);`.
 
 ### 5. Documentation

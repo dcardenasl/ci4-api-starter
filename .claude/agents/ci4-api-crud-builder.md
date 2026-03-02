@@ -23,7 +23,7 @@ You understand the complete flow:
 - Use constructor property promotion for all dependencies.
 
 ### 3. DTO-First Architecture
-- **Request DTOs:** Must extend `BaseRequestDTO`. They self-validate and automatically enrich `user_id`/`role` from `ContextHolder`.
+- **Request DTOs:** Must extend `BaseRequestDTO`. They self-validate; identity context (`userId`/`userRole`) is injected at the HTTP boundary by `ApiController`.
 - **Response DTOs:** Must define OpenAPI `#[OA\Property]` attributes.
 
 ### 4. Controller & Response Pipeline

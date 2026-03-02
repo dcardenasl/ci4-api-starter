@@ -3,10 +3,16 @@
 
 ## Filter Pipeline
 
-Every request passes through filters in this order:
+Global pipeline (configured in `app/Config/Filters.php`):
 
 ```
-CorsFilter → ThrottleFilter → JwtAuthFilter → RoleAuthFilter → Controller
+LocaleFilter → CorsFilter → InvalidChars → Controller → CorsFilter → SecurityHeadersFilter → RequestLoggingFilter
+```
+
+Route-level pipeline (configured in `app/Config/Routes.php`) for authenticated admin endpoints:
+
+```
+AuthThrottleFilter/JwtAuthFilter → RoleAuthorizationFilter → Controller
 ```
 
 ## Available Filters
@@ -14,17 +20,20 @@ CorsFilter → ThrottleFilter → JwtAuthFilter → RoleAuthFilter → Controlle
 | Filter | Alias | Purpose | Configuration |
 |--------|-------|---------|---------------|
 | `CorsFilter` | `cors` | Handle CORS and preflight | `.env` CORS_* |
-| `ThrottleFilter` | `throttle` | Rate limiting (60 req/min) | `RATE_LIMIT_*` |
+| `ThrottleFilter` | `throttle` | Generic rate limiting (available alias) | `RATE_LIMIT_*` |
+| `AuthThrottleFilter` | `authThrottle` | Stricter throttling for auth/public identity endpoints | `AUTH_RATE_LIMIT_*` |
 | `JwtAuthFilter` | `jwtauth` | Validate JWT token | `JWT_SECRET_KEY` |
 | `RoleAuthorizationFilter` | `roleauth` | Check user role | Route arg: `roleauth:admin` |
+| `RequestLoggingFilter` | `requestLogging` | Persist request telemetry (except health probes) | `REQUEST_LOGGING_ENABLED` |
+| `SecurityHeadersFilter` | `secureheaders` | Adds secure response headers | Config-driven |
 
 ## Usage in Routes
 
 ```php
 // app/Config/Routes.php
 
-// Public with throttle
-$routes->group('', ['filter' => 'throttle'], function ($routes) {
+// Public auth endpoints with auth-specific throttling
+$routes->group('', ['filter' => 'authThrottle'], function ($routes) {
     $routes->post('auth/login', 'AuthController::login');
 });
 
@@ -63,4 +72,3 @@ public array $aliases = [
     'myfilter' => \App\Filters\MyFilter::class,
 ];
 ```
-

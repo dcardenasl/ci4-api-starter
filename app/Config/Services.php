@@ -387,7 +387,19 @@ class Services extends BaseService
         }
 
         return new \App\Services\System\AuditService(
-            new \App\Models\AuditLogModel()
+            new \App\Models\AuditLogModel(),
+            static::auditResponseMapper()
+        );
+    }
+
+    public static function auditResponseMapper(bool $getShared = true)
+    {
+        if ($getShared) {
+            return static::getSharedInstance('auditResponseMapper');
+        }
+
+        return new \App\Services\Core\Mappers\DtoResponseMapper(
+            \App\DTO\Response\Audit\AuditResponseDTO::class
         );
     }
 

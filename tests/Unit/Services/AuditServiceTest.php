@@ -6,6 +6,8 @@ namespace Tests\Unit\Services;
 
 use App\DTO\SecurityContext;
 use App\Exceptions\NotFoundException;
+use App\Interfaces\DataTransferObjectInterface;
+use App\Interfaces\Mappers\ResponseMapperInterface;
 use App\Models\AuditLogModel;
 use App\Services\System\AuditService;
 use CodeIgniter\Test\CIUnitTestCase;
@@ -36,7 +38,15 @@ class AuditServiceTest extends CIUnitTestCase
         $mockUserModel->method('find')->willReturn((object)['id' => 99]);
         \CodeIgniter\Config\Factories::injectMock('models', \App\Models\UserModel::class, $mockUserModel);
 
-        $this->service = new AuditService($this->mockAuditLogModel);
+        $responseMapper = new class () implements ResponseMapperInterface {
+            public function map(object $entity): DataTransferObjectInterface
+            {
+                $data = method_exists($entity, 'toArray') ? $entity->toArray() : (array) $entity;
+                return \App\DTO\Response\Audit\AuditResponseDTO::fromArray($data);
+            }
+        };
+
+        $this->service = new AuditService($this->mockAuditLogModel, $responseMapper);
     }
 
     protected function tearDown(): void

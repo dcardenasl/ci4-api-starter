@@ -95,15 +95,64 @@ class Services extends BaseService
             return static::getSharedInstance('userService');
         }
 
+        $userModel = static::userModel();
+
         return new \App\Services\Users\UserService(
-            static::userModel(),
+            $userModel,
+            static::userResponseMapper(),
             static::emailService(),
             static::auditService(),
-            new \App\Libraries\Security\UserRoleGuard(),
-            new \App\Services\Auth\UserInvitationService(
-                new \App\Models\PasswordResetModel(),
-                static::emailService()
-            )
+            static::userRoleGuard(),
+            static::createUserAction($userModel),
+            static::updateUserAction($userModel)
+        );
+    }
+
+    public static function userRoleGuard(bool $getShared = true)
+    {
+        if ($getShared) {
+            return static::getSharedInstance('userRoleGuard');
+        }
+
+        return new \App\Libraries\Security\UserRoleGuard();
+    }
+
+    public static function userInvitationService(bool $getShared = true)
+    {
+        if ($getShared) {
+            return static::getSharedInstance('userInvitationService');
+        }
+
+        return new \App\Services\Auth\UserInvitationService(
+            new \App\Models\PasswordResetModel(),
+            static::emailService()
+        );
+    }
+
+    public static function userResponseMapper(bool $getShared = true)
+    {
+        if ($getShared) {
+            return static::getSharedInstance('userResponseMapper');
+        }
+
+        return new \App\Services\Core\Mappers\DtoResponseMapper(
+            \App\DTO\Response\Users\UserResponseDTO::class
+        );
+    }
+
+    public static function createUserAction(\App\Models\UserModel $userModel)
+    {
+        return new \App\Services\Users\Actions\CreateUserAction(
+            $userModel,
+            static::userInvitationService()
+        );
+    }
+
+    public static function updateUserAction(\App\Models\UserModel $userModel)
+    {
+        return new \App\Services\Users\Actions\UpdateUserAction(
+            $userModel,
+            static::userRoleGuard()
         );
     }
 

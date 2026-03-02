@@ -4,17 +4,17 @@ declare(strict_types=1);
 
 namespace App\Services\Users;
 
-use App\DTO\Response\Users\UserResponseDTO;
 use App\DTO\SecurityContext;
 use App\Exceptions\NotFoundException;
-use App\Exceptions\ValidationException;
+use App\Interfaces\Mappers\ResponseMapperInterface;
 use App\Interfaces\System\AuditServiceInterface;
 use App\Interfaces\System\EmailServiceInterface;
 use App\Interfaces\Users\UserServiceInterface;
 use App\Libraries\Security\UserRoleGuard;
 use App\Models\UserModel;
-use App\Services\Auth\UserInvitationService;
 use App\Services\Core\BaseCrudService;
+use App\Services\Users\Actions\CreateUserAction;
+use App\Services\Users\Actions\UpdateUserAction;
 use App\Traits\AppliesQueryOptions;
 use App\Traits\ResolvesWebAppLinks;
 
@@ -30,16 +30,22 @@ class UserService extends BaseCrudService implements UserServiceInterface
     use ResolvesWebAppLinks;
     use \App\Traits\ValidatesRequiredFields;
 
-    protected string $responseDtoClass = UserResponseDTO::class;
+    protected CreateUserAction $createUserAction;
+    protected UpdateUserAction $updateUserAction;
 
     public function __construct(
         protected UserModel $userModel,
+        ResponseMapperInterface $responseMapper,
         protected EmailServiceInterface $emailService,
         protected AuditServiceInterface $auditService,
         protected UserRoleGuard $roleGuard,
-        protected UserInvitationService $invitationService
+        CreateUserAction $createUserAction,
+        UpdateUserAction $updateUserAction
     ) {
+        parent::__construct($responseMapper);
         $this->model = $userModel;
+        $this->createUserAction = $createUserAction;
+        $this->updateUserAction = $updateUserAction;
     }
 
     /**
@@ -58,43 +64,10 @@ class UserService extends BaseCrudService implements UserServiceInterface
         /** @var \App\DTO\Request\Users\UserStoreRequestDTO $request */
         return $this->wrapInTransaction(function () use ($request, $context) {
             $actorRole = $context?->role ?? 'user';
-            $adminId = $context?->userId;
-            $isPrivilegedCreator = in_array($actorRole, ['admin', 'superadmin'], true);
-            $status = $isPrivilegedCreator ? 'active' : 'invited';
-
-            // 1. Security Check
             $this->roleGuard->assertCanAssignRole($actorRole, (string) $request->role);
 
-            // 2. Prepare Data
-            $now = date('Y-m-d H:i:s');
-            $generatedPassword = bin2hex(random_bytes(24)) . 'Aa1!';
-
-            $userId = $this->model->insert([
-                'email'      => $request->email,
-                'first_name' => $request->firstName,
-                'last_name'  => $request->lastName,
-                'password'   => password_hash($generatedPassword, PASSWORD_BCRYPT),
-                'role'       => $request->role,
-                'status'     => $status,
-                'approved_at' => $isPrivilegedCreator ? $now : null,
-                'approved_by' => $isPrivilegedCreator ? $adminId : null,
-                'invited_at'  => $now,
-                'invited_by'  => $adminId,
-            ]);
-
-            if (!$userId) {
-                throw new ValidationException(lang('Api.validationFailed'), $this->model->errors());
-            }
-
             /** @var \App\Entities\UserEntity $user */
-            $user = $this->model->find($userId);
-
-            // 3. Trigger Invitation Flow (password setup is always required for admin-created users)
-            try {
-                $this->invitationService->sendInvitation($user);
-            } catch (\Throwable $e) {
-                log_message('error', 'Failed to send invitation email: ' . $e->getMessage());
-            }
+            $user = $this->createUserAction->execute($request, $context);
 
             return $this->mapToResponse($user);
         });
@@ -105,42 +78,12 @@ class UserService extends BaseCrudService implements UserServiceInterface
      */
     public function update(int $id, \App\Interfaces\DataTransferObjectInterface $request, ?SecurityContext $context = null): \App\Interfaces\DataTransferObjectInterface
     {
-        $data = $request->toArray();
-        $actorRole = $context?->role ?? 'user';
-        $actorId = $context?->userId;
-
-        /** @var \App\Entities\UserEntity|null $targetUser */
-        $targetUser = $this->model->find($id);
-        if (!$targetUser) {
-            throw new NotFoundException(lang('Users.notFound'));
-        }
-
-        // 1. Security Check (Management)
-        $this->roleGuard->assertCanManageTarget($actorRole, $actorId, $id, (string) $targetUser->role);
-
-        // 2. Security Check (Role Change)
-        if (isset($data['role'])) {
-            $this->roleGuard->assertCanChangeRole($actorRole, (string) $targetUser->role, (string) $data['role']);
-        }
-
-        // 3. Process Update
-        $updateData = array_filter([
-            'email'      => $data['email'] ?? null,
-            'first_name' => $data['firstName'] ?? ($data['first_name'] ?? null),
-            'last_name'  => $data['lastName'] ?? ($data['last_name'] ?? null),
-            'password'   => isset($data['password']) ? password_hash($data['password'], PASSWORD_BCRYPT) : null,
-            'role'       => $data['role'] ?? null,
-        ], fn ($value) => $value !== null);
-
-        if ($updateData === []) {
-            throw new ValidationException(lang('Api.validationFailed'), ['update' => lang('Api.noFieldsToUpdate')]);
-        }
-
-        $this->model->update($id, $updateData);
-
-        /** @var \App\Entities\UserEntity $updatedUser */
-        $updatedUser = $this->model->find($id);
-        return $this->mapToResponse($updatedUser);
+        /** @var \App\DTO\Request\Users\UserUpdateRequestDTO $request */
+        return $this->wrapInTransaction(function () use ($id, $request, $context) {
+            /** @var \App\Entities\UserEntity $updatedUser */
+            $updatedUser = $this->updateUserAction->execute($id, $request, $context);
+            return $this->mapToResponse($updatedUser);
+        });
     }
 
     /**

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\DTO\Request;
 
+use App\DTO\SecurityContext;
 use App\Exceptions\ValidationException;
 use App\Interfaces\DataTransferObjectInterface;
 
@@ -17,10 +18,9 @@ abstract readonly class BaseRequestDTO implements DataTransferObjectInterface
     /**
      * @throws ValidationException If validation fails
      */
-    public function __construct(array $data)
+    public function __construct(array $data, ?SecurityContext $context = null)
     {
-        $enrichedData = $this->enrichWithContext($data);
-        $this->assertNoSnakeCaseKeys($enrichedData);
+        $enrichedData = $this->enrichWithContext($data, $context);
         $this->validate($enrichedData);
         $this->map($enrichedData);
     }
@@ -28,9 +28,9 @@ abstract readonly class BaseRequestDTO implements DataTransferObjectInterface
     /**
      * Enrich input data with values from global ContextHolder if missing
      */
-    private function enrichWithContext(array $data): array
+    private function enrichWithContext(array $data, ?SecurityContext $context): array
     {
-        $context = \App\Libraries\ContextHolder::get();
+        $context = $context ?? \App\Libraries\ContextHolder::get();
 
         // Fallback to ApiRequest if ContextHolder is empty (e.g. if filter hasn't run or was bypassed)
         if ($context === null) {
@@ -96,30 +96,6 @@ abstract readonly class BaseRequestDTO implements DataTransferObjectInterface
                 lang('Api.validationFailed'),
                 $validation->getErrors()
             );
-        }
-    }
-
-    /**
-     * Reject snake_case keys in incoming request payloads.
-     */
-    private function assertNoSnakeCaseKeys(array $data, string $path = ''): void
-    {
-        $errors = [];
-
-        foreach ($data as $key => $value) {
-            if (is_string($key) && str_contains($key, '_')) {
-                $fullKey = $path === '' ? $key : $path . '.' . $key;
-                $errors[$fullKey] = 'Use camelCase for request fields.';
-            }
-
-            if (is_array($value)) {
-                $nestedPath = $path === '' ? (string) $key : $path . '.' . $key;
-                $this->assertNoSnakeCaseKeys($value, $nestedPath);
-            }
-        }
-
-        if ($errors !== []) {
-            throw new ValidationException(lang('Api.validationFailed'), $errors);
         }
     }
 }

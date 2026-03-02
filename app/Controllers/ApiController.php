@@ -109,7 +109,7 @@ abstract class ApiController extends Controller
             if (!class_exists($dtoClass)) {
                 throw new \InvalidArgumentException("DTO class '{$dtoClass}' not found.");
             }
-            $payload = new $dtoClass($data);
+            $payload = new $dtoClass($data, $context);
         }
 
         // 2. Resolve and execute target

@@ -71,8 +71,8 @@ $data = $this->collectRequestData();
 $context = $this->establishSecurityContext();
 
 // BaseRequestDTO::__construct
-$enrichedData = $this->enrichWithContext($data); // Añade user_id/role
-$this->validate($enrichedData);
+$this->validate($data);
+$this->map($data);
 ```
 
 ### 2. Lógica de Servicio (Compuesta)

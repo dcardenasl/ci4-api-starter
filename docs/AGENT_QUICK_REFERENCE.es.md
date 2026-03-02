@@ -21,7 +21,7 @@ Solicitud HTTP → Controlador → [RequestDTO] → Servicio de Dominio (Guards/
 ```
 
 ### Innovaciones Clave:
-- **`BaseRequestDTO`**: Enriquece automáticamente `user_id` y `role` desde el `ContextHolder`.
+- **`BaseRequestDTO`**: Objeto puro de validación/mapeo (sin lecturas de framework o contexto).
 - **`ApiResult`**: Estandarización de `body` y `status` entre capas.
 - **`ExceptionFormatter`**: Gestión de errores centralizada y consciente del entorno.
 
@@ -47,6 +47,7 @@ php spark make:crud {Nombre} --domain {Dominio} --route {endpoint}
 
 ### Paso 3: Controlador Declarativo
 - Extender de `ApiController`.
+- Resolver el servicio principal explícitamente en `resolveDefaultService()`.
 - Usar `handleRequest()` para mapeo automático y propagación de contexto.
 
 ---

@@ -34,7 +34,7 @@ HTTP Request
 ┌─────────────────────────────────────────┐
 │ 4. DTO LAYER (The Shield)               │
 │    - Self-validates in constructor      │
-│    - Enriches with SecurityContext      │
+│    - Receives context-enriched payload  │
 └─────────────────────────────────────────┘
      │
      ▼
@@ -115,4 +115,4 @@ If an exception occurs:
 2. **Composition** - Services delegate specialized tasks.
 3. **Fail fast** - DTOs stop bad data before logic.
 4. **Consistent responses** - `ApiResult` ensures universal format.
-5. **Contextual awareness** - `SecurityContext` propagates automatically.
+5. **Contextual awareness** - `SecurityContext` is injected at the HTTP boundary before DTO creation.

@@ -142,7 +142,7 @@ sequenceDiagram
 
 1. El usuario autenticado envia `POST /api/v1/auth/resend-verification` con `client_base_url` opcional.
 2. El filtro `jwtauth` valida el token Bearer.
-3. `VerificationService::resendVerification({user_id, client_base_url})`:
+3. `VerificationService::resendVerification({userId, client_base_url})`:
    - Obtiene al usuario desde la base de datos.
    - Si `email_verified_at != null` → `ConflictException` (409) ya verificado.
    - Llama nuevamente a `sendVerificationEmail(userId, data)` (igual que el paso 1), que genera un nuevo token, actualiza el usuario y encola un nuevo correo.
@@ -168,13 +168,13 @@ sequenceDiagram
         jwtauth-->>Cliente: 401 Unauthorized
     end
 
-    jwtauth->>Controller: request pasa (user_id establecido)
+    jwtauth->>Controller: request pasa (identidad disponible para SecurityContext)
 
     Controller->>ApiCtrl: handleRequest('resendVerification')
-    ApiCtrl->>ApiCtrl: collectRequestData() — user_id desde JWT
-    ApiCtrl->>VerifSvc: resendVerification({user_id, client_base_url})
+    ApiCtrl->>ApiCtrl: collectRequestData() + establishSecurityContext()
+    ApiCtrl->>VerifSvc: resendVerification({userId, client_base_url})
 
-    VerifSvc->>DB: SELECT user WHERE id = user_id
+    VerifSvc->>DB: SELECT user WHERE id = userId
     DB-->>VerifSvc: UserEntity
 
     alt Usuario no encontrado

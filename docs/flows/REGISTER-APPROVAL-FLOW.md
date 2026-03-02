@@ -84,7 +84,7 @@ sequenceDiagram
 
 1. Admin lists pending users: `GET /api/v1/users?filter[status][eq]=pending_approval` (requires `jwtauth` + `roleauth:admin`).
 2. Admin approves a user: `POST /api/v1/users/{id}/approve`.
-3. The `jwtauth` filter decodes the Bearer token and sets `user_id` and `role` on the request. The `roleauth:admin` filter verifies the role.
+3. The `jwtauth` filter decodes the Bearer token and exposes identity for `SecurityContext`. The `roleauth:admin` filter verifies the role.
 4. `UserController` calls `handleRequest('approve', ['id' => $id])`.
 5. `UserService::approve()` runs status guard clauses:
    - User not found → `NotFoundException` (404).
@@ -119,8 +119,8 @@ sequenceDiagram
     jwtauth->>Controller: request passes
 
     Controller->>ApiCtrl: handleRequest('approve', {id})
-    ApiCtrl->>ApiCtrl: collectRequestData() — adds user_id from JWT
-    ApiCtrl->>UserSvc: approve({id, user_id: adminId})
+    ApiCtrl->>ApiCtrl: collectRequestData() + establishSecurityContext()
+    ApiCtrl->>UserSvc: approve(id, context{userId: adminId})
 
     UserSvc->>DB: SELECT user WHERE id = ?
     DB-->>UserSvc: UserEntity

@@ -36,7 +36,7 @@ public function create(): ResponseInterface
 **Responsabilidad:** Garantizar la integridad de los datos, seguridad de tipos y estabilidad del contrato.
 
 ### Request DTOs (Entrada)
-- **Auto-validación:** Llaman a `validateOrFail()` en su constructor.
+- **Auto-validación:** Ejecutan reglas de validación en el constructor (`BaseRequestDTO::validate()`).
 - **Inmutabilidad:** Clases `readonly` de PHP 8.2.
 - **Seguridad de Tipos:** Los tipos de propiedades se aplican estrictamente.
 
@@ -103,7 +103,7 @@ Contrato base de `BaseCrudService`:
 
 **Flujo:**
 ```
-Petición → Controller → [RequestDTO] → Service → Model → Entity → [ResponseDTO] → ApiResponse → JSON
+Petición → Controller → [RequestDTO] → Service → Model → Entity → [ResponseDTO] → ApiResult → JSON
 ```
 
 Cada capa es **testeable independientemente** y tiene **una sola razón para cambiar**.

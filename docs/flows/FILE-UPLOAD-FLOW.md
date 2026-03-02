@@ -3,14 +3,14 @@
 ## Explanation
 1. Protected route. The upload enters via `POST /api/v1/files/upload`, inside the `jwtauth` protected group in `app/Config/Routes.php`. The JWT filter adds `userId` to the request.
 2. Controller. `FileController::upload()` reads the file from `multipart/form-data` using `getFile('file')` and delegates to `handleRequest('upload', ...)`.
-3. Collection and sanitization. `ApiController::handleRequest()` calls `collectRequestData()`, which merges query/post/raw/json and adds `user_id` from JWT, then sanitizes strings.
+3. Collection and context propagation. `ApiController::handleRequest()` calls `collectRequestData()` to merge query/post/raw/json/files and then injects `userId`/`userRole` via `SecurityContext`.
 4. Main validations (service). `FileService::upload()` validates required fields, size, and allowed extension.
 5. Storage persistence. It generates a unique name and a `Y/m/d/filename` path, reads the temp file, and stores it via `StorageManager`.
 6. DB persistence. It inserts metadata into the `files` table (metadata, url, path, driver). If it fails, it rolls back and deletes the file from storage.
 7. Response. Returns `201` with metadata (`id`, `original_name`, `size`, `mime_type`, `url`, `uploaded_at`).
 
 ## Service validations
-- `file` and `user_id` are required.
+- `file` and `userId` are required.
 - Valid object (`isValid()`).
 - Max size via `FILE_MAX_SIZE` (default 10MB).
 - Allowed extension via `FILE_ALLOWED_TYPES` (default `jpg,jpeg,png,gif,pdf`).
@@ -36,11 +36,11 @@ FileController::upload()
 ApiController::handleRequest('upload')
   |
   v
-collectRequestData() + sanitizeInput() + user_id
+collectRequestData() + withSecurityContext(userId/userRole)
   |
   v
 FileService::upload()
-  |  validate: file, user_id, size, extension
+  |  validate: file, userId, size, extension
   |  generate name and path Y/m/d/...
   |  storage->put(path, contents)
   |  insert metadata in DB

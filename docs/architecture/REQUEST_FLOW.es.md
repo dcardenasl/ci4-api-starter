@@ -36,7 +36,7 @@ Solicitud HTTP
 ┌─────────────────────────────────────────┐
 │ 4. CAPA DTO (El Escudo)                 │
 │    - Autovalidación en constructor      │
-│    - Enriquecimiento con Contexto       │
+│    - Recibe payload enriquecido         │
 └─────────────────────────────────────────┘
      │
      ▼
@@ -117,4 +117,4 @@ Si ocurre una excepción:
 2. **Composición** - Los servicios delegan tareas especializadas.
 3. **Falla Rápido** - Los DTOs detienen datos inválidos antes de la lógica.
 4. **Respuestas Consistentes** - `ApiResult` garantiza un formato universal.
-5. **Conciencia Contextual** - El `SecurityContext` se propaga automáticamente.
+5. **Conciencia Contextual** - El `SecurityContext` se inyecta en el borde HTTP antes de crear DTOs.

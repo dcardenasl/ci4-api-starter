@@ -8,9 +8,8 @@ use App\DTO\Response\Users\UserResponseDTO;
 use App\Entities\UserEntity;
 use App\Exceptions\NotFoundException;
 use App\Interfaces\Mappers\ResponseMapperInterface;
-use App\Interfaces\System\AuditServiceInterface;
-use App\Interfaces\System\EmailServiceInterface;
 use App\Models\UserModel;
+use App\Services\Users\Actions\ApproveUserAction;
 use App\Services\Users\Actions\CreateUserAction;
 use App\Services\Users\Actions\UpdateUserAction;
 use App\Services\Users\UserService;
@@ -28,8 +27,7 @@ class UserServiceTest extends CIUnitTestCase
 
     protected UserService $service;
     protected UserModel $mockUserModel;
-    protected EmailServiceInterface $mockEmailService;
-    protected AuditServiceInterface $mockAuditService;
+    protected ApproveUserAction $mockApproveUserAction;
     protected CreateUserAction $mockCreateUserAction;
     protected UpdateUserAction $mockUpdateUserAction;
     protected ResponseMapperInterface $responseMapper;
@@ -39,10 +37,7 @@ class UserServiceTest extends CIUnitTestCase
         parent::setUp();
 
         $this->mockUserModel = $this->createMock(UserModel::class);
-        $this->mockEmailService = $this->createMock(EmailServiceInterface::class);
-        $this->mockAuditService = $this->createMock(AuditServiceInterface::class);
-        $this->mockEmailService->method('queueTemplate')->willReturn(1);
-
+        $this->mockApproveUserAction = $this->createMock(ApproveUserAction::class);
         $this->mockCreateUserAction = $this->createMock(CreateUserAction::class);
         $this->mockUpdateUserAction = $this->createMock(UpdateUserAction::class);
         $this->responseMapper = new class () implements ResponseMapperInterface {
@@ -55,9 +50,8 @@ class UserServiceTest extends CIUnitTestCase
         $this->service = new UserService(
             $this->mockUserModel,
             $this->responseMapper,
-            $this->mockEmailService,
-            $this->mockAuditService,
             new \App\Libraries\Security\UserRoleGuard(),
+            $this->mockApproveUserAction,
             $this->mockCreateUserAction,
             $this->mockUpdateUserAction
         );
@@ -122,6 +116,27 @@ class UserServiceTest extends CIUnitTestCase
 
         $result = $this->service->update($id, $request);
         $this->assertInstanceOf(\App\Interfaces\DataTransferObjectInterface::class, $result);
+    }
+
+    public function testApproveDelegatesToApproveUserAction(): void
+    {
+        $id = 1;
+        $context = new \App\DTO\SecurityContext(10, 'admin');
+        $approvedUser = $this->createUserEntity([
+            'id' => $id,
+            'email' => 'approved@example.com',
+            'status' => 'active',
+        ]);
+
+        $this->mockApproveUserAction
+            ->expects($this->once())
+            ->method('execute')
+            ->with($id, $context, 'https://client.test')
+            ->willReturn($approvedUser);
+
+        $result = $this->service->approve($id, $context, 'https://client.test');
+        $this->assertInstanceOf(\App\Interfaces\DataTransferObjectInterface::class, $result);
+        $this->assertEquals('approved@example.com', $result->toArray()['email']);
     }
 
     // ==================== DESTROY TESTS ====================

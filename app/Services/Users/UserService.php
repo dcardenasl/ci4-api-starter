@@ -7,16 +7,14 @@ namespace App\Services\Users;
 use App\DTO\SecurityContext;
 use App\Exceptions\NotFoundException;
 use App\Interfaces\Mappers\ResponseMapperInterface;
-use App\Interfaces\System\AuditServiceInterface;
-use App\Interfaces\System\EmailServiceInterface;
 use App\Interfaces\Users\UserServiceInterface;
 use App\Libraries\Security\UserRoleGuard;
 use App\Models\UserModel;
 use App\Services\Core\BaseCrudService;
+use App\Services\Users\Actions\ApproveUserAction;
 use App\Services\Users\Actions\CreateUserAction;
 use App\Services\Users\Actions\UpdateUserAction;
 use App\Traits\AppliesQueryOptions;
-use App\Traits\ResolvesWebAppLinks;
 
 /**
  * User Service (Refactored)
@@ -27,23 +25,23 @@ use App\Traits\ResolvesWebAppLinks;
 class UserService extends BaseCrudService implements UserServiceInterface
 {
     use AppliesQueryOptions;
-    use ResolvesWebAppLinks;
     use \App\Traits\ValidatesRequiredFields;
 
+    protected ApproveUserAction $approveUserAction;
     protected CreateUserAction $createUserAction;
     protected UpdateUserAction $updateUserAction;
 
     public function __construct(
         protected UserModel $userModel,
         ResponseMapperInterface $responseMapper,
-        protected EmailServiceInterface $emailService,
-        protected AuditServiceInterface $auditService,
         protected UserRoleGuard $roleGuard,
+        ApproveUserAction $approveUserAction,
         CreateUserAction $createUserAction,
         UpdateUserAction $updateUserAction
     ) {
         parent::__construct($responseMapper);
         $this->model = $userModel;
+        $this->approveUserAction = $approveUserAction;
         $this->createUserAction = $createUserAction;
         $this->updateUserAction = $updateUserAction;
     }
@@ -91,41 +89,9 @@ class UserService extends BaseCrudService implements UserServiceInterface
      */
     public function approve(int $id, ?SecurityContext $context = null, ?string $clientBaseUrl = null): \App\Interfaces\DataTransferObjectInterface
     {
-        /** @var \App\Entities\UserEntity|null $user */
-        $user = $this->model->find($id);
-        if (!$user) {
-            throw new NotFoundException(lang('Users.notFound'));
-        }
+        return $this->wrapInTransaction(function () use ($id, $context, $clientBaseUrl) {
+            $approvedUser = $this->approveUserAction->execute($id, $context, $clientBaseUrl);
 
-        // Business Rule Check
-        $status = (string) $user->status;
-        if ($status === 'active') {
-            throw new \App\Exceptions\ConflictException(lang('Users.alreadyApproved'));
-        }
-        if ($status === 'invited') {
-            throw new \App\Exceptions\ConflictException(lang('Users.cannotApproveInvited'));
-        }
-        if ($status !== 'pending_approval') {
-            throw new \App\Exceptions\ConflictException(lang('Users.invalidApprovalState'));
-        }
-
-        return $this->wrapInTransaction(function () use ($id, $context, $status, $user, $clientBaseUrl) {
-            $this->model->update($id, [
-                'status' => 'active',
-                'approved_at' => date('Y-m-d H:i:s'),
-                'approved_by' => $context?->userId,
-            ]);
-
-            $this->auditService->log('user_approved', 'users', $id, ['status' => $status], ['status' => 'active'], $context);
-
-            $this->emailService->queueTemplate('account-approved', (string) $user->email, [
-                'subject' => lang('Email.accountApproved.subject'),
-                'display_name' => $user->getDisplayName(),
-                'login_link' => $this->buildLoginUrl($clientBaseUrl),
-            ]);
-
-            /** @var \App\Entities\UserEntity $approvedUser */
-            $approvedUser = $this->model->find($id);
             return $this->mapToResponse($approvedUser);
         });
     }

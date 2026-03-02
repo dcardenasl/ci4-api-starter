@@ -100,9 +100,8 @@ class Services extends BaseService
         return new \App\Services\Users\UserService(
             $userModel,
             static::userResponseMapper(),
-            static::emailService(),
-            static::auditService(),
             static::userRoleGuard(),
+            static::approveUserAction($userModel),
             static::createUserAction($userModel),
             static::updateUserAction($userModel)
         );
@@ -145,6 +144,15 @@ class Services extends BaseService
         return new \App\Services\Users\Actions\CreateUserAction(
             $userModel,
             static::userInvitationService()
+        );
+    }
+
+    public static function approveUserAction(\App\Models\UserModel $userModel)
+    {
+        return new \App\Services\Users\Actions\ApproveUserAction(
+            $userModel,
+            static::auditService(),
+            static::emailService()
         );
     }
 
@@ -376,7 +384,7 @@ class Services extends BaseService
         // EmailService requires MailerInterface (null for now) and QueueManager
         return new \App\Services\System\EmailService(
             null,
-            new \App\Libraries\Queue\QueueManager()
+            static::queueManager()
         );
     }
 

@@ -10,6 +10,7 @@ This directory contains a specialized Claude Code agent designed specifically fo
 
 This agent is a senior PHP/CodeIgniter 4 expert that knows:
 - The complete layered architecture (Controller → Service → Model → Entity)
+- Declarative controller pattern (`resolveDefaultService()` + `handleRequest(...)`)
 - All custom exceptions and when to use them
 - The ApiResponse library and standardized formats
 - Testing patterns across Unit, Integration, and Feature tests

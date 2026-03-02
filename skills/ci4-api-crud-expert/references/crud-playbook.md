@@ -6,7 +6,7 @@
   - `app/Controllers/Api/V1/Users/UserController.php`
   - `app/DTO/Request/Users/UserIndexRequestDTO.php`
   - `app/DTO/Response/Users/UserResponseDTO.php`
-  - `app/Services/UserService.php`
+  - `app/Services/Users/UserService.php`
 - Confirmar filtros/rutas en `app/Config/Routes.php`.
 
 ## 2) Orden recomendado de implementación
@@ -21,7 +21,7 @@
 
 ## 3) Capa DTO (Mandatoria)
 
-- **Request DTO:** Clase `readonly` de PHP 8.2. Validar en constructor vía `validateOrFail($data, 'domain', 'action')`.
+- **Request DTO:** Clase `readonly` de PHP 8.2. Validar en constructor vía `BaseRequestDTO::rules()` + `BaseRequestDTO::validate()`.
 - **Response DTO:** Clase `readonly` de PHP 8.2. Incluir atributos `#[OA\Property]`. Mapear desde array/entity vía método estático `fromArray()`.
 
 ## 4) Servicio Puro
@@ -34,9 +34,9 @@
 ## 5) Controlador Moderno
 
 - Extender `ApiController`.
-- Usar `getDTO()` para la entrada.
-- Delegar vía closure a `handleRequest(fn() => ...)`.
-- La normalización de salida (snake_case) es automática.
+- Resolver el servicio principal en `resolveDefaultService()`.
+- Usar `handleRequest('method', RequestDTO::class)` o closure cuando debas fijar parámetros de ruta.
+- La normalización de salida (`ApiResult` + JSON) es automática.
 
 ## 6) Definición de Terminado (Done)
 

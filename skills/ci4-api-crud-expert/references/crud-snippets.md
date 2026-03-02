@@ -12,11 +12,20 @@ namespace App\Controllers\Api\V1\Catalog;
 use App\Controllers\ApiController;
 use App\DTO\Request\Catalog\ProductIndexRequestDTO;
 use App\DTO\Request\Catalog\ProductCreateRequestDTO;
+use App\Interfaces\Catalog\ProductServiceInterface;
 use CodeIgniter\HTTP\ResponseInterface;
+use Config\Services;
 
 class ProductController extends ApiController
 {
-    protected string $serviceName = 'productService';
+    protected ProductServiceInterface $productService;
+
+    protected function resolveDefaultService(): object
+    {
+        $this->productService = Services::productService();
+
+        return $this->productService;
+    }
 
     public function index(): ResponseInterface
     {
@@ -37,7 +46,7 @@ class ProductController extends ApiController
 
 declare(strict_types=1);
 
-namespace App\Interfaces;
+namespace App\Interfaces\Catalog;
 
 use App\Interfaces\DataTransferObjectInterface;
 
@@ -90,7 +99,7 @@ readonly class ProductCreateRequestDTO extends BaseRequestDTO
 
 declare(strict_types=1);
 
-namespace App\Services;
+namespace App\Services\Catalog;
 
 use App\Interfaces\DataTransferObjectInterface;
 use App\Interfaces\ProductServiceInterface;

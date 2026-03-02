@@ -6,8 +6,9 @@ Every PR must pass these gates before merge.
 
 1. `composer cs-check`
 2. `composer phpstan`
-3. `php scripts/i18n-check.php`
-4. `php scripts/docs-i18n-parity-check.php`
+3. `composer arch-drift`
+4. `php scripts/i18n-check.php`
+5. `php scripts/docs-i18n-parity-check.php`
 
 ## 2. Test Gates
 
@@ -26,6 +27,8 @@ These architecture tests must remain green:
 5. `tests/Unit/Architecture/ControllerDtoRequestContractsTest.php`
 6. `tests/Unit/Architecture/RuntimeInstantiationConventionsTest.php`
 7. `tests/Unit/Architecture/FilterConventionsTest.php`
+8. `tests/Unit/Architecture/ControllerRouteCoverageTest.php`
+9. `tests/Unit/Architecture/ServicePurityConventionsTest.php`
 
 ## 4. Contract Expectations
 

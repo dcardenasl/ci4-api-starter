@@ -15,6 +15,7 @@
 
 - [ ] `composer cs-check`
 - [ ] `composer phpstan`
+- [ ] `composer arch-drift`
 - [ ] `vendor/bin/phpunit --configuration phpunit.xml --no-coverage --testdox`
 
 ## Checklist

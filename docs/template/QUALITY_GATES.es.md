@@ -6,8 +6,9 @@ Checklist de calidad obligatoria para cada PR.
 
 1. `composer cs-check`
 2. `composer phpstan`
-3. `php scripts/i18n-check.php`
-4. `php scripts/docs-i18n-parity-check.php`
+3. `composer arch-drift`
+4. `php scripts/i18n-check.php`
+5. `php scripts/docs-i18n-parity-check.php`
 
 ## 2. Pruebas
 
@@ -26,6 +27,8 @@ Deben pasar los tests de `tests/Unit/Architecture/`:
 5. uso de DTOs en pipeline de controladores
 6. convenciones de instanciación runtime (sin `new *Model()` en Commands/Filters)
 7. convenciones de Filters (`strict_types` y uso de `Config\Services`)
+8. cobertura de rutas para controllers API v1
+9. pureza de servicios (sin `Config\Services`, `env()` ni `getenv()` en `app/Services`)
 
 ## 4. Contratos mínimos
 

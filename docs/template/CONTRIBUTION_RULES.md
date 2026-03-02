@@ -22,10 +22,11 @@ These rules define the minimum contribution standard for this repository and dow
 
 1. `composer cs-check`
 2. `composer phpstan`
-3. `php scripts/i18n-check.php`
-4. `php scripts/docs-i18n-parity-check.php`
-5. `vendor/bin/phpunit`
-6. Prefer `composer quality` to run the full chain.
+3. `composer arch-drift`
+4. `php scripts/i18n-check.php`
+5. `php scripts/docs-i18n-parity-check.php`
+6. `vendor/bin/phpunit`
+7. Prefer `composer quality` to run the full chain.
 
 ## 4. PR Acceptance Checklist
 
@@ -33,3 +34,4 @@ These rules define the minimum contribution standard for this repository and dow
 2. Internal/external contract impact is declared.
 3. Migration actions are documented if contracts changed.
 4. No unresolved TODOs or temporary shortcuts are introduced.
+5. Architecture drift impact is explicitly declared when touching controllers/services/filters.

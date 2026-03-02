@@ -22,10 +22,11 @@ Estas reglas definen el estándar mínimo de contribución para este repositorio
 
 1. `composer cs-check`
 2. `composer phpstan`
-3. `php scripts/i18n-check.php`
-4. `php scripts/docs-i18n-parity-check.php`
-5. `vendor/bin/phpunit`
-6. Recomendado: `composer quality` para ejecutar toda la cadena.
+3. `composer arch-drift`
+4. `php scripts/i18n-check.php`
+5. `php scripts/docs-i18n-parity-check.php`
+6. `vendor/bin/phpunit`
+7. Recomendado: `composer quality` para ejecutar toda la cadena.
 
 ## 4. Checklist de aceptación de PR
 
@@ -33,3 +34,4 @@ Estas reglas definen el estándar mínimo de contribución para este repositorio
 2. Impacto de contratos internos/externos declarado.
 3. Acciones de migración documentadas si hubo cambios de contrato.
 4. No introducir TODOs sin resolver ni atajos temporales.
+5. Declarar explícitamente impacto de architecture drift cuando se tocan controllers/services/filters.

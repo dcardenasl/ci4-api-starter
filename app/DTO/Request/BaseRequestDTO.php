@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\DTO\Request;
 
-use App\DTO\SecurityContext;
 use App\Exceptions\ValidationException;
 use App\Interfaces\DataTransferObjectInterface;
 
@@ -18,46 +17,10 @@ abstract readonly class BaseRequestDTO implements DataTransferObjectInterface
     /**
      * @throws ValidationException If validation fails
      */
-    public function __construct(array $data, ?SecurityContext $context = null)
+    public function __construct(array $data)
     {
-        $enrichedData = $this->enrichWithContext($data, $context);
-        $this->validate($enrichedData);
-        $this->map($enrichedData);
-    }
-
-    /**
-     * Enrich input data with values from global ContextHolder if missing
-     */
-    private function enrichWithContext(array $data, ?SecurityContext $context): array
-    {
-        $context = $context ?? \App\Libraries\ContextHolder::get();
-
-        // Fallback to ApiRequest if ContextHolder is empty (e.g. if filter hasn't run or was bypassed)
-        if ($context === null) {
-            $request = \Config\Services::request();
-            if ($request instanceof \App\HTTP\ApiRequest) {
-                $userId = $request->getAuthUserId();
-                $role = $request->getAuthUserRole();
-                if ($userId !== null) {
-                    $context = new \App\DTO\SecurityContext($userId, $role);
-                    \App\Libraries\ContextHolder::set($context);
-                }
-            }
-        }
-
-        if ($context === null) {
-            return $data;
-        }
-
-        if (!isset($data['userId']) && $context->userId !== null) {
-            $data['userId'] = $context->userId;
-        }
-
-        if (!isset($data['userRole']) && $context->role !== null) {
-            $data['userRole'] = $context->role;
-        }
-
-        return $data;
+        $this->validate($data);
+        $this->map($data);
     }
 
     /**

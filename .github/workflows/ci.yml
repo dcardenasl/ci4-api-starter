@@ -55,19 +55,11 @@ jobs:
       - name: Install dependencies
         run: composer install --prefer-dist --no-progress --no-interaction
 
-      - name: Run static analysis
-        # PHPStan level 6 - BLOCKING (failures will fail the build)
-        # This ensures code quality and type safety standards are maintained
-        run: composer phpstan
 
-      - name: Check code style
-        run: composer cs-check
 
-      - name: Run i18n checks
-        run: composer i18n-check
 
-      - name: Run architecture drift checks
-        run: composer arch-drift
+      - name: Validate Swagger documentation
+        run: composer swagger-validate
 
       - name: Create .env file from example
         run: cp .env.example .env
@@ -116,15 +108,6 @@ jobs:
           mkdir -p writable/debugbar
           chmod -R 777 writable
 
-      - name: Generate Swagger and verify up to date
-        run: |
-          php spark swagger:generate
-          if ! git diff --exit-code public/swagger.json; then
-            echo "swagger.json is out of date. Run 'php spark swagger:generate' and commit changes."
-            git --no-pager diff -- public/swagger.json
-            exit 1
-          fi
-
       - name: Verify PHPUnit configuration
         run: |
           echo "Checking for phpunit.xml..."
@@ -152,4 +135,4 @@ jobs:
           echo "✓ Database connection successful"
 
       - name: Run tests
-        run: composer test
+        run: composer quality

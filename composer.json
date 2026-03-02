@@ -63,13 +63,16 @@
         "i18n-check": "php scripts/i18n-check.php",
         "docs-i18n-check": "php scripts/docs-i18n-parity-check.php",
         "arch-drift": [
+            "@swagger-validate",
             "phpunit tests/Unit/Architecture --configuration=phpunit.xml --no-coverage --testdox",
             "@i18n-check",
             "@docs-i18n-check"
         ],
+        "swagger-validate": "sh -c 'php spark swagger:generate && git --no-pager diff --exit-code public/swagger.json >/dev/null || (git --no-pager diff -- public/swagger.json; exit 1)'",
         "quality": [
             "@cs-check",
             "@phpstan",
+            "@swagger-validate",
             "@arch-drift",
             "@i18n-check",
             "@docs-i18n-check",

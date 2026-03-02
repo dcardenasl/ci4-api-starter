@@ -281,8 +281,38 @@ class Services extends BaseService
             return static::getSharedInstance('apiKeyService');
         }
 
+        $apiKeyModel = new \App\Models\ApiKeyModel();
+
         return new \App\Services\Tokens\ApiKeyService(
-            new \App\Models\ApiKeyModel()
+            $apiKeyModel,
+            static::apiKeyResponseMapper(),
+            static::createApiKeyAction($apiKeyModel),
+            static::updateApiKeyAction($apiKeyModel)
+        );
+    }
+
+    public static function apiKeyResponseMapper(bool $getShared = true)
+    {
+        if ($getShared) {
+            return static::getSharedInstance('apiKeyResponseMapper');
+        }
+
+        return new \App\Services\Core\Mappers\DtoResponseMapper(
+            \App\DTO\Response\ApiKeys\ApiKeyResponseDTO::class
+        );
+    }
+
+    public static function createApiKeyAction(\App\Models\ApiKeyModel $apiKeyModel)
+    {
+        return new \App\Services\Tokens\Actions\CreateApiKeyAction(
+            $apiKeyModel
+        );
+    }
+
+    public static function updateApiKeyAction(\App\Models\ApiKeyModel $apiKeyModel)
+    {
+        return new \App\Services\Tokens\Actions\UpdateApiKeyAction(
+            $apiKeyModel
         );
     }
 

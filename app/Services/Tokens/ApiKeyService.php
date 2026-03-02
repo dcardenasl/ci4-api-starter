@@ -4,26 +4,30 @@ declare(strict_types=1);
 
 namespace App\Services\Tokens;
 
+use App\DTO\Response\ApiKeys\ApiKeyResponseDTO;
 use App\DTO\SecurityContext;
-use App\Exceptions\BadRequestException;
-use App\Exceptions\ValidationException;
+use App\Interfaces\Mappers\ResponseMapperInterface;
 use App\Interfaces\Tokens\ApiKeyServiceInterface;
 use App\Models\ApiKeyModel;
 use App\Services\Core\BaseCrudService;
+use App\Services\Tokens\Actions\CreateApiKeyAction;
+use App\Services\Tokens\Actions\UpdateApiKeyAction;
 
-/**
- * Api Key Service
- *
- * Manages the lifecycle of API keys for server-to-server or third-party access.
- */
 class ApiKeyService extends BaseCrudService implements ApiKeyServiceInterface
 {
-    protected string $responseDtoClass = \App\DTO\Response\ApiKeys\ApiKeyResponseDTO::class;
+    protected CreateApiKeyAction $createApiKeyAction;
+    protected UpdateApiKeyAction $updateApiKeyAction;
 
-    public function __construct(protected ApiKeyModel $apiKeyModel)
-    {
+    public function __construct(
+        protected ApiKeyModel $apiKeyModel,
+        ResponseMapperInterface $responseMapper,
+        CreateApiKeyAction $createApiKeyAction,
+        UpdateApiKeyAction $updateApiKeyAction
+    ) {
+        parent::__construct($responseMapper);
         $this->model = $apiKeyModel;
-        helper('security');
+        $this->createApiKeyAction = $createApiKeyAction;
+        $this->updateApiKeyAction = $updateApiKeyAction;
     }
 
     /**
@@ -33,34 +37,12 @@ class ApiKeyService extends BaseCrudService implements ApiKeyServiceInterface
     {
         /** @var \App\DTO\Request\ApiKeys\ApiKeyCreateRequestDTO $request */
         return $this->wrapInTransaction(function () use ($request) {
-            $rawKey = \generate_api_key();
-            $hash = \hash_api_key($rawKey);
+            ['entity' => $apiKey, 'key' => $rawKey] = $this->createApiKeyAction->execute($request);
 
-            $data = [
-                'name' => $request->name,
-                'key_prefix' => substr($rawKey, 0, 12),
-                'key_hash' => $hash,
-                'is_active' => 1,
-                'rate_limit_requests' => $request->rateLimitRequests ?? 600,
-                'rate_limit_window' => $request->rateLimitWindow ?? 60,
-                'user_rate_limit' => $request->userRateLimit ?? 60,
-                'ip_rate_limit' => $request->ipRateLimit ?? 200,
-            ];
-
-            $id = $this->model->insert($data);
-
-            if (!$id) {
-                throw new ValidationException(lang('Api.validationFailed'), $this->model->errors());
-            }
-
-            /** @var object $apiKey */
-            $apiKey = $this->model->find($id);
-
-            // Return full key only at creation time.
             $apiKeyData = $apiKey->toArray();
             $apiKeyData['key'] = $rawKey;
 
-            return \App\DTO\Response\ApiKeys\ApiKeyResponseDTO::fromArray($apiKeyData);
+            return ApiKeyResponseDTO::fromArray($apiKeyData);
         });
     }
 
@@ -69,32 +51,9 @@ class ApiKeyService extends BaseCrudService implements ApiKeyServiceInterface
      */
     public function update(int $id, \App\Interfaces\DataTransferObjectInterface $request, ?SecurityContext $context = null): \App\Interfaces\DataTransferObjectInterface
     {
-        $existing = $this->model->find($id);
-        if (!$existing) {
-            throw new \App\Exceptions\NotFoundException(lang('Api.resourceNotFound'));
-        }
-
+        /** @var \App\DTO\Request\ApiKeys\ApiKeyUpdateRequestDTO $request */
         return $this->wrapInTransaction(function () use ($id, $request) {
-            /** @var \App\DTO\Request\ApiKeys\ApiKeyUpdateRequestDTO $request */
-            $data = array_filter([
-                'name' => $request->name,
-                'is_active' => $request->isActive,
-                'rate_limit_requests' => $request->rateLimitRequests,
-                'rate_limit_window' => $request->rateLimitWindow,
-                'user_rate_limit' => $request->userRateLimit,
-                'ip_rate_limit' => $request->ipRateLimit,
-            ], fn ($val) => $val !== null);
-
-            if (empty($data)) {
-                throw new BadRequestException(lang('Api.noFieldsToUpdate'));
-            }
-
-            if (!$this->model->update($id, $data)) {
-                throw new ValidationException(lang('Api.validationFailed'), $this->model->errors());
-            }
-
-            /** @var object $updatedApiKey */
-            $updatedApiKey = $this->model->find($id);
+            $updatedApiKey = $this->updateApiKeyAction->execute($id, $request);
             return $this->mapToResponse($updatedApiKey);
         });
     }

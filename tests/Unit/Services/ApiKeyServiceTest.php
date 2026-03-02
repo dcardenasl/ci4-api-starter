@@ -6,11 +6,15 @@ namespace Tests\Unit\Services;
 
 use App\DTO\Request\ApiKeys\ApiKeyCreateRequestDTO;
 use App\DTO\Request\ApiKeys\ApiKeyUpdateRequestDTO;
+use App\DTO\Response\ApiKeys\ApiKeyResponseDTO;
 use App\Entities\ApiKeyEntity;
 use App\Exceptions\BadRequestException;
 use App\Exceptions\NotFoundException;
 use App\Interfaces\DataTransferObjectInterface;
+use App\Interfaces\Mappers\ResponseMapperInterface;
 use App\Models\ApiKeyModel;
+use App\Services\Tokens\Actions\CreateApiKeyAction;
+use App\Services\Tokens\Actions\UpdateApiKeyAction;
 use App\Services\Tokens\ApiKeyService;
 use CodeIgniter\Test\CIUnitTestCase;
 use Tests\Support\Traits\CustomAssertionsTrait;
@@ -24,11 +28,13 @@ class ApiKeyServiceTest extends CIUnitTestCase
 
     protected ApiKeyService $service;
     protected ApiKeyModel $mockApiKeyModel;
+    protected CreateApiKeyAction $mockCreateApiKeyAction;
+    protected UpdateApiKeyAction $mockUpdateApiKeyAction;
+    protected ResponseMapperInterface $responseMapper;
 
     protected function setUp(): void
     {
         parent::setUp();
-        require_once APPPATH . 'Helpers/security_helper.php';
 
         $this->mockApiKeyModel = new class () extends ApiKeyModel {
             public ?ApiKeyEntity $returnEntity = null;
@@ -69,8 +75,21 @@ class ApiKeyServiceTest extends CIUnitTestCase
                 return $this->returnEntity;
             }
         };
+        $this->mockCreateApiKeyAction = $this->createMock(CreateApiKeyAction::class);
+        $this->mockUpdateApiKeyAction = $this->createMock(UpdateApiKeyAction::class);
+        $this->responseMapper = new class () implements ResponseMapperInterface {
+            public function map(object $entity): DataTransferObjectInterface
+            {
+                return ApiKeyResponseDTO::fromArray($entity->toArray());
+            }
+        };
 
-        $this->service = new ApiKeyService($this->mockApiKeyModel);
+        $this->service = new ApiKeyService(
+            $this->mockApiKeyModel,
+            $this->responseMapper,
+            $this->mockCreateApiKeyAction,
+            $this->mockUpdateApiKeyAction
+        );
     }
 
     // ==================== SHOW TESTS ====================
@@ -105,10 +124,12 @@ class ApiKeyServiceTest extends CIUnitTestCase
             'is_active'            => 1,
             'rate_limit_requests'  => 600,
         ]);
-        $this->mockApiKeyModel->insertReturn = 1;
-        $this->mockApiKeyModel->returnEntity = $entity;
-
         $request = new ApiKeyCreateRequestDTO(['name' => 'My App']);
+        $this->mockCreateApiKeyAction->expects($this->once())
+            ->method('execute')
+            ->with($this->isInstanceOf(ApiKeyCreateRequestDTO::class))
+            ->willReturn(['entity' => $entity, 'key' => 'apk_test_key']);
+
         $result = $this->service->store($request);
 
         $this->assertInstanceOf(DataTransferObjectInterface::class, $result);
@@ -122,7 +143,10 @@ class ApiKeyServiceTest extends CIUnitTestCase
     public function testUpdateModifiesApiKey(): void
     {
         $entity = $this->makeEntity(['id' => 1, 'name' => 'New Name', 'is_active' => 1]);
-        $this->mockApiKeyModel->returnEntity = $entity;
+        $this->mockUpdateApiKeyAction->expects($this->once())
+            ->method('execute')
+            ->with(1, $this->isInstanceOf(ApiKeyUpdateRequestDTO::class))
+            ->willReturn($entity);
 
         $request = new ApiKeyUpdateRequestDTO(['name' => 'New Name']);
         $result  = $this->service->update(1, $request);
@@ -133,14 +157,14 @@ class ApiKeyServiceTest extends CIUnitTestCase
 
     public function testUpdateNonExistentKeyThrowsNotFoundException(): void
     {
-        $this->mockApiKeyModel->returnEntity = null;
+        $this->mockUpdateApiKeyAction->method('execute')->willThrowException(new NotFoundException(lang('Api.resourceNotFound')));
         $this->expectException(NotFoundException::class);
         $this->service->update(99, new ApiKeyUpdateRequestDTO(['name' => 'X']));
     }
 
     public function testUpdateWithNoFieldsThrowsBadRequestException(): void
     {
-        $this->mockApiKeyModel->returnEntity = $this->makeEntity(['id' => 1, 'name' => 'X']);
+        $this->mockUpdateApiKeyAction->method('execute')->willThrowException(new BadRequestException(lang('Api.noFieldsToUpdate')));
         $this->expectException(BadRequestException::class);
         $this->service->update(1, new ApiKeyUpdateRequestDTO([]));
     }

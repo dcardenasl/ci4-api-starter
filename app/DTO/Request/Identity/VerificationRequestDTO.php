@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\DTO\Request\Identity;
 
 use App\DTO\Request\BaseRequestDTO;
+use App\Exceptions\ValidationException;
 
 /**
  * Verification Request DTO
@@ -25,6 +26,13 @@ readonly class VerificationRequestDTO extends BaseRequestDTO
     protected function map(array $data): void
     {
         $this->token = (string) ($data['token'] ?? '');
+
+        // Defensive guardrail: keep deterministic validation even if validator state is altered.
+        if (strlen($this->token) < 10) {
+            throw new ValidationException(lang('Api.validationFailed'), [
+                'token' => lang('InputValidation.auth.verificationTokenMinLength'),
+            ]);
+        }
     }
 
     public function toArray(): array

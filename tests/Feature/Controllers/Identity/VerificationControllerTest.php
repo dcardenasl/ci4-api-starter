@@ -25,16 +25,24 @@ class VerificationControllerTest extends ApiTestCase
         $token = bin2hex(random_bytes(32));
         $email = 'test-final-verify+' . uniqid('', true) . '@example.com';
 
-        $this->userModel->insert([
+        $insertedId = $this->userModel
+            ->skipValidation(true)
+            ->insert([
             'email' => $email,
             'password' => password_hash('Pass123!', PASSWORD_BCRYPT),
             'role' => 'user',
+            'status' => 'active',
             'email_verified_at' => null,
             'email_verification_token' => $token,
             'verification_token_expires' => date('Y-m-d H:i:s', strtotime('+24 hours')),
         ]);
 
-        $result = $this->get("/api/v1/auth/verify-email?token={$token}");
+        $this->assertIsInt($insertedId);
+        $this->assertGreaterThan(0, $insertedId);
+
+        $result = $this->withBodyFormat('json')->post('/api/v1/auth/verify-email', [
+            'token' => $token,
+        ]);
 
         $result->assertStatus(200);
         $json = json_decode($result->getJSON(), true);
@@ -43,7 +51,9 @@ class VerificationControllerTest extends ApiTestCase
 
     public function testVerifyEmailReturns404ForInvalidToken(): void
     {
-        $result = $this->get('/api/v1/auth/verify-email?token=token-that-does-not-exist-in-db-and-is-long-enough-xyz');
+        $result = $this->withBodyFormat('json')->post('/api/v1/auth/verify-email', [
+            'token' => 'token-that-does-not-exist-in-db-and-is-long-enough-xyz',
+        ]);
 
         $result->assertStatus(404);
         $json = json_decode($result->getJSON(), true);
@@ -52,7 +62,9 @@ class VerificationControllerTest extends ApiTestCase
 
     public function testVerifyEmailReturns422ForTooShortToken(): void
     {
-        $result = $this->get('/api/v1/auth/verify-email?token=short');
+        $result = $this->withBodyFormat('json')->post('/api/v1/auth/verify-email', [
+            'token' => 'short',
+        ]);
 
         $result->assertStatus(422);
     }

@@ -72,6 +72,7 @@ return [
         'resetTokenInvalid'       => 'Invalid reset token format',
         'verificationTokenRequired' => 'Verification token is required',
         'verificationTokenInvalid'  => 'Invalid verification token format',
+        'verificationTokenMinLength' => 'Verification token must be at least 10 characters',
         'refreshTokenRequired'    => 'Refresh token is required',
         'refreshTokenInvalid'     => 'Invalid refresh token',
     ],

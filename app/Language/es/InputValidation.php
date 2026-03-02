@@ -72,6 +72,7 @@ return [
         'resetTokenInvalid'       => 'Formato de token de restablecimiento inválido',
         'verificationTokenRequired' => 'El token de verificación es obligatorio',
         'verificationTokenInvalid'  => 'Formato de token de verificación inválido',
+        'verificationTokenMinLength' => 'El token de verificación debe tener al menos 10 caracteres',
         'refreshTokenRequired'    => 'El token de actualización es obligatorio',
         'refreshTokenInvalid'     => 'Token de actualización inválido',
     ],

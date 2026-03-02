@@ -7,12 +7,20 @@ namespace Tests\Unit\Services;
 use App\DTO\Request\Auth\LoginRequestDTO;
 use App\Entities\UserEntity;
 use App\Exceptions\AuthenticationException;
+use App\Interfaces\Auth\GoogleIdentityServiceInterface;
 use App\Interfaces\Auth\VerificationServiceInterface;
 use App\Interfaces\System\AuditServiceInterface;
+use App\Interfaces\System\EmailServiceInterface;
 use App\Interfaces\Tokens\JwtServiceInterface;
 use App\Interfaces\Tokens\RefreshTokenServiceInterface;
 use App\Models\UserModel;
+use App\Services\Auth\Actions\GoogleLoginAction;
+use App\Services\Auth\Actions\RegisterUserAction;
 use App\Services\Auth\AuthService;
+use App\Services\Auth\Support\AuthUserMapper;
+use App\Services\Auth\Support\GoogleAuthHandler;
+use App\Services\Auth\Support\SessionManager;
+use App\Services\Users\UserAccountGuard;
 use CodeIgniter\Test\CIUnitTestCase;
 use Tests\Support\Traits\CustomAssertionsTrait;
 
@@ -26,10 +34,12 @@ class AuthServiceTest extends CIUnitTestCase
     use CustomAssertionsTrait;
 
     protected AuthService $service;
-    protected JwtServiceInterface $mockJwtService;
-    protected RefreshTokenServiceInterface $mockRefreshTokenService;
+    protected \App\Interfaces\Tokens\JwtServiceInterface $mockJwtService;
+    protected \App\Interfaces\Tokens\RefreshTokenServiceInterface $mockRefreshTokenService;
     protected VerificationServiceInterface $mockVerificationService;
     protected AuditServiceInterface $mockAuditService;
+    protected GoogleIdentityServiceInterface $mockGoogleIdentityService;
+    protected EmailServiceInterface $mockEmailService;
 
     protected function setUp(): void
     {
@@ -39,6 +49,8 @@ class AuthServiceTest extends CIUnitTestCase
         $this->mockRefreshTokenService = $this->createMock(RefreshTokenServiceInterface::class);
         $this->mockVerificationService = $this->createMock(VerificationServiceInterface::class);
         $this->mockAuditService = $this->createMock(AuditServiceInterface::class);
+        $this->mockGoogleIdentityService = $this->createMock(GoogleIdentityServiceInterface::class);
+        $this->mockEmailService = $this->createMock(EmailServiceInterface::class);
     }
 
     protected function createServiceWithUserQuery(?UserEntity $returnUser): AuthService
@@ -71,13 +83,28 @@ class AuthServiceTest extends CIUnitTestCase
             }
         };
 
+        $userMapper = new AuthUserMapper();
+        $sessionManager = new SessionManager($this->mockJwtService, $this->mockRefreshTokenService);
+        $registerUserAction = new RegisterUserAction($mockUserModel, $this->mockVerificationService);
+        $googleLoginAction = new GoogleLoginAction(
+            $mockUserModel,
+            $this->mockGoogleIdentityService,
+            new GoogleAuthHandler($mockUserModel, $this->mockRefreshTokenService),
+            $sessionManager,
+            $userMapper,
+            new UserAccountGuard(),
+            $this->mockAuditService,
+            $this->mockEmailService
+        );
+
         return new AuthService(
             $mockUserModel,
-            $this->mockVerificationService,
+            $registerUserAction,
+            $googleLoginAction,
             $this->mockAuditService,
-            new \App\Services\Auth\Support\AuthUserMapper(),
-            new \App\Services\Auth\Support\GoogleAuthHandler($mockUserModel, $this->mockRefreshTokenService),
-            new \App\Services\Auth\Support\SessionManager($this->mockJwtService, $this->mockRefreshTokenService)
+            $userMapper,
+            $sessionManager,
+            new UserAccountGuard()
         );
     }
 
@@ -140,27 +167,45 @@ class AuthServiceTest extends CIUnitTestCase
             'role' => 'user',
             'status' => 'pending_approval'
         ]);
-        $service = $this->createServiceWithUserQuery($user);
 
-        // We bypass is_unique validation in tests if database is not ready,
-        // but here we expect the DTO to validate.
-        // For unit tests, we might need to mock the validation or ensure the email is "unique" enough.
-
-        $request = new class () implements \App\Interfaces\DataTransferObjectInterface {
-            public string $email = 'new-unique@example.com';
-            public string $firstName = 'New';
-            public string $lastName = 'User';
-            public string $password = 'StrongPass123!';
-
-            public function toArray(): array
+        $mockUserModel = new class ($user) extends UserModel {
+            public function __construct(private readonly UserEntity $returnUser)
             {
-                return [
-                    'email' => $this->email,
-                    'first_name' => $this->firstName,
-                    'last_name' => $this->lastName,
-                ];
+            }
+
+            public function find($id = null)
+            {
+                return $this->returnUser;
             }
         };
+
+        $registerUserAction = $this->createMock(RegisterUserAction::class);
+        $request = new \App\DTO\Request\Auth\RegisterRequestDTO([
+            'email' => 'new-unique+' . uniqid('', true) . '@example.com',
+            'firstName' => 'New',
+            'lastName' => 'User',
+            'password' => 'StrongPass123!',
+        ]);
+
+        $registerUserAction
+            ->expects($this->once())
+            ->method('execute')
+            ->with($request, null)
+            ->willReturn($user);
+
+        $googleLoginAction = $this->createMock(GoogleLoginAction::class);
+        $userMapper = new AuthUserMapper();
+        $sessionManager = new SessionManager($this->mockJwtService, $this->mockRefreshTokenService);
+
+        $service = new AuthService(
+            $mockUserModel,
+            $registerUserAction,
+            $googleLoginAction,
+            $this->mockAuditService,
+            $userMapper,
+            $sessionManager,
+            new UserAccountGuard()
+        );
 
         $result = $service->register($request);
 

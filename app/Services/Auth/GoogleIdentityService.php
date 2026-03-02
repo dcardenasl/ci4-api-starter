@@ -9,6 +9,11 @@ use App\Exceptions\ServiceUnavailableException;
 
 class GoogleIdentityService implements \App\Interfaces\Auth\GoogleIdentityServiceInterface
 {
+    public function __construct(
+        protected string $clientId = ''
+    ) {
+    }
+
     /**
      * Verify a Google ID token and return normalized claims.
      */
@@ -23,7 +28,7 @@ class GoogleIdentityService implements \App\Interfaces\Auth\GoogleIdentityServic
             );
         }
 
-        $clientId = trim((string) env('GOOGLE_CLIENT_ID', ''));
+        $clientId = trim($this->clientId);
         if ($clientId === '') {
             throw new ServiceUnavailableException(lang('Auth.googleClientNotConfigured'));
         }

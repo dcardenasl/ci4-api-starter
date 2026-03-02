@@ -32,7 +32,9 @@ class AuditService extends BaseCrudService implements \App\Interfaces\System\Aud
 
     public function __construct(
         protected readonly AuditLogModel $auditLogModel,
-        ResponseMapperInterface $responseMapper
+        ResponseMapperInterface $responseMapper,
+        protected string $defaultIpAddress = '127.0.0.1',
+        protected string $defaultUserAgent = 'system'
     ) {
         parent::__construct($responseMapper);
         $this->model = $auditLogModel;
@@ -57,13 +59,15 @@ class AuditService extends BaseCrudService implements \App\Interfaces\System\Aud
         $userId = $context?->userId;
 
         // Network metadata resolution (prefer context, fallback to request helper if safe)
-        $ipAddress = $context?->metadata['ip_address'] ?? '';
-        $userAgent = $context?->metadata['user_agent'] ?? '';
+        $ipAddress = trim((string) ($context?->metadata['ip_address'] ?? ''));
+        $userAgent = trim((string) ($context?->metadata['user_agent'] ?? ''));
 
-        if ($ipAddress === '' || $userAgent === '') {
-            $request = \Config\Services::request();
-            $ipAddress = ($ipAddress === '') ? $request->getIPAddress() : $ipAddress;
-            $userAgent = ($userAgent === '') ? $request->getHeaderLine('User-Agent') : $userAgent;
+        if ($ipAddress === '') {
+            $ipAddress = $this->defaultIpAddress;
+        }
+
+        if ($userAgent === '') {
+            $userAgent = $this->defaultUserAgent;
         }
 
         $data = [

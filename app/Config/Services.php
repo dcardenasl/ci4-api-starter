@@ -53,9 +53,12 @@ class Services extends BaseService
             return static::getSharedInstance('sessionManager');
         }
 
+        $accessTokenTtl = (int) (getenv('JWT_ACCESS_TOKEN_TTL') ?: env('JWT_ACCESS_TOKEN_TTL', 3600));
+
         return new \App\Services\Auth\Support\SessionManager(
             static::jwtService(),
-            static::refreshTokenService()
+            static::refreshTokenService(),
+            $accessTokenTtl
         );
     }
 
@@ -171,9 +174,7 @@ class Services extends BaseService
         }
 
         return new \App\Services\Auth\GoogleIdentityService(
-            static::userModel(),
-            static::jwtService(),
-            static::auditService()
+            trim((string) env('GOOGLE_CLIENT_ID', ''))
         );
     }
 
@@ -248,11 +249,16 @@ class Services extends BaseService
             return static::getSharedInstance('refreshTokenService');
         }
 
+        $refreshTokenTtl = (int) (getenv('JWT_REFRESH_TOKEN_TTL') ?: env('JWT_REFRESH_TOKEN_TTL', 604800));
+        $accessTokenTtl = (int) (getenv('JWT_ACCESS_TOKEN_TTL') ?: env('JWT_ACCESS_TOKEN_TTL', 3600));
+
         return new \App\Services\Tokens\RefreshTokenService(
             new \App\Models\RefreshTokenModel(),
             static::jwtService(),
             static::userModel(),
-            static::userAccountGuard()
+            static::userAccountGuard(),
+            $refreshTokenTtl,
+            $accessTokenTtl
         );
     }
 
@@ -381,10 +387,17 @@ class Services extends BaseService
             return static::getSharedInstance('emailService');
         }
 
+        $fromAddress = (string) (env('EMAIL_FROM_ADDRESS') ?: 'no-reply@example.com');
+        $fromName = (string) (env('EMAIL_FROM_NAME') ?: 'CI4 API');
+        $defaultLocale = (string) config('App')->defaultLocale;
+
         // EmailService requires MailerInterface (null for now) and QueueManager
         return new \App\Services\System\EmailService(
             null,
-            static::queueManager()
+            static::queueManager(),
+            $fromAddress,
+            $fromName,
+            $defaultLocale
         );
     }
 
@@ -417,9 +430,14 @@ class Services extends BaseService
             return static::getSharedInstance('metricsService');
         }
 
+        $slowQueryThreshold = (int) env('SLOW_QUERY_THRESHOLD', 1000);
+        $p95Target = (int) env('SLO_API_P95_TARGET_MS', 500);
+
         return new \App\Services\System\MetricsService(
             new \App\Models\RequestLogModel(),
-            new \App\Models\MetricModel()
+            new \App\Models\MetricModel(),
+            $slowQueryThreshold,
+            $p95Target
         );
     }
 

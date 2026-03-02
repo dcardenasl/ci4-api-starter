@@ -24,7 +24,9 @@ readonly class RefreshTokenService implements \App\Interfaces\Tokens\RefreshToke
         protected RefreshTokenModel $refreshTokenModel,
         protected JwtServiceInterface $jwtService,
         protected UserModel $userModel,
-        protected UserAccountGuard $userAccountGuard
+        protected UserAccountGuard $userAccountGuard,
+        protected int $refreshTokenTtl = 604800,
+        protected int $accessTokenTtl = 3600
     ) {
     }
 
@@ -35,9 +37,7 @@ readonly class RefreshTokenService implements \App\Interfaces\Tokens\RefreshToke
     {
         $token = \generate_token();
 
-        // Calculate expiry from environment or default to 7 days
-        $ttl = (int) (getenv('JWT_REFRESH_TOKEN_TTL') ?: env('JWT_REFRESH_TOKEN_TTL', 604800));
-        $expiresAt = date('Y-m-d H:i:s', time() + $ttl);
+        $expiresAt = date('Y-m-d H:i:s', time() + $this->refreshTokenTtl);
 
         $this->refreshTokenModel->insert([
             'user_id'    => $userId,
@@ -81,7 +81,7 @@ readonly class RefreshTokenService implements \App\Interfaces\Tokens\RefreshToke
             return \App\DTO\Response\Identity\TokenResponseDTO::fromArray([
                 'access_token'  => $accessToken,
                 'refresh_token' => $newRefreshToken,
-                'expires_in'    => (int) (getenv('JWT_ACCESS_TOKEN_TTL') ?: env('JWT_ACCESS_TOKEN_TTL', 3600)),
+                'expires_in'    => $this->accessTokenTtl,
             ]);
         });
     }

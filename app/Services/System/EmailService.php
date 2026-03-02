@@ -21,7 +21,10 @@ readonly class EmailService implements EmailServiceInterface
 {
     public function __construct(
         protected ?MailerInterface $mailer = null,
-        protected ?QueueManager $queueManager = null
+        protected ?QueueManager $queueManager = null,
+        protected string $fromAddress = 'no-reply@example.com',
+        protected string $fromName = 'CI4 API',
+        protected string $defaultLocale = 'en'
     ) {
     }
 
@@ -36,11 +39,8 @@ readonly class EmailService implements EmailServiceInterface
         }
 
         try {
-            $fromAddress = (string) (env('EMAIL_FROM_ADDRESS') ?: 'no-reply@example.com');
-            $fromName = (string) (env('EMAIL_FROM_NAME') ?: 'CI4 API');
-
             $email = (new Email())
-                ->from(new Address($fromAddress, $fromName))
+                ->from(new Address($this->fromAddress, $this->fromName))
                 ->to($to)
                 ->subject($subject)
                 ->html($message);
@@ -104,9 +104,7 @@ readonly class EmailService implements EmailServiceInterface
 
         // Set locale for template rendering if not provided
         if (!isset($data['locale']) || !is_string($data['locale']) || $data['locale'] === '') {
-            /** @var \CodeIgniter\HTTP\IncomingRequest $request */
-            $request = \Config\Services::request();
-            $data['locale'] = method_exists($request, 'getLocale') ? (string) $request->getLocale() : (string) config('App')->defaultLocale;
+            $data['locale'] = $this->defaultLocale;
         }
 
         return $this->queueManager->push(SendTemplateEmailJob::class, [

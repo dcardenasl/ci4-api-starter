@@ -17,7 +17,8 @@ class SessionManager
 {
     public function __construct(
         protected JwtServiceInterface $jwtService,
-        protected RefreshTokenServiceInterface $refreshTokenService
+        protected RefreshTokenServiceInterface $refreshTokenService,
+        protected int $accessTokenTtl = 3600
     ) {
     }
 
@@ -37,7 +38,7 @@ class SessionManager
         return [
             'access_token' => $accessToken,
             'refresh_token' => $refreshToken,
-            'expires_in' => (int) (getenv('JWT_ACCESS_TOKEN_TTL') ?: 3600),
+            'expires_in' => $this->accessTokenTtl,
             'user' => $userData,
         ];
     }

@@ -39,11 +39,10 @@ class AuthService implements \App\Interfaces\Auth\AuthServiceInterface
         protected AuditServiceInterface $auditService,
         protected AuthUserMapper $userMapper,
         protected SessionManager $sessionManager,
-        protected ?UserAccountGuard $userAccessPolicy = null
+        protected UserAccountGuard $userAccessPolicy
     ) {
         $this->registerUserAction = $registerUserAction;
         $this->googleLoginAction = $googleLoginAction;
-        $this->userAccessPolicy ??= \Config\Services::userAccountGuard();
     }
 
     /**

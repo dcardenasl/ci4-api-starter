@@ -22,7 +22,9 @@ readonly class MetricsService implements \App\Interfaces\System\MetricsServiceIn
 
     public function __construct(
         protected RequestLogModel $requestLogModel,
-        protected MetricModel $metricModel
+        protected MetricModel $metricModel,
+        protected int $defaultSlowQueryThreshold = 1000,
+        protected int $defaultP95TargetMs = 500
     ) {
     }
 
@@ -38,7 +40,7 @@ readonly class MetricsService implements \App\Interfaces\System\MetricsServiceIn
         return \App\DTO\Response\Metrics\MetricsOverviewResponseDTO::fromArray([
             'request_stats' => $requestStats,
             'slow_requests' => $this->requestLogModel->getSlowRequests(
-                (int) env('SLOW_QUERY_THRESHOLD', 1000),
+                $this->defaultSlowQueryThreshold,
                 5
             ),
             'slo' => [
@@ -46,7 +48,7 @@ readonly class MetricsService implements \App\Interfaces\System\MetricsServiceIn
                 'error_rate_percent'   => $requestStats['error_rate_percent'] ?? 0,
                 'p95_response_time_ms' => $requestStats['p95_response_time_ms'] ?? 0,
                 'p99_response_time_ms' => $requestStats['p99_response_time_ms'] ?? 0,
-                'p95_target_ms'        => $requestStats['slo']['p95_target_ms'] ?? (int) env('SLO_API_P95_TARGET_MS', 500),
+                'p95_target_ms'        => $requestStats['slo']['p95_target_ms'] ?? $this->defaultP95TargetMs,
                 'p95_target_met'       => $requestStats['slo']['p95_target_met'] ?? true,
             ],
         ]);

@@ -24,6 +24,8 @@ Use the internal generator to create a domain-aligned CRUD skeleton:
 php spark make:crud Product --domain Catalog --route products
 ```
 
+The repository now ships with a completed example module, `DemoProduct`, under the `Catalog` domain. Review its DTOs, controller, service, and tests as a reference for the architecture contract, and verify any new module with `php spark module:check <Resource> --domain <Domain>`.
+
 The command generates entity, model, interface, service, controller, validation, i18n files, OpenAPI placeholders, and tests.
 
 ## Quick Start

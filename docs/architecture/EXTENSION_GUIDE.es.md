@@ -20,6 +20,8 @@ Proceso completo paso a paso:
 
 Ver [`../GETTING_STARTED.md`](../GETTING_STARTED.md) para un recorrido completo con ejemplos de código.
 
+El repo incluye un módulo de ejemplo (`DemoProduct` en el dominio `Catalog`). Revisa su estructura (DTOs, controladores, servicios y tests) para entender cómo lucen los artefactos generados y usa `php spark module:check <Resource> --domain <Domain>` para validar tus propios módulos.
+
 ## Añadir Filtros Personalizados
 
 ```php
@@ -48,4 +50,3 @@ class PaymentRequiredException extends ApiException
     protected int $statusCode = 402;
 }
 ```
-

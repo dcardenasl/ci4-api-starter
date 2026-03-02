@@ -192,6 +192,11 @@ Usa ADRs para decisiones transversales no negociables:
 3. [ADR-006-FEATURE-TOGGLE-POLICY.es.md](ADR-006-FEATURE-TOGGLE-POLICY.es.md)
 4. [ADR-007-SERVICE-RETURN-CONTRACTS.es.md](ADR-007-SERVICE-RETURN-CONTRACTS.es.md)
 
+## 🚨 Cómo manejar el desvío arquitectónico
+
+Cuando `composer arch-drift` falla o CI marca un guardrail, consulta:
+- [DRIFT_GUIDE.es.md](DRIFT_GUIDE.es.md) para los pasos de corrección.
+
 ---
 
 ## 💡 Consejos para Leer
@@ -216,6 +221,12 @@ Una vez que hayas completado el mapa de aprendizaje:
 2. **Lee el código** - Examina controladores, servicios y modelos existentes
 3. **Ejecuta tests** - Ve cómo funciona el testing en todas las capas
 4. **Contribuye** - Mejora la documentación o agrega características
+
+---
+
+## 🧪 Ejemplo vivo
+
+Consulta el módulo `DemoProduct` generado (dominio `Catalog`) en `app/Services/Catalog`, `app/Controllers/Api/V1/Catalog` y sus DTO/tests para ver el patrón del template aplicado (validación DTO, lógica de servicio y documentación cohesionada).
 
 ---
 

@@ -198,6 +198,11 @@ Use ADRs for non-negotiable cross-cutting decisions:
 3. [ADR-006-FEATURE-TOGGLE-POLICY.md](ADR-006-FEATURE-TOGGLE-POLICY.md)
 4. [ADR-007-SERVICE-RETURN-CONTRACTS.md](ADR-007-SERVICE-RETURN-CONTRACTS.md)
 
+## 🚨 Handling Architecture Drift
+
+When `composer arch-drift` fails or CI flags a guardrail, consult:
+- [DRIFT_GUIDE.md](DRIFT_GUIDE.md) for remediation steps.
+
 ---
 
 ## 💡 Tips for Reading
@@ -222,6 +227,12 @@ Once you've completed the roadmap:
 2. **Read the code** - Examine existing controllers, services, models
 3. **Run tests** - See how testing works across all layers
 4. **Contribute** - Improve the docs or add features
+
+---
+
+## 🧪 Living Example
+
+Walk through the generated `DemoProduct` module in `app/Services/Catalog`, `app/Controllers/Api/V1/Catalog`, and its DTO/tests to see the template structure applied with DTO validation, service orchestration, and documentation artifacts in one place.
 
 ---
 

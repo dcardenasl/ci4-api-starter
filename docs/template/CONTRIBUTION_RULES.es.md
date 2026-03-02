@@ -28,6 +28,8 @@ Estas reglas definen el estándar mínimo de contribución para este repositorio
 6. `vendor/bin/phpunit`
 7. Recomendado: `composer quality` para ejecutar toda la cadena.
 
+Consulta `docs/architecture/DRIFT_GUIDE.es.md` siempre que `composer arch-drift` u otros guardrails de arquitectura fallen para saber cómo diagnosticar y corregir el incidente.
+
 ## 4. Checklist de aceptación de PR
 
 1. Alcance e impacto documentados explícitamente.
@@ -35,3 +37,4 @@ Estas reglas definen el estándar mínimo de contribución para este repositorio
 3. Acciones de migración documentadas si hubo cambios de contrato.
 4. No introducir TODOs sin resolver ni atajos temporales.
 5. Declarar explícitamente impacto de architecture drift cuando se tocan controllers/services/filters.
+6. Consultar `docs/architecture/DRIFT_GUIDE.es.md` cuando fallen los guardrails de arquitectura.

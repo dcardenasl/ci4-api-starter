@@ -28,6 +28,8 @@ These rules define the minimum contribution standard for this repository and dow
 6. `vendor/bin/phpunit`
 7. Prefer `composer quality` to run the full chain.
 
+Consult `docs/architecture/DRIFT_GUIDE.md` whenever `composer arch-drift` or other architecture guardrails fail so you know how to diagnose and resolve the issue.
+
 ## 4. PR Acceptance Checklist
 
 1. Scope and impact are explicitly documented.
@@ -35,3 +37,4 @@ These rules define the minimum contribution standard for this repository and dow
 3. Migration actions are documented if contracts changed.
 4. No unresolved TODOs or temporary shortcuts are introduced.
 5. Architecture drift impact is explicitly declared when touching controllers/services/filters.
+6. Consult `docs/architecture/DRIFT_GUIDE.md` whenever the architecture guardrails fail.

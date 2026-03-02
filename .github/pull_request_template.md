@@ -18,6 +18,10 @@
 - [ ] `composer arch-drift`
 - [ ] `vendor/bin/phpunit --configuration phpunit.xml --no-coverage --testdox`
 
+## Architecture Drift
+
+- [ ] Documented any `composer arch-drift` failures or guardrail violations with references to `docs/architecture/DRIFT_GUIDE.md`.
+
 ## Checklist
 
 - [ ] No secrets/credentials committed

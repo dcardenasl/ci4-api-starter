@@ -6,14 +6,23 @@ namespace App\Controllers\Api\V1\Identity;
 
 use App\Controllers\ApiController;
 use App\DTO\Request\Identity\VerificationRequestDTO;
+use App\Interfaces\Auth\VerificationServiceInterface;
 use CodeIgniter\HTTP\ResponseInterface;
+use Config\Services;
 
 /**
  * Modernized Verification Controller
  */
 class VerificationController extends ApiController
 {
-    protected string $serviceName = 'verificationService';
+    protected VerificationServiceInterface $verificationService;
+
+    protected function resolveDefaultService(): object
+    {
+        $this->verificationService = Services::verificationService();
+
+        return $this->verificationService;
+    }
 
     /**
      * Verify email with token

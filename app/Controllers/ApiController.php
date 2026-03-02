@@ -10,8 +10,10 @@ use App\Libraries\ApiResponse;
 use App\Libraries\ContextHolder;
 use CodeIgniter\API\ResponseTrait;
 use CodeIgniter\Controller;
+use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
 use Exception;
+use Psr\Log\LoggerInterface;
 
 /**
  * Base API Controller
@@ -23,9 +25,6 @@ use Exception;
 abstract class ApiController extends Controller
 {
     use ResponseTrait;
-
-    protected string $serviceName = '';
-    protected ?object $service = null;
 
     /**
      * Map controller actions to success HTTP status codes.
@@ -39,15 +38,16 @@ abstract class ApiController extends Controller
     ];
 
     /**
-     * Get the service instance associated with this controller
+     * Controllers must resolve their primary service explicitly.
      */
-    protected function getService(): object
+    abstract protected function resolveDefaultService(): object;
+
+    protected object $defaultService;
+
+    public function initController(RequestInterface $request, ResponseInterface $response, LoggerInterface $logger)
     {
-        if ($this->service === null) {
-            $method = $this->serviceName;
-            $this->service = \Config\Services::$method();
-        }
-        return $this->service;
+        parent::initController($request, $response, $logger);
+        $this->defaultService = $this->resolveDefaultService();
     }
 
     /**
@@ -109,17 +109,33 @@ abstract class ApiController extends Controller
             if (!class_exists($dtoClass)) {
                 throw new \InvalidArgumentException("DTO class '{$dtoClass}' not found.");
             }
-            $payload = new $dtoClass($data, $context);
+            $payload = new $dtoClass($this->withSecurityContext($data, $context));
         }
 
         // 2. Resolve and execute target
         // If string, assume it's a method of the associated service
         if (is_string($target)) {
-            return $this->getService()->{$target}($payload, $context);
+            return $this->defaultService->{$target}($payload, $context);
         }
 
         // Otherwise, execute as a standard callable (Closure, [$this, 'method'], etc.)
         return $target($payload, $context);
+    }
+
+    /**
+     * Keep context enrichment at the HTTP boundary so DTOs remain pure data objects.
+     */
+    private function withSecurityContext(array $data, \App\DTO\SecurityContext $context): array
+    {
+        if (!isset($data['userId']) && $context->userId !== null) {
+            $data['userId'] = $context->userId;
+        }
+
+        if (!isset($data['userRole']) && $context->role !== null) {
+            $data['userRole'] = $context->role;
+        }
+
+        return $data;
     }
 
     /**

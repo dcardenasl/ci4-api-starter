@@ -6,7 +6,9 @@ namespace App\Controllers\Api\V1\Identity;
 
 use App\Controllers\ApiController;
 use App\DTO\Request\Auth\RegisterRequestDTO;
+use App\Interfaces\Auth\AuthServiceInterface;
 use CodeIgniter\HTTP\ResponseInterface;
+use Config\Services;
 
 /**
  * Modernized Registration Controller
@@ -15,7 +17,14 @@ use CodeIgniter\HTTP\ResponseInterface;
  */
 class RegistrationController extends ApiController
 {
-    protected string $serviceName = 'authService';
+    protected AuthServiceInterface $authService;
+
+    protected function resolveDefaultService(): object
+    {
+        $this->authService = Services::authService();
+
+        return $this->authService;
+    }
 
     /**
      * @var array<string, int>

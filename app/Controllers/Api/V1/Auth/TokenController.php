@@ -6,14 +6,23 @@ namespace App\Controllers\Api\V1\Auth;
 
 use App\Controllers\ApiController;
 use App\DTO\Request\Identity\RefreshTokenRequestDTO;
+use App\Interfaces\Tokens\AuthTokenServiceInterface;
 use CodeIgniter\HTTP\ResponseInterface;
+use Config\Services;
 
 /**
  * Modernized Token Controller
  */
 class TokenController extends ApiController
 {
-    protected string $serviceName = 'authTokenService';
+    protected AuthTokenServiceInterface $authTokenService;
+
+    protected function resolveDefaultService(): object
+    {
+        $this->authTokenService = Services::authTokenService();
+
+        return $this->authTokenService;
+    }
 
     /**
      * Refresh access token using refresh token
@@ -29,7 +38,7 @@ class TokenController extends ApiController
     public function revoke(): ResponseInterface
     {
         return $this->handleRequest(function ($dto, $context) {
-            return $this->getService()->revokeToken(
+            return $this->authTokenService->revokeToken(
                 $this->request->getHeaderLine('Authorization'),
                 $context
             );

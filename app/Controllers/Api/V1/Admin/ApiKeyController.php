@@ -8,7 +8,9 @@ use App\Controllers\ApiController;
 use App\DTO\Request\ApiKeys\ApiKeyCreateRequestDTO;
 use App\DTO\Request\ApiKeys\ApiKeyIndexRequestDTO;
 use App\DTO\Request\ApiKeys\ApiKeyUpdateRequestDTO;
+use App\Interfaces\Tokens\ApiKeyServiceInterface;
 use CodeIgniter\HTTP\ResponseInterface;
+use Config\Services;
 
 /**
  * Modernized API Key Controller
@@ -18,7 +20,14 @@ use CodeIgniter\HTTP\ResponseInterface;
  */
 class ApiKeyController extends ApiController
 {
-    protected string $serviceName = 'apiKeyService';
+    protected ApiKeyServiceInterface $apiKeyService;
+
+    protected function resolveDefaultService(): object
+    {
+        $this->apiKeyService = Services::apiKeyService();
+
+        return $this->apiKeyService;
+    }
 
     /**
      * List all API keys
@@ -34,7 +43,7 @@ class ApiKeyController extends ApiController
     public function show(int $id): ResponseInterface
     {
         return $this->handleRequest(
-            fn ($dto, $context) => $this->getService()->show($id, $context)
+            fn ($dto, $context) => $this->apiKeyService->show($id, $context)
         );
     }
 
@@ -52,7 +61,7 @@ class ApiKeyController extends ApiController
     public function update(int $id): ResponseInterface
     {
         return $this->handleRequest(
-            fn ($dto, $context) => $this->getService()->update($id, $dto, $context),
+            fn ($dto, $context) => $this->apiKeyService->update($id, $dto, $context),
             ApiKeyUpdateRequestDTO::class
         );
     }
@@ -63,7 +72,7 @@ class ApiKeyController extends ApiController
     public function delete(int $id): ResponseInterface
     {
         return $this->handleRequest(
-            fn ($dto, $context) => $this->getService()->destroy($id, $context)
+            fn ($dto, $context) => $this->apiKeyService->destroy($id, $context)
         );
     }
 }

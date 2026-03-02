@@ -8,7 +8,9 @@ use App\Controllers\ApiController;
 use App\DTO\Request\Auth\GoogleLoginRequestDTO;
 use App\DTO\Request\Auth\LoginRequestDTO;
 use App\DTO\Request\Auth\RegisterRequestDTO;
+use App\Interfaces\Auth\AuthServiceInterface;
 use CodeIgniter\HTTP\ResponseInterface;
+use Config\Services;
 
 /**
  * Modernized Authentication Controller
@@ -17,7 +19,15 @@ use CodeIgniter\HTTP\ResponseInterface;
  */
 class AuthController extends ApiController
 {
-    protected string $serviceName = 'authService';
+    protected AuthServiceInterface $authService;
+
+    protected function resolveDefaultService(): object
+    {
+        $this->authService = Services::authService();
+
+        return $this->authService;
+    }
+
     protected array $statusCodes = [
         'register' => 201,
     ];
@@ -52,7 +62,7 @@ class AuthController extends ApiController
     public function me(): ResponseInterface
     {
         return $this->handleRequest(function () {
-            return $this->getService()->me($this->getUserId());
+            return $this->authService->me($this->getUserId());
         });
     }
 }

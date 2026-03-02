@@ -62,6 +62,18 @@ class ControllerConventionsTest extends CIUnitTestCase
                 $violations[] = $relative . ': collectRequestData() must not be called directly in concrete controller';
             }
 
+            if (preg_match('/protected\s+string\s+\$serviceName\s*=/', $source) === 1) {
+                $violations[] = $relative . ': serviceName locator property is forbidden; resolve service explicitly';
+            }
+
+            if (preg_match('/\bgetService\s*\(/', $source) === 1) {
+                $violations[] = $relative . ': getService() locator usage is forbidden; use explicit service property';
+            }
+
+            if (preg_match('/\bresolveDefaultService\s*\(/', $source) !== 1) {
+                $violations[] = $relative . ': missing resolveDefaultService() explicit dependency contract';
+            }
+
             if (! $allowsTryCatch && preg_match('/\btry\s*\{/', $source) === 1) {
                 $violations[] = $relative . ': try/catch not allowed; use ApiController::handleRequest()';
             }

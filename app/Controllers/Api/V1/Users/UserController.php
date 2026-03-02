@@ -8,7 +8,9 @@ use App\Controllers\ApiController;
 use App\DTO\Request\Users\UserIndexRequestDTO;
 use App\DTO\Request\Users\UserStoreRequestDTO;
 use App\DTO\Request\Users\UserUpdateRequestDTO;
+use App\Interfaces\Users\UserServiceInterface;
 use CodeIgniter\HTTP\ResponseInterface;
+use Config\Services;
 
 /**
  * Modernized User Controller
@@ -17,7 +19,14 @@ use CodeIgniter\HTTP\ResponseInterface;
  */
 class UserController extends ApiController
 {
-    protected string $serviceName = 'userService';
+    protected UserServiceInterface $userService;
+
+    protected function resolveDefaultService(): object
+    {
+        $this->userService = Services::userService();
+
+        return $this->userService;
+    }
 
     /**
      * List users with filters and pagination
@@ -32,7 +41,7 @@ class UserController extends ApiController
      */
     public function show(int $id): ResponseInterface
     {
-        return $this->handleRequest(fn ($dto, $context) => $this->getService()->show($id, $context));
+        return $this->handleRequest(fn ($dto, $context) => $this->userService->show($id, $context));
     }
 
     /**
@@ -49,7 +58,7 @@ class UserController extends ApiController
     public function update(int $id): ResponseInterface
     {
         return $this->handleRequest(
-            fn ($dto, $context) => $this->getService()->update($id, $dto, $context),
+            fn ($dto, $context) => $this->userService->update($id, $dto, $context),
             UserUpdateRequestDTO::class
         );
     }
@@ -62,7 +71,7 @@ class UserController extends ApiController
         return $this->handleRequest(
             function ($dto, $context) use ($id) {
                 $clientBaseUrl = $this->request->getVar('client_base_url');
-                return $this->getService()->approve(
+                return $this->userService->approve(
                     $id,
                     $context,
                     is_string($clientBaseUrl) ? $clientBaseUrl : null
@@ -76,7 +85,7 @@ class UserController extends ApiController
      */
     public function delete(int $id): ResponseInterface
     {
-        return $this->handleRequest(fn ($dto, $context) => $this->getService()->destroy($id, $context));
+        return $this->handleRequest(fn ($dto, $context) => $this->userService->destroy($id, $context));
     }
 
 }

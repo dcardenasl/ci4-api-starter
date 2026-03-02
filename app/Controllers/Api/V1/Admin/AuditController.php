@@ -7,7 +7,9 @@ namespace App\Controllers\Api\V1\Admin;
 use App\Controllers\ApiController;
 use App\DTO\Request\Audit\AuditByEntityRequestDTO;
 use App\DTO\Request\Audit\AuditIndexRequestDTO;
+use App\Interfaces\System\AuditServiceInterface;
 use CodeIgniter\HTTP\ResponseInterface;
+use Config\Services;
 
 /**
  * Modernized Audit Controller
@@ -16,7 +18,14 @@ use CodeIgniter\HTTP\ResponseInterface;
  */
 class AuditController extends ApiController
 {
-    protected string $serviceName = 'auditService';
+    protected AuditServiceInterface $auditService;
+
+    protected function resolveDefaultService(): object
+    {
+        $this->auditService = Services::auditService();
+
+        return $this->auditService;
+    }
 
     /**
      * List all audit logs
@@ -31,7 +40,7 @@ class AuditController extends ApiController
      */
     public function show(int $id): ResponseInterface
     {
-        return $this->handleRequest(fn ($dto, $context) => $this->getService()->show($id, $context));
+        return $this->handleRequest(fn ($dto, $context) => $this->auditService->show($id, $context));
     }
 
 

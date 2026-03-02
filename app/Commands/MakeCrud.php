@@ -127,7 +127,9 @@ class MakeCrud extends BaseCommand
             return;
         }
 
-        $method = "\n    public static function {$methodName}(bool \$getShared = true)\n    {\n        if (\$getShared) {\n            return static::getSharedInstance('{$methodName}');\n        }\n\n        return new \\App\\Services\\{$domain}\\{$resource}Service(\n            new \\App\\Models\\{$resource}Model()\n        );\n    }\n";
+        $mapperMethodName = "{$resourceLower}ResponseMapper";
+
+        $method = "\n    public static function {$mapperMethodName}(bool \$getShared = true)\n    {\n        if (\$getShared) {\n            return static::getSharedInstance('{$mapperMethodName}');\n        }\n\n        return new \\App\\Services\\Core\\Mappers\\DtoResponseMapper(\n            \\App\\DTO\\Response\\{$domain}\\{$resource}ResponseDTO::class\n        );\n    }\n\n    public static function {$methodName}(bool \$getShared = true)\n    {\n        if (\$getShared) {\n            return static::getSharedInstance('{$methodName}');\n        }\n\n        return new \\App\\Services\\{$domain}\\{$resource}Service(\n            new \\App\\Models\\{$resource}Model(),\n            static::{$mapperMethodName}()\n        );\n    }\n";
 
         $needle = "\n}\n";
         $position = strrpos($content, $needle);
@@ -515,11 +517,21 @@ use App\Controllers\ApiController;
 use App\DTO\Request\\{$domain}\\{$resource}IndexRequestDTO;
 use App\DTO\Request\\{$domain}\\{$resource}CreateRequestDTO;
 use App\DTO\Request\\{$domain}\\{$resource}UpdateRequestDTO;
+use App\Interfaces\\{$domain}\\{$resource}ServiceInterface;
 use CodeIgniter\HTTP\ResponseInterface;
+use Config\Services;
 
 class {$resource}Controller extends ApiController
 {
-    protected string \$serviceName = '{$resourceLower}Service';
+    protected {$resource}ServiceInterface \${$resourceLower}Service;
+
+    protected function resolveDefaultService(): object
+    {
+        \$this->{$resourceLower}Service = Services::{$resourceLower}Service();
+
+        return \$this->{$resourceLower}Service;
+    }
+
     protected array \$statusCodes = [
         'store' => 201,
     ];
@@ -537,19 +549,19 @@ class {$resource}Controller extends ApiController
     public function update(int \$id): ResponseInterface
     {
         return \$this->handleRequest(
-            fn(\$dto, \$context) => \$this->getService()->update(\$id, \$dto, \$context),
+            fn(\$dto, \$context) => \$this->{$resourceLower}Service->update(\$id, \$dto, \$context),
             {$resource}UpdateRequestDTO::class
         );
     }
 
     public function show(int \$id): ResponseInterface
     {
-        return \$this->handleRequest(fn(\$dto, \$context) => \$this->getService()->show(\$id, \$context));
+        return \$this->handleRequest(fn(\$dto, \$context) => \$this->{$resourceLower}Service->show(\$id, \$context));
     }
 
     public function delete(int \$id): ResponseInterface
     {
-        return \$this->handleRequest(fn(\$dto, \$context) => \$this->getService()->destroy(\$id, \$context));
+        return \$this->handleRequest(fn(\$dto, \$context) => \$this->{$resourceLower}Service->destroy(\$id, \$context));
     }
 }
 PHP;

@@ -9,8 +9,10 @@ use App\DTO\Request\Files\FileGetRequestDTO;
 use App\DTO\Request\Files\FileIndexRequestDTO;
 use App\DTO\Request\Files\FileUploadRequestDTO;
 use App\DTO\Response\Files\FileDownloadResponseDTO;
+use App\Interfaces\Files\FileServiceInterface;
 use App\Libraries\ApiResponse;
 use CodeIgniter\HTTP\ResponseInterface;
+use Config\Services;
 
 /**
  * File Controller
@@ -20,7 +22,14 @@ use CodeIgniter\HTTP\ResponseInterface;
  */
 class FileController extends ApiController
 {
-    protected string $serviceName = 'fileService';
+    protected FileServiceInterface $fileService;
+
+    protected function resolveDefaultService(): object
+    {
+        $this->fileService = Services::fileService();
+
+        return $this->fileService;
+    }
 
     /**
      * Map upload to 201 Created status
@@ -53,7 +62,7 @@ class FileController extends ApiController
     {
         return $this->handleRequest(function ($dto, $context) {
             /** @var FileDownloadResponseDTO $result */
-            $result = $this->getService()->download($dto, $context);
+            $result = $this->fileService->download($dto, $context);
             $payload = $result->toArray();
 
             // For local storage, send file for direct download

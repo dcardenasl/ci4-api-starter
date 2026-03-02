@@ -22,4 +22,14 @@ class ApiControllerConventionsTest extends CIUnitTestCase
         $this->assertStringNotContainsString("str_contains(\$msg, 'pending')", $source);
         $this->assertStringNotContainsString("str_contains(\$msg, 'pendiente')", $source);
     }
+
+    public function testApiControllerRequiresExplicitServiceResolutionContract(): void
+    {
+        $path = rtrim((string) ROOTPATH, DIRECTORY_SEPARATOR) . '/app/Controllers/ApiController.php';
+        $source = file_get_contents($path);
+
+        $this->assertIsString($source);
+        $this->assertStringContainsString('abstract protected function resolveDefaultService(): object;', $source);
+        $this->assertStringNotContainsString('protected function getService(): object', $source);
+    }
 }

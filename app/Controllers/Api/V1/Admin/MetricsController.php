@@ -9,8 +9,10 @@ use App\DTO\Request\Metrics\CustomMetricQueryRequestDTO;
 use App\DTO\Request\Metrics\MetricsQueryRequestDTO;
 use App\DTO\Request\Metrics\RecordMetricRequestDTO;
 use App\DTO\Request\Metrics\SlowRequestsQueryRequestDTO;
+use App\Interfaces\System\MetricsServiceInterface;
 use App\Libraries\ApiResponse;
 use CodeIgniter\HTTP\ResponseInterface;
+use Config\Services;
 
 /**
  * Modernized Metrics Controller
@@ -19,7 +21,14 @@ use CodeIgniter\HTTP\ResponseInterface;
  */
 class MetricsController extends ApiController
 {
-    protected string $serviceName = 'metricsService';
+    protected MetricsServiceInterface $metricsService;
+
+    protected function resolveDefaultService(): object
+    {
+        $this->metricsService = Services::metricsService();
+
+        return $this->metricsService;
+    }
 
     /**
      * Map upload to 201 Created status

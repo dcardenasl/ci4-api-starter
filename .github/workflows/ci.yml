@@ -66,6 +66,9 @@ jobs:
       - name: Run i18n checks
         run: composer i18n-check
 
+      - name: Run architecture drift checks
+        run: composer arch-drift
+
       - name: Create .env file from example
         run: cp .env.example .env
 

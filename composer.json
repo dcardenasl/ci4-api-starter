@@ -62,9 +62,15 @@
         "cs-check": "php-cs-fixer fix --dry-run --diff --sequential",
         "i18n-check": "php scripts/i18n-check.php",
         "docs-i18n-check": "php scripts/docs-i18n-parity-check.php",
+        "arch-drift": [
+            "phpunit tests/Unit/Architecture --configuration=phpunit.xml --no-coverage --testdox",
+            "@i18n-check",
+            "@docs-i18n-check"
+        ],
         "quality": [
             "@cs-check",
             "@phpstan",
+            "@arch-drift",
             "@i18n-check",
             "@docs-i18n-check",
             "@test"

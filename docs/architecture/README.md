@@ -189,6 +189,15 @@ For a condensed, table-based quick reference optimized for rapid lookup:
 For hands-on, step-by-step tutorial:
 → See [`../GETTING_STARTED.md`](../GETTING_STARTED.md)
 
+## 🧾 Architecture Decisions (ADRs)
+
+Use ADRs for non-negotiable cross-cutting decisions:
+
+1. [ADR-004-OBSERVABILITY-GOVERNANCE.md](ADR-004-OBSERVABILITY-GOVERNANCE.md)
+2. [ADR-005-SERVICE-PURITY-DI.md](ADR-005-SERVICE-PURITY-DI.md)
+3. [ADR-006-FEATURE-TOGGLE-POLICY.md](ADR-006-FEATURE-TOGGLE-POLICY.md)
+4. [ADR-007-SERVICE-RETURN-CONTRACTS.md](ADR-007-SERVICE-RETURN-CONTRACTS.md)
+
 ---
 
 ## 💡 Tips for Reading

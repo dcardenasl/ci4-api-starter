@@ -183,6 +183,15 @@ Para una referencia rápida condensada, basada en tablas, optimizada para búsqu
 Para tutorial paso a paso, práctico:
 → Ver [`../GETTING_STARTED.md`](../GETTING_STARTED.md)
 
+## 🧾 Decisiones de Arquitectura (ADRs)
+
+Usa ADRs para decisiones transversales no negociables:
+
+1. [ADR-004-OBSERVABILITY-GOVERNANCE.es.md](ADR-004-OBSERVABILITY-GOVERNANCE.es.md)
+2. [ADR-005-SERVICE-PURITY-DI.es.md](ADR-005-SERVICE-PURITY-DI.es.md)
+3. [ADR-006-FEATURE-TOGGLE-POLICY.es.md](ADR-006-FEATURE-TOGGLE-POLICY.es.md)
+4. [ADR-007-SERVICE-RETURN-CONTRACTS.es.md](ADR-007-SERVICE-RETURN-CONTRACTS.es.md)
+
 ---
 
 ## 💡 Consejos para Leer

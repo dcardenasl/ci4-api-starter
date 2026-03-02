@@ -25,20 +25,67 @@ class Services extends BaseService
             return static::getSharedInstance('authService');
         }
 
+        $userModel = static::userModel();
+
         return new \App\Services\Auth\AuthService(
-            static::userModel(),
-            static::verificationService(),
+            $userModel,
+            static::registerUserAction($userModel),
+            static::googleLoginAction($userModel),
             static::auditService(),
-            new \App\Services\Auth\Support\AuthUserMapper(),
-            new \App\Services\Auth\Support\GoogleAuthHandler(
-                static::userModel(),
-                static::refreshTokenService()
-            ),
-            new \App\Services\Auth\Support\SessionManager(
-                static::jwtService(),
-                static::refreshTokenService()
-            ),
+            static::authUserMapper(),
+            static::sessionManager(),
             static::userAccountGuard()
+        );
+    }
+
+    public static function authUserMapper(bool $getShared = true)
+    {
+        if ($getShared) {
+            return static::getSharedInstance('authUserMapper');
+        }
+
+        return new \App\Services\Auth\Support\AuthUserMapper();
+    }
+
+    public static function sessionManager(bool $getShared = true)
+    {
+        if ($getShared) {
+            return static::getSharedInstance('sessionManager');
+        }
+
+        return new \App\Services\Auth\Support\SessionManager(
+            static::jwtService(),
+            static::refreshTokenService()
+        );
+    }
+
+    public static function googleAuthHandler(\App\Models\UserModel $userModel)
+    {
+        return new \App\Services\Auth\Support\GoogleAuthHandler(
+            $userModel,
+            static::refreshTokenService()
+        );
+    }
+
+    public static function registerUserAction(\App\Models\UserModel $userModel)
+    {
+        return new \App\Services\Auth\Actions\RegisterUserAction(
+            $userModel,
+            static::verificationService()
+        );
+    }
+
+    public static function googleLoginAction(\App\Models\UserModel $userModel)
+    {
+        return new \App\Services\Auth\Actions\GoogleLoginAction(
+            $userModel,
+            static::googleIdentityService(),
+            static::googleAuthHandler($userModel),
+            static::sessionManager(),
+            static::authUserMapper(),
+            static::userAccountGuard(),
+            static::auditService(),
+            static::emailService()
         );
     }
 

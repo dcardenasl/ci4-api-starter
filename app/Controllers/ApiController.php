@@ -91,12 +91,35 @@ abstract class ApiController extends Controller
             return $existingContext;
         }
 
-        $securityContext = new \App\DTO\SecurityContext($this->getUserId(), $this->getUserRole());
+        $securityContext = new \App\DTO\SecurityContext(
+            $this->getUserId(),
+            $this->getUserRole(),
+            $this->buildRequestMetadata()
+        );
 
         // Set context globally for this request
         ContextHolder::set($securityContext);
 
         return $securityContext;
+    }
+
+    /**
+     * Gather request metadata once at the HTTP boundary.
+     *
+     * @return array<string, mixed>
+     */
+    private function buildRequestMetadata(): array
+    {
+        $metadata = [
+            'ip_address' => $this->request->getIPAddress(),
+            'user_agent' => $this->request->getHeaderLine('User-Agent'),
+        ];
+
+        if (method_exists($this->request, 'getLocale')) {
+            $metadata['locale'] = (string) $this->request->getLocale();
+        }
+
+        return $metadata;
     }
     /**
      * Execute the target service method or callable

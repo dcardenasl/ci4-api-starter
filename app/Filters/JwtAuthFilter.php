@@ -82,7 +82,15 @@ class JwtAuthFilter implements FilterInterface
         }
 
         // Also set global context for DTO enrichment
-        ContextHolder::set(new \App\DTO\SecurityContext((int) $decoded->uid, (string) $decoded->role));
+        ContextHolder::set(new \App\DTO\SecurityContext(
+            (int) $decoded->uid,
+            (string) $decoded->role,
+            [
+                'ip_address' => $request->getIPAddress(),
+                'user_agent' => $request->getHeaderLine('User-Agent'),
+                'locale' => method_exists($request, 'getLocale') ? (string) $request->getLocale() : null,
+            ]
+        ));
 
         return $request;
     }

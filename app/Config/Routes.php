@@ -28,10 +28,12 @@ $routes->get('/', static function () {
 
 // Health check endpoints
 $routes->group('', ['namespace' => '\App\Controllers\Api\V1\System'], function ($routes) {
-    $routes->get('health', 'HealthController::index');
     $routes->get('ping', 'HealthController::ping');
-    $routes->get('ready', 'HealthController::ready');
-    $routes->get('live', 'HealthController::live');
+    $routes->group('', ['filter' => 'featureToggle:monitoring'], function ($routes) {
+        $routes->get('health', 'HealthController::index');
+        $routes->get('ready', 'HealthController::ready');
+        $routes->get('live', 'HealthController::live');
+    });
 });
 
 // API v1 Routes
@@ -91,11 +93,13 @@ $routes->group('api/v1', function ($routes) {
             $routes->put('api-keys/(:num)', '\App\Controllers\Api\V1\Admin\ApiKeyController::update/$1');
             $routes->delete('api-keys/(:num)', '\App\Controllers\Api\V1\Admin\ApiKeyController::delete/$1');
 
-            $routes->get('metrics', '\App\Controllers\Api\V1\Admin\MetricsController::index');
-            $routes->get('metrics/requests', '\App\Controllers\Api\V1\Admin\MetricsController::requests');
-            $routes->get('metrics/slow-requests', '\App\Controllers\Api\V1\Admin\MetricsController::slowRequests');
-            $routes->get('metrics/custom/(:segment)', '\App\Controllers\Api\V1\Admin\MetricsController::custom/$1');
-            $routes->post('metrics/record', '\App\Controllers\Api\V1\Admin\MetricsController::record');
+            $routes->group('', ['filter' => 'featureToggle:metrics'], function ($routes) {
+                $routes->get('metrics', '\App\Controllers\Api\V1\Admin\MetricsController::index');
+                $routes->get('metrics/requests', '\App\Controllers\Api\V1\Admin\MetricsController::requests');
+                $routes->get('metrics/slow-requests', '\App\Controllers\Api\V1\Admin\MetricsController::slowRequests');
+                $routes->get('metrics/custom/(:segment)', '\App\Controllers\Api\V1\Admin\MetricsController::custom/$1');
+                $routes->post('metrics/record', '\App\Controllers\Api\V1\Admin\MetricsController::record');
+            });
 
             $routes->get('audit', '\App\Controllers\Api\V1\Admin\AuditController::index');
             $routes->get('audit/(:num)', '\App\Controllers\Api\V1\Admin\AuditController::show/$1');

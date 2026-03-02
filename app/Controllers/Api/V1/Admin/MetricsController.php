@@ -10,7 +10,6 @@ use App\DTO\Request\Metrics\MetricsQueryRequestDTO;
 use App\DTO\Request\Metrics\RecordMetricRequestDTO;
 use App\DTO\Request\Metrics\SlowRequestsQueryRequestDTO;
 use App\Interfaces\System\MetricsServiceInterface;
-use App\Libraries\ApiResponse;
 use CodeIgniter\HTTP\ResponseInterface;
 use Config\Services;
 
@@ -42,10 +41,6 @@ class MetricsController extends ApiController
      */
     public function index(): ResponseInterface
     {
-        if (! env('METRICS_ENABLED', true)) {
-            return $this->respond(ApiResponse::error([], lang('Metrics.disabled'), 503), 503);
-        }
-
         return $this->handleRequest('getOverview', MetricsQueryRequestDTO::class);
     }
 

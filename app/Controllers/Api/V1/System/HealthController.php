@@ -42,14 +42,6 @@ class HealthController extends Controller
      */
     public function index(): ResponseInterface
     {
-        // Check if monitoring is enabled
-        if (! env('MONITORING_ENABLED', true)) {
-            return $this->response->setJSON([
-                'status' => 'disabled',
-                'message' => lang('Health.monitoringDisabled'),
-            ])->setStatusCode(503);
-        }
-
         // Run all health checks
         $checks = $this->healthChecker->checkAll();
 

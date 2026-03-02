@@ -8,6 +8,18 @@ use Tests\Support\ApiTestCase;
 
 class HealthControllerTest extends ApiTestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+        putenv('MONITORING_ENABLED=true');
+    }
+
+    protected function tearDown(): void
+    {
+        putenv('MONITORING_ENABLED');
+        parent::tearDown();
+    }
+
     public function testReadyEndpointResponds(): void
     {
         $result = $this->get('/ready');
@@ -23,5 +35,13 @@ class HealthControllerTest extends ApiTestCase
 
         $json = json_decode($result->getJSON(), true);
         $this->assertEquals('alive', $json['status']);
+    }
+
+    public function testHealthEndpointReturns503WhenMonitoringDisabled(): void
+    {
+        putenv('MONITORING_ENABLED=false');
+
+        $result = $this->get('/health');
+        $result->assertStatus(503);
     }
 }

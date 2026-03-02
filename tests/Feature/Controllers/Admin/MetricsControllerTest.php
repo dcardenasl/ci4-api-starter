@@ -15,9 +15,16 @@ class MetricsControllerTest extends ApiTestCase
     {
         parent::setUp();
         $this->actAs('admin');
+        putenv('METRICS_ENABLED=true');
 
         // Ensure static context is set for background model operations (Auditable trait)
         \App\Libraries\ContextHolder::set(new \App\DTO\SecurityContext($this->currentUserId, $this->currentUserRole));
+    }
+
+    protected function tearDown(): void
+    {
+        putenv('METRICS_ENABLED');
+        parent::tearDown();
     }
 
     public function testMetricsRequiresAdmin(): void
@@ -60,5 +67,13 @@ class MetricsControllerTest extends ApiTestCase
         ]);
 
         $valid->assertStatus(201);
+    }
+
+    public function testMetricsEndpointsReturn503WhenFeatureIsDisabled(): void
+    {
+        putenv('METRICS_ENABLED=false');
+
+        $result = $this->get('/api/v1/metrics');
+        $result->assertStatus(503);
     }
 }

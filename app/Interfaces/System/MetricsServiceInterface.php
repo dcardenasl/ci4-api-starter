@@ -36,4 +36,9 @@ interface MetricsServiceInterface
      * Record a custom metric
      */
     public function record(\App\DTO\Request\Metrics\RecordMetricRequestDTO $request, ?SecurityContext $context = null): OperationResult;
+
+    /**
+     * Record the outcome of a feature toggle evaluation
+     */
+    public function recordFeatureToggle(string $feature, bool $enabled): void;
 }

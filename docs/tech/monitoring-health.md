@@ -31,3 +31,12 @@ Included indicators:
 
 Configuration:
 - `SLO_API_P95_TARGET_MS` (default: `500`)
+
+## Feature toggle telemetry
+
+Every feature evaluation emits a `feature_toggle` metric with:
+- `metric_value`: `1` when enabled, `0` when disabled.
+- `tags.feature`: feature name.
+- `tags.enabled`: `1` or `0`.
+
+You can query `feature_toggle` metrics via `GET /api/v1/metrics/custom/feature_toggle` and filter by tags to understand how often a toggle is evaluated and its outcome.

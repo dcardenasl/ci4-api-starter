@@ -73,6 +73,18 @@ readonly class MetricsService implements \App\Interfaces\System\MetricsServiceIn
         );
     }
 
+    public function recordFeatureToggle(string $feature, bool $enabled): void
+    {
+        $this->metricModel->record(
+            'feature_toggle',
+            $enabled ? 1.0 : 0.0,
+            [
+                'feature' => $feature,
+                'enabled' => $enabled ? '1' : '0',
+            ]
+        );
+    }
+
     public function record(\App\DTO\Request\Metrics\RecordMetricRequestDTO $request, ?SecurityContext $context = null): OperationResult
     {
         $recorded = (bool) $this->metricModel->record($request->name, $request->value, $request->tags);

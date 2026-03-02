@@ -22,7 +22,10 @@ class FeatureToggleFilter implements FilterInterface
 
         /** @var FeatureFlags $flags */
         $flags = config(FeatureFlags::class);
-        if ($flags->isEnabled($flag)) {
+        $enabled = $flags->isEnabled($flag);
+        Services::metricsService()->recordFeatureToggle($flag, $enabled);
+
+        if ($enabled) {
             return $request;
         }
 

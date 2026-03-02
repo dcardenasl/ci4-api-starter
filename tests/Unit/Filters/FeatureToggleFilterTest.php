@@ -7,6 +7,7 @@ namespace Tests\Unit\Filters;
 use App\Filters\FeatureToggleFilter;
 use CodeIgniter\HTTP\IncomingRequest;
 use CodeIgniter\Test\CIUnitTestCase;
+use Config\Services;
 
 class FeatureToggleFilterTest extends CIUnitTestCase
 {
@@ -22,7 +23,22 @@ class FeatureToggleFilterTest extends CIUnitTestCase
     {
         putenv('METRICS_ENABLED');
         putenv('MONITORING_ENABLED');
+        Services::reset(true);
         parent::tearDown();
+    }
+
+    public function testBeforeRecordsFeatureToggleMetric(): void
+    {
+        $mockMetrics = $this->createMock(\App\Interfaces\System\MetricsServiceInterface::class);
+        $mockMetrics
+            ->expects($this->once())
+            ->method('recordFeatureToggle')
+            ->with('metrics', true);
+
+        Services::injectMock('metricsService', $mockMetrics);
+
+        $request = $this->createMock(IncomingRequest::class);
+        $this->filter->before($request, ['metrics']);
     }
 
     public function testBeforeAllowsRequestWhenFeatureIsEnabled(): void

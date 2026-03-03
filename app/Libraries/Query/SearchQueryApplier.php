@@ -35,13 +35,13 @@ class SearchQueryApplier
         }
 
         // Check minimum search length
-        $minLength = (int) env('SEARCH_MIN_LENGTH', 3);
+        $minLength = config('Api')->searchMinLength;
         if (strlen($query) < $minLength) {
             return;
         }
 
         // Check if search is enabled
-        if (!env('SEARCH_ENABLED', true)) {
+        if (!config('Api')->searchEnabled) {
             return;
         }
         if ($useFulltext) {

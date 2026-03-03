@@ -28,9 +28,13 @@ class QueryBuilder
 
     protected ?string $searchQuery = null;
 
-    public function __construct(Model $model)
+    public function __construct(\CodeIgniter\Model|\App\Interfaces\Core\RepositoryInterface $target)
     {
-        $this->model = $model;
+        if ($target instanceof \App\Interfaces\Core\RepositoryInterface) {
+            $this->model = $target->getModel();
+        } else {
+            $this->model = $target;
+        }
     }
 
     /**
@@ -107,7 +111,7 @@ class QueryBuilder
         }
 
         // Use FULLTEXT search if enabled
-        $useFulltext = env('SEARCH_ENABLED', 'true') === 'true';
+        $useFulltext = config('Api')->searchEnabled;
 
         SearchQueryApplier::apply($this->model, $query, $searchableFields, $useFulltext);
 
@@ -124,8 +128,9 @@ class QueryBuilder
     public function paginate(int $page = 1, int $limit = 20): array
     {
         // Enforce limits
-        $defaultLimit = (int) env('PAGINATION_DEFAULT_LIMIT', 20);
-        $maxLimit = (int) env('PAGINATION_MAX_LIMIT', 100);
+        $apiConfig = config('Api');
+        $defaultLimit = $apiConfig->paginationDefaultLimit;
+        $maxLimit = $apiConfig->paginationMaxLimit;
 
         $limit = min($limit > 0 ? $limit : $defaultLimit, $maxLimit);
         $page = max($page, 1);

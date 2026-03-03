@@ -8,34 +8,31 @@ use App\DTO\SecurityContext;
 use App\Entities\DemoproductEntity;
 use App\Exceptions\BadRequestException;
 use App\Interfaces\Catalog\DemoproductServiceInterface;
+use App\Interfaces\Core\RepositoryInterface;
 use App\Interfaces\DataTransferObjectInterface;
 use App\Interfaces\Mappers\ResponseMapperInterface;
-use App\Models\DemoproductModel;
 use App\Services\Core\BaseCrudService;
-use App\Traits\AppliesQueryOptions;
 
 class DemoproductService extends BaseCrudService implements DemoproductServiceInterface
 {
-    use AppliesQueryOptions;
-
     public function __construct(
-        protected DemoproductModel $demoproductModel,
+        protected RepositoryInterface $demoproductRepository,
         ResponseMapperInterface $responseMapper
     ) {
         parent::__construct($responseMapper);
-        $this->model = $demoproductModel;
+        $this->repository = $demoproductRepository;
     }
 
     public function store(DataTransferObjectInterface $request, ?SecurityContext $context = null): DataTransferObjectInterface
     {
         return $this->wrapInTransaction(function () use ($request) {
-            $id = $this->model->insert($request->toArray());
-            if (!$id) {
-                throw new \App\Exceptions\ValidationException(lang('Api.validationFailed'), $this->model->errors());
+            $id = $this->repository->insert($request->toArray());
+            if ($id === false || $id === true) {
+                throw new \App\Exceptions\ValidationException(lang('Api.validationFailed'), $this->repository->errors());
             }
 
             /** @var DemoproductEntity|null $entity */
-            $entity = $this->model->find($id);
+            $entity = $this->repository->find($id);
             if (! $entity instanceof DemoproductEntity) {
                 throw new \App\Exceptions\NotFoundException(lang('Api.resourceNotFound'));
             }
@@ -47,7 +44,7 @@ class DemoproductService extends BaseCrudService implements DemoproductServiceIn
     public function update(int $id, DataTransferObjectInterface $request, ?SecurityContext $context = null): DataTransferObjectInterface
     {
         return $this->wrapInTransaction(function () use ($id, $request) {
-            if (!$this->model->find($id)) {
+            if (!$this->repository->find($id)) {
                 throw new \App\Exceptions\NotFoundException(lang('Api.resourceNotFound'));
             }
 
@@ -56,10 +53,10 @@ class DemoproductService extends BaseCrudService implements DemoproductServiceIn
                 throw new BadRequestException(lang('Api.noFieldsToUpdate'));
             }
 
-            $this->model->update($id, $data);
+            $this->repository->update($id, $data);
 
             /** @var DemoproductEntity|null $entity */
-            $entity = $this->model->find($id);
+            $entity = $this->repository->find($id);
             if (! $entity instanceof DemoproductEntity) {
                 throw new \App\Exceptions\NotFoundException(lang('Api.resourceNotFound'));
             }

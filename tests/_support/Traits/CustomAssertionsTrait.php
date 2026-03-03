@@ -62,8 +62,8 @@ trait CustomAssertionsTrait
         $this->assertArrayHasKey('meta', $result);
         $this->assertArrayHasKey('total', $result['meta']);
         $this->assertArrayHasKey('page', $result['meta']);
-        $this->assertArrayHasKey('perPage', $result['meta']);
-        $this->assertArrayHasKey('lastPage', $result['meta']);
+        $this->assertArrayHasKey('per_page', $result['meta']);
+        $this->assertArrayHasKey('last_page', $result['meta']);
     }
 
     /**

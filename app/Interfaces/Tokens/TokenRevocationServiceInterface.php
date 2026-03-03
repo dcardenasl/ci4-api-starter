@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Interfaces\Tokens;
 
+use App\DTO\Request\Identity\RevokeAccessTokenRequestDTO;
 use App\DTO\SecurityContext;
 
 /**
@@ -21,7 +22,7 @@ interface TokenRevocationServiceInterface
     /**
      * Revoke an access token from authorization header
      */
-    public function revokeAccessToken(array $data, ?SecurityContext $context = null): bool;
+    public function revokeAccessToken(RevokeAccessTokenRequestDTO $request, ?SecurityContext $context = null): bool;
 
     /**
      * Check if a token is revoked

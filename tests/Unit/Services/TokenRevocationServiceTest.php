@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Services;
 
+use App\DTO\Request\Identity\RevokeAccessTokenRequestDTO;
 use App\Exceptions\AuthenticationException;
 use App\Exceptions\BadRequestException;
+use App\Exceptions\ValidationException;
 use App\Interfaces\System\AuditServiceInterface;
 use App\Interfaces\Tokens\JwtServiceInterface;
 use App\Models\RefreshTokenModel;
@@ -73,36 +75,36 @@ class TokenRevocationServiceTest extends CIUnitTestCase
             ->method('save')
             ->willReturn(true);
 
-        $result = $this->service->revokeAccessToken([
+        $result = $this->service->revokeAccessToken(new RevokeAccessTokenRequestDTO([
             'authorization_header' => 'Bearer valid-token-here',
-        ]);
+        ]));
 
         $this->assertTrue($result);
     }
 
     public function testRevokeAccessTokenWithoutHeaderThrowsException(): void
     {
-        $this->expectException(BadRequestException::class);
+        $this->expectException(ValidationException::class);
 
-        $this->service->revokeAccessToken([]);
+        $this->service->revokeAccessToken(new RevokeAccessTokenRequestDTO([]));
     }
 
     public function testRevokeAccessTokenWithEmptyHeaderThrowsException(): void
     {
-        $this->expectException(BadRequestException::class);
+        $this->expectException(ValidationException::class);
 
-        $this->service->revokeAccessToken([
+        $this->service->revokeAccessToken(new RevokeAccessTokenRequestDTO([
             'authorization_header' => '',
-        ]);
+        ]));
     }
 
     public function testRevokeAccessTokenWithInvalidFormatThrowsException(): void
     {
         $this->expectException(BadRequestException::class);
 
-        $this->service->revokeAccessToken([
+        $this->service->revokeAccessToken(new RevokeAccessTokenRequestDTO([
             'authorization_header' => 'InvalidFormat token-here',
-        ]);
+        ]));
     }
 
     public function testRevokeAccessTokenWithInvalidTokenThrowsException(): void
@@ -113,9 +115,9 @@ class TokenRevocationServiceTest extends CIUnitTestCase
 
         $this->expectException(AuthenticationException::class);
 
-        $this->service->revokeAccessToken([
+        $this->service->revokeAccessToken(new RevokeAccessTokenRequestDTO([
             'authorization_header' => 'Bearer invalid-token',
-        ]);
+        ]));
     }
 
     public function testRevokeAccessTokenWithMissingJtiThrowsException(): void
@@ -126,9 +128,9 @@ class TokenRevocationServiceTest extends CIUnitTestCase
 
         $this->expectException(AuthenticationException::class);
 
-        $this->service->revokeAccessToken([
+        $this->service->revokeAccessToken(new RevokeAccessTokenRequestDTO([
             'authorization_header' => 'Bearer token-without-jti',
-        ]);
+        ]));
     }
 
     public function testRevokeAccessTokenWithMissingExpThrowsException(): void
@@ -139,9 +141,9 @@ class TokenRevocationServiceTest extends CIUnitTestCase
 
         $this->expectException(AuthenticationException::class);
 
-        $this->service->revokeAccessToken([
+        $this->service->revokeAccessToken(new RevokeAccessTokenRequestDTO([
             'authorization_header' => 'Bearer token-without-exp',
-        ]);
+        ]));
     }
 
     // ==================== REVOKE TOKEN TESTS ====================

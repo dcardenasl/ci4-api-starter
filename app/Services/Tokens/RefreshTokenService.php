@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Tokens;
 
+use App\DTO\Request\Identity\RefreshTokenRequestDTO;
 use App\Exceptions\AuthenticationException;
 use App\Interfaces\Tokens\JwtServiceInterface;
 use App\Models\RefreshTokenModel;
@@ -52,7 +53,7 @@ readonly class RefreshTokenService implements \App\Interfaces\Tokens\RefreshToke
     /**
      * Refresh access token using refresh token (with rotation)
      */
-    public function refreshAccessToken(\App\DTO\Request\Identity\RefreshTokenRequestDTO $request): \App\DTO\Response\Identity\TokenResponseDTO
+    public function refreshAccessToken(RefreshTokenRequestDTO $request): \App\DTO\Response\Identity\TokenResponseDTO
     {
         return $this->wrapInTransaction(function () use ($request) {
             $tokenRecord = $this->refreshTokenModel->findActiveForUpdate($request->refresh_token);
@@ -89,9 +90,9 @@ readonly class RefreshTokenService implements \App\Interfaces\Tokens\RefreshToke
     /**
      * Revoke a refresh token
      */
-    public function revoke(array $data): OperationResult
+    public function revoke(RefreshTokenRequestDTO $request): OperationResult
     {
-        $revoked = $this->refreshTokenModel->revokeToken($data['refresh_token'] ?? '');
+        $revoked = $this->refreshTokenModel->revokeToken($request->refresh_token);
 
         if (!$revoked) {
             throw new \App\Exceptions\NotFoundException(lang('Tokens.tokenNotFound'));

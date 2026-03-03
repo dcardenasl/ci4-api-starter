@@ -28,7 +28,7 @@ interface RefreshTokenServiceInterface
     /**
      * Revoke a refresh token
      */
-    public function revoke(array $data): OperationResult;
+    public function revoke(RefreshTokenRequestDTO $request): OperationResult;
 
     /**
      * Revoke all user's refresh tokens

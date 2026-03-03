@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Tokens;
 
+use App\DTO\Request\Identity\RevokeAccessTokenRequestDTO;
 use App\DTO\SecurityContext;
 use App\Exceptions\AuthenticationException;
 use App\Interfaces\Tokens\RefreshTokenServiceInterface;
@@ -36,9 +37,12 @@ class AuthTokenService implements \App\Interfaces\Tokens\AuthTokenServiceInterfa
      */
     public function revokeToken(string $authorizationHeader, ?SecurityContext $context = null): OperationResult
     {
-        $this->tokenRevocationService->revokeAccessToken([
-            'authorization_header' => $authorizationHeader
-        ], $context);
+        $this->tokenRevocationService->revokeAccessToken(
+            new RevokeAccessTokenRequestDTO([
+                'authorization_header' => $authorizationHeader,
+            ]),
+            $context
+        );
 
         return OperationResult::success(null, lang('Tokens.tokenRevokedSuccess'));
     }

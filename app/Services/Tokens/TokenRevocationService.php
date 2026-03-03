@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Tokens;
 
+use App\DTO\Request\Identity\RevokeAccessTokenRequestDTO;
 use App\DTO\SecurityContext;
 use App\Exceptions\AuthenticationException;
 use App\Exceptions\BadRequestException;
@@ -11,7 +12,6 @@ use App\Interfaces\System\AuditServiceInterface;
 use App\Interfaces\Tokens\JwtServiceInterface;
 use App\Models\RefreshTokenModel;
 use App\Models\TokenBlacklistModel;
-use App\Traits\ValidatesRequiredFields;
 use CodeIgniter\Cache\CacheInterface;
 
 /**
@@ -22,8 +22,6 @@ use CodeIgniter\Cache\CacheInterface;
  */
 readonly class TokenRevocationService implements \App\Interfaces\Tokens\TokenRevocationServiceInterface
 {
-    use ValidatesRequiredFields;
-
     public function __construct(
         protected TokenBlacklistModel $blacklistModel,
         protected RefreshTokenModel $refreshTokenModel,
@@ -62,13 +60,9 @@ readonly class TokenRevocationService implements \App\Interfaces\Tokens\TokenRev
     /**
      * Revoke an access token from authorization header
      */
-    public function revokeAccessToken(array $data, ?SecurityContext $context = null): bool
+    public function revokeAccessToken(RevokeAccessTokenRequestDTO $request, ?SecurityContext $context = null): bool
     {
-        $this->validateRequiredFields($data, [
-            'authorization_header' => lang('Tokens.authorizationHeaderRequired'),
-        ], lang('Tokens.invalidRequest'));
-
-        $token = $this->bearerTokenService->extractFromHeader((string) $data['authorization_header']);
+        $token = $this->bearerTokenService->extractFromHeader($request->authorization_header);
         if ($token === null) {
             throw new BadRequestException(
                 lang('Tokens.invalidRequest'),

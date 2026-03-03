@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Services;
 
+use App\DTO\Request\Identity\RefreshTokenRequestDTO;
 use App\Interfaces\Tokens\JwtServiceInterface;
 use App\Models\RefreshTokenModel;
 use App\Models\UserModel;
@@ -98,7 +99,9 @@ class RefreshTokenServiceTest extends CIUnitTestCase
             ->with(self::VALID_REFRESH_TOKEN)
             ->willReturn(true);
 
-        $result = $this->service->revoke(['refresh_token' => self::VALID_REFRESH_TOKEN]);
+        $result = $this->service->revoke(new RefreshTokenRequestDTO([
+            'refresh_token' => self::VALID_REFRESH_TOKEN,
+        ]));
 
         $this->assertSame(\App\Support\OperationResult::SUCCESS, $result->state);
     }
@@ -111,7 +114,9 @@ class RefreshTokenServiceTest extends CIUnitTestCase
 
         $this->expectException(\App\Exceptions\NotFoundException::class);
 
-        $this->service->revoke(['refresh_token' => self::UNKNOWN_REFRESH_TOKEN]);
+        $this->service->revoke(new RefreshTokenRequestDTO([
+            'refresh_token' => self::UNKNOWN_REFRESH_TOKEN,
+        ]));
     }
 
     // ==================== REVOKE ALL USER TOKENS TESTS ====================

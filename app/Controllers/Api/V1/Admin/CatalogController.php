@@ -23,7 +23,10 @@ class CatalogController extends ApiController
 
     public function index(): ResponseInterface
     {
-        return $this->handleRequest(fn (mixed $payload, array $context) => $this->catalogService->index(), null);
+        return $this->handleRequest(
+            fn (mixed $payload, \App\DTO\SecurityContext $context) => $this->catalogService->index(),
+            null
+        );
     }
 
     public function auditFacets(): ResponseInterface

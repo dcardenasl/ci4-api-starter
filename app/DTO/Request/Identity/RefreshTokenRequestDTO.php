@@ -8,29 +8,27 @@ use App\DTO\Request\BaseRequestDTO;
 
 /**
  * Refresh Token Request DTO
- *
- * Validates the refresh token string.
  */
 readonly class RefreshTokenRequestDTO extends BaseRequestDTO
 {
-    public string $refreshToken;
+    public string $refresh_token;
 
     protected function rules(): array
     {
         return [
-            'refreshToken' => 'required|string|min_length[10]',
+            'refresh_token' => 'required|string|min_length[10]',
         ];
     }
 
     protected function map(array $data): void
     {
-        $this->refreshToken = (string) ($data['refreshToken'] ?? '');
+        $this->refresh_token = (string) ($data['refresh_token'] ?? '');
     }
 
     public function toArray(): array
     {
         return [
-            'refreshToken' => $this->refreshToken,
+            'refresh_token' => $this->refresh_token,
         ];
     }
 }

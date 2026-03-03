@@ -88,12 +88,13 @@ class AuthService implements \App\Interfaces\Auth\AuthServiceInterface
     /**
      * Get current authenticated user profile
      */
-    public function me(int $userId, ?SecurityContext $context = null): DataTransferObjectInterface
+    public function me(int $user_id, ?SecurityContext $context = null): DataTransferObjectInterface
     {
-        if ($userId <= 0) {
-            throw new AuthenticationException(lang('Users.auth.notAuthenticated'));
+        if ($user_id <= 0) {
+            throw new AuthenticationException(lang('Auth.unauthorized'));
         }
-        $user = $this->userModel->find($userId);
+
+        $user = $this->userModel->find($user_id);
         if (!$user) {
             throw new AuthenticationException(lang('Users.auth.notAuthenticated'));
         }

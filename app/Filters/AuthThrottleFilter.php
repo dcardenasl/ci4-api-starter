@@ -41,7 +41,7 @@ class AuthThrottleFilter implements FilterInterface
         $maxAttempts = (int) env('AUTH_RATE_LIMIT_REQUESTS', self::MAX_AUTH_ATTEMPTS);
         $window = (int) env('AUTH_RATE_LIMIT_WINDOW', self::AUTH_WINDOW);
         $ip = $request->getIPAddress();
-        $userId = $request instanceof ApiRequest ? $request->getAuthUserId() : null;
+        $user_id = $request instanceof ApiRequest ? $request->getAuthUserId() : null;
 
         // API key policy for auth routes:
         // 1) If X-App-Key is present, validate it first and enforce key-based limits.
@@ -54,15 +54,15 @@ class AuthThrottleFilter implements FilterInterface
                 return $this->unauthorizedApiKeyResponse($response);
             }
 
-            if ($userId === null) {
-                $userId = $this->extractUserIdFromBearer($request);
+            if ($user_id === null) {
+                $user_id = $this->extractUserIdFromBearer($request);
             }
 
             $apiKeyResult = $this->enforceApiKeyRateLimit(
                 $cache,
                 $appKey,
                 $ip,
-                $userId,
+                $user_id,
                 $window,
                 fn (int $maxRequests, int $window): ResponseInterface =>
                     $this->rateLimitExceeded($response, $maxRequests, $window)

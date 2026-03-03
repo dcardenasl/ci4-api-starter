@@ -17,9 +17,9 @@ class GoogleIdentityService implements \App\Interfaces\Auth\GoogleIdentityServic
     /**
      * Verify a Google ID token and return normalized claims.
      */
-    public function verifyIdToken(string $idToken): \App\DTO\Response\Identity\GoogleIdentityResponseDTO
+    public function verifyIdToken(string $id_token): \App\DTO\Response\Identity\GoogleIdentityResponseDTO
     {
-        $token = trim($idToken);
+        $token = trim($id_token);
 
         if ($token === '') {
             throw new AuthenticationException(

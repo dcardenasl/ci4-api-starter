@@ -27,7 +27,7 @@ interface AuthServiceInterface
     /**
      * Get the current authenticated user profile
      */
-    public function me(int $userId, ?SecurityContext $context = null): \App\Interfaces\DataTransferObjectInterface;
+    public function me(int $user_id, ?SecurityContext $context = null): \App\Interfaces\DataTransferObjectInterface;
 
     /**
      * Register a new user with password

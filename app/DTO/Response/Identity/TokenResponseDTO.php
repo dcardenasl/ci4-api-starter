@@ -13,39 +13,39 @@ use OpenApi\Attributes as OA;
 #[OA\Schema(
     schema: 'TokenResponse',
     title: 'Token Response',
-    description: 'Refresh token operation result',
-    required: ['accessToken', 'refreshToken', 'expiresIn']
+    required: ['access_token', 'refresh_token', 'expires_in']
 )]
 readonly class TokenResponseDTO implements DataTransferObjectInterface
 {
     public function __construct(
-        #[OA\Property(property: 'accessToken', description: 'New JWT access token')]
-        public string $accessToken,
-        #[OA\Property(property: 'refreshToken', description: 'New opaque refresh token')]
-        public string $refreshToken,
-        #[OA\Property(property: 'expiresIn', description: 'Token expiration in seconds', example: 3600)]
-        public int $expiresIn,
-        #[OA\Property(property: 'tokenType', description: 'Token type', example: 'Bearer')]
-        public string $tokenType = 'Bearer'
+        #[OA\Property(property: 'access_token', description: 'New JWT access token')]
+        public string $access_token,
+        #[OA\Property(property: 'refresh_token', description: 'New opaque refresh token')]
+        public string $refresh_token,
+        #[OA\Property(property: 'expires_in', description: 'Token expiration in seconds', example: 3600)]
+        public int $expires_in,
+        #[OA\Property(description: 'Associated user data', ref: '#/components/schemas/UserResponse', nullable: true)]
+        public ?\App\DTO\Response\Users\UserResponseDTO $user = null
     ) {
     }
 
     public static function fromArray(array $data): self
     {
         return new self(
-            accessToken: (string) $data['access_token'],
-            refreshToken: (string) $data['refresh_token'],
-            expiresIn: (int) ($data['expires_in'] ?? 3600)
+            access_token: (string) ($data['access_token'] ?? ''),
+            refresh_token: (string) ($data['refresh_token'] ?? ''),
+            expires_in: (int) ($data['expires_in'] ?? 3600),
+            user: isset($data['user']) ? \App\DTO\Response\Users\UserResponseDTO::fromArray((array) $data['user']) : null
         );
     }
 
     public function toArray(): array
     {
         return [
-            'accessToken' => $this->accessToken,
-            'refreshToken' => $this->refreshToken,
-            'expiresIn' => $this->expiresIn,
-            'tokenType' => $this->tokenType,
+            'access_token' => $this->access_token,
+            'refresh_token' => $this->refresh_token,
+            'expires_in' => $this->expires_in,
+            'user' => $this->user?->toArray(),
         ];
     }
 }

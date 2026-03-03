@@ -13,41 +13,39 @@ use OpenApi\Attributes as OA;
 #[OA\Schema(
     schema: 'VerificationResponse',
     title: 'Verification Response',
-    description: 'Email verification result',
-    required: ['message', 'userId', 'email', 'verifiedAt']
+    required: ['message', 'user_id', 'email', 'verified_at']
 )]
 readonly class VerificationResponseDTO implements DataTransferObjectInterface
 {
     public function __construct(
-        #[OA\Property(description: 'Result message', example: 'Email verified successfully')]
+        #[OA\Property(description: 'Success message')]
         public string $message,
-        #[OA\Property(property: 'userId', description: 'Verified user id', example: 1)]
-        public int $userId,
-        #[OA\Property(description: 'Verified email', example: 'user@example.com')]
+        #[OA\Property(property: 'user_id', description: 'Verified user id', example: 1)]
+        public int $user_id,
+        #[OA\Property(description: 'User email')]
         public string $email,
-        #[OA\Property(property: 'verifiedAt', description: 'Verification timestamp', example: '2026-02-26 12:00:00')]
-        public string $verifiedAt
+        #[OA\Property(property: 'verified_at', description: 'Verification timestamp')]
+        public string $verified_at
     ) {
     }
 
     public static function fromArray(array $data): self
     {
         return new self(
-            message: (string) ($data['message'] ?? lang('Verification.success')),
-            userId: (int) $data['user_id'],
-            email: (string) $data['email'],
-            verifiedAt: (string) $data['verified_at']
+            message: (string) ($data['message'] ?? ''),
+            user_id: (int) ($data['user_id'] ?? 0),
+            email: (string) ($data['email'] ?? ''),
+            verified_at: (string) ($data['verified_at'] ?? '')
         );
     }
 
     public function toArray(): array
     {
         return [
-            'status' => 'success',
             'message' => $this->message,
-            'userId' => $this->userId,
+            'user_id' => $this->user_id,
             'email' => $this->email,
-            'verifiedAt' => $this->verifiedAt,
+            'verified_at' => $this->verified_at,
         ];
     }
 }

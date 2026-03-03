@@ -42,7 +42,7 @@ class ThrottleFilter implements FilterInterface
         $response = Services::response();
 
         $ip     = $request->getIPAddress();
-        $userId = $request instanceof ApiRequest ? $request->getAuthUserId() : null;
+        $user_id = $request instanceof ApiRequest ? $request->getAuthUserId() : null;
 
         // ------------------------------------------------------------------
         // 1. Resolve API key from X-App-Key header
@@ -60,13 +60,13 @@ class ThrottleFilter implements FilterInterface
         }
 
         // ------------------------------------------------------------------
-        // 2. Extract userId from JWT when it has not yet been set by JwtAuthFilter
+        // 2. Extract user_id from JWT when it has not yet been set by JwtAuthFilter
         //    (ThrottleFilter runs before JwtAuthFilter on public routes).
         //    We do a best-effort, non-security-critical parse of the bearer token
         //    solely to apply per-user rate limiting.
         // ------------------------------------------------------------------
-        if ($userId === null) {
-            $userId = $this->extractUserIdFromBearer($request);
+        if ($user_id === null) {
+            $user_id = $this->extractUserIdFromBearer($request);
         }
 
         // ------------------------------------------------------------------
@@ -79,7 +79,7 @@ class ThrottleFilter implements FilterInterface
                 $cache,
                 $appKey,
                 $ip,
-                $userId,
+                $user_id,
                 $window,
                 fn (int $maxRequests, int $window): ResponseInterface =>
                     $this->rateLimitExceeded($response, $maxRequests, $window)
@@ -108,8 +108,8 @@ class ThrottleFilter implements FilterInterface
             }
 
             // User-based rate limit (only when authenticated)
-            if ($userId !== null) {
-                $userKey       = 'rate_limit_user_' . $userId;
+            if ($user_id !== null) {
+                $userKey       = 'rate_limit_user_' . $user_id;
                 $userRemaining = $this->checkRateLimit($cache, $userKey, $userLimit, $window);
 
                 if ($userRemaining === false) {

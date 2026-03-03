@@ -41,17 +41,17 @@ class RoleAuthorizationFilter implements FilterInterface
         $requiredRole = $arguments[0] ?? 'user';
         $context = ContextHolder::get();
 
-        $userRole = $request instanceof ApiRequest ? $request->getAuthUserRole() : null;
-        $userRole ??= $context?->user_role;
-        $userRole ??= $request->getHeaderLine('X-Test-User-Role') ?: null;
+        $user_role = $request instanceof ApiRequest ? $request->getAuthUserRole() : null;
+        $user_role ??= $context?->user_role;
+        $user_role ??= $request->getHeaderLine('X-Test-User-Role') ?: null;
 
-        if (!$userRole) {
+        if (!$user_role) {
             return Services::response()
                 ->setJSON(ApiResponse::unauthorized(lang('Auth.authRequired')))
                 ->setStatusCode(ResponseInterface::HTTP_UNAUTHORIZED);
         }
 
-        if (!$this->hasPermission($userRole, $requiredRole)) {
+        if (!$this->hasPermission($user_role, $requiredRole)) {
             return Services::response()
                 ->setJSON(ApiResponse::forbidden(lang('Auth.insufficientPermissions')))
                 ->setStatusCode(ResponseInterface::HTTP_FORBIDDEN);
@@ -76,13 +76,13 @@ class RoleAuthorizationFilter implements FilterInterface
      *
      * Uses hierarchical role system where higher levels inherit lower permissions.
      *
-     * @param string $userRole Current user's role
+     * @param string $user_role Current user's role
      * @param string $requiredRole Required role for the resource
      * @return bool True if user has permission
      */
-    private function hasPermission(string $userRole, string $requiredRole): bool
+    private function hasPermission(string $user_role, string $requiredRole): bool
     {
-        $userLevel = self::ROLE_HIERARCHY[$userRole] ?? 0;
+        $userLevel = self::ROLE_HIERARCHY[$user_role] ?? 0;
         $requiredLevel = self::ROLE_HIERARCHY[$requiredRole] ?? 0;
 
         return $userLevel >= $requiredLevel;

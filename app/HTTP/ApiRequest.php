@@ -26,9 +26,9 @@ class ApiRequest extends IncomingRequest
         parent::__construct($config, $uri, $body, $userAgent);
     }
 
-    public function setAuthContext(?int $userId, ?string $role): void
+    public function setAuthContext(?int $user_id, ?string $role): void
     {
-        $this->authUserId = $userId;
+        $this->authUserId = $user_id;
         $this->authUserRole = $role;
     }
 

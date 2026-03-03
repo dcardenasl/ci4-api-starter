@@ -55,14 +55,14 @@ readonly class RefreshTokenService implements \App\Interfaces\Tokens\RefreshToke
     public function refreshAccessToken(\App\DTO\Request\Identity\RefreshTokenRequestDTO $request): \App\DTO\Response\Identity\TokenResponseDTO
     {
         return $this->wrapInTransaction(function () use ($request) {
-            $tokenRecord = $this->refreshTokenModel->findActiveForUpdate($request->refreshToken);
+            $tokenRecord = $this->refreshTokenModel->findActiveForUpdate($request->refresh_token);
 
             if (!$tokenRecord || !isset($tokenRecord->user_id)) {
                 throw new AuthenticationException(lang('Tokens.invalidRefreshToken'));
             }
 
             // Revoke old refresh token (token rotation security)
-            $this->refreshTokenModel->revokeToken($request->refreshToken);
+            $this->refreshTokenModel->revokeToken($request->refresh_token);
 
             // Issue new refresh token
             $newRefreshToken = $this->issueRefreshToken((int) $tokenRecord->user_id);

@@ -24,6 +24,8 @@ return [
         'searchTooLong'          => 'Search query is too long',
 
         // Names
+        'nameRequired'            => 'Name is required',
+        'nameMaxLength'           => 'Name cannot exceed 255 characters',
         'firstNameMaxLength'     => 'First name cannot exceed 100 characters',
         'lastNameMaxLength'      => 'Last name cannot exceed 100 characters',
 

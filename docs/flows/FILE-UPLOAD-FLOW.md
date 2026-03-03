@@ -13,6 +13,7 @@
 - `file` and `user_id` are required.
 - Valid object (`isValid()`).
 - Max size via `FILE_MAX_SIZE` (default 10MB).
+- For Base64 JSON uploads, configure `post_max_size` with headroom (recommended: `16M` for `FILE_MAX_SIZE=10MB`).
 - Allowed extension via `FILE_ALLOWED_TYPES` (default `jpg,jpeg,png,gif,pdf`).
 
 Note: Request-shape validation is centralized through `app/Validations/FileValidation.php` using `getValidationRules('file', <action>) + validateInputs(...)` inside `FileService`. Runtime checks (`isValid()`, max size, allowed extension list) are still enforced in the service.

@@ -29,6 +29,7 @@ Es el más fiable porque evita problemas de límites de cURL y protocolos multip
 2.  **Extracción:** `FileUploadRequestDTO` busca el archivo en el payload. Si detecta un string largo o prefijo `data:`, usa el `Base64Processor`. Si detecta un objeto de CodeIgniter, usa el `MultipartProcessor`.
 3.  **Procesamiento:**
     - Se valida el tamaño (env: `FILE_MAX_SIZE`).
+    - Para uploads JSON Base64, configura `post_max_size` con margen (recomendado: `16M` para `FILE_MAX_SIZE=10MB`).
     - Se valida la extensión (env: `FILE_ALLOWED_TYPES`).
 4.  **Almacenamiento:**
     - Se guarda físicamente vía `StorageManager` (Local o S3).

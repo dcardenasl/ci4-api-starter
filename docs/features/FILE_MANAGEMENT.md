@@ -62,8 +62,8 @@ Unlike standard implementations that read the entire file into memory (especiall
 Control file behavior via `.env`:
 
 ```env
-# Max size in bytes (e.g., 20MB)
-FILE_MAX_SIZE=20971520
+# Max size in bytes (e.g., 10MB)
+FILE_MAX_SIZE=10485760
 # Allowed extensions
 FILE_ALLOWED_TYPES=jpg,jpeg,png,gif,pdf
 # Storage driver (local or s3)

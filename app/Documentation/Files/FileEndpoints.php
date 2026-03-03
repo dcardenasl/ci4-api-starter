@@ -44,7 +44,7 @@ use OpenApi\Attributes as OA;
                             new OA\Property(property: 'total', type: 'integer', example: 45),
                             new OA\Property(property: 'per_page', type: 'integer', example: 20),
                             new OA\Property(property: 'page', type: 'integer', example: 1),
-                            new OA\Property(property: 'lastPage', type: 'integer', example: 3),
+                            new OA\Property(property: 'last_page', type: 'integer', example: 3),
                             new OA\Property(property: 'from', type: 'integer', example: 1),
                             new OA\Property(property: 'to', type: 'integer', example: 20),
                         ]

@@ -44,13 +44,13 @@ use OpenApi\Attributes as OA;
             schema: new OA\Schema(type: 'string', enum: ['active', 'inactive', 'pending_approval', 'invited'])
         ),
         new OA\Parameter(
-            name: 'orderBy',
+            name: 'order_by',
             in: 'query',
             required: false,
             schema: new OA\Schema(type: 'string', enum: ['id', 'email', 'created_at', 'role', 'status', 'first_name', 'last_name'])
         ),
         new OA\Parameter(
-            name: 'orderDir',
+            name: 'order_dir',
             in: 'query',
             required: false,
             schema: new OA\Schema(type: 'string', enum: ['ASC', 'DESC', 'asc', 'desc'])
@@ -75,7 +75,7 @@ use OpenApi\Attributes as OA;
                             new OA\Property(property: 'total', type: 'integer', example: 100),
                             new OA\Property(property: 'per_page', type: 'integer', example: 20),
                             new OA\Property(property: 'page', type: 'integer', example: 1),
-                            new OA\Property(property: 'lastPage', type: 'integer', example: 5),
+                            new OA\Property(property: 'last_page', type: 'integer', example: 5),
                             new OA\Property(property: 'from', type: 'integer', example: 1),
                             new OA\Property(property: 'to', type: 'integer', example: 20),
                         ]

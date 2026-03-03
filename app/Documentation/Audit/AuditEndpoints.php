@@ -31,19 +31,19 @@ use OpenApi\Attributes as OA;
             schema: new OA\Schema(type: 'string')
         ),
         new OA\Parameter(
-            name: 'entityType',
+            name: 'entity_type',
             in: 'query',
             required: false,
             schema: new OA\Schema(type: 'string')
         ),
         new OA\Parameter(
-            name: 'entityId',
+            name: 'entity_id',
             in: 'query',
             required: false,
             schema: new OA\Schema(type: 'integer', minimum: 1)
         ),
         new OA\Parameter(
-            name: 'userId',
+            name: 'user_id',
             in: 'query',
             required: false,
             schema: new OA\Schema(type: 'integer', minimum: 1)
@@ -64,7 +64,7 @@ use OpenApi\Attributes as OA;
                             new OA\Property(property: 'total', type: 'integer', example: 120),
                             new OA\Property(property: 'per_page', type: 'integer', example: 20),
                             new OA\Property(property: 'page', type: 'integer', example: 1),
-                            new OA\Property(property: 'lastPage', type: 'integer', example: 6),
+                            new OA\Property(property: 'last_page', type: 'integer', example: 6),
                             new OA\Property(property: 'from', type: 'integer', example: 1),
                             new OA\Property(property: 'to', type: 'integer', example: 20),
                         ]

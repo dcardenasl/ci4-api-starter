@@ -19,15 +19,15 @@ use OpenApi\Attributes as OA;
     content: new OA\JsonContent(
         properties: [
             new OA\Property(
-                property: 'firstName',
+                property: 'first_name',
                 type: 'string',
-                description: 'Updated first name',
-                example: 'Alex'
+                description: 'User first name',
+                example: 'John'
             ),
             new OA\Property(
-                property: 'lastName',
+                property: 'last_name',
                 type: 'string',
-                description: 'Updated last name',
+                description: 'User last name',
                 example: 'Doe'
             ),
             new OA\Property(

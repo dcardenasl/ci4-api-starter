@@ -17,18 +17,18 @@ use OpenApi\Attributes as OA;
     description: 'New user registration data',
     required: true,
     content: new OA\JsonContent(
-        required: ['email', 'password', 'firstName', 'lastName'],
+        required: ['email', 'password', 'first_name', 'last_name'],
         properties: [
             new OA\Property(
-                property: 'firstName',
+                property: 'first_name',
                 type: 'string',
-                description: 'First name',
-                example: 'Alex'
+                description: 'User first name',
+                example: 'Jane'
             ),
             new OA\Property(
-                property: 'lastName',
+                property: 'last_name',
                 type: 'string',
-                description: 'Last name',
+                description: 'User last name',
                 example: 'Doe'
             ),
             new OA\Property(

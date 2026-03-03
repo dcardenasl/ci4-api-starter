@@ -19,11 +19,7 @@ class UserEntity extends Entity
      *
      * @var array<string, string>
      */
-    protected $datamap = [
-        'firstName' => 'first_name',
-        'lastName'  => 'last_name',
-        'avatarUrl' => 'avatar_url',
-    ];
+    protected $datamap = [];
 
     /**
      * Define date fields

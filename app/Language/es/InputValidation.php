@@ -12,49 +12,49 @@ return [
     // ========================================
     'common' => [
         // Validación de ID
-        'idRequired'         => '{0} es obligatorio',
-        'idMustBePositive'   => '{0} debe ser un entero positivo',
+        'id_required'         => '{0} es obligatorio',
+        'id_must_be_positive'   => '{0} debe ser un entero positivo',
 
         // Paginación
-        'pageMustBePositive'     => 'La página debe ser un entero positivo',
-        'perPageMustBePositive'  => 'Los elementos por página deben ser un entero positivo',
-        'perPageExceedsMax'      => 'Los elementos por página no pueden exceder 100',
-        'sortFieldInvalid'       => 'El campo de ordenamiento contiene caracteres inválidos',
-        'sortDirInvalid'         => 'La dirección de ordenamiento debe ser asc o desc',
-        'searchTooLong'          => 'La consulta de búsqueda es demasiado larga',
+        'page_must_be_positive'     => 'La página debe ser un entero positivo',
+        'per_page_must_be_positive'  => 'Los elementos por página deben ser un entero positivo',
+        'per_page_exceeds_max'      => 'Los elementos por página no pueden exceder 100',
+        'sort_field_invalid'       => 'El campo de ordenamiento contiene caracteres inválidos',
+        'sort_dir_invalid'         => 'La dirección de ordenamiento debe ser asc o desc',
+        'search_too_long'          => 'La consulta de búsqueda es demasiado larga',
 
         // Nombres
-        'firstNameMaxLength'     => 'El nombre no puede exceder 100 caracteres',
-        'lastNameMaxLength'      => 'El apellido no puede exceder 100 caracteres',
+        'first_name_max_length'     => 'El nombre no puede exceder 100 caracteres',
+        'last_name_max_length'      => 'El apellido no puede exceder 100 caracteres',
 
         // Email
-        'emailRequired'          => 'El email es obligatorio',
-        'emailInvalid'           => 'Proporcione una dirección de email válida',
-        'emailMaxLength'         => 'El email no puede exceder 255 caracteres',
-        'emailAlreadyRegistered' => 'Este email ya está registrado',
+        'email_required'          => 'El email es obligatorio',
+        'email_invalid'           => 'Proporcione una dirección de email válida',
+        'email_max_length'         => 'El email no puede exceder 255 caracteres',
+        'email_already_registered' => 'Este email ya está registrado',
 
         // Contraseña
-        'passwordRequired'       => 'La contraseña es obligatoria',
-        'passwordStrength'       => 'La contraseña debe tener 8-128 caracteres con mayúscula, minúscula, número y carácter especial',
-        'newPasswordRequired'    => 'La nueva contraseña es obligatoria',
+        'password_required'       => 'La contraseña es obligatoria',
+        'password_strength'       => 'La contraseña debe tener 8-128 caracteres con mayúscula, minúscula, número y carácter especial',
+        'new_password_required'    => 'La nueva contraseña es obligatoria',
 
         // Rol
-        'roleInvalid'            => 'El rol debe ser user, admin o superadmin',
+        'role_invalid'            => 'El rol debe ser user, admin o superadmin',
 
         // OAuth
-        'oauthProviderInvalid'     => 'El proveedor OAuth no es compatible',
-        'oauthProviderIdMaxLength' => 'El ID del proveedor OAuth no puede exceder 255 caracteres',
-        'avatarUrlInvalid'         => 'La URL del avatar debe ser válida',
-        'avatarUrlMaxLength'       => 'La URL del avatar no puede exceder 255 caracteres',
+        'oauth_provider_invalid'     => 'El proveedor OAuth no es compatible',
+        'oauth_provider_id_max_length' => 'El ID del proveedor OAuth no puede exceder 255 caracteres',
+        'avatar_url_invalid'         => 'La URL del avatar debe ser válida',
+        'avatar_url_max_length'       => 'La URL del avatar no puede exceder 255 caracteres',
 
         // ID de usuario
-        'userIdMustBeInteger'    => 'El ID de usuario debe ser un entero',
-        'userIdMustBePositive'   => 'El ID de usuario debe ser un entero positivo',
-        'userIdRequired'         => 'El ID de usuario es obligatorio',
+        'user_id_must_be_integer'    => 'El ID de usuario debe ser un entero',
+        'user_id_must_be_positive'   => 'El ID de usuario debe ser un entero positivo',
+        'user_id_required'         => 'El ID de usuario es obligatorio',
 
         // Configuración de validación
-        'unknownValidationDomain' => 'El dominio de validación "{0}" no está registrado',
-        'unknownValidationAction' => 'La acción de validación "{0}" no está definida para el dominio "{1}"',
+        'unknown_validation_domain' => 'El dominio de validación "{0}" no está registrado',
+        'unknown_validation_action' => 'La acción de validación "{0}" no está definida para el dominio "{1}"',
     ],
 
     // ========================================
@@ -62,73 +62,73 @@ return [
     // ========================================
     'auth' => [
         // Login
-        'emailRequired'          => 'El email es obligatorio',
-        'idTokenRequired'        => 'El token de Google es obligatorio',
-        'idTokenInvalid'         => 'El token de Google es inválido',
-        'clientBaseUrlInvalid'   => 'La URL base del cliente debe ser válida',
+        'email_required'          => 'El email es obligatorio',
+        'id_token_required'        => 'El token de Google es obligatorio',
+        'id_token_invalid'         => 'El token de Google es inválido',
+        'client_base_url_invalid'   => 'La URL base del cliente debe ser válida',
 
         // Token
-        'resetTokenRequired'      => 'El token de restablecimiento es obligatorio',
-        'resetTokenInvalid'       => 'Formato de token de restablecimiento inválido',
-        'verificationTokenRequired' => 'El token de verificación es obligatorio',
-        'verificationTokenInvalid'  => 'Formato de token de verificación inválido',
-        'verificationTokenMinLength' => 'El token de verificación debe tener al menos 10 caracteres',
-        'refreshTokenRequired'    => 'El token de actualización es obligatorio',
-        'refreshTokenInvalid'     => 'Token de actualización inválido',
+        'reset_token_required'      => 'El token de restablecimiento es obligatorio',
+        'reset_token_invalid'       => 'Formato de token de restablecimiento inválido',
+        'verification_token_required' => 'El token de verificación es obligatorio',
+        'verification_token_invalid'  => 'Formato de token de verificación inválido',
+        'verification_token_min_length' => 'El token de verificación debe tener al menos 10 caracteres',
+        'refresh_token_required'    => 'El token de actualización es obligatorio',
+        'refresh_token_invalid'     => 'Token de actualización inválido',
     ],
 
     // ========================================
     // Dominio File
     // ========================================
     'file' => [
-        'noFileUploaded'         => 'No se subió ningún archivo',
-        'fileTooLarge'           => 'El tamaño del archivo no puede exceder 10MB',
-        'fileTypeNotAllowed'     => 'El tipo de archivo no está permitido',
+        'no_file_uploaded'         => 'No se subió ningún archivo',
+        'file_too_large'           => 'El tamaño del archivo no puede exceder 10MB',
+        'file_type_not_allowed'     => 'El tipo de archivo no está permitido',
     ],
 
     // ========================================
     // Dominio Token
     // ========================================
     'token' => [
-        'refreshTokenRequired'   => 'El token de actualización es obligatorio',
-        'refreshTokenInvalid'    => 'Formato de token de actualización inválido',
+        'refresh_token_required'   => 'El token de actualización es obligatorio',
+        'refresh_token_invalid'    => 'Formato de token de actualización inválido',
     ],
 
     // ========================================
     // Dominio API Key
     // ========================================
     'apiKey' => [
-        'nameRequired'                => 'El nombre de la clave de API es obligatorio',
-        'nameMaxLength'               => 'El nombre no puede exceder {0} caracteres',
-        'keyPrefixRequired'           => 'El prefijo de la clave es obligatorio',
-        'keyPrefixMaxLength'          => 'El prefijo de la clave no puede exceder {0} caracteres',
-        'keyHashRequired'             => 'El hash de la clave es obligatorio',
-        'keyHashMaxLength'            => 'El hash de la clave no puede exceder {0} caracteres',
-        'rateLimitRequestsInteger'    => 'El límite de solicitudes debe ser un entero',
-        'rateLimitRequestsGreaterThan' => 'El límite de solicitudes debe ser mayor que 0',
-        'rateLimitWindowInteger'      => 'La ventana de límite debe ser un entero',
-        'rateLimitWindowGreaterThan'  => 'La ventana de límite debe ser mayor que 0',
-        'userRateLimitInteger'        => 'El límite por usuario debe ser un entero',
-        'userRateLimitGreaterThan'    => 'El límite por usuario debe ser mayor que 0',
-        'ipRateLimitInteger'          => 'El límite por IP debe ser un entero',
-        'ipRateLimitGreaterThan'      => 'El límite por IP debe ser mayor que 0',
+        'name_required'                => 'El nombre de la clave de API es obligatorio',
+        'name_max_length'               => 'El nombre no puede exceder {0} caracteres',
+        'key_prefix_required'           => 'El prefijo de la clave es obligatorio',
+        'key_prefix_max_length'          => 'El prefijo de la clave no puede exceder {0} caracteres',
+        'key_hash_required'             => 'El hash de la clave es obligatorio',
+        'key_hash_max_length'            => 'El hash de la clave no puede exceder {0} caracteres',
+        'rate_limit_requests_integer'    => 'El límite de solicitudes debe ser un entero',
+        'rate_limit_requests_greater_than' => 'El límite de solicitudes debe ser mayor que 0',
+        'rate_limit_window_integer'      => 'La ventana de límite debe ser un entero',
+        'rate_limit_window_greater_than'  => 'La ventana de límite debe ser mayor que 0',
+        'user_rate_limit_integer'        => 'El límite por usuario debe ser un entero',
+        'user_rate_limit_greater_than'    => 'El límite por usuario debe ser mayor que 0',
+        'ip_rate_limit_integer'          => 'El límite por IP debe ser un entero',
+        'ip_rate_limit_greater_than'      => 'El límite por IP debe ser mayor que 0',
     ],
 
     // ========================================
     // Dominio Audit
     // ========================================
     'audit' => [
-        'actionInvalidChars'     => 'La acción contiene caracteres inválidos',
-        'actionTooLong'          => 'La acción no puede exceder 50 caracteres',
-        'entityTypeRequired'     => 'El tipo de entidad es obligatorio',
-        'entityTypeInvalidChars' => 'El tipo de entidad contiene caracteres inválidos',
-        'entityTypeTooLong'      => 'El tipo de entidad no puede exceder 50 caracteres',
-        'entityIdRequired'       => 'El ID de entidad es obligatorio',
-        'entityIdMustBePositive' => 'El ID de entidad debe ser un entero positivo',
-        'fromDateInvalid'        => 'La fecha desde debe estar en formato Y-m-d',
-        'toDateInvalid'          => 'La fecha hasta debe estar en formato Y-m-d',
-        'auditLogIdRequired'     => 'El ID del registro de auditoría es obligatorio',
-        'auditLogEntityRequired' => 'El tipo de entidad y el ID son obligatorios',
-        'auditLogNotFound'       => 'Registro de auditoría no encontrado',
+        'action_invalid_chars'     => 'La acción contiene caracteres inválidos',
+        'action_too_long'          => 'La acción no puede exceder 50 caracteres',
+        'entity_type_required'     => 'El tipo de entidad es obligatorio',
+        'entity_type_invalid_chars' => 'El tipo de entidad contiene caracteres inválidos',
+        'entity_type_too_long'      => 'El tipo de entidad no puede exceder 50 caracteres',
+        'entity_id_required'       => 'El ID de entidad es obligatorio',
+        'entity_id_must_be_positive' => 'El ID de entidad debe ser un entero positivo',
+        'from_date_invalid'        => 'La fecha desde debe estar en formato Y-m-d',
+        'to_date_invalid'          => 'La fecha hasta debe estar en formato Y-m-d',
+        'audit_log_id_required'     => 'El ID del registro de auditoría es obligatorio',
+        'audit_log_entity_required' => 'El tipo de entidad y el ID son obligatorios',
+        'audit_log_not_found'       => 'Registro de auditoría no encontrado',
     ],
 ];

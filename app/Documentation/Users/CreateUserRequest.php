@@ -21,13 +21,13 @@ use OpenApi\Attributes as OA;
         required: ['email'],
         properties: [
             new OA\Property(
-                property: 'firstName',
+                property: 'first_name',
                 type: 'string',
                 description: 'First name',
                 example: 'Alex'
             ),
             new OA\Property(
-                property: 'lastName',
+                property: 'last_name',
                 type: 'string',
                 description: 'Last name',
                 example: 'Doe'
@@ -46,19 +46,19 @@ use OpenApi\Attributes as OA;
                 example: 'user'
             ),
             new OA\Property(
-                property: 'oauthProvider',
+                property: 'oauth_provider',
                 type: 'string',
                 description: 'Optional OAuth provider for externally managed accounts',
                 example: 'google'
             ),
             new OA\Property(
-                property: 'oauthProviderId',
+                property: 'oauth_provider_id',
                 type: 'string',
                 description: 'Provider-specific identifier',
                 example: '113337022221111122223'
             ),
             new OA\Property(
-                property: 'avatarUrl',
+                property: 'avatar_url',
                 type: 'string',
                 format: 'uri',
                 description: 'Optional avatar URL',

@@ -16,21 +16,21 @@ use OpenApi\Attributes as OA;
     schema: 'FileDownloadResponse',
     title: 'File Download Response',
     description: 'File metadata for downloads and external storage',
-    required: ['id', 'originalName', 'url', 'path', 'storageDriver']
+    required: ['id', 'original_name', 'url', 'path', 'storage_driver']
 )]
 readonly class FileDownloadResponseDTO implements DataTransferObjectInterface
 {
     public function __construct(
         #[OA\Property(description: 'Unique file identifier', example: 1)]
         public int $id,
-        #[OA\Property(property: 'originalName', description: 'Original filename', example: 'document.pdf')]
-        public string $originalName,
+        #[OA\Property(property: 'original_name', description: 'Original filename', example: 'document.pdf')]
+        public string $original_name,
         #[OA\Property(description: 'Public or temporary access URL', example: 'https://example.com/storage/document.pdf')]
         public string $url,
         #[OA\Property(description: 'Storage path', example: 'uploads/abc123_document.pdf')]
         public string $path,
-        #[OA\Property(property: 'storageDriver', description: 'Storage driver name', example: 's3')]
-        public string $storageDriver
+        #[OA\Property(property: 'storage_driver', description: 'Storage driver name', example: 's3')]
+        public string $storage_driver
     ) {
     }
 
@@ -38,10 +38,10 @@ readonly class FileDownloadResponseDTO implements DataTransferObjectInterface
     {
         return new self(
             id: (int) ($data['id'] ?? 0),
-            originalName: (string) ($data['original_name'] ?? ''),
+            original_name: (string) ($data['original_name'] ?? ''),
             url: (string) ($data['url'] ?? ''),
             path: (string) ($data['path'] ?? ''),
-            storageDriver: (string) ($data['storage_driver'] ?? '')
+            storage_driver: (string) ($data['storage_driver'] ?? '')
         );
     }
 
@@ -49,10 +49,10 @@ readonly class FileDownloadResponseDTO implements DataTransferObjectInterface
     {
         return [
             'id' => $this->id,
-            'originalName' => $this->originalName,
+            'original_name' => $this->original_name,
             'url' => $this->url,
             'path' => $this->path,
-            'storageDriver' => $this->storageDriver,
+            'storage_driver' => $this->storage_driver,
         ];
     }
 }

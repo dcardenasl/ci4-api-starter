@@ -166,11 +166,11 @@ class FileService implements FileServiceInterface
      */
     public function destroy(int $id, ?SecurityContext $context = null): bool
     {
-        if ($context?->userId === null) {
+        if ($context?->user_id === null) {
             throw new AuthorizationException(lang('Api.unauthorized'));
         }
 
-        $file = $this->findFileAndAuthorize($id, $context->userId, 'delete', $context->isAdmin());
+        $file = $this->findFileAndAuthorize($id, $context->user_id, 'delete', $context->isAdmin());
 
         return $this->wrapInTransaction(function () use ($file) {
             $this->storage->delete($file->path);
@@ -181,7 +181,7 @@ class FileService implements FileServiceInterface
     protected function resolveUserId(object|array $request, ?SecurityContext $context): int
     {
         $data = $request instanceof \App\Interfaces\DataTransferObjectInterface ? $request->toArray() : (array)$request;
-        $userId = $context?->userId ?? (int) ($data['userId'] ?? 0);
+        $userId = $context?->user_id ?? (int) ($data['user_id'] ?? 0);
 
         if ($userId === 0) {
             throw new AuthorizationException(lang('Api.unauthorized'));

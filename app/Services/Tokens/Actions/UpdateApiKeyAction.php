@@ -27,11 +27,11 @@ class UpdateApiKeyAction
 
         $data = array_filter([
             'name' => $request->name,
-            'is_active' => $request->isActive,
-            'rate_limit_requests' => $request->rateLimitRequests,
-            'rate_limit_window' => $request->rateLimitWindow,
-            'user_rate_limit' => $request->userRateLimit,
-            'ip_rate_limit' => $request->ipRateLimit,
+            'is_active' => $request->is_active,
+            'rate_limit_requests' => $request->rate_limit_requests,
+            'rate_limit_window' => $request->rate_limit_window,
+            'user_rate_limit' => $request->user_rate_limit,
+            'ip_rate_limit' => $request->ip_rate_limit,
         ], fn ($value) => $value !== null);
 
         if ($data === []) {

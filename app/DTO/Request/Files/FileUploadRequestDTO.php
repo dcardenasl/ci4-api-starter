@@ -17,7 +17,7 @@ use CodeIgniter\HTTP\Files\UploadedFile;
 readonly class FileUploadRequestDTO extends BaseRequestDTO
 {
     public UploadedFile|string $file;
-    public int $userId;
+    public int $user_id;
     public ?string $filename;
 
     protected function rules(): array
@@ -28,11 +28,11 @@ readonly class FileUploadRequestDTO extends BaseRequestDTO
     protected function map(array $data): void
     {
         log_message('debug', '[FileUploadRequestDTO] payload: ' . json_encode($this->preparePayloadForLog($data)));
-        if (!isset($data['userId']) || !is_numeric($data['userId'])) {
+        if (!isset($data['user_id']) || !is_numeric($data['user_id'])) {
             throw new AuthenticationException(lang('Auth.unauthorized'));
         }
 
-        $this->userId = (int) $data['userId'];
+        $this->user_id = (int) $data['user_id'];
         $this->filename = $data['filename'] ?? null;
 
         $fileData = $this->extractFileFromData($data);
@@ -69,7 +69,7 @@ readonly class FileUploadRequestDTO extends BaseRequestDTO
 
         // 3. Fallback: Search for potential Base64 or large strings in other keys
         foreach ($data as $key => $value) {
-            if (in_array($key, ['userId', 'userRole', 'filename', 'visibility'], true)) {
+            if (in_array($key, ['user_id', 'user_role', 'filename', 'visibility'], true)) {
                 continue;
             }
 
@@ -158,7 +158,7 @@ readonly class FileUploadRequestDTO extends BaseRequestDTO
     {
         return [
             'file'     => $this->file,
-            'userId'   => $this->userId,
+            'user_id'   => $this->user_id,
             'filename' => $this->filename,
         ];
     }

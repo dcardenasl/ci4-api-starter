@@ -16,7 +16,7 @@ readonly class FileIndexRequestDTO extends BaseRequestDTO
 {
     public int $page;
     public int $perPage;
-    public int $userId;
+    public int $user_id;
 
     protected function rules(): array
     {
@@ -28,11 +28,11 @@ readonly class FileIndexRequestDTO extends BaseRequestDTO
 
     protected function map(array $data): void
     {
-        if (!isset($data['userId']) || !is_numeric($data['userId'])) {
+        if (!isset($data['user_id']) || !is_numeric($data['user_id'])) {
             throw new AuthenticationException(lang('Auth.unauthorized'));
         }
 
-        $this->userId = (int) $data['userId'];
+        $this->user_id = (int) $data['user_id'];
         $this->page = isset($data['page']) ? (int) $data['page'] : 1;
         $this->perPage = isset($data['perPage']) ? (int) $data['perPage'] : 20;
     }
@@ -42,7 +42,7 @@ readonly class FileIndexRequestDTO extends BaseRequestDTO
         return [
             'page'    => $this->page,
             'perPage' => $this->perPage,
-            'userId'  => $this->userId,
+            'user_id'  => $this->user_id,
         ];
     }
 }

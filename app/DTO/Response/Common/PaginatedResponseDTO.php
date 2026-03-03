@@ -14,7 +14,7 @@ use OpenApi\Attributes as OA;
     schema: 'PaginatedResponse',
     title: 'Paginated Response',
     description: 'Generic pagination payload',
-    required: ['data', 'total', 'page', 'perPage']
+    required: ['data', 'total', 'page', 'per_page']
 )]
 readonly class PaginatedResponseDTO implements DataTransferObjectInterface
 {
@@ -28,13 +28,13 @@ readonly class PaginatedResponseDTO implements DataTransferObjectInterface
         public int $total,
         #[OA\Property(description: 'Current page', example: 1)]
         public int $page,
-        #[OA\Property(property: 'perPage', description: 'Items per page', example: 20)]
-        public int $perPage
+        #[OA\Property(property: 'per_page', description: 'Items per page', example: 20)]
+        public int $per_page
     ) {
     }
 
     /**
-     * @param array{data?: array<int, mixed>, total?: int, page?: int, perPage?: int} $data
+     * @param array{data?: array<int, mixed>, total?: int, page?: int, per_page?: int} $data
      */
     public static function fromArray(array $data): self
     {
@@ -42,7 +42,7 @@ readonly class PaginatedResponseDTO implements DataTransferObjectInterface
             data: $data['data'] ?? [],
             total: (int) ($data['total'] ?? 0),
             page: (int) ($data['page'] ?? 1),
-            perPage: (int) ($data['perPage'] ?? 10)
+            per_page: (int) ($data['per_page'] ?? 10)
         );
     }
 
@@ -52,7 +52,7 @@ readonly class PaginatedResponseDTO implements DataTransferObjectInterface
             'data' => $this->data,
             'total' => $this->total,
             'page' => $this->page,
-            'perPage' => $this->perPage,
+            'per_page' => $this->per_page,
         ];
     }
 }

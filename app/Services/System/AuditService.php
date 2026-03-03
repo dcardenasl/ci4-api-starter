@@ -56,7 +56,7 @@ class AuditService extends BaseCrudService implements \App\Interfaces\System\Aud
             return;
         }
 
-        $userId = $context?->userId;
+        $userId = $context?->user_id;
 
         // Network metadata resolution (prefer context, fallback to request helper if safe)
         $ipAddress = trim((string) ($context?->metadata['ip_address'] ?? ''));
@@ -145,8 +145,8 @@ class AuditService extends BaseCrudService implements \App\Interfaces\System\Aud
     public function byEntity(DataTransferObjectInterface $request, ?SecurityContext $context = null): DataTransferObjectInterface
     {
         /** @var \App\DTO\Request\Audit\AuditByEntityRequestDTO $request */
-        $entityId = $request->entityId;
-        $entityType = $this->normalizeEntityType($request->entityType);
+        $entityId = $request->entity_id;
+        $entityType = $this->normalizeEntityType($request->entity_type);
 
         $logs = $this->auditLogModel->getByEntity($entityType, $entityId);
 

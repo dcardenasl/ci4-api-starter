@@ -27,10 +27,10 @@ class CreateApiKeyAction
             'key_prefix' => substr($rawKey, 0, 12),
             'key_hash' => $hash,
             'is_active' => 1,
-            'rate_limit_requests' => $request->rateLimitRequests ?? 600,
-            'rate_limit_window' => $request->rateLimitWindow ?? 60,
-            'user_rate_limit' => $request->userRateLimit ?? 60,
-            'ip_rate_limit' => $request->ipRateLimit ?? 200,
+            'rate_limit_requests' => $request->rate_limit_requests ?? 600,
+            'rate_limit_window' => $request->rate_limit_window ?? 60,
+            'user_rate_limit' => $request->user_rate_limit ?? 60,
+            'ip_rate_limit' => $request->ip_rate_limit ?? 200,
         ];
 
         $id = $this->apiKeyModel->insert($data);

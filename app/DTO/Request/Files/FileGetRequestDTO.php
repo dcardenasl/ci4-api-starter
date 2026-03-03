@@ -15,7 +15,7 @@ use App\Exceptions\AuthenticationException;
 readonly class FileGetRequestDTO extends BaseRequestDTO
 {
     public int $id;
-    public int $userId;
+    public int $user_id;
 
     protected function rules(): array
     {
@@ -26,19 +26,19 @@ readonly class FileGetRequestDTO extends BaseRequestDTO
 
     protected function map(array $data): void
     {
-        if (!isset($data['userId']) || !is_numeric($data['userId'])) {
+        if (!isset($data['user_id']) || !is_numeric($data['user_id'])) {
             throw new AuthenticationException(lang('Auth.unauthorized'));
         }
 
         $this->id = (int) $data['id'];
-        $this->userId = (int) $data['userId'];
+        $this->user_id = (int) $data['user_id'];
     }
 
     public function toArray(): array
     {
         return [
             'id'     => $this->id,
-            'userId' => $this->userId,
+            'user_id' => $this->user_id,
         ];
     }
 }

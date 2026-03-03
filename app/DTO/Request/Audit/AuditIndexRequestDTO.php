@@ -14,50 +14,50 @@ use App\DTO\Request\BaseRequestDTO;
 readonly class AuditIndexRequestDTO extends BaseRequestDTO
 {
     public int $page;
-    public int $perPage;
+    public int $per_page;
     public ?string $search;
-    public ?string $entityType;
-    public ?int $entityId;
-    public ?int $userId;
+    public ?string $entity_type;
+    public ?int $entity_id;
+    public ?int $user_id;
 
     protected function rules(): array
     {
         return [
             'page'       => 'permit_empty|is_natural_no_zero',
-            'perPage'    => 'permit_empty|is_natural_no_zero|less_than[101]',
+            'per_page'    => 'permit_empty|is_natural_no_zero|less_than[101]',
             'search'     => 'permit_empty|string|max_length[100]',
-            'entityType' => 'permit_empty|string|max_length[50]',
-            'entityId'   => 'permit_empty|is_natural_no_zero',
-            'userId'     => 'permit_empty|is_natural_no_zero',
+            'entity_type' => 'permit_empty|string|max_length[50]',
+            'entity_id'   => 'permit_empty|is_natural_no_zero',
+            'user_id'     => 'permit_empty|is_natural_no_zero',
         ];
     }
 
     protected function map(array $data): void
     {
         $this->page = isset($data['page']) ? (int) $data['page'] : 1;
-        $this->perPage = isset($data['perPage']) ? (int) $data['perPage'] : 20;
+        $this->per_page = isset($data['per_page']) ? (int) $data['per_page'] : 20;
         $this->search = $data['search'] ?? null;
-        $this->entityType = $data['entityType'] ?? null;
-        $this->entityId = isset($data['entityId']) ? (int) $data['entityId'] : null;
-        $this->userId = isset($data['userId']) ? (int) $data['userId'] : null;
+        $this->entity_type = $data['entity_type'] ?? null;
+        $this->entity_id = isset($data['entity_id']) ? (int) $data['entity_id'] : null;
+        $this->user_id = isset($data['user_id']) ? (int) $data['user_id'] : null;
     }
 
     public function toArray(): array
     {
         $data = [
             'page'    => $this->page,
-            'perPage' => $this->perPage,
+            'per_page' => $this->per_page,
             'search'  => $this->search,
         ];
 
-        if ($this->entityType) {
-            $data['filter']['entity_type'] = ['eq' => $this->entityType];
+        if ($this->entity_type) {
+            $data['filter']['entity_type'] = ['eq' => $this->entity_type];
         }
-        if ($this->entityId) {
-            $data['filter']['entity_id']   = ['eq' => $this->entityId];
+        if ($this->entity_id) {
+            $data['filter']['entity_id']   = ['eq' => $this->entity_id];
         }
-        if ($this->userId) {
-            $data['filter']['user_id']     = ['eq' => $this->userId];
+        if ($this->user_id) {
+            $data['filter']['user_id']     = ['eq' => $this->user_id];
         }
 
         return $data;

@@ -11,28 +11,28 @@ use App\DTO\Request\BaseRequestDTO;
  */
 readonly class AuditByEntityRequestDTO extends BaseRequestDTO
 {
-    public string $entityType;
-    public int $entityId;
+    public string $entity_type;
+    public int $entity_id;
 
     protected function rules(): array
     {
         return [
-            'entityType' => 'required|string|max_length[100]',
-            'entityId' => 'required|integer|greater_than[0]',
+            'entity_type' => 'required|string|max_length[100]',
+            'entity_id' => 'required|integer|greater_than[0]',
         ];
     }
 
     protected function map(array $data): void
     {
-        $this->entityType = (string) ($data['entityType'] ?? '');
-        $this->entityId = (int) ($data['entityId'] ?? 0);
+        $this->entity_type = (string) ($data['entity_type'] ?? '');
+        $this->entity_id = (int) ($data['entity_id'] ?? 0);
     }
 
     public function toArray(): array
     {
         return [
-            'entityType' => $this->entityType,
-            'entityId' => $this->entityId,
+            'entity_type' => $this->entity_type,
+            'entity_id' => $this->entity_id,
         ];
     }
 }

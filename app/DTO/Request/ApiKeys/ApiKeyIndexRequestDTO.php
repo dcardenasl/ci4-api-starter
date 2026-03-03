@@ -12,38 +12,38 @@ use App\DTO\Request\BaseRequestDTO;
 readonly class ApiKeyIndexRequestDTO extends BaseRequestDTO
 {
     public int $page;
-    public int $perPage;
+    public int $per_page;
     public ?string $search;
-    public ?int $isActive;
+    public ?int $is_active;
 
     protected function rules(): array
     {
         return [
             'page'      => 'permit_empty|is_natural_no_zero',
-            'perPage'   => 'permit_empty|is_natural_no_zero|less_than[101]',
+            'per_page'   => 'permit_empty|is_natural_no_zero|less_than[101]',
             'search'    => 'permit_empty|string|max_length[100]',
-            'isActive'  => 'permit_empty|in_list[0,1]',
+            'is_active'  => 'permit_empty|in_list[0,1]',
         ];
     }
 
     protected function map(array $data): void
     {
         $this->page = isset($data['page']) ? (int) $data['page'] : 1;
-        $this->perPage = isset($data['perPage']) ? (int) $data['perPage'] : 20;
+        $this->per_page = isset($data['per_page']) ? (int) $data['per_page'] : 20;
         $this->search = $data['search'] ?? null;
-        $this->isActive = isset($data['isActive']) ? (int) $data['isActive'] : null;
+        $this->is_active = isset($data['is_active']) ? (int) $data['is_active'] : null;
     }
 
     public function toArray(): array
     {
         $data = [
             'page'    => $this->page,
-            'perPage' => $this->perPage,
+            'per_page' => $this->per_page,
             'search'  => $this->search,
         ];
 
-        if ($this->isActive !== null) {
-            $data['filter']['is_active'] = ['eq' => $this->isActive];
+        if ($this->is_active !== null) {
+            $data['filter']['is_active'] = ['eq' => $this->is_active];
         }
 
         return $data;

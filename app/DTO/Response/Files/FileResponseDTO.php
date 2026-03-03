@@ -16,28 +16,28 @@ use OpenApi\Attributes as OA;
     schema: 'FileResponse',
     title: 'File Response',
     description: 'File metadata and access URL',
-    required: ['id', 'originalName', 'mimeType', 'size', 'url']
+    required: ['id', 'original_name', 'mime_type', 'size', 'url']
 )]
 readonly class FileResponseDTO implements DataTransferObjectInterface
 {
     public function __construct(
         #[OA\Property(description: 'Unique file identifier', example: 1)]
         public int $id,
-        #[OA\Property(property: 'originalName', description: 'Original filename', example: 'document.pdf')]
-        public string $originalName,
+        #[OA\Property(property: 'original_name', description: 'Original filename', example: 'document.pdf')]
+        public string $original_name,
         #[OA\Property(description: 'Stored filename', example: 'abc123_document.pdf')]
         public string $filename,
-        #[OA\Property(property: 'mimeType', description: 'MIME type', example: 'application/pdf')]
-        public string $mimeType,
+        #[OA\Property(property: 'mime_type', description: 'MIME type', example: 'application/pdf')]
+        public string $mime_type,
         #[OA\Property(property: 'size', description: 'File size in bytes', example: 102400)]
-        public int $fileSize,
-        #[OA\Property(property: 'humanSize', description: 'Human readable file size', example: '100 KB')]
-        public string $humanSize,
-        #[OA\Property(property: 'isImage', description: 'Whether the file is an image', example: false)]
-        public bool $isImage,
+        public int $file_size,
+        #[OA\Property(property: 'human_size', description: 'Human readable file size', example: '100 KB')]
+        public string $human_size,
+        #[OA\Property(property: 'is_image', description: 'Whether the file is an image', example: false)]
+        public bool $is_image,
         #[OA\Property(description: 'Public or temporary access URL', example: 'https://example.com/storage/file.pdf')]
         public string $url,
-        #[OA\Property(property: 'uploadedAt', description: 'Upload timestamp', example: '2026-02-26 12:00:00', nullable: true)]
+        #[OA\Property(property: 'uploaded_at', description: 'Upload timestamp', example: '2026-02-26 12:00:00', nullable: true)]
         public ?string $createdAt = null
     ) {
     }
@@ -51,16 +51,16 @@ readonly class FileResponseDTO implements DataTransferObjectInterface
 
         // Handle case where we receive an entity array or raw data
         $size = (int) ($data['file_size'] ?? $data['size'] ?? 0);
-        $isImage = isset($data['mime_type']) && str_starts_with((string)$data['mime_type'], 'image/');
+        $is_image = isset($data['mime_type']) && str_starts_with((string)$data['mime_type'], 'image/');
 
         return new self(
             id: (int) ($data['id'] ?? 0),
-            originalName: (string) ($data['original_name'] ?? ''),
+            original_name: (string) ($data['original_name'] ?? ''),
             filename: (string) ($data['filename'] ?? $data['stored_name'] ?? ''),
-            mimeType: (string) ($data['mime_type'] ?? ''),
-            fileSize: $size,
-            humanSize: (string) ($data['human_size'] ?? self::calculateHumanSize($size)),
-            isImage: (bool) ($data['is_image'] ?? $isImage),
+            mime_type: (string) ($data['mime_type'] ?? ''),
+            file_size: $size,
+            human_size: (string) ($data['human_size'] ?? self::calculateHumanSize($size)),
+            is_image: (bool) ($data['is_image'] ?? $is_image),
             url: (string) ($data['url'] ?? ''),
             createdAt: $createdAt ? (string) $createdAt : null
         );
@@ -79,15 +79,15 @@ readonly class FileResponseDTO implements DataTransferObjectInterface
     {
         return [
             'id' => $this->id,
-            'originalName' => $this->originalName,
+            'original_name' => $this->original_name,
             'filename' => $this->filename,
-            'mimeType' => $this->mimeType,
-            'size' => $this->fileSize,
-            'fileSize' => $this->fileSize, // Kept for compatibility if needed
-            'humanSize' => $this->humanSize,
-            'isImage' => $this->isImage,
+            'mime_type' => $this->mime_type,
+            'size' => $this->file_size,
+            'file_size' => $this->file_size, // Kept for compatibility if needed
+            'human_size' => $this->human_size,
+            'is_image' => $this->is_image,
             'url' => $this->url,
-            'uploadedAt' => $this->createdAt,
+            'uploaded_at' => $this->createdAt,
         ];
     }
 }

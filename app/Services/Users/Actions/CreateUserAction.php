@@ -20,8 +20,8 @@ class CreateUserAction
 
     public function execute(UserStoreRequestDTO $request, ?SecurityContext $context = null): \App\Entities\UserEntity
     {
-        $actorRole = $context?->role ?? 'user';
-        $adminId = $context?->userId;
+        $actorRole = $context?->user_role ?? 'user';
+        $adminId = $context?->user_id;
         $isPrivilegedCreator = in_array($actorRole, ['admin', 'superadmin'], true);
         $status = $isPrivilegedCreator ? 'active' : 'invited';
         $now = date('Y-m-d H:i:s');
@@ -29,8 +29,8 @@ class CreateUserAction
 
         $data = [
             'email'       => $request->email,
-            'first_name'  => $request->firstName,
-            'last_name'   => $request->lastName,
+            'first_name'  => $request->first_name,
+            'last_name'   => $request->last_name,
             'password'    => password_hash($generatedPassword, PASSWORD_BCRYPT),
             'role'        => $request->role,
             'status'      => $status,

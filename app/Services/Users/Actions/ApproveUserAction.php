@@ -46,7 +46,7 @@ class ApproveUserAction
         $this->userModel->update($id, [
             'status' => 'active',
             'approved_at' => date('Y-m-d H:i:s'),
-            'approved_by' => $context?->userId,
+            'approved_by' => $context?->user_id,
         ]);
 
         $this->auditService->log('user_approved', 'users', $id, ['status' => $status], ['status' => 'active'], $context);

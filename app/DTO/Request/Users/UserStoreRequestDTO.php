@@ -14,48 +14,48 @@ use App\DTO\Request\BaseRequestDTO;
 readonly class UserStoreRequestDTO extends BaseRequestDTO
 {
     public string $email;
-    public ?string $firstName;
-    public ?string $lastName;
+    public ?string $first_name;
+    public ?string $last_name;
     public ?string $role;
-    public ?string $oauthProvider;
-    public ?string $oauthProviderId;
-    public ?string $avatarUrl;
+    public ?string $oauth_provider;
+    public ?string $oauth_provider_id;
+    public ?string $avatar_url;
 
     protected function rules(): array
     {
         return [
             'email'     => 'required|valid_email_idn|max_length[255]',
-            'firstName' => 'permit_empty|string|max_length[100]',
-            'lastName'  => 'permit_empty|string|max_length[100]',
+            'first_name' => 'permit_empty|string|max_length[100]',
+            'last_name'  => 'permit_empty|string|max_length[100]',
             'role'      => 'permit_empty|in_list[user,admin,superadmin]',
             'password'  => 'permit_empty|max_length[0]', // Ensure password is not provided
-            'oauthProvider' => 'permit_empty|in_list[google,github]',
-            'oauthProviderId' => 'permit_empty|string|max_length[255]',
-            'avatarUrl' => 'permit_empty|valid_url|max_length[255]',
+            'oauth_provider' => 'permit_empty|in_list[google,github]',
+            'oauth_provider_id' => 'permit_empty|string|max_length[255]',
+            'avatar_url' => 'permit_empty|valid_url|max_length[255]',
         ];
     }
 
     protected function map(array $data): void
     {
         $this->email = (string) $data['email'];
-        $this->firstName = $data['firstName'] ?? null;
-        $this->lastName = $data['lastName'] ?? null;
+        $this->first_name = $data['first_name'] ?? null;
+        $this->last_name = $data['last_name'] ?? null;
         $this->role = $data['role'] ?? 'user';
-        $this->oauthProvider = $data['oauthProvider'] ?? null;
-        $this->oauthProviderId = $data['oauthProviderId'] ?? null;
-        $this->avatarUrl = $data['avatarUrl'] ?? null;
+        $this->oauth_provider = $data['oauth_provider'] ?? null;
+        $this->oauth_provider_id = $data['oauth_provider_id'] ?? null;
+        $this->avatar_url = $data['avatar_url'] ?? null;
     }
 
     public function toArray(): array
     {
         return [
             'email'     => $this->email,
-            'firstName' => $this->firstName,
-            'lastName'  => $this->lastName,
+            'first_name' => $this->first_name,
+            'last_name'  => $this->last_name,
             'role'      => $this->role,
-            'oauthProvider' => $this->oauthProvider,
-            'oauthProviderId' => $this->oauthProviderId,
-            'avatarUrl' => $this->avatarUrl,
+            'oauth_provider' => $this->oauth_provider,
+            'oauth_provider_id' => $this->oauth_provider_id,
+            'avatar_url' => $this->avatar_url,
         ];
     }
 }

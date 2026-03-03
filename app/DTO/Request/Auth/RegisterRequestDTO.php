@@ -14,16 +14,16 @@ use App\DTO\Request\BaseRequestDTO;
 readonly class RegisterRequestDTO extends BaseRequestDTO
 {
     public string $email;
-    public string $firstName;
-    public string $lastName;
+    public string $first_name;
+    public string $last_name;
     public string $password;
 
     protected function rules(): array
     {
         return [
             'email'     => 'required|valid_email_idn|max_length[255]|is_unique[users.email]',
-            'firstName' => 'required|string|max_length[100]',
-            'lastName'  => 'required|string|max_length[100]',
+            'first_name' => 'required|string|max_length[100]',
+            'last_name'  => 'required|string|max_length[100]',
             'password'  => 'required|strong_password',
         ];
     }
@@ -31,8 +31,8 @@ readonly class RegisterRequestDTO extends BaseRequestDTO
     protected function map(array $data): void
     {
         $this->email = strtolower(trim((string) $data['email']));
-        $this->firstName = trim((string) ($data['firstName'] ?? ''));
-        $this->lastName = trim((string) ($data['lastName'] ?? ''));
+        $this->first_name = trim((string) ($data['first_name'] ?? ''));
+        $this->last_name = trim((string) ($data['last_name'] ?? ''));
         $this->password = (string) $data['password'];
     }
 
@@ -40,8 +40,8 @@ readonly class RegisterRequestDTO extends BaseRequestDTO
     {
         return [
             'email'     => $this->email,
-            'firstName' => $this->firstName,
-            'lastName'  => $this->lastName,
+            'first_name' => $this->first_name,
+            'last_name'  => $this->last_name,
             'password'  => $this->password,
         ];
     }

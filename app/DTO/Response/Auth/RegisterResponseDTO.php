@@ -16,7 +16,7 @@ use OpenApi\Attributes as OA;
     schema: 'RegisterResponse',
     title: 'Register Response',
     description: 'User data returned after registration',
-    required: ['id', 'email', 'firstName', 'lastName', 'role', 'status']
+    required: ['id', 'email', 'first_name', 'last_name', 'role', 'status']
 )]
 readonly class RegisterResponseDTO implements DataTransferObjectInterface
 {
@@ -25,36 +25,36 @@ readonly class RegisterResponseDTO implements DataTransferObjectInterface
         public int $id,
         #[OA\Property(description: 'User email address', example: 'newuser@example.com')]
         public string $email,
-        #[OA\Property(property: 'firstName', description: 'User first name', example: 'Alex')]
-        public string $firstName,
-        #[OA\Property(property: 'lastName', description: 'User last name', example: 'Doe')]
-        public string $lastName,
+        #[OA\Property(property: 'first_name', description: 'User first name', example: 'Alex')]
+        public string $first_name,
+        #[OA\Property(property: 'last_name', description: 'User last name', example: 'Doe')]
+        public string $last_name,
         #[OA\Property(description: 'User role', example: 'user', enum: ['user', 'admin', 'superadmin'])]
         public string $role,
         #[OA\Property(description: 'Account status', example: 'pending_approval', enum: ['pending_approval', 'active', 'invited'])]
         public string $status,
-        #[OA\Property(property: 'createdAt', description: 'Creation timestamp', example: '2026-02-26 12:00:00', nullable: true)]
-        public ?string $createdAt = null
+        #[OA\Property(property: 'created_at', description: 'Creation timestamp', example: '2026-02-26 12:00:00', nullable: true)]
+        public ?string $created_at = null
     ) {
     }
 
     public static function fromArray(array $data): self
     {
-        $createdAt = $data['created_at'] ?? $data['createdAt'] ?? null;
+        $created_at = $data['created_at'] ?? $data['created_at'] ?? null;
 
         // Normalize date to string if it's an object (CI4 Time or DateTime)
-        if ($createdAt instanceof \DateTimeInterface) {
-            $createdAt = $createdAt->format('Y-m-d H:i:s');
+        if ($created_at instanceof \DateTimeInterface) {
+            $created_at = $created_at->format('Y-m-d H:i:s');
         }
 
         return new self(
             id: (int) ($data['id'] ?? 0),
             email: (string) ($data['email'] ?? ''),
-            firstName: (string) ($data['firstName'] ?? ($data['first_name'] ?? '')),
-            lastName: (string) ($data['lastName'] ?? ($data['last_name'] ?? '')),
+            first_name: (string) ($data['first_name'] ?? ($data['first_name'] ?? '')),
+            last_name: (string) ($data['last_name'] ?? ($data['last_name'] ?? '')),
             role: (string) ($data['role'] ?? 'user'),
             status: (string) ($data['status'] ?? 'pending_approval'),
-            createdAt: $createdAt ? (string) $createdAt : null
+            created_at: $created_at ? (string) $created_at : null
         );
     }
 
@@ -63,11 +63,11 @@ readonly class RegisterResponseDTO implements DataTransferObjectInterface
         return [
             'id' => $this->id,
             'email' => $this->email,
-            'firstName' => $this->firstName,
-            'lastName' => $this->lastName,
+            'first_name' => $this->first_name,
+            'last_name' => $this->last_name,
             'role' => $this->role,
             'status' => $this->status,
-            'createdAt' => $this->createdAt,
+            'created_at' => $this->created_at,
         ];
     }
 }

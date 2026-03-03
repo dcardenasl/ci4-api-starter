@@ -33,7 +33,7 @@ class GoogleLoginAction
 
     public function execute(GoogleLoginRequestDTO $request, ?SecurityContext $context = null): OperationResult
     {
-        $identity = $this->googleIdentityService->verifyIdToken($request->idToken);
+        $identity = $this->googleIdentityService->verifyIdToken($request->id_token);
         $email = strtolower($identity->email);
 
         /** @var UserEntity|null $user */
@@ -76,7 +76,7 @@ class GoogleLoginAction
                 $updateData['oauth_provider'] = 'google';
             }
             if (($user->oauth_provider ?? null) === 'google' && empty($user->oauth_provider_id)) {
-                $updateData['oauth_provider_id'] = $identity->providerId;
+                $updateData['oauth_provider_id'] = $identity->provider_id;
             }
             if ($user->email_verified_at === null) {
                 $updateData['email_verified_at'] = date('Y-m-d H:i:s');

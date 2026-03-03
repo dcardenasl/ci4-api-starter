@@ -27,8 +27,8 @@ class UpdateUserAction
             throw new NotFoundException(lang('Users.notFound'));
         }
 
-        $actorRole = $context?->role ?? 'user';
-        $actorId = $context?->userId;
+        $actorRole = $context?->user_role ?? 'user';
+        $actorId = $context?->user_id;
 
         $this->roleGuard->assertCanManageTarget($actorRole, $actorId, $userId, (string) $targetUser->role);
 
@@ -63,11 +63,11 @@ class UpdateUserAction
         if ($request->email !== null) {
             $data['email'] = $request->email;
         }
-        if ($request->firstName !== null) {
-            $data['first_name'] = $request->firstName;
+        if ($request->first_name !== null) {
+            $data['first_name'] = $request->first_name;
         }
-        if ($request->lastName !== null) {
-            $data['last_name'] = $request->lastName;
+        if ($request->last_name !== null) {
+            $data['last_name'] = $request->last_name;
         }
         if ($request->password !== null) {
             $data['password'] = password_hash($request->password, PASSWORD_BCRYPT);

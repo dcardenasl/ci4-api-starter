@@ -61,7 +61,7 @@ class UserService extends BaseCrudService implements UserServiceInterface
     {
         /** @var \App\DTO\Request\Users\UserStoreRequestDTO $request */
         return $this->wrapInTransaction(function () use ($request, $context) {
-            $actorRole = $context?->role ?? 'user';
+            $actorRole = $context?->user_role ?? 'user';
             $this->roleGuard->assertCanAssignRole($actorRole, (string) $request->role);
 
             /** @var \App\Entities\UserEntity $user */
@@ -118,7 +118,7 @@ class UserService extends BaseCrudService implements UserServiceInterface
             throw new NotFoundException(lang('Users.notFound'));
         }
 
-        $this->roleGuard->assertCanManageTarget($context?->role ?? 'user', $context?->userId, $id, (string) $targetUser->role);
+        $this->roleGuard->assertCanManageTarget($context?->user_role ?? 'user', $context?->user_id, $id, (string) $targetUser->role);
 
         return parent::destroy($id, $context);
     }

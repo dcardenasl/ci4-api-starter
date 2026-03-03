@@ -22,8 +22,8 @@ class RegisterUserAction
     {
         $userId = $this->userModel->insert([
             'email'      => $request->email,
-            'first_name' => $request->firstName,
-            'last_name'  => $request->lastName,
+            'first_name' => $request->first_name,
+            'last_name'  => $request->last_name,
             'password'   => password_hash($request->password, PASSWORD_BCRYPT),
             'role'       => 'user',
             'status'     => 'pending_approval',

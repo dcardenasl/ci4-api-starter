@@ -13,24 +13,24 @@ use App\DTO\Request\BaseRequestDTO;
  */
 readonly class GoogleLoginRequestDTO extends BaseRequestDTO
 {
-    public string $idToken;
+    public string $id_token;
 
     protected function rules(): array
     {
         return [
-            'idToken' => 'required|string',
+            'id_token' => 'required|string',
         ];
     }
 
     protected function map(array $data): void
     {
-        $this->idToken = (string) ($data['idToken'] ?? '');
+        $this->id_token = (string) ($data['id_token'] ?? '');
     }
 
     public function toArray(): array
     {
         return [
-            'idToken' => $this->idToken,
+            'id_token' => $this->id_token,
         ];
     }
 }

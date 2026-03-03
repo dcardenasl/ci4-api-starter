@@ -7,10 +7,11 @@ Use this checklist when creating a new module from this template.
 1. Run `php spark make:crud {Resource} --domain {Domain} --route {slug}`.
 2. Verify generated files exist in `Controllers`, `DTO`, `Interfaces`, `Services`, `Documentation`, `Language`, and `tests`.
 3. Run `php spark module:check {Resource} --domain {Domain}` and fix all reported gaps.
+4. Remember: `module:check` does not validate migration existence/content.
 
 ## 2. Persistence
 
-1. Create migration(s) for the resource table(s).
+1. Create migration(s) for the resource table(s) immediately after scaffold validation.
 2. Validate `Model` fields: `allowedFields`, validation rules, searchable/filterable/sortable fields.
 3. Confirm `Entity` casts/dates are correct.
 
@@ -27,7 +28,9 @@ Use this checklist when creating a new module from this template.
    - `index()` -> `DataTransferObjectInterface` (paginated DTO)
    - `show/store/update()` -> resource DTO
    - commands -> `OperationResult`
-3. Register service in `app/Config/Services.php` if not already generated.
+3. Use `GenericRepository` by default for standard CRUD.
+4. Create dedicated `*RepositoryInterface` + implementation only for non-trivial domain queries.
+5. Register service/repository wiring in `app/Config/Services.php` if not already generated.
 
 ## 5. Controller and Routes
 
@@ -53,3 +56,4 @@ Use this checklist when creating a new module from this template.
 1. `composer quality` passes.
 2. Module respects the architecture contract in `docs/template/ARCHITECTURE_CONTRACT.md`.
 3. No unresolved TODO placeholders remain in generated files.
+4. Playbook compliance validated against `docs/template/CRUD_FROM_ZERO.md`.

@@ -48,13 +48,11 @@ declare(strict_types=1);
 
 namespace App\Interfaces\Catalog;
 
-use App\Interfaces\DataTransferObjectInterface;
+use App\Interfaces\Core\CrudServiceContract;
 
-interface ProductServiceInterface
+interface ProductServiceInterface extends CrudServiceContract
 {
-    public function index(DataTransferObjectInterface $request): array;
-    public function show(int $id): DataTransferObjectInterface;
-    public function store(DataTransferObjectInterface $request): DataTransferObjectInterface;
+    // Métodos específicos de dominio opcionales.
 }
 ```
 
@@ -101,8 +99,11 @@ declare(strict_types=1);
 
 namespace App\Services\Catalog;
 
+use App\DTO\SecurityContext;
+use App\Interfaces\Mappers\ResponseMapperInterface;
 use App\Interfaces\DataTransferObjectInterface;
-use App\Interfaces\ProductServiceInterface;
+use App\Interfaces\Catalog\ProductServiceInterface;
+use App\Repositories\GenericRepository;
 use App\Models\ProductModel;
 use App\Traits\AppliesQueryOptions;
 
@@ -110,18 +111,20 @@ class ProductService extends BaseCrudService implements ProductServiceInterface
 {
     use AppliesQueryOptions;
 
-    protected string $responseDtoClass = \App\DTO\Response\Catalog\ProductResponseDTO::class;
-
-    public function __construct(protected ProductModel $productModel) {
-        $this->model = $productModel;
+    public function __construct(
+        protected ProductModel $productModel,
+        ResponseMapperInterface $responseMapper
+    ) {
+        parent::__construct($responseMapper);
+        $this->repository = new GenericRepository($productModel);
     }
 
-    public function store(DataTransferObjectInterface $request): DataTransferObjectInterface
+    public function store(DataTransferObjectInterface $request, ?SecurityContext $context = null): DataTransferObjectInterface
     {
         return $this->wrapInTransaction(function() use ($request) {
-            $id = $this->model->insert($request->toArray());
+            $id = $this->repository->insert($request->toArray());
             // Lógica de negocio adicional...
-            return $this->mapToResponse($this->model->find($id));
+            return $this->mapToResponse($this->repository->find((int) $id));
         });
     }
 }

@@ -9,8 +9,13 @@ This skill defines the gold standard for resource creation, prioritizing immutab
 
 ## Implementation Flow (MANDATORY)
 
+0. **Scaffold Bootstrap (Default):**
+   - Run `php spark make:crud {Resource} --domain {Domain} --route {slug}`.
+   - Run `php spark module:check {Resource} --domain {Domain}`.
+   - Note: scaffold does not generate migrations.
+
 1. **Database & State:**
-   - **Migration**: Include timestamps and soft deletes.
+   - **Migration**: Create after scaffold validation; include timestamps and soft deletes.
    - **Entity**: Use explicit `$casts` and `Entity` base class.
    - **Model**: Use `Filterable`, `Searchable`, and `Auditable` traits.
 
@@ -22,6 +27,7 @@ This skill defines the gold standard for resource creation, prioritizing immutab
 3. **Pure Service Layer (Domain Focused):**
    - **Interface**: Create in `app/Interfaces/{Domain}/`.
    - **Service**: Implement in `app/Services/{Domain}/` inheriting from `BaseCrudService`.
+   - **Repository**: Use `GenericRepository` by default; create dedicated repository interfaces/implementations only for non-trivial domain queries.
    - **Composition**: Decompose logic into `Support/` classes (Mappers, Handlers).
    - **Strict DI**: Injected dependencies must be typed via Interfaces. Register in `app/Config/Services.php`.
 

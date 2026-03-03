@@ -76,7 +76,8 @@ Para nuevos proyectos creados desde este repositorio, sigue primero estos docume
 
 1. [Contrato de Arquitectura](docs/template/ARCHITECTURE_CONTRACT.md)
 2. [Checklist de Bootstrap de Modulo](docs/template/MODULE_BOOTSTRAP_CHECKLIST.md)
-3. [Quality Gates](docs/template/QUALITY_GATES.md)
+3. [Playbook CRUD Desde Cero](docs/template/CRUD_FROM_ZERO.es.md)
+4. [Quality Gates](docs/template/QUALITY_GATES.md)
 
 ## Endpoints de la API
 
@@ -431,7 +432,8 @@ encryption.key=hex2bin:<pegar-nueva-clave-aqui>
 
 Esta plantilla incluye un agente especializado de [Claude Code](https://claude.ai/code) que actúa como arquitecto experto para este proyecto. Cuando usas Claude Code, el agente automáticamente te ayuda a:
 - Crear recursos CRUD completos siguiendo todos los patrones arquitectónicos
-- Generar migraciones, entidades, modelos, servicios, controladores y tests
+- Generar y alinear las capas CRUD (entidades, modelos, DTOs, servicios, controladores, rutas y tests)
+- Guiar explícitamente el paso de migraciones (los archivos de migración no se generan automáticamente con `make:crud`)
 - Mantener consistencia con las convenciones de código existentes
 - Seguir las mejores prácticas de seguridad y testing
 

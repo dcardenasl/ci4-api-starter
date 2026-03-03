@@ -27,5 +27,7 @@ Reglas obligatorias para cualquier módulo construido sobre este template.
 1. Registrar servicios en `app/Config/Services.php`.
 2. Mantener i18n en `en` y `es`.
 3. Mantener pruebas Unit/Feature/Integration según alcance.
-4. En clases runtime (`Commands`, `Filters`) resolver dependencias con `Config\Services`/helpers de modelo (`model()`), evitando `new *Model()` directo y `service('...')`.
-5. `composer quality` debe pasar antes de merge.
+4. `make:crud` es el bootstrap recomendado por defecto, seguido de creación explícita de migraciones.
+5. La persistencia CRUD estándar usa `GenericRepository`; repositorios dedicados se crean cuando hay queries de dominio no triviales.
+6. En clases runtime (`Commands`, `Filters`) resolver dependencias con `Config\Services`/helpers de modelo (`model()`), evitando `new *Model()` directo y `service('...')`.
+7. `composer quality` debe pasar antes de merge.

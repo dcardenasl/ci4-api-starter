@@ -43,3 +43,4 @@ Deben pasar los tests de `tests/Unit/Architecture/`:
 1. `git status` limpio después de tests.
 2. Documentación actualizada cuando cambian contratos o convenciones.
 3. El scaffold de módulos nuevos genera archivos compatibles con guardrails de contrato.
+4. Los CRUD nuevos siguen `docs/template/CRUD_FROM_ZERO.es.md` (incluyendo validación de scaffold y paso explícito de migración).

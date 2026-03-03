@@ -43,3 +43,4 @@ These architecture tests must remain green:
 1. `git status` clean after tests.
 2. Docs updated when contracts or conventions change.
 3. New module scaffolding outputs files compliant with contract guardrails.
+4. New CRUD modules follow `docs/template/CRUD_FROM_ZERO.md` (including scaffold validation + explicit migration step).

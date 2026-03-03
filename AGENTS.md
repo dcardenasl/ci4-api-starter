@@ -18,7 +18,7 @@
 - `composer install` installs dependencies.
 - `php spark serve` runs the dev server.
 - `php spark migrate` applies migrations.
-- `php spark make:crud {Resource} --domain {Domain} --route {endpoint}` scaffolds new resources (Mandatory first step).
+- `php spark make:crud {Resource} --domain {Domain} --route {endpoint}` scaffolds new resources (recommended default first step).
 - `vendor/bin/phpunit` runs the test suite.
 - `composer quality` runs all quality gates (PHPStan, tests, CS-check).
 - `php spark swagger:generate` regenerates `public/swagger.json` from DTO and Documentation annotations.
@@ -27,6 +27,8 @@
 - **Thin Controllers:** Resolve the default service explicitly in `resolveDefaultService()` and use `handleRequest('method', RequestDTO::class)` as the default pattern.
 - **No Inline Annotations:** Do not add OpenAPI annotations to controllers. Use DTOs for schemas and `app/Documentation/` for endpoints.
 - **Service Registration:** Always register new services in `app/Config/Services.php`.
+- **Migration Timing:** `make:crud` does not generate migration files; create migrations immediately after scaffold/bootstrap validation.
+- **Repository Strategy:** Use `GenericRepository` by default for CRUD; add dedicated repositories only for non-trivial domain queries.
 - **Pure Logic:** Business decisions belong in services; HTTP decisions belong in controllers.
 
 ### Controller Architecture Invariants

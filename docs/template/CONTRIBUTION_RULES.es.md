@@ -9,6 +9,7 @@ Estas reglas definen el estándar mínimo de contribución para este repositorio
 3. Transferencia entre capas con DTOs (`readonly`, request DTOs validados).
 4. Clases runtime (`Commands`, `Filters`) resuelven dependencias por contenedor/helpers (`Services::*`, `model()`).
 5. Mensajes de validación y excepciones deben usar claves `lang()` (sin textos hardcodeados visibles al usuario).
+6. Para módulos CRUD nuevos, seguir `docs/template/CRUD_FROM_ZERO.es.md` como flujo canónico.
 
 ## 2. Entregables obligatorios por cambio
 
@@ -38,3 +39,4 @@ Consulta `docs/architecture/DRIFT_GUIDE.es.md` siempre que `composer arch-drift`
 4. No introducir TODOs sin resolver ni atajos temporales.
 5. Declarar explícitamente impacto de architecture drift cuando se tocan controllers/services/filters.
 6. Consultar `docs/architecture/DRIFT_GUIDE.es.md` cuando fallen los guardrails de arquitectura.
+7. Si se agregó un CRUD nuevo, confirmar que se siguió el flujo scaffold + migración + module check.

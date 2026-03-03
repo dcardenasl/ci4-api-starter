@@ -39,10 +39,12 @@ The agent automatically activates when you ask Claude Code to:
 The agent will:
 1. **Research** existing patterns in your codebase
 2. **Scaffold first** with `php spark make:crud ...` for new CRUD resources
-3. **Plan** the implementation (migration, entity, model, service, controller, tests)
-4. **Implement** following exact architectural patterns
-5. **Test** with Unit, Integration, and Feature tests
-6. **Document** with OpenAPI annotations in `app/Documentation/`
+3. **Validate bootstrap** with `php spark module:check ...`
+4. **Plan** the implementation (migration, entity/model alignment, DTO/service/controller/tests)
+5. **Implement** following exact architectural patterns
+6. **Test** with Unit, Integration, and Feature tests
+7. **Document** with OpenAPI annotations in `app/Documentation/`
+8. **Apply repository strategy** (`GenericRepository` by default, dedicated repositories only for non-trivial queries)
 
 ## What's included
 
@@ -65,7 +67,7 @@ The agent ensures that every new resource follows the exact same patterns as exi
 
 - ✅ **Zero learning curve** - The agent knows all the patterns
 - ✅ **Architectural consistency** - Never deviates from established conventions
-- ✅ **Complete implementation** - Generates migration, model, service, controller, and tests
+- ✅ **Complete implementation** - Generates scaffolded CRUD layers and guides explicit migration creation
 - ✅ **Best practices** - Follows security, testing, and documentation standards
 - ✅ **Bilingual** - Responds in Spanish or English based on your input
 

@@ -214,427 +214,55 @@ curl -X GET http://localhost:8080/api/v1/users \
 
 Let's build a complete Product resource step by step. This will teach you the patterns used throughout the project.
 
-### Step 1: Create the Migration
+### Step 1: Scaffold the Resource First
+
+```bash
+php spark make:crud Product --domain Catalog --route products
+```
+
+This generates the CRUD skeleton (controller/service/interface/DTO/model/entity/docs/i18n/tests).
+
+### Step 2: Validate Generated Bootstrap
+
+```bash
+php spark module:check Product --domain Catalog
+```
+
+This validates scaffolded artifacts and basic wiring. It does not validate migrations.
+
+### Step 3: Create Migration(s)
 
 ```bash
 php spark make:migration CreateProductsTable
-```
-
-Edit the generated file in `app/Database/Migrations/`:
-
-```php
-<?php
-namespace App\Database\Migrations;
-use CodeIgniter\Database\Migration;
-
-class CreateProductsTable extends Migration
-{
-    public function up()
-    {
-        $this->forge->addField([
-            'id' => [
-                'type'           => 'INT',
-                'constraint'     => 11,
-                'unsigned'       => true,
-                'auto_increment' => true,
-            ],
-            'name' => [
-                'type'       => 'VARCHAR',
-                'constraint' => 255,
-            ],
-            'description' => [
-                'type' => 'TEXT',
-                'null' => true,
-            ],
-            'price' => [
-                'type'       => 'DECIMAL',
-                'constraint' => '10,2',
-            ],
-            'stock' => [
-                'type'       => 'INT',
-                'constraint' => 11,
-                'default'    => 0,
-            ],
-            'created_at' => [
-                'type' => 'DATETIME',
-                'null' => true,
-            ],
-            'updated_at' => [
-                'type' => 'DATETIME',
-                'null' => true,
-            ],
-            'deleted_at' => [
-                'type' => 'DATETIME',
-                'null' => true,
-            ],
-        ]);
-
-        $this->forge->addKey('id', true);
-        $this->forge->addKey('name');
-        $this->forge->addKey('created_at');
-        $this->forge->createTable('products');
-    }
-
-    public function down()
-    {
-        $this->forge->dropTable('products');
-    }
-}
-```
-
-Run the migration:
-```bash
 php spark migrate
 ```
 
-### Step 2: Create the Entity
+Then align model/entity fields with the real schema.
 
-Create `app/Entities/ProductEntity.php`:
+### Step 4: Finalize DTOs and Service
 
-```php
-<?php
-namespace App\Entities;
-use CodeIgniter\Entity\Entity;
+1. Complete request DTO `rules()`, `map()`, and `toArray()`.
+2. Complete response DTO `fromArray()` and OpenAPI attributes.
+3. Keep service pure:
+   - reads return DTOs
+   - command flows return `OperationResult`
+   - no HTTP response building in services
 
-class ProductEntity extends Entity
-{
-    protected $casts = [
-        'id'    => 'integer',
-        'price' => 'float',
-        'stock' => 'integer',
-    ];
+### Step 5: Repository Decision
 
-    protected $dates = [
-        'created_at',
-        'updated_at',
-        'deleted_at',
-    ];
+1. Start with `GenericRepository` for standard CRUD.
+2. Create dedicated repository interface/implementation only for non-trivial domain queries.
 
-    // Computed property: is product in stock?
-    public function isInStock(): bool
-    {
-        return $this->stock > 0;
-    }
+### Step 6: Complete Routing, Docs, and Tests
 
-    // Computed property: formatted price
-    public function getFormattedPrice(): string
-    {
-        return '$' . number_format($this->price, 2);
-    }
-}
-```
+1. Verify routes/filters in `app/Config/Routes.php`.
+2. Complete endpoint docs in `app/Documentation/{Domain}/...`.
+3. Complete Unit/Integration/Feature tests.
+4. Run `composer quality` and `php spark swagger:generate`.
 
-### Step 3: Create the Model
-
-Create `app/Models/ProductModel.php`:
-
-```php
-<?php
-namespace App\Models;
-use App\Entities\ProductEntity;
-use App\Traits\Filterable;
-use App\Traits\Searchable;
-use CodeIgniter\Model;
-
-class ProductModel extends Model
-{
-    use Filterable, Searchable;
-
-    protected $table            = 'products';
-    protected $primaryKey       = 'id';
-    protected $returnType       = ProductEntity::class;
-    protected $useSoftDeletes   = true;
-    protected $useTimestamps    = true;
-
-    protected $allowedFields = [
-        'name',
-        'description',
-        'price',
-        'stock',
-    ];
-
-    // Validation rules
-    protected $validationRules = [
-        'name' => [
-            'rules'  => 'required|max_length[255]',
-            'errors' => [
-                'required'   => 'Product name is required',
-                'max_length' => 'Product name cannot exceed 255 characters',
-            ],
-        ],
-        'price' => [
-            'rules'  => 'required|numeric|greater_than[0]',
-            'errors' => [
-                'required'     => 'Price is required',
-                'numeric'      => 'Price must be a number',
-                'greater_than' => 'Price must be greater than 0',
-            ],
-        ],
-        'stock' => [
-            'rules'  => 'permit_empty|integer|greater_than_equal_to[0]',
-        ],
-    ];
-
-    // Query features
-    protected array $searchableFields = ['name', 'description'];
-    protected array $filterableFields = ['name', 'price', 'stock', 'created_at'];
-    protected array $sortableFields   = ['id', 'name', 'price', 'stock', 'created_at'];
-}
-```
-
-### Step 4: Create the Service Interface
-
-Create `app/Interfaces/ProductServiceInterface.php`:
-
-```php
-<?php
-namespace App\Interfaces;
-
-interface ProductServiceInterface
-{
-    public function index(array $data): array;
-    public function show(array $data): array;
-    public function store(array $data): array;
-    public function update(array $data): array;
-    public function destroy(array $data): array;
-}
-```
-
-### Step 5: Create the Service
-
-Create `app/Services/ProductService.php`:
-
-```php
-<?php
-namespace App\Services;
-
-use App\Exceptions\BadRequestException;
-use App\Exceptions\NotFoundException;
-use App\Exceptions\ValidationException;
-use App\Interfaces\ProductServiceInterface;
-use App\Libraries\ApiResponse;
-use App\Libraries\Query\QueryBuilder;
-use App\Models\ProductModel;
-
-class ProductService implements ProductServiceInterface
-{
-    public function __construct(
-        protected ProductModel $productModel
-    ) {}
-
-    public function index(array $data): array
-    {
-        $builder = new QueryBuilder($this->productModel);
-
-        // Apply filters
-        if (!empty($data['filter'])) {
-            $builder->filter($data['filter']);
-        }
-
-        // Apply search
-        if (!empty($data['search'])) {
-            $builder->search($data['search']);
-        }
-
-        // Apply sorting
-        if (!empty($data['sort'])) {
-            $builder->sort($data['sort']);
-        }
-
-        // Paginate
-        $page = max((int) ($data['page'] ?? 1), 1);
-        $limit = (int) ($data['limit'] ?? 20);
-        $result = $builder->paginate($page, $limit);
-
-        // Convert entities to arrays
-        $result['data'] = array_map(fn($product) => $product->toArray(), $result['data']);
-
-        return ApiResponse::paginated(
-            $result['data'],
-            $result['total'],
-            $result['page'],
-            $result['per_page']
-        );
-    }
-
-    public function show(array $data): array
-    {
-        if (!isset($data['id'])) {
-            throw new BadRequestException('Product ID is required');
-        }
-
-        $product = $this->productModel->find($data['id']);
-
-        if (!$product) {
-            throw new NotFoundException('Product not found');
-        }
-
-        return ApiResponse::success($product->toArray());
-    }
-
-    public function store(array $data): array
-    {
-        // Validate
-        if (!$this->productModel->validate($data)) {
-            throw new ValidationException(
-                'Validation failed',
-                $this->productModel->errors()
-            );
-        }
-
-        // Insert
-        $productId = $this->productModel->insert($data);
-        $product = $this->productModel->find($productId);
-
-        return ApiResponse::created($product->toArray(), 'Product created successfully');
-    }
-
-    public function update(array $data): array
-    {
-        if (!isset($data['id'])) {
-            throw new BadRequestException('Product ID is required');
-        }
-
-        $product = $this->productModel->find($data['id']);
-
-        if (!$product) {
-            throw new NotFoundException('Product not found');
-        }
-
-        // Validate
-        if (!$this->productModel->validate($data)) {
-            throw new ValidationException(
-                'Validation failed',
-                $this->productModel->errors()
-            );
-        }
-
-        // Update
-        $this->productModel->update($data['id'], $data);
-        $product = $this->productModel->find($data['id']);
-
-        return ApiResponse::success($product->toArray(), 'Product updated successfully');
-    }
-
-    public function destroy(array $data): array
-    {
-        if (!isset($data['id'])) {
-            throw new BadRequestException('Product ID is required');
-        }
-
-        $product = $this->productModel->find($data['id']);
-
-        if (!$product) {
-            throw new NotFoundException('Product not found');
-        }
-
-        // Soft delete
-        $this->productModel->delete($data['id']);
-
-        return ApiResponse::deleted('Product deleted successfully');
-    }
-}
-```
-
-### Step 6: Register the Service
-
-Add to `app/Config/Services.php`:
-
-```php
-public static function productService(bool $getShared = true)
-{
-    if ($getShared) {
-        return static::getSharedInstance('productService');
-    }
-
-    return new \App\Services\ProductService(
-        new \App\Models\ProductModel()
-    );
-}
-```
-
-### Step 7: Create the Controller
-
-Create `app/Controllers/Api/V1/ProductController.php`:
-
-```php
-<?php
-namespace App\Controllers\Api\V1;
-
-use App\Controllers\ApiController;
-use Config\Services;
-
-class ProductController extends ApiController
-{
-    protected function resolveDefaultService(): object
-    {
-        return Services::productService();
-    }
-
-    // That's it! All CRUD methods are inherited from ApiController:
-    // - index()   -> GET /products
-    // - show($id) -> GET /products/:id
-    // - create()  -> POST /products
-    // - update($id) -> PUT /products/:id
-    // - delete($id) -> DELETE /products/:id
-}
-```
-
-### Step 8: Add Routes
-
-Add to `app/Config/Routes.php`:
-
-```php
-$routes->group('api/v1', ['filter' => 'jwtauth'], function ($routes) {
-    // Public read access
-    $routes->get('products', 'Api\V1\ProductController::index');
-    $routes->get('products/(:num)', 'Api\V1\ProductController::show/$1');
-
-    // Admin-only write access
-    $routes->group('', ['filter' => 'roleauth:admin'], function ($routes) {
-        $routes->post('products', 'Api\V1\ProductController::create');
-        $routes->put('products/(:num)', 'Api\V1\ProductController::update/$1');
-        $routes->delete('products/(:num)', 'Api\V1\ProductController::delete/$1');
-    });
-});
-```
-
-### Step 9: Test Your Endpoints
-
-```bash
-# Create a product (requires admin token)
-curl -X POST http://localhost:8080/api/v1/products \
-  -H "Authorization: Bearer ADMIN_ACCESS_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "Laptop",
-    "description": "High-performance laptop",
-    "price": 999.99,
-    "stock": 50
-  }'
-
-# List products (with filtering and search)
-curl -X GET "http://localhost:8080/api/v1/products?search=laptop&filter[price][gte]=500&sort=-created_at&page=1&limit=10" \
-  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
-
-# Get single product
-curl -X GET http://localhost:8080/api/v1/products/1 \
-  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
-
-# Update product
-curl -X PUT http://localhost:8080/api/v1/products/1 \
-  -H "Authorization: Bearer ADMIN_ACCESS_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "Gaming Laptop",
-    "price": 1299.99,
-    "stock": 30
-  }'
-
-# Delete product (soft delete)
-curl -X DELETE http://localhost:8080/api/v1/products/1 \
-  -H "Authorization: Bearer ADMIN_ACCESS_TOKEN"
-```
+For the full canonical checklist, use:
+- `docs/template/CRUD_FROM_ZERO.md`
+- `docs/template/CRUD_FROM_ZERO.es.md`
 
 ---
 
@@ -642,13 +270,13 @@ curl -X DELETE http://localhost:8080/api/v1/products/1 \
 
 What you just built follows these patterns:
 
-1. **Request flows through layers**: Controller → Service → Model → Entity
+1. **Request flows through layers**: Controller → RequestDTO → Service → Repository/Model → Entity → ResponseDTO
 2. **Controller is thin**: Only handles HTTP, delegates to service
 3. **Service contains business logic**: Validation, error handling, orchestration
 4. **Model handles database**: Query builder operations only
 5. **Entity represents data**: Type casting, computed properties
 6. **Exceptions for errors**: Throw custom exceptions, controller handles them
-7. **ApiResponse for consistency**: All responses follow same structure
+7. **Centralized response normalization**: `ApiController` + `ApiResponse::fromResult()` keep JSON responses consistent
 
 This same pattern applies to **every resource** in the project.
 

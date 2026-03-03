@@ -223,7 +223,7 @@ When `composer arch-drift` fails or CI flags a guardrail, consult:
 
 Once you've completed the roadmap:
 
-1. **Build something** - Create a new CRUD resource from scratch
+1. **Build something** - Create a new CRUD resource from scratch using `docs/template/CRUD_FROM_ZERO.md`
 2. **Read the code** - Examine existing controllers, services, models
 3. **Run tests** - See how testing works across all layers
 4. **Contribute** - Improve the docs or add features

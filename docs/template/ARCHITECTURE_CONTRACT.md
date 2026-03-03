@@ -38,5 +38,7 @@ For services implementing `CrudServiceContract`/`BaseCrudService`:
 1. New services must be registered in `app/Config/Services.php`.
 2. New modules must include `en` and `es` language files.
 3. New modules must include Unit/Feature tests (and Integration when persistence logic is relevant).
-4. Runtime classes (`Commands`, `Filters`) should resolve dependencies via container/model helpers (`Config\Services`, `model()`), not direct `new *Model()` or `service('...')` patterns.
-5. `composer quality` must pass before merge.
+4. `make:crud` is the recommended default bootstrap, followed by explicit migration creation.
+5. Default CRUD persistence should use `GenericRepository`; dedicated repositories are required only for non-trivial domain queries.
+6. Runtime classes (`Commands`, `Filters`) should resolve dependencies via container/model helpers (`Config\Services`, `model()`), not direct `new *Model()` or `service('...')` patterns.
+7. `composer quality` must pass before merge.

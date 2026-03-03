@@ -34,6 +34,13 @@ HTTP Request → Controller → [RequestDTO] → Domain Service (Guards/Handlers
 php spark make:crud {Name} --domain {Domain} --route {endpoint}
 ```
 
+Then validate:
+```bash
+php spark module:check {Name} --domain {Domain}
+```
+
+Important: `make:crud` does not generate migration files. Create migration(s) right after scaffold validation.
+
 ### Step 1: Immutable DTOs
 - Extend `BaseRequestDTO`.
 - Use **`readonly class`** for all DTOs and Services.
@@ -43,6 +50,7 @@ php spark make:crud {Name} --domain {Domain} --route {endpoint}
 - Inherit from `BaseCrudService` for CRUD.
 - Decompose logic into `Support/` components (Handlers, Mappers, Guards).
 - Use **constructor injection** for all dependencies (No static calls).
+- Use `GenericRepository` by default; add dedicated repositories only for non-trivial domain queries.
 - Register in `app/Config/Services.php`.
 
 ### Step 3: Declarative Controller

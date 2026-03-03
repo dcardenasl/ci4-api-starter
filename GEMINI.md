@@ -18,6 +18,8 @@ A production-ready REST API starter template for CodeIgniter 4 (v4.6+) with an a
 
 ### Database & Migrations
 - `php spark migrate`: Run pending migrations.
+- `php spark make:crud {Name} --domain {Domain} --route {endpoint}`: Generate CRUD skeleton (recommended default).
+- `php spark module:check {Name} --domain {Domain}`: Validate scaffolded module artifacts.
 - `php spark db:seed InitialSeeder`: Seed initial data.
 
 ### Testing & Quality
@@ -47,6 +49,7 @@ A production-ready REST API starter template for CodeIgniter 4 (v4.6+) with an a
 - **Domain Logic Only:** Services must not touch global request state.
 - **Atomic Operations:** Use `HandlesTransactions` trait for state changes.
 - **Error Handling:** Throw exceptions implementing `HasStatusCode`.
+- **Repository Strategy:** Use `GenericRepository` as default for CRUD and escalate to dedicated repositories only when domain queries are non-trivial.
 
 ### 5. Living Documentation (OpenAPI)
 - **Schemas:** Defined as attributes in DTO classes (`#[OA\Schema]`).
@@ -61,3 +64,7 @@ A production-ready REST API starter template for CodeIgniter 4 (v4.6+) with an a
 - **Audit Trail:** Audit is automated via `Auditable` trait in models.
 - **SQL Injection:** Always use CI4 Query Builder; avoid raw SQL.
 - **Secret Protection:** Never commit `.env` files.
+
+## CRUD Lifecycle Notes
+- `make:crud` does not generate migration files.
+- Create migrations immediately after scaffold/module validation and before closing service/domain behavior.

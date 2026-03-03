@@ -28,7 +28,8 @@ composer cs-fix                 # Fix code style (PSR-12)
 ### Database
 ```bash
 php spark migrate               # Run migrations
-php spark make:crud {Name} --domain {Domain} --route {endpoint}  # Scaffold new CRUD (Mandatory)
+php spark make:crud {Name} --domain {Domain} --route {endpoint}  # Scaffold new CRUD (Recommended default)
+php spark module:check {Name} --domain {Domain}                  # Validate scaffold output
 ```
 
 ### OpenAPI Documentation
@@ -95,4 +96,10 @@ For architecture rules and onboarding, prefer:
 
 1. `docs/template/ARCHITECTURE_CONTRACT.md`
 2. `docs/template/MODULE_BOOTSTRAP_CHECKLIST.md`
-3. `docs/template/QUALITY_GATES.md`
+3. `docs/template/CRUD_FROM_ZERO.md`
+4. `docs/template/QUALITY_GATES.md`
+
+## CRUD Notes
+
+1. `make:crud` does not generate migration files. Create migrations after scaffold + `module:check`.
+2. Default persistence for CRUD is `GenericRepository`; create dedicated repositories only for non-trivial domain queries.

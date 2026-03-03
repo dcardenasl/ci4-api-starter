@@ -9,6 +9,7 @@ These rules define the minimum contribution standard for this repository and dow
 3. Data transfer between layers uses DTOs (`readonly`, validated request DTOs).
 4. Runtime classes (`Commands`, `Filters`) resolve dependencies via container/helpers (`Services::*`, `model()`).
 5. Validation and exception messages must use `lang()` keys (no hardcoded user-facing strings).
+6. For new CRUD modules, follow `docs/template/CRUD_FROM_ZERO.md` as canonical flow.
 
 ## 2. Required Artifacts Per Change
 
@@ -38,3 +39,4 @@ Consult `docs/architecture/DRIFT_GUIDE.md` whenever `composer arch-drift` or oth
 4. No unresolved TODOs or temporary shortcuts are introduced.
 5. Architecture drift impact is explicitly declared when touching controllers/services/filters.
 6. Consult `docs/architecture/DRIFT_GUIDE.md` whenever the architecture guardrails fail.
+7. If a new CRUD module was added, confirm scaffold + migration + module check flow was followed.

@@ -12,10 +12,11 @@ Este directorio contiene la documentación técnica para desarrolladores y agent
 
 1. `template/ARCHITECTURE_CONTRACT.md`
 2. `template/MODULE_BOOTSTRAP_CHECKLIST.md`
-3. `template/QUALITY_GATES.md`
-4. `template/VERSIONING_POLICY.md`
-5. `template/CONTRIBUTION_RULES.md`
-6. `release/TEMPLATE_AUDIT_CLOSEOUT.md`
+3. `template/CRUD_FROM_ZERO.es.md`
+4. `template/QUALITY_GATES.md`
+5. `template/VERSIONING_POLICY.md`
+6. `template/CONTRIBUTION_RULES.md`
+7. `release/TEMPLATE_AUDIT_CLOSEOUT.md`
 
 ## Cobertura EN/ES
 

@@ -11,13 +11,14 @@
 
 ## 2) Orden recomendado de implementación
 
-1. **Base de Datos:** Migration, Entity, Model.
-2. **Contrato (DTOs):** Request DTO (entrada) y Response DTO (salida con OpenAPI attributes).
-3. **Lógica:** Service Interface, Service Implementation (Pure Service).
-4. **Infraestructura:** Services config, Language files.
-5. **Transporte:** Controller (extends `ApiController`), Routes.
-6. **Documentación:** `php spark swagger:generate`.
-7. **Calidad:** Tests (Unit, Feature) y `composer quality`.
+1. **Bootstrap:** `php spark make:crud ...` + `php spark module:check ...`.
+2. **Base de Datos:** crear migration(s) (no las genera el scaffold), luego ajustar Entity y Model.
+3. **Contrato (DTOs):** Request DTO (entrada) y Response DTO (salida con OpenAPI attributes).
+4. **Lógica:** Service Interface, Service Implementation (Pure Service) + estrategia de repositorio.
+5. **Infraestructura:** Services config, Language files.
+6. **Transporte:** Controller (extends `ApiController`), Routes.
+7. **Documentación:** `php spark swagger:generate`.
+8. **Calidad:** Tests (Unit, Feature) y `composer quality`.
 
 ## 3) Capa DTO (Mandatoria)
 
@@ -29,6 +30,7 @@
 - NO usar `ApiResponse` ni códigos HTTP.
 - Recibir DTOs específicos.
 - Retornar DTOs o Entidades.
+- Usar `GenericRepository` por defecto; escalar a repositorio dedicado solo cuando las queries de dominio lo requieran.
 - Lanzar excepciones personalizadas para errores.
 
 ## 5) Controlador Moderno

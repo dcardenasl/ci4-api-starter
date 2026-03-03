@@ -112,10 +112,11 @@ Template adoption and quality governance live in:
 
 1. [`template/ARCHITECTURE_CONTRACT.md`](template/ARCHITECTURE_CONTRACT.md)
 2. [`template/MODULE_BOOTSTRAP_CHECKLIST.md`](template/MODULE_BOOTSTRAP_CHECKLIST.md)
-3. [`template/QUALITY_GATES.md`](template/QUALITY_GATES.md)
-4. [`template/VERSIONING_POLICY.md`](template/VERSIONING_POLICY.md)
-5. [`template/CONTRIBUTION_RULES.md`](template/CONTRIBUTION_RULES.md)
-6. [`release/TEMPLATE_AUDIT_CLOSEOUT.md`](release/TEMPLATE_AUDIT_CLOSEOUT.md)
+3. [`template/CRUD_FROM_ZERO.md`](template/CRUD_FROM_ZERO.md)
+4. [`template/QUALITY_GATES.md`](template/QUALITY_GATES.md)
+5. [`template/VERSIONING_POLICY.md`](template/VERSIONING_POLICY.md)
+6. [`template/CONTRIBUTION_RULES.md`](template/CONTRIBUTION_RULES.md)
+7. [`release/TEMPLATE_AUDIT_CLOSEOUT.md`](release/TEMPLATE_AUDIT_CLOSEOUT.md)
 
 All markdown docs in `docs/` must keep EN/ES parity (`.md` and `.es.md`).
 
@@ -303,7 +304,7 @@ When adding new features:
 |--------------|-----------|
 | **Get started quickly** | [`../GETTING_STARTED.md`](../GETTING_STARTED.md) |
 | **Understand architecture** | [`architecture/OVERVIEW.md`](architecture/OVERVIEW.md) |
-| **Add a CRUD resource** | [`architecture/EXTENSION_GUIDE.md`](architecture/EXTENSION_GUIDE.md) |
+| **Add a CRUD resource** | [`template/CRUD_FROM_ZERO.md`](template/CRUD_FROM_ZERO.md) |
 | **Understand file upload** | [`flows/FILE-UPLOAD-FLOW.md`](flows/FILE-UPLOAD-FLOW.md) |
 | **Understand authentication** | [`flows/AUTH-LOGIN-FLOW.md`](flows/AUTH-LOGIN-FLOW.md) |
 | **Understand registration & approval** | [`flows/REGISTER-APPROVAL-FLOW.md`](flows/REGISTER-APPROVAL-FLOW.md) |

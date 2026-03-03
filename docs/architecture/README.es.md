@@ -217,7 +217,7 @@ Cuando `composer arch-drift` falla o CI marca un guardrail, consulta:
 
 Una vez que hayas completado el mapa de aprendizaje:
 
-1. **Construye algo** - Crea un nuevo recurso CRUD desde cero
+1. **Construye algo** - Crea un nuevo recurso CRUD desde cero usando `docs/template/CRUD_FROM_ZERO.es.md`
 2. **Lee el código** - Examina controladores, servicios y modelos existentes
 3. **Ejecuta tests** - Ve cómo funciona el testing en todas las capas
 4. **Contribuye** - Mejora la documentación o agrega características

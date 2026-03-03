@@ -8,7 +8,7 @@ In this architecture, **an administrator never sets a user's password**. The sys
 
 ## Creation Process
 
-1.  **Request:** The Admin sends `POST /api/v1/users` with basic data (`email`, `firstName`, `lastName`, `role`).
+1.  **Request:** The Admin sends `POST /api/v1/users` with basic data (`email`, `first_name`, `last_name`, `role`).
 2.  **Generation:** The `UserService` creates the record in the database:
     - Initial status: `invited`.
     - Password: A 48-character random string is generated that **no one knows**.

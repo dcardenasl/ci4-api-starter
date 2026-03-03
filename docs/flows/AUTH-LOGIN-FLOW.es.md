@@ -61,7 +61,7 @@ sequenceDiagram
         ApiCtrl-->>Cliente: 401 {status: error, message: Credenciales invalidas}
     end
 
-    AuthSvc->>DB: SELECT * WHERE id = userId (entidad completa)
+    AuthSvc->>DB: SELECT * WHERE id = user_id (entidad completa)
     DB-->>AuthSvc: UserEntity
 
     alt status = 'invited'
@@ -79,10 +79,10 @@ sequenceDiagram
         ApiCtrl-->>Cliente: 401 {status: error, message: Correo no verificado}
     end
 
-    AuthSvc->>JwtSvc: encode(userId, role)
+    AuthSvc->>JwtSvc: encode(user_id, role)
     JwtSvc-->>AuthSvc: access_token (JWT, TTL: JWT_ACCESS_TOKEN_TTL)
 
-    AuthSvc->>RefreshSvc: issueRefreshToken(userId)
+    AuthSvc->>RefreshSvc: issueRefreshToken(user_id)
     RefreshSvc->>DB: INSERT registro refresh_token
     DB-->>RefreshSvc: ok
     RefreshSvc-->>AuthSvc: refresh_token

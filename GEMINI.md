@@ -35,7 +35,7 @@ A production-ready REST API starter template for CodeIgniter 4 (v4.6+) with an a
 
 ### 2. DTO-First Development (The "Shield" Pattern)
 **All data transfer must use PHP 8.2 `readonly` classes.**
-- **Automatic Context:** `ApiController` enriches DTO payloads with `userId` and `userRole` using `SecurityContext` before DTO construction.
+- **Automatic Context:** `ApiController` enriches DTO payloads with `user_id` and `user_role` using `SecurityContext` before DTO construction.
 - **NO Manual Validation:** Handled by DTO constructor.
 
 ### 3. Controller Standards (The Orchestrator)

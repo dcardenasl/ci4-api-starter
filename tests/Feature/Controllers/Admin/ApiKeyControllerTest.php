@@ -80,7 +80,7 @@ class ApiKeyControllerTest extends ApiTestCase
         $this->assertArrayHasKey('data', $json);
         $this->assertArrayHasKey('key', $json['data'], 'Raw key must be returned at creation');
         $this->assertStringStartsWith('apk_', $json['data']['key']);
-        $this->assertArrayHasKey('keyPrefix', $json['data']);
+        $this->assertArrayHasKey('key_prefix', $json['data']);
         $this->assertEquals('My Integration App', $json['data']['name']);
     }
 
@@ -88,18 +88,18 @@ class ApiKeyControllerTest extends ApiTestCase
     {
         $result = $this->withBodyFormat('json')->post('/api/v1/api-keys', [
             'name'                => 'High Volume App',
-            'rateLimitRequests' => 1200,
-            'rateLimitWindow'   => 60,
-            'userRateLimit'     => 120,
-            'ipRateLimit'       => 400,
+            'rate_limit_requests' => 1200,
+            'rate_limit_window'   => 60,
+            'user_rate_limit'     => 120,
+            'ip_rate_limit'       => 400,
         ]);
 
         $result->assertStatus(201);
 
         $json = $this->getResponseJson($result);
-        $this->assertEquals(1200, $json['data']['rateLimitRequests']);
-        $this->assertEquals(120, $json['data']['userRateLimit']);
-        $this->assertEquals(400, $json['data']['ipRateLimit']);
+        $this->assertEquals(1200, $json['data']['rate_limit_requests']);
+        $this->assertEquals(120, $json['data']['user_rate_limit']);
+        $this->assertEquals(400, $json['data']['ip_rate_limit']);
     }
 
     public function testCreateApiKeyWithoutNameReturns422(): void
@@ -165,14 +165,14 @@ class ApiKeyControllerTest extends ApiTestCase
 
         $updateResult = $this->withBodyFormat('json')->put("/api/v1/api-keys/{$createdId}", [
             'name'      => 'Updated Name',
-            'isActive' => false,
+            'is_active' => false,
         ]);
 
         $updateResult->assertStatus(200);
 
         $json = $this->getResponseJson($updateResult);
         $this->assertEquals('Updated Name', $json['data']['name']);
-        $this->assertFalse((bool) $json['data']['isActive']);
+        $this->assertFalse((bool) $json['data']['is_active']);
     }
 
     public function testUpdateWithNoFieldsReturns400(): void

@@ -120,9 +120,9 @@ class AuditServiceTest extends CIUnitTestCase
         $newValues = [
             'email' => 'new@example.com',
             'password' => 'new-secret',
-            'accessToken' => 'jwt-token',
+            'access_token' => 'jwt-token',
             'profile' => [
-                'refreshToken' => 'refresh-token',
+                'refresh_token' => 'refresh-token',
                 'timezone' => 'America/Mexico_City',
             ],
         ];
@@ -137,8 +137,8 @@ class AuditServiceTest extends CIUnitTestCase
                 return !isset($old['password'])
                     && !isset($old['profile']['token'])
                     && !isset($new['password'])
-                    && !isset($new['accessToken'])
-                    && !isset($new['profile']['refreshToken'])
+                    && !isset($new['access_token'])
+                    && !isset($new['profile']['refresh_token'])
                     && ($old['email'] ?? null) === 'old@example.com'
                     && ($new['email'] ?? null) === 'new@example.com';
             }));
@@ -324,8 +324,8 @@ class AuditServiceTest extends CIUnitTestCase
             ->willReturn($logs);
 
         $result = $this->service->byEntity(new \App\DTO\Request\Audit\AuditByEntityRequestDTO([
-            'entityType' => 'users',
-            'entityId' => 5,
+            'entity_type' => 'users',
+            'entity_id' => 5,
         ]));
         $payload = $result->toArray();
 
@@ -344,8 +344,8 @@ class AuditServiceTest extends CIUnitTestCase
             ->willReturn([]);
 
         $result = $this->service->byEntity(new \App\DTO\Request\Audit\AuditByEntityRequestDTO([
-            'entityType' => 'user',
-            'entityId' => 5,
+            'entity_type' => 'user',
+            'entity_id' => 5,
         ]));
 
         $this->assertSame([], $result->toArray());
@@ -354,7 +354,7 @@ class AuditServiceTest extends CIUnitTestCase
     public function testByEntityWithMissingParamsThrowsValidationException(): void
     {
         $this->expectException(\App\Exceptions\ValidationException::class);
-        new \App\DTO\Request\Audit\AuditByEntityRequestDTO(['entityType' => 'users']);
+        new \App\DTO\Request\Audit\AuditByEntityRequestDTO(['entity_type' => 'users']);
     }
 
     // ==================== HELPER METHODS ====================

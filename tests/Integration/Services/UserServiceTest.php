@@ -40,8 +40,8 @@ class UserServiceTest extends CIUnitTestCase
     {
         $request = new UserStoreRequestDTO([
             'email' => 'integration@example.com',
-            'firstName' => 'Integration',
-            'lastName' => 'User',
+            'first_name' => 'Integration',
+            'last_name' => 'User',
             'role' => 'user',
         ]);
 
@@ -74,7 +74,7 @@ class UserServiceTest extends CIUnitTestCase
 
         $request = new UserUpdateRequestDTO([
             'email' => 'new@example.com',
-            'firstName' => 'New',
+            'first_name' => 'New',
         ]);
 
         $result = $this->userService->update((int) $userId, $request, new SecurityContext(1, 'admin'));

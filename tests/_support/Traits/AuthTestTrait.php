@@ -49,7 +49,7 @@ trait AuthTestTrait
         $this->setTestRequestHeaders($headers);
 
         return [
-            'userId' => $this->currentUserId,
+            'user_id' => $this->currentUserId,
             'role'   => $role,
             'token'  => $token
         ];
@@ -104,6 +104,6 @@ trait AuthTestTrait
         $result->assertStatus(200);
 
         $json = json_decode($result->getJSON(), true);
-        return $json['accessToken'] ?? ($json['data']['accessToken'] ?? '');
+        return $json['access_token'] ?? ($json['data']['access_token'] ?? '');
     }
 }

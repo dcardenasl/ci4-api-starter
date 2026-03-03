@@ -220,7 +220,7 @@ Generated file: `public/swagger.json` (served at `http://localhost:8080/swagger.
 
 **Postman:**
 - Collection (full API): `docs/postman/ci4-api.postman_collection.json`
-  Variables are stored at the collection level (`baseUrl`, `accessToken`, `refreshToken`, `userId`, `fileId`).
+  Variables are stored at the collection level (`baseUrl`, `access_token`, `refresh_token`, `user_id`, `file_id`).
 - Optional environment: `docs/postman/ci4-api.postman_environment.json`
 
 ## Project Structure

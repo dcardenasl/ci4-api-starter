@@ -110,7 +110,7 @@ class UserServiceTest extends CIUnitTestCase
         $id = 1;
         $user = $this->createUserEntity(['id' => $id, 'role' => 'user']);
         $request = new \App\DTO\Request\Users\UserUpdateRequestDTO([
-            'firstName' => 'Updated',
+            'first_name' => 'Updated',
         ]);
         $this->mockUpdateUserAction->expects($this->once())->method('execute')->with($id, $request)->willReturn($user);
 

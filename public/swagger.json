@@ -2602,8 +2602,8 @@
                 "required": [
                     "id",
                     "name",
-                    "keyPrefix",
-                    "isActive"
+                    "key_prefix",
+                    "is_active"
                 ],
                 "properties": {
                     "id": {
@@ -2616,32 +2616,32 @@
                         "type": "string",
                         "example": "My Mobile App"
                     },
-                    "keyPrefix": {
+                    "key_prefix": {
                         "description": "First characters of the key (safe to display)",
                         "type": "string",
                         "example": "apk_a3f9c2b1"
                     },
-                    "isActive": {
+                    "is_active": {
                         "description": "Whether the key is currently active",
                         "type": "boolean",
                         "example": true
                     },
-                    "rateLimitRequests": {
+                    "rate_limit_requests": {
                         "description": "Max requests per window",
                         "type": "integer",
                         "example": 600
                     },
-                    "rateLimitWindow": {
+                    "rate_limit_window": {
                         "description": "Window in seconds",
                         "type": "integer",
                         "example": 60
                     },
-                    "userRateLimit": {
+                    "user_rate_limit": {
                         "description": "Per-user limit",
                         "type": "integer",
                         "example": 60
                     },
-                    "ipRateLimit": {
+                    "ip_rate_limit": {
                         "description": "Per-IP limit",
                         "type": "integer",
                         "example": 200
@@ -2652,13 +2652,13 @@
                         "example": "apk_a3f9...",
                         "nullable": true
                     },
-                    "createdAt": {
+                    "created_at": {
                         "description": "Creation timestamp",
                         "type": "string",
                         "example": "2026-02-26 12:00:00",
                         "nullable": true
                     },
-                    "updatedAt": {
+                    "updated_at": {
                         "description": "Last update timestamp",
                         "type": "string",
                         "example": "2026-02-26 12:00:00",
@@ -2673,8 +2673,8 @@
                 "required": [
                     "id",
                     "action",
-                    "entityType",
-                    "createdAt"
+                    "entity_type",
+                    "created_at"
                 ],
                 "properties": {
                     "id": {
@@ -2694,52 +2694,52 @@
                         ],
                         "example": "update"
                     },
-                    "entityType": {
+                    "entity_type": {
                         "description": "Affected entity type",
                         "type": "string",
                         "example": "users"
                     },
-                    "entityId": {
+                    "entity_id": {
                         "description": "Affected entity ID",
                         "type": "integer",
                         "example": 5,
                         "nullable": true
                     },
-                    "oldValues": {
+                    "old_values": {
                         "description": "Values before the change",
                         "type": "object",
                         "nullable": true
                     },
-                    "newValues": {
+                    "new_values": {
                         "description": "Values after the change",
                         "type": "object",
                         "nullable": true
                     },
-                    "userId": {
+                    "user_id": {
                         "description": "ID of user who performed the action",
                         "type": "integer",
                         "example": 1,
                         "nullable": true
                     },
-                    "userEmail": {
+                    "user_email": {
                         "description": "Email of user who performed the action",
                         "type": "string",
                         "example": "admin@example.com",
                         "nullable": true
                     },
-                    "ipAddress": {
+                    "ip_address": {
                         "description": "IP address of the requester",
                         "type": "string",
                         "example": "127.0.0.1",
                         "nullable": true
                     },
-                    "userAgent": {
+                    "user_agent": {
                         "description": "User-Agent of the requester",
                         "type": "string",
                         "example": "Mozilla/5.0...",
                         "nullable": true
                     },
-                    "createdAt": {
+                    "created_at": {
                         "description": "Log timestamp",
                         "type": "string",
                         "example": "2026-02-26 12:00:00"
@@ -2751,23 +2751,23 @@
                 "title": "Login Response",
                 "description": "Successful authentication response containing JWT tokens and user data",
                 "required": [
-                    "accessToken",
-                    "refreshToken",
-                    "expiresIn",
+                    "access_token",
+                    "refresh_token",
+                    "expires_in",
                     "user"
                 ],
                 "properties": {
-                    "accessToken": {
+                    "access_token": {
                         "description": "JWT access token",
                         "type": "string",
                         "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
                     },
-                    "refreshToken": {
+                    "refresh_token": {
                         "description": "Opaque refresh token",
                         "type": "string",
                         "example": "apk_a1b2c3d4e5f6g7h8i9j0..."
                     },
-                    "expiresIn": {
+                    "expires_in": {
                         "description": "Token expiration time in seconds",
                         "type": "integer",
                         "example": 3600
@@ -2784,8 +2784,8 @@
                 "required": [
                     "id",
                     "email",
-                    "firstName",
-                    "lastName",
+                    "first_name",
+                    "last_name",
                     "role",
                     "status"
                 ],
@@ -2800,12 +2800,12 @@
                         "type": "string",
                         "example": "newuser@example.com"
                     },
-                    "firstName": {
+                    "first_name": {
                         "description": "User first name",
                         "type": "string",
                         "example": "Alex"
                     },
-                    "lastName": {
+                    "last_name": {
                         "description": "User last name",
                         "type": "string",
                         "example": "Doe"
@@ -2830,7 +2830,7 @@
                         ],
                         "example": "pending_approval"
                     },
-                    "createdAt": {
+                    "created_at": {
                         "description": "Creation timestamp",
                         "type": "string",
                         "example": "2026-02-26 12:00:00",
@@ -2872,7 +2872,7 @@
                     "data",
                     "total",
                     "page",
-                    "perPage"
+                    "per_page"
                 ],
                 "properties": {
                     "data": {
@@ -2892,7 +2892,7 @@
                         "type": "integer",
                         "example": 1
                     },
-                    "perPage": {
+                    "per_page": {
                         "description": "Items per page",
                         "type": "integer",
                         "example": 20
@@ -2917,10 +2917,10 @@
                 "description": "File metadata for downloads and external storage",
                 "required": [
                     "id",
-                    "originalName",
+                    "original_name",
                     "url",
                     "path",
-                    "storageDriver"
+                    "storage_driver"
                 ],
                 "properties": {
                     "id": {
@@ -2928,7 +2928,7 @@
                         "type": "integer",
                         "example": 1
                     },
-                    "originalName": {
+                    "original_name": {
                         "description": "Original filename",
                         "type": "string",
                         "example": "document.pdf"
@@ -2943,7 +2943,7 @@
                         "type": "string",
                         "example": "uploads/abc123_document.pdf"
                     },
-                    "storageDriver": {
+                    "storage_driver": {
                         "description": "Storage driver name",
                         "type": "string",
                         "example": "s3"
@@ -2956,8 +2956,8 @@
                 "description": "File metadata and access URL",
                 "required": [
                     "id",
-                    "originalName",
-                    "mimeType",
+                    "original_name",
+                    "mime_type",
                     "size",
                     "url"
                 ],
@@ -2967,7 +2967,7 @@
                         "type": "integer",
                         "example": 1
                     },
-                    "originalName": {
+                    "original_name": {
                         "description": "Original filename",
                         "type": "string",
                         "example": "document.pdf"
@@ -2977,7 +2977,7 @@
                         "type": "string",
                         "example": "abc123_document.pdf"
                     },
-                    "mimeType": {
+                    "mime_type": {
                         "description": "MIME type",
                         "type": "string",
                         "example": "application/pdf"
@@ -2987,12 +2987,12 @@
                         "type": "integer",
                         "example": 102400
                     },
-                    "humanSize": {
+                    "human_size": {
                         "description": "Human readable file size",
                         "type": "string",
                         "example": "100 KB"
                     },
-                    "isImage": {
+                    "is_image": {
                         "description": "Whether the file is an image",
                         "type": "boolean",
                         "example": false
@@ -3002,7 +3002,7 @@
                         "type": "string",
                         "example": "https://example.com/storage/file.pdf"
                     },
-                    "uploadedAt": {
+                    "uploaded_at": {
                         "description": "Upload timestamp",
                         "type": "string",
                         "example": "2026-02-26 12:00:00",
@@ -3016,7 +3016,7 @@
                 "description": "Verified identity data returned by Google",
                 "required": [
                     "provider",
-                    "providerId",
+                    "provider_id",
                     "email"
                 ],
                 "properties": {
@@ -3025,7 +3025,7 @@
                         "type": "string",
                         "example": "google"
                     },
-                    "providerId": {
+                    "provider_id": {
                         "description": "Provider user identifier",
                         "type": "string",
                         "example": "113337022221111122223"
@@ -3035,19 +3035,19 @@
                         "type": "string",
                         "example": "user@example.com"
                     },
-                    "firstName": {
+                    "first_name": {
                         "description": "User first name",
                         "type": "string",
                         "example": "Alex",
                         "nullable": true
                     },
-                    "lastName": {
+                    "last_name": {
                         "description": "User last name",
                         "type": "string",
                         "example": "Doe",
                         "nullable": true
                     },
-                    "avatarUrl": {
+                    "avatar_url": {
                         "description": "Avatar URL",
                         "type": "string",
                         "example": "https://example.com/avatar.png",
@@ -3235,13 +3235,13 @@
                         "type": "string",
                         "example": "user@example.com"
                     },
-                    "firstName": {
+                    "first_name": {
                         "description": "User first name",
                         "type": "string",
                         "example": "John",
                         "nullable": true
                     },
-                    "lastName": {
+                    "last_name": {
                         "description": "User last name",
                         "type": "string",
                         "example": "Doe",
@@ -3267,19 +3267,19 @@
                         ],
                         "example": "active"
                     },
-                    "avatarUrl": {
+                    "avatar_url": {
                         "description": "URL to user avatar",
                         "type": "string",
                         "example": "https://example.com/avatar.png",
                         "nullable": true
                     },
-                    "createdAt": {
+                    "created_at": {
                         "description": "Creation timestamp",
                         "type": "string",
                         "example": "2026-02-26 12:00:00",
                         "nullable": true
                     },
-                    "updatedAt": {
+                    "updated_at": {
                         "description": "Last update timestamp",
                         "type": "string",
                         "example": "2026-02-26 12:00:00",

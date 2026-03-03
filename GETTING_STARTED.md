@@ -453,7 +453,7 @@ class ProductService implements ProductServiceInterface
             $result['data'],
             $result['total'],
             $result['page'],
-            $result['perPage']
+            $result['per_page']
         );
     }
 

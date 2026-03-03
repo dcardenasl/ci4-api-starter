@@ -227,8 +227,8 @@ $this->passwordResetModel->insert(['token' => $tokenHash]);
 
 **Antes** (`app/Traits/Auditable.php:209`)
 ```php
-if (property_exists($request, 'userId')) {
-    return (int) $request->userId;
+if (property_exists($request, 'user_id')) {
+    return (int) $request->user_id;
 }
 ```
 

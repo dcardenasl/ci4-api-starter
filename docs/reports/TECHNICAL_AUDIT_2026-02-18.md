@@ -271,7 +271,7 @@ JWT_REVOCATION_CHECK=true
 public function __construct(
     protected UserModel $userModel,
     protected JwtServiceInterface $jwtService,
-    protected RefreshTokenServiceInterface $refreshTokenService,
+    protected RefreshTokenServiceInterface $refresh_tokenService,
     protected VerificationServiceInterface $verificationService
 ) {
 }
@@ -435,7 +435,7 @@ class ApiResponse
 {
     public static function success($data, $message, $meta): array { /* ... */ }
     public static function error($errors, $message, $code): array { /* ... */ }
-    public static function paginated($items, $total, $page, $perPage): array { /* ... */ }
+    public static function paginated($items, $total, $page, $per_page): array { /* ... */ }
     public static function validationError($errors): array { /* ... */ }
     // ...
 }
@@ -565,8 +565,8 @@ POST /api/v1/auth/login
     │   └─ Verifica status == 'active' (rechaza 'pending_approval', 'invited')
     ├─ validateEmailVerification($user)
     │   └─ Verifica email_verified_at != null (excepto Google OAuth)
-    ├─ $jwtService->encode($userId, $role) → Genera access token (1h TTL)
-    ├─ $refreshTokenService->issueRefreshToken($userId) → Genera refresh token (7d TTL)
+    ├─ $jwtService->encode($user_id, $role) → Genera access token (1h TTL)
+    ├─ $refresh_tokenService->issueRefreshToken($user_id) → Genera refresh token (7d TTL)
     └─ ApiResponse::success([access_token, refresh_token, expires_in, user])
         ↓
 HTTP 200 OK
@@ -594,10 +594,10 @@ GET /api/v1/users (requiere JWT)
     ├─ $jwtService->decode($token) → Decodifica y verifica firma
     ├─ Si JWT_REVOCATION_CHECK=true:
     │   └─ $tokenRevocationService->isRevoked($jti) → Consulta blacklist
-    ├─ $userModel->find($userId) → Verifica user existe
+    ├─ $userModel->find($user_id) → Verifica user existe
     ├─ Verifica status == 'active'
     ├─ Verifica email_verified_at != null (si requerido)
-    └─ $request->setAuthContext($userId, $role) → Inyecta context en request
+    └─ $request->setAuthContext($user_id, $role) → Inyecta context en request
         ↓
 [RoleAuthorizationFilter::before()] (si filter: 'roleauth:admin')
     ├─ Lee role de ApiRequest context
@@ -678,7 +678,7 @@ Request
     ├─ Query builder con where/like/orderBy aplicados
     └─ Retorna UserEntity[]
         ↓
-ApiResponse::paginated([...], total, page, perPage)
+ApiResponse::paginated([...], total, page, per_page)
     └─ HTTP 200 OK
 ```
 
@@ -1032,13 +1032,13 @@ if ($cache->get($key) >= $limit) {
 
 ```php
 // Option 1: Rate limit por user_id si está autenticado
-$key = $userId
-    ? "throttle:user:{$userId}"
+$key = $user_id
+    ? "throttle:user:{$user_id}"
     : "throttle:ip:{$ipAddress}";
 
 // Option 2: Rate limit combinado (el más estricto gana)
 $ipKey = "throttle:ip:{$ipAddress}";
-$userKey = "throttle:user:{$userId}";
+$userKey = "throttle:user:{$user_id}";
 
 if ($cache->get($ipKey) >= $ipLimit || $cache->get($userKey) >= $userLimit) {
     throw new TooManyRequestsException('Rate limit exceeded');
@@ -1447,10 +1447,10 @@ public function testLoginWithValidCredentialsReturnsUserData(): void
 ```php
 public function testInsertCreatesUser(): void
 {
-    $userId = $this->userModel->insert([...]);
-    $this->assertIsInt($userId);
+    $user_id = $this->userModel->insert([...]);
+    $this->assertIsInt($user_id);
 
-    $user = $this->userModel->find($userId);
+    $user = $this->userModel->find($user_id);
     $this->assertEquals('test@example.com', $user->email);
 }
 ```
@@ -1564,7 +1564,7 @@ class ThrottleFilter implements FilterInterface
     public function before(RequestInterface $request, $arguments = null)
     {
         $ipAddress = $request->getIPAddress();
-        $userId = $this->getUserIdFromRequest($request);
+        $user_id = $this->getUserIdFromRequest($request);
 
         // Rate limit por IP (público + autenticado)
         $ipKey = "throttle:ip:{$ipAddress}";
@@ -1576,8 +1576,8 @@ class ThrottleFilter implements FilterInterface
         }
 
         // Rate limit por usuario (solo si está autenticado)
-        if ($userId) {
-            $userKey = "throttle:user:{$userId}";
+        if ($user_id) {
+            $userKey = "throttle:user:{$user_id}";
             $userLimit = (int) env('THROTTLE_USER_LIMIT', 100);
             $userAttempts = cache()->get($userKey) ?? 0;
 
@@ -1735,7 +1735,7 @@ public function register(array $data): array
     //     throw new ValidationException(lang('Api.validationFailed'), $businessErrors);
     // }
 
-    $userId = $this->userModel->insert([...]);
+    $user_id = $this->userModel->insert([...]);
     // ...
 }
 

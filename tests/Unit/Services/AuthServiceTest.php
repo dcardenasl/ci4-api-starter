@@ -133,7 +133,7 @@ class AuthServiceTest extends CIUnitTestCase
 
         $this->assertInstanceOf(\App\Interfaces\DataTransferObjectInterface::class, $result);
         $data = $result->toArray();
-        $this->assertEquals('jwt.access.token', $data['accessToken']);
+        $this->assertEquals('jwt.access.token', $data['access_token']);
         $this->assertEquals(1, $data['user']['id']);
     }
 
@@ -182,8 +182,8 @@ class AuthServiceTest extends CIUnitTestCase
         $registerUserAction = $this->createMock(RegisterUserAction::class);
         $request = new \App\DTO\Request\Auth\RegisterRequestDTO([
             'email' => 'new-unique+' . uniqid('', true) . '@example.com',
-            'firstName' => 'New',
-            'lastName' => 'User',
+            'first_name' => 'New',
+            'last_name' => 'User',
             'password' => 'StrongPass123!',
         ]);
 

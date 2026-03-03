@@ -59,7 +59,7 @@ class UserControllerTest extends ApiTestCase
         $this->resetRequest();
 
         $updateResult = $this->withBodyFormat('json')->put("/api/v1/users/{$createdId}", [
-            'firstName' => 'Updated',
+            'first_name' => 'Updated',
         ]);
 
         $updateResult->assertStatus(200);
@@ -117,7 +117,7 @@ class UserControllerTest extends ApiTestCase
         $targetAdminId = $this->createUser('target-admin@example.com', 'ValidPass123!', 'admin');
 
         $result = $this->withBodyFormat('json')->put("/api/v1/users/{$targetAdminId}", [
-            'firstName' => 'Blocked',
+            'first_name' => 'Blocked',
         ]);
 
         $result->assertStatus(403);
@@ -175,7 +175,7 @@ class UserControllerTest extends ApiTestCase
         $this->resetRequest();
 
         $updateResult = $this->withBodyFormat('json')->put("/api/v1/users/{$createdId}", [
-            'firstName' => 'Managed',
+            'first_name' => 'Managed',
         ]);
         $updateResult->assertStatus(200);
 

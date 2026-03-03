@@ -178,7 +178,7 @@ Formato de respuesta estandarizado:
 ApiResponse::success($data, $message, $meta)     // 200
 ApiResponse::created($data)                       // 201
 ApiResponse::deleted($message)                    // 200
-ApiResponse::paginated($items, $total, $page, $perPage)
+ApiResponse::paginated($items, $total, $page, $per_page)
 ApiResponse::error($errors, $message, $code)
 ApiResponse::validationError($errors)             // 422
 ApiResponse::notFound($message)                   // 404

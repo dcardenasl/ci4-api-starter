@@ -8,7 +8,7 @@ En esta arquitectura, **un administrador nunca establece la contraseña de un us
 
 ## Proceso de Creación
 
-1.  **Solicitud:** El Admin envía `POST /api/v1/users` con los datos básicos (`email`, `firstName`, `lastName`, `role`).
+1.  **Solicitud:** El Admin envía `POST /api/v1/users` con los datos básicos (`email`, `first_name`, `last_name`, `role`).
 2.  **Generación:** El `UserService` crea el registro en la base de datos:
     - Estado inicial: `invited`.
     - Contraseña: Se genera una cadena aleatoria de 48 caracteres que **nadie conoce**.

@@ -23,7 +23,7 @@ After self-registration the account is placed in `pending_approval` state. A ver
    - `role = 'user'` (hardcoded — self-registration can never set a privileged role)
    - `status = 'pending_approval'`
    - Password hashed with `PASSWORD_BCRYPT`
-7. `VerificationService::sendVerificationEmail(userId, {client_base_url})` is called:
+7. `VerificationService::sendVerificationEmail(user_id, {client_base_url})` is called:
    - Generates a random token, sets expiry to 24 hours from now.
    - Builds the verification link using `ResolvesWebAppLinks::buildVerificationUrl(token, clientBaseUrl)` — this points to the **frontend** (e.g. `http://myapp.com/verify-email?token=X`), not the API.
    - Queues the verification email (non-blocking; errors are logged but do not fail registration).
@@ -60,9 +60,9 @@ sequenceDiagram
     end
 
     AuthSvc->>DB: INSERT users {email, password_hash, role='user', status='pending_approval'}
-    DB-->>AuthSvc: userId
+    DB-->>AuthSvc: user_id
 
-    AuthSvc->>VerifSvc: sendVerificationEmail(userId, {client_base_url})
+    AuthSvc->>VerifSvc: sendVerificationEmail(user_id, {client_base_url})
     VerifSvc->>DB: UPDATE users SET email_verification_token, verification_token_expires
     VerifSvc->>VerifSvc: buildVerificationUrl(token, clientBaseUrl)
     Note over VerifSvc: Link points to FRONTEND<br/>e.g. http://myapp.com/verify-email?token=X
@@ -120,7 +120,7 @@ sequenceDiagram
 
     Controller->>ApiCtrl: handleRequest('approve', {id})
     ApiCtrl->>ApiCtrl: collectRequestData() + establishSecurityContext()
-    ApiCtrl->>UserSvc: approve(id, context{userId: adminId})
+    ApiCtrl->>UserSvc: approve(id, context{user_id: adminId})
 
     UserSvc->>DB: SELECT user WHERE id = ?
     DB-->>UserSvc: UserEntity

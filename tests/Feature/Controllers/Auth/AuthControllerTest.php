@@ -42,8 +42,8 @@ class AuthControllerTest extends ApiTestCase
             ->post('/api/v1/auth/register', [
                 'email' => 'new@example.com',
                 'password' => 'ValidPass123!',
-                'firstName' => 'New',
-                'lastName' => 'User',
+                'first_name' => 'New',
+                'last_name' => 'User',
             ]);
 
         // Returns 201 Created
@@ -78,8 +78,8 @@ class AuthControllerTest extends ApiTestCase
             ->post('/api/v1/auth/register', [
                 'email' => $email,
                 'password' => 'ValidPass123!',
-                'firstName' => 'Name',
-                'lastName' => 'Last',
+                'first_name' => 'Name',
+                'last_name' => 'Last',
             ]);
 
         $result->assertStatus(422);
@@ -107,7 +107,7 @@ class AuthControllerTest extends ApiTestCase
 
         $result->assertStatus(200);
         $json = $this->getResponseJson($result);
-        $this->assertArrayHasKey('accessToken', $json['data']);
+        $this->assertArrayHasKey('access_token', $json['data']);
     }
 
     public function testLoginWithEmptyCredentialsReturns422(): void
@@ -136,7 +136,7 @@ class AuthControllerTest extends ApiTestCase
 
         $result = $this->withBodyFormat('json')
             ->post('/api/v1/auth/google-login', [
-                'idToken' => 'google.id.token',
+                'id_token' => 'google.id.token',
             ]);
 
         $result->assertStatus(202);

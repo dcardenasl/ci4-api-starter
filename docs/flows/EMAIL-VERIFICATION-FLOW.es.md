@@ -17,7 +17,7 @@ Este paso no tiene un endpoint dedicado — es disparado internamente desde `Aut
 ### Paso a paso
 
 1. `AuthService::register()` inserta el nuevo usuario.
-2. Llama a `VerificationService::sendVerificationEmail(userId, {client_base_url})`:
+2. Llama a `VerificationService::sendVerificationEmail(user_id, {client_base_url})`:
    - Obtiene la entidad del usuario desde la base de datos.
    - Genera un token aleatorio via `generate_token()`.
    - Calcula la expiracion: 24 horas a partir de ahora.
@@ -39,8 +39,8 @@ sequenceDiagram
 
     Note over AuthSvc: Llamado internamente tras INSERT del usuario<br/>(ver REGISTER-APPROVAL-FLOW para el registro completo)
 
-    AuthSvc->>VerifSvc: sendVerificationEmail(userId, {client_base_url})
-    VerifSvc->>DB: SELECT user WHERE id = userId
+    AuthSvc->>VerifSvc: sendVerificationEmail(user_id, {client_base_url})
+    VerifSvc->>DB: SELECT user WHERE id = user_id
     DB-->>VerifSvc: UserEntity
 
     VerifSvc->>VerifSvc: generate_token() + expira = now + 24h
@@ -142,10 +142,10 @@ sequenceDiagram
 
 1. El usuario autenticado envia `POST /api/v1/auth/resend-verification` con `client_base_url` opcional.
 2. El filtro `jwtauth` valida el token Bearer.
-3. `VerificationService::resendVerification({userId, client_base_url})`:
+3. `VerificationService::resendVerification({user_id, client_base_url})`:
    - Obtiene al usuario desde la base de datos.
    - Si `email_verified_at != null` → `ConflictException` (409) ya verificado.
-   - Llama nuevamente a `sendVerificationEmail(userId, data)` (igual que el paso 1), que genera un nuevo token, actualiza el usuario y encola un nuevo correo.
+   - Llama nuevamente a `sendVerificationEmail(user_id, data)` (igual que el paso 1), que genera un nuevo token, actualiza el usuario y encola un nuevo correo.
 4. Respuesta: `200 OK` con `"Correo de verificacion enviado"`.
 
 ### Diagrama
@@ -172,9 +172,9 @@ sequenceDiagram
 
     Controller->>ApiCtrl: handleRequest('resendVerification')
     ApiCtrl->>ApiCtrl: collectRequestData() + establishSecurityContext()
-    ApiCtrl->>VerifSvc: resendVerification({userId, client_base_url})
+    ApiCtrl->>VerifSvc: resendVerification({user_id, client_base_url})
 
-    VerifSvc->>DB: SELECT user WHERE id = userId
+    VerifSvc->>DB: SELECT user WHERE id = user_id
     DB-->>VerifSvc: UserEntity
 
     alt Usuario no encontrado
@@ -187,7 +187,7 @@ sequenceDiagram
         ApiCtrl-->>Cliente: 409 {status: error, message: Correo ya verificado}
     end
 
-    VerifSvc->>VerifSvc: sendVerificationEmail(userId, {client_base_url})
+    VerifSvc->>VerifSvc: sendVerificationEmail(user_id, {client_base_url})
     VerifSvc->>DB: UPDATE users SET email_verification_token, verification_token_expires
     VerifSvc->>VerifSvc: buildVerificationUrl(token, clientBaseUrl)
     VerifSvc->>EmailSvc: queueTemplate('verification', email, {enlace, expires_at})

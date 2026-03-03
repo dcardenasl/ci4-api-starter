@@ -39,7 +39,7 @@ class RequestLoggingFilter implements FilterInterface
     public function after(RequestInterface $request, ResponseInterface $response, $arguments = null)
     {
         // Check if request logging is enabled
-        if (! env('REQUEST_LOGGING_ENABLED', true)) {
+        if (! config('Api')->requestLoggingEnabled) {
             return $response;
         }
 
@@ -76,8 +76,11 @@ class RequestLoggingFilter implements FilterInterface
             );
 
             // Log slow queries
-            $slowQueryThreshold = (int) env('SLOW_QUERY_THRESHOLD', 1000);
-            if ($responseTime > $slowQueryThreshold) {
+            $apiConfig = config('Api');
+            $slowQueryThreshold = $apiConfig->slowQueryThreshold;
+            $isSlow = $responseTime > $slowQueryThreshold;
+
+            if ($isSlow) {
                 log_message('warning', "Slow request detected: {$method} {$uri} ({$responseTime}ms)");
             }
         } catch (\Throwable $e) {

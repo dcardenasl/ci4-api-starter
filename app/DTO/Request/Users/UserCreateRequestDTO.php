@@ -11,7 +11,7 @@ use App\DTO\Request\BaseRequestDTO;
  *
  * Validates data for creating a new user.
  */
-readonly class UserStoreRequestDTO extends BaseRequestDTO
+readonly class UserCreateRequestDTO extends BaseRequestDTO
 {
     public string $email;
     public ?string $first_name;

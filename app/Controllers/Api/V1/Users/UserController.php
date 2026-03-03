@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Controllers\Api\V1\Users;
 
 use App\Controllers\ApiController;
+use App\DTO\Request\Users\UserCreateRequestDTO;
 use App\DTO\Request\Users\UserIndexRequestDTO;
-use App\DTO\Request\Users\UserStoreRequestDTO;
 use App\DTO\Request\Users\UserUpdateRequestDTO;
 use App\Interfaces\Users\UserServiceInterface;
 use CodeIgniter\HTTP\ResponseInterface;
@@ -49,7 +49,7 @@ class UserController extends ApiController
      */
     public function create(): ResponseInterface
     {
-        return $this->handleRequest('store', UserStoreRequestDTO::class);
+        return $this->handleRequest('store', UserCreateRequestDTO::class);
     }
 
     /**

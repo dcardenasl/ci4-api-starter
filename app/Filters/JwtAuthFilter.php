@@ -49,7 +49,7 @@ class JwtAuthFilter implements FilterInterface
         }
 
         // Check if token is revoked (if revocation check is enabled)
-        if (env('JWT_REVOCATION_CHECK', 'true') === 'true') {
+        if (config('Api')->jwtRevocationCheck) {
             $jti = $decoded->jti ?? null;
 
             if ($jti) {

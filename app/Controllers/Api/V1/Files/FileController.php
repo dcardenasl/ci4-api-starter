@@ -67,7 +67,7 @@ class FileController extends ApiController
 
             // For local storage, send file for direct download
             if ($result->storage_driver === 'local') {
-                $filePath = FCPATH . env('FILE_UPLOAD_PATH', 'writable/uploads/') . $result->path;
+                $filePath = FCPATH . config('Api')->fileUploadPath . $result->path;
 
                 if (file_exists($filePath)) {
                     return $this->response->download($filePath, null)->setFileName($result->original_name);

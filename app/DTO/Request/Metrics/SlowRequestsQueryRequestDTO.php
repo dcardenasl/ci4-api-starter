@@ -26,7 +26,7 @@ readonly class SlowRequestsQueryRequestDTO extends BaseRequestDTO
     {
         $threshold = is_numeric($data['threshold'] ?? null)
             ? (int) $data['threshold']
-            : (int) env('SLOW_QUERY_THRESHOLD', 1000);
+            : config('Api')->slowQueryThreshold;
 
         $limit = is_numeric($data['limit'] ?? null)
             ? (int) $data['limit']

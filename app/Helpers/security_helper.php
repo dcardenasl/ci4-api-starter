@@ -44,10 +44,7 @@ if (!function_exists('is_email_verification_required')) {
      */
     function is_email_verification_required(): bool
     {
-        return (bool) filter_var(
-            env('AUTH_REQUIRE_EMAIL_VERIFICATION', 'true'),
-            FILTER_VALIDATE_BOOLEAN
-        );
+        return config('Api')->requireEmailVerification;
     }
 }
 

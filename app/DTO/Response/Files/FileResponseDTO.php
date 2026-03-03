@@ -38,15 +38,15 @@ readonly class FileResponseDTO implements DataTransferObjectInterface
         #[OA\Property(description: 'Public or temporary access URL', example: 'https://example.com/storage/file.pdf')]
         public string $url,
         #[OA\Property(property: 'uploaded_at', description: 'Upload timestamp', example: '2026-02-26 12:00:00', nullable: true)]
-        public ?string $createdAt = null
+        public ?string $created_at = null
     ) {
     }
 
     public static function fromArray(array $data): self
     {
-        $createdAt = $data['created_at'] ?? $data['uploaded_at'] ?? null;
-        if ($createdAt instanceof \DateTimeInterface) {
-            $createdAt = $createdAt->format('Y-m-d H:i:s');
+        $created_at = $data['created_at'] ?? $data['uploaded_at'] ?? null;
+        if ($created_at instanceof \DateTimeInterface) {
+            $created_at = $created_at->format('Y-m-d H:i:s');
         }
 
         // Handle case where we receive an entity array or raw data
@@ -62,7 +62,7 @@ readonly class FileResponseDTO implements DataTransferObjectInterface
             human_size: (string) ($data['human_size'] ?? self::calculateHumanSize($size)),
             is_image: (bool) ($data['is_image'] ?? $is_image),
             url: (string) ($data['url'] ?? ''),
-            createdAt: $createdAt ? (string) $createdAt : null
+            created_at: $created_at ? (string) $created_at : null
         );
     }
 
@@ -83,11 +83,10 @@ readonly class FileResponseDTO implements DataTransferObjectInterface
             'filename' => $this->filename,
             'mime_type' => $this->mime_type,
             'size' => $this->file_size,
-            'file_size' => $this->file_size, // Kept for compatibility if needed
             'human_size' => $this->human_size,
             'is_image' => $this->is_image,
             'url' => $this->url,
-            'uploaded_at' => $this->createdAt,
+            'uploaded_at' => $this->created_at,
         ];
     }
 }

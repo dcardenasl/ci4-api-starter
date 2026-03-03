@@ -111,7 +111,7 @@ class FileService implements FileServiceInterface
             $this->fileModel->orderBy('uploaded_at', 'DESC');
         });
 
-        $result = $builder->paginate($request->page, $request->perPage);
+        $result = $builder->paginate($request->page, $request->per_page);
 
         $formattedData = array_map(function ($file) {
             return FileResponseDTO::fromArray([
@@ -130,7 +130,7 @@ class FileService implements FileServiceInterface
             'data'    => $formattedData,
             'total'   => $result['total'],
             'page'    => $result['page'],
-            'perPage' => $result['perPage'],
+            'per_page' => $result['per_page'],
         ]);
     }
 
@@ -162,15 +162,15 @@ class FileService implements FileServiceInterface
     }
 
     /**
-     * CRUD compatibility alias
+     * CRUD implementation
      */
-    public function destroy(int $id, ?SecurityContext $context = null): bool
+    public function destroy(int|string $id, ?SecurityContext $context = null): bool
     {
         if ($context?->user_id === null) {
             throw new AuthorizationException(lang('Api.unauthorized'));
         }
 
-        $file = $this->findFileAndAuthorize($id, $context->user_id, 'delete', $context->isAdmin());
+        $file = $this->findFileAndAuthorize((int) $id, $context->user_id, 'delete', $context->isAdmin());
 
         return $this->wrapInTransaction(function () use ($file) {
             $this->storage->delete($file->path);

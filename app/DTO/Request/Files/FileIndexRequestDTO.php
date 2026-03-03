@@ -15,14 +15,14 @@ use App\Exceptions\AuthenticationException;
 readonly class FileIndexRequestDTO extends BaseRequestDTO
 {
     public int $page;
-    public int $perPage;
+    public int $per_page;
     public int $user_id;
 
     protected function rules(): array
     {
         return [
             'page'    => 'permit_empty|is_natural_no_zero',
-            'perPage' => 'permit_empty|is_natural_no_zero|less_than[101]',
+            'per_page' => 'permit_empty|is_natural_no_zero|less_than[101]',
         ];
     }
 
@@ -34,14 +34,14 @@ readonly class FileIndexRequestDTO extends BaseRequestDTO
 
         $this->user_id = (int) $data['user_id'];
         $this->page = isset($data['page']) ? (int) $data['page'] : 1;
-        $this->perPage = isset($data['perPage']) ? (int) $data['perPage'] : 20;
+        $this->per_page = isset($data['per_page']) ? (int) $data['per_page'] : 20;
     }
 
     public function toArray(): array
     {
         return [
             'page'    => $this->page,
-            'perPage' => $this->perPage,
+            'per_page' => $this->per_page,
             'user_id'  => $this->user_id,
         ];
     }

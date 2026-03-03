@@ -52,9 +52,9 @@ abstract class BaseCrudService implements \App\Interfaces\Core\CrudServiceContra
 
         $requestData = $request->toArray();
         $page = $requestData['page'] ?? 1;
-        $perPage = $requestData['perPage'] ?? 20;
+        $per_page = $requestData['per_page'] ?? 20;
 
-        $result = $builder->paginate((int) $page, (int) $perPage);
+        $result = $builder->paginate((int) $page, (int) $per_page);
 
         // Auto-map entities to response DTOs
         $result['data'] = array_map(
@@ -69,7 +69,7 @@ abstract class BaseCrudService implements \App\Interfaces\Core\CrudServiceContra
             'data'    => $result['data'],
             'total'   => $result['total'],
             'page'    => $result['page'],
-            'perPage' => $result['perPage'],
+            'per_page' => $result['per_page'],
         ]);
     }
 

@@ -119,7 +119,7 @@ class QueryBuilder
      *
      * @param int $page Current page number
      * @param int $limit Items per page
-     * @return array Returns ['data' => [], 'total' => 0, 'page' => 1, 'perPage' => 20, 'lastPage' => 1]
+     * @return array Returns ['data' => [], 'total' => 0, 'page' => 1, 'per_page' => 20, 'last_page' => 1]
      */
     public function paginate(int $page = 1, int $limit = 20): array
     {
@@ -135,7 +135,7 @@ class QueryBuilder
 
         // Calculate pagination
         $offset = ($page - 1) * $limit;
-        $lastPage = $total > 0 ? (int) ceil($total / $limit) : 1;
+        $last_page = $total > 0 ? (int) ceil($total / $limit) : 1;
 
         // Get paginated data
         $data = $this->model->findAll($limit, $offset);
@@ -144,8 +144,8 @@ class QueryBuilder
             'data' => $data,
             'total' => $total,
             'page' => $page,
-            'perPage' => $limit,
-            'lastPage' => $lastPage,
+            'per_page' => $limit,
+            'last_page' => $last_page,
             'from' => $total > 0 ? $offset + 1 : 0,
             'to' => min($offset + $limit, $total),
         ];

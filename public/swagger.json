@@ -3361,10 +3361,10 @@
                     "application/json": {
                         "schema": {
                             "required": [
-                                "idToken"
+                                "id_token"
                             ],
                             "properties": {
-                                "idToken": {
+                                "id_token": {
                                     "description": "Google ID token from frontend OAuth flow",
                                     "type": "string"
                                 }

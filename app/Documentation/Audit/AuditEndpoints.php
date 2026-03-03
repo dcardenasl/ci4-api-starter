@@ -19,7 +19,7 @@ use OpenApi\Attributes as OA;
             schema: new OA\Schema(type: 'integer', minimum: 1)
         ),
         new OA\Parameter(
-            name: 'perPage',
+            name: 'per_page',
             in: 'query',
             required: false,
             schema: new OA\Schema(type: 'integer', minimum: 1)
@@ -62,7 +62,7 @@ use OpenApi\Attributes as OA;
                         type: 'object',
                         properties: [
                             new OA\Property(property: 'total', type: 'integer', example: 120),
-                            new OA\Property(property: 'perPage', type: 'integer', example: 20),
+                            new OA\Property(property: 'per_page', type: 'integer', example: 20),
                             new OA\Property(property: 'page', type: 'integer', example: 1),
                             new OA\Property(property: 'lastPage', type: 'integer', example: 6),
                             new OA\Property(property: 'from', type: 'integer', example: 1),

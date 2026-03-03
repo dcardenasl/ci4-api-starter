@@ -19,7 +19,7 @@ class ControllerDtoRequestContractsTest extends CIUnitTestCase
         return [
             'app/Controllers/Api/V1/Users/UserController.php' => [
                 "handleRequest('index', UserIndexRequestDTO::class)",
-                "handleRequest('store', UserStoreRequestDTO::class)",
+                "handleRequest('store', UserCreateRequestDTO::class)",
                 "UserUpdateRequestDTO::class",
             ],
             'app/Controllers/Api/V1/Admin/ApiKeyController.php' => [

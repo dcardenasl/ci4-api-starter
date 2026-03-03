@@ -10,13 +10,13 @@ use App\Exceptions\ConflictException;
 use App\Exceptions\NotFoundException;
 use App\Interfaces\System\AuditServiceInterface;
 use App\Interfaces\System\EmailServiceInterface;
-use App\Models\UserModel;
+use App\Interfaces\Users\UserRepositoryInterface;
 use App\Services\Users\Actions\ApproveUserAction;
 use CodeIgniter\Test\CIUnitTestCase;
 
 class ApproveUserActionTest extends CIUnitTestCase
 {
-    protected UserModel $userModel;
+    protected UserRepositoryInterface $mockUserRepository;
     protected AuditServiceInterface $auditService;
     protected EmailServiceInterface $emailService;
     protected ApproveUserAction $action;
@@ -25,15 +25,15 @@ class ApproveUserActionTest extends CIUnitTestCase
     {
         parent::setUp();
 
-        $this->userModel = $this->createMock(UserModel::class);
+        $this->mockUserRepository = $this->createMock(UserRepositoryInterface::class);
         $this->auditService = $this->createMock(AuditServiceInterface::class);
         $this->emailService = $this->createMock(EmailServiceInterface::class);
-        $this->action = new ApproveUserAction($this->userModel, $this->auditService, $this->emailService);
+        $this->action = new ApproveUserAction($this->mockUserRepository, $this->auditService, $this->emailService);
     }
 
     public function testExecuteThrowsNotFoundWhenUserDoesNotExist(): void
     {
-        $this->userModel->expects($this->once())->method('find')->with(999)->willReturn(null);
+        $this->mockUserRepository->expects($this->once())->method('find')->with(999)->willReturn(null);
 
         $this->expectException(NotFoundException::class);
         $this->action->execute(999, new SecurityContext(1, 'admin'));
@@ -42,8 +42,8 @@ class ApproveUserActionTest extends CIUnitTestCase
     public function testExecuteThrowsConflictWhenUserAlreadyActive(): void
     {
         $user = new UserEntity(['id' => 1, 'email' => 'active@example.com', 'status' => 'active']);
-        $this->userModel->expects($this->once())->method('find')->with(1)->willReturn($user);
-        $this->userModel->expects($this->never())->method('update');
+        $this->mockUserRepository->expects($this->once())->method('find')->with(1)->willReturn($user);
+        $this->mockUserRepository->expects($this->never())->method('update');
 
         $this->expectException(ConflictException::class);
         $this->action->execute(1, new SecurityContext(1, 'admin'));
@@ -52,8 +52,8 @@ class ApproveUserActionTest extends CIUnitTestCase
     public function testExecuteThrowsConflictWhenUserIsInvited(): void
     {
         $user = new UserEntity(['id' => 1, 'email' => 'invited@example.com', 'status' => 'invited']);
-        $this->userModel->expects($this->once())->method('find')->with(1)->willReturn($user);
-        $this->userModel->expects($this->never())->method('update');
+        $this->mockUserRepository->expects($this->once())->method('find')->with(1)->willReturn($user);
+        $this->mockUserRepository->expects($this->never())->method('update');
 
         $this->expectException(ConflictException::class);
         $this->action->execute(1, new SecurityContext(1, 'admin'));
@@ -62,8 +62,8 @@ class ApproveUserActionTest extends CIUnitTestCase
     public function testExecuteThrowsConflictWhenUserIsInInvalidState(): void
     {
         $user = new UserEntity(['id' => 1, 'email' => 'blocked@example.com', 'status' => 'blocked']);
-        $this->userModel->expects($this->once())->method('find')->with(1)->willReturn($user);
-        $this->userModel->expects($this->never())->method('update');
+        $this->mockUserRepository->expects($this->once())->method('find')->with(1)->willReturn($user);
+        $this->mockUserRepository->expects($this->never())->method('update');
 
         $this->expectException(ConflictException::class);
         $this->action->execute(1, new SecurityContext(1, 'admin'));
@@ -87,12 +87,12 @@ class ApproveUserActionTest extends CIUnitTestCase
             'status' => 'active',
         ]);
 
-        $this->userModel->expects($this->exactly(2))
+        $this->mockUserRepository->expects($this->exactly(2))
             ->method('find')
             ->with(7)
             ->willReturnOnConsecutiveCalls($pendingUser, $approvedUser);
 
-        $this->userModel->expects($this->once())
+        $this->mockUserRepository->expects($this->once())
             ->method('update')
             ->with(7, $this->callback(function (array $data): bool {
                 return $data['status'] === 'active'

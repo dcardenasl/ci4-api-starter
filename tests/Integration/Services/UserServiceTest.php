@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Integration\Services;
 
-use App\DTO\Request\Users\UserStoreRequestDTO;
+use App\DTO\Request\Users\UserCreateRequestDTO;
 use App\DTO\Request\Users\UserUpdateRequestDTO;
 use App\DTO\SecurityContext;
 use App\Exceptions\ConflictException;
@@ -38,7 +38,7 @@ class UserServiceTest extends CIUnitTestCase
 
     public function testStoreCreatesUserInDatabase(): void
     {
-        $request = new UserStoreRequestDTO([
+        $request = new UserCreateRequestDTO([
             'email' => 'integration@example.com',
             'first_name' => 'Integration',
             'last_name' => 'User',

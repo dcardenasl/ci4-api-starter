@@ -10,8 +10,8 @@ use App\Exceptions\ValidationException;
 use App\Interfaces\System\AuditServiceInterface;
 use App\Interfaces\System\EmailServiceInterface;
 use App\Interfaces\Tokens\RefreshTokenServiceInterface;
+use App\Interfaces\Users\UserRepositoryInterface;
 use App\Models\PasswordResetModel;
-use App\Models\UserModel;
 use App\Services\Auth\PasswordResetService;
 use CodeIgniter\Test\CIUnitTestCase;
 use Tests\Support\Traits\CustomAssertionsTrait;
@@ -27,7 +27,7 @@ class PasswordResetServiceTest extends CIUnitTestCase
     private const UNKNOWN_RESET_TOKEN = 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb';
 
     protected PasswordResetService $service;
-    protected UserModel $mockUserModel;
+    protected UserRepositoryInterface $mockUserRepository;
     protected PasswordResetModel $mockPasswordResetModel;
     protected EmailServiceInterface $mockEmailService;
     protected RefreshTokenServiceInterface $mockRefreshTokenService;
@@ -51,7 +51,7 @@ class PasswordResetServiceTest extends CIUnitTestCase
     }
 
     /**
-     * Create service with mocked user model
+     * Create service with mocked user repository
      */
     private function createServiceWithUser(
         ?UserEntity $activeUser,
@@ -59,38 +59,11 @@ class PasswordResetServiceTest extends CIUnitTestCase
     ): PasswordResetService {
         $validToken = self::VALID_RESET_TOKEN;
 
-        $mockUserModel = new class ($activeUser, $deletedUser) extends UserModel {
-            private ?UserEntity $activeUser;
-            private ?UserEntity $deletedUser;
-            private bool $includeDeleted = false;
-
-            public function __construct(?UserEntity $activeUser, ?UserEntity $deletedUser)
-            {
-                $this->activeUser = $activeUser;
-                $this->deletedUser = $deletedUser;
-            }
-
-            public function withDeleted(bool $val = true): static
-            {
-                $this->includeDeleted = $val;
-                return $this;
-            }
-
-            public function where($key, $value = null, ?bool $escape = null): static
-            {
-                return $this;
-            }
-
-            public function first()
-            {
-                return $this->includeDeleted ? $this->deletedUser : $this->activeUser;
-            }
-
-            public function update($id = null, $row = null): bool
-            {
-                return true;
-            }
-        };
+        $mockUserRepository = $this->createMock(UserRepositoryInterface::class);
+        $mockUserRepository->method('findByEmail')->willReturn($activeUser);
+        $mockUserRepository->method('findByEmailWithDeleted')->willReturn($activeUser ?? $deletedUser);
+        $mockUserRepository->method('update')->willReturn(true);
+        $mockUserRepository->method('restore')->willReturn(true);
 
         $mockPasswordResetModel = new class ($validToken) extends PasswordResetModel {
             private string $validToken;
@@ -127,7 +100,7 @@ class PasswordResetServiceTest extends CIUnitTestCase
         };
 
         return new PasswordResetService(
-            $mockUserModel,
+            $mockUserRepository,
             $mockPasswordResetModel,
             $this->mockEmailService,
             $this->mockRefreshTokenService,

@@ -13,7 +13,7 @@ use App\Interfaces\System\AuditServiceInterface;
 use App\Interfaces\System\EmailServiceInterface;
 use App\Interfaces\Tokens\JwtServiceInterface;
 use App\Interfaces\Tokens\RefreshTokenServiceInterface;
-use App\Models\UserModel;
+use App\Interfaces\Users\UserRepositoryInterface;
 use App\Services\Auth\Actions\GoogleLoginAction;
 use App\Services\Auth\Actions\RegisterUserAction;
 use App\Services\Auth\AuthService;
@@ -55,41 +55,21 @@ class AuthServiceTest extends CIUnitTestCase
 
     protected function createServiceWithUserQuery(?UserEntity $returnUser): AuthService
     {
-        $mockUserModel = new class ($returnUser) extends UserModel {
-            private ?UserEntity $returnUser;
-            public function __construct(?UserEntity $user)
-            {
-                $this->returnUser = $user;
-            }
-            public function where($key, $value = null, ?bool $escape = null): static
-            {
-                return $this;
-            }
-            public function first()
-            {
-                return $this->returnUser;
-            }
-            public function insert($row = null, bool $returnID = true)
-            {
-                return 1;
-            }
-            public function find($id = null)
-            {
-                return $this->returnUser;
-            }
-            public function update($id = null, $data = null): bool
-            {
-                return true;
-            }
-        };
+        $mockUserRepository = $this->createMock(UserRepositoryInterface::class);
+        $mockUserRepository->method('findByEmail')->willReturn($returnUser);
+        $mockUserRepository->method('findByEmailWithDeleted')->willReturn($returnUser);
+        $mockUserRepository->method('find')->willReturn($returnUser);
+        $mockUserRepository->method('insert')->willReturn(1);
+        $mockUserRepository->method('update')->willReturn(true);
+        $mockUserRepository->method('restore')->willReturn(true);
 
         $userMapper = new AuthUserMapper();
         $sessionManager = new SessionManager($this->mockJwtService, $this->mockRefreshTokenService);
-        $registerUserAction = new RegisterUserAction($mockUserModel, $this->mockVerificationService);
+        $registerUserAction = new RegisterUserAction($mockUserRepository, $this->mockVerificationService, $this->mockEmailService);
         $googleLoginAction = new GoogleLoginAction(
-            $mockUserModel,
+            $mockUserRepository,
             $this->mockGoogleIdentityService,
-            new GoogleAuthHandler($mockUserModel, $this->mockRefreshTokenService),
+            new GoogleAuthHandler($mockUserRepository, $this->mockRefreshTokenService),
             $sessionManager,
             $userMapper,
             new UserAccountGuard(),
@@ -98,7 +78,7 @@ class AuthServiceTest extends CIUnitTestCase
         );
 
         return new AuthService(
-            $mockUserModel,
+            $mockUserRepository,
             $registerUserAction,
             $googleLoginAction,
             $this->mockAuditService,
@@ -168,16 +148,8 @@ class AuthServiceTest extends CIUnitTestCase
             'status' => 'pending_approval'
         ]);
 
-        $mockUserModel = new class ($user) extends UserModel {
-            public function __construct(private readonly UserEntity $returnUser)
-            {
-            }
-
-            public function find($id = null)
-            {
-                return $this->returnUser;
-            }
-        };
+        $mockUserRepository = $this->createMock(UserRepositoryInterface::class);
+        $mockUserRepository->method('find')->willReturn($user);
 
         $registerUserAction = $this->createMock(RegisterUserAction::class);
         $request = new \App\DTO\Request\Auth\RegisterRequestDTO([
@@ -198,7 +170,7 @@ class AuthServiceTest extends CIUnitTestCase
         $sessionManager = new SessionManager($this->mockJwtService, $this->mockRefreshTokenService);
 
         $service = new AuthService(
-            $mockUserModel,
+            $mockUserRepository,
             $registerUserAction,
             $googleLoginAction,
             $this->mockAuditService,

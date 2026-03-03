@@ -8,7 +8,7 @@ use App\DTO\Response\Users\UserResponseDTO;
 use App\Entities\UserEntity;
 use App\Exceptions\NotFoundException;
 use App\Interfaces\Mappers\ResponseMapperInterface;
-use App\Models\UserModel;
+use App\Interfaces\Users\UserRepositoryInterface;
 use App\Services\Users\Actions\ApproveUserAction;
 use App\Services\Users\Actions\CreateUserAction;
 use App\Services\Users\Actions\UpdateUserAction;
@@ -26,7 +26,7 @@ class UserServiceTest extends CIUnitTestCase
     use CustomAssertionsTrait;
 
     protected UserService $service;
-    protected UserModel $mockUserModel;
+    protected UserRepositoryInterface $mockUserRepository;
     protected ApproveUserAction $mockApproveUserAction;
     protected CreateUserAction $mockCreateUserAction;
     protected UpdateUserAction $mockUpdateUserAction;
@@ -36,7 +36,7 @@ class UserServiceTest extends CIUnitTestCase
     {
         parent::setUp();
 
-        $this->mockUserModel = $this->createMock(UserModel::class);
+        $this->mockUserRepository = $this->createMock(UserRepositoryInterface::class);
         $this->mockApproveUserAction = $this->createMock(ApproveUserAction::class);
         $this->mockCreateUserAction = $this->createMock(CreateUserAction::class);
         $this->mockUpdateUserAction = $this->createMock(UpdateUserAction::class);
@@ -48,7 +48,7 @@ class UserServiceTest extends CIUnitTestCase
         };
 
         $this->service = new UserService(
-            $this->mockUserModel,
+            $this->mockUserRepository,
             $this->responseMapper,
             new \App\Libraries\Security\UserRoleGuard(),
             $this->mockApproveUserAction,
@@ -72,7 +72,7 @@ class UserServiceTest extends CIUnitTestCase
             'role' => 'user',
         ]);
 
-        $this->mockUserModel->expects($this->once())->method('find')->with(1)->willReturn($user);
+        $this->mockUserRepository->expects($this->once())->method('find')->with(1)->willReturn($user);
 
         $result = $this->service->show(1);
 
@@ -82,7 +82,7 @@ class UserServiceTest extends CIUnitTestCase
 
     public function testShowWithNonExistentUserThrowsNotFoundException(): void
     {
-        $this->mockUserModel->method('find')->willReturn(null);
+        $this->mockUserRepository->method('find')->willReturn(null);
         $this->expectException(NotFoundException::class);
         $this->service->show(999);
     }
@@ -91,7 +91,7 @@ class UserServiceTest extends CIUnitTestCase
 
     public function testStoreCreatesUser(): void
     {
-        $request = new \App\DTO\Request\Users\UserStoreRequestDTO([
+        $request = new \App\DTO\Request\Users\UserCreateRequestDTO([
             'email' => 'new@example.com',
             'role' => 'user',
         ]);
@@ -144,8 +144,8 @@ class UserServiceTest extends CIUnitTestCase
     public function testDestroyDeletesUser(): void
     {
         $id = 1;
-        $this->mockUserModel->method('find')->willReturn($this->createUserEntity(['id' => $id, 'role' => 'user']));
-        $this->mockUserModel->expects($this->once())->method('delete')->with($id)->willReturn(true);
+        $this->mockUserRepository->method('find')->willReturn($this->createUserEntity(['id' => $id, 'role' => 'user']));
+        $this->mockUserRepository->expects($this->once())->method('delete')->with($id)->willReturn(true);
 
         $result = $this->service->destroy($id);
         $this->assertTrue($result);

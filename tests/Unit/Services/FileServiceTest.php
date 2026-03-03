@@ -9,9 +9,9 @@ use App\Exceptions\AuthorizationException;
 use App\Exceptions\BadRequestException;
 use App\Exceptions\NotFoundException;
 use App\Exceptions\ValidationException;
+use App\Interfaces\Files\FileRepositoryInterface;
 use App\Interfaces\System\AuditServiceInterface;
 use App\Libraries\Storage\StorageManager;
-use App\Models\FileModel;
 use App\Services\Files\FileService;
 use CodeIgniter\HTTP\Files\UploadedFile;
 use CodeIgniter\Test\CIUnitTestCase;
@@ -27,7 +27,7 @@ class FileServiceTest extends CIUnitTestCase
     use CustomAssertionsTrait;
 
     protected FileService $service;
-    protected FileModel $mockFileModel;
+    protected FileRepositoryInterface $mockFileRepository;
     protected StorageManager $mockStorage;
     protected AuditServiceInterface $mockAuditService;
 
@@ -35,13 +35,16 @@ class FileServiceTest extends CIUnitTestCase
     {
         parent::setUp();
 
-        $this->mockFileModel = $this->createMock(FileModel::class);
+        $this->mockFileRepository = $this->createMock(FileRepositoryInterface::class);
+        $mockFileModel = $this->createMock(\App\Models\FileModel::class);
+        $this->mockFileRepository->method('getModel')->willReturn($mockFileModel);
+
         $this->mockStorage = $this->createMock(StorageManager::class);
         $this->mockAuditService = $this->createMock(AuditServiceInterface::class);
 
         // Inject real processors and generator as they are mostly stateless and hard to mock without overhead
         $this->service = new FileService(
-            $this->mockFileModel,
+            $this->mockFileRepository,
             $this->mockStorage,
             $this->mockAuditService,
             new \App\Libraries\Files\FilenameGenerator($this->mockStorage),
@@ -146,7 +149,7 @@ class FileServiceTest extends CIUnitTestCase
             ->method('url')
             ->willReturn('http://localhost/uploads/2026/02/17/photo_abc123.jpg');
 
-        // Mock FileModel with anonymous class for insert + find
+        // Mock FileRepository
         $savedEntity = $this->createFileEntity([
             'id' => 1,
             'original_name' => 'photo.jpg',
@@ -156,11 +159,11 @@ class FileServiceTest extends CIUnitTestCase
             'uploaded_at' => date('Y-m-d H:i:s'),
         ]);
 
-        $this->mockFileModel
+        $this->mockFileRepository
             ->method('insert')
             ->willReturn(1);
 
-        $this->mockFileModel
+        $this->mockFileRepository
             ->method('find')
             ->willReturn($savedEntity);
 
@@ -210,11 +213,11 @@ class FileServiceTest extends CIUnitTestCase
             ->method('delete');
 
         // Insert fails
-        $this->mockFileModel
+        $this->mockFileRepository
             ->method('insert')
             ->willReturn(false);
 
-        $this->mockFileModel
+        $this->mockFileRepository
             ->method('errors')
             ->willReturn(['file' => 'Database error']);
 
@@ -280,54 +283,14 @@ class FileServiceTest extends CIUnitTestCase
             ]),
         ];
 
-        // Mock con clase anónima que soporta QueryBuilder
-        $this->mockFileModel = new class ($files) extends FileModel {
-            private array $returnFiles;
-
-            public function __construct(array $files)
-            {
-                $this->returnFiles = $files;
-            }
-
-            public function where($key, $value = null, ?bool $escape = null): static
-            {
-                return $this;
-            }
-
-            public function orderBy(string $orderBy, string $direction = '', ?bool $escape = null): static
-            {
-                return $this;
-            }
-
-            public function countAllResults(bool $reset = true, bool $test = false)
-            {
-                return count($this->returnFiles);
-            }
-
-            public function findAll(?int $limit = null, int $offset = 0)
-            {
-                return $this->returnFiles;
-            }
-
-            public function applyFilters(array $filters): static
-            {
-                return $this;
-            }
-
-            public function search(string $query): static
-            {
-                return $this;
-            }
-        };
-
-        $this->service = new FileService(
-            $this->mockFileModel,
-            $this->mockStorage,
-            $this->mockAuditService,
-            new \App\Libraries\Files\FilenameGenerator($this->mockStorage),
-            new \App\Libraries\Files\MultipartProcessor(),
-            new \App\Libraries\Files\Base64Processor()
-        );
+        $this->mockFileRepository
+            ->method('paginateCriteria')
+            ->willReturn([
+                'data' => $files,
+                'total' => 2,
+                'page' => 1,
+                'per_page' => 20
+            ]);
 
         $request = new \App\DTO\Request\Files\FileIndexRequestDTO(['user_id' => 1]);
         $result = $this->service->index($request);
@@ -355,7 +318,7 @@ class FileServiceTest extends CIUnitTestCase
 
     public function testDownloadNonExistentFileThrowsNotFoundException(): void
     {
-        $this->mockFileModel
+        $this->mockFileRepository
             ->method('find')
             ->willReturn(null);
 
@@ -372,7 +335,7 @@ class FileServiceTest extends CIUnitTestCase
             'user_id' => 99, // Different user
         ]);
 
-        $this->mockFileModel
+        $this->mockFileRepository
             ->method('find')
             ->willReturn($file);
 
@@ -393,7 +356,7 @@ class FileServiceTest extends CIUnitTestCase
             'storage_driver' => 'local',
         ]);
 
-        $this->mockFileModel
+        $this->mockFileRepository
             ->method('find')
             ->willReturn($file);
 
@@ -410,7 +373,7 @@ class FileServiceTest extends CIUnitTestCase
 
     public function testDeleteNonExistentFileThrowsNotFoundException(): void
     {
-        $this->mockFileModel
+        $this->mockFileRepository
             ->method('find')
             ->willReturn(null);
 
@@ -427,7 +390,7 @@ class FileServiceTest extends CIUnitTestCase
             'user_id' => 99,
         ]);
 
-        $this->mockFileModel
+        $this->mockFileRepository
             ->method('find')
             ->willReturn($file);
 
@@ -445,7 +408,7 @@ class FileServiceTest extends CIUnitTestCase
             'path' => '2024/01/01/file.jpg',
         ]);
 
-        $this->mockFileModel
+        $this->mockFileRepository
             ->method('find')
             ->willReturn($file);
 
@@ -455,7 +418,7 @@ class FileServiceTest extends CIUnitTestCase
             ->with('2024/01/01/file.jpg')
             ->willReturn(true);
 
-        $this->mockFileModel
+        $this->mockFileRepository
             ->expects($this->once())
             ->method('delete')
             ->with(1)
@@ -469,7 +432,6 @@ class FileServiceTest extends CIUnitTestCase
 
     public function testUploadWithDuplicateFilenameGeneratesNumericSeries(): void
     {
-        $base64 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
         $filename = 'logo.png';
         $datePath = date('Y/m/d');
 
@@ -504,8 +466,8 @@ class FileServiceTest extends CIUnitTestCase
             'uploaded_at' => date('Y-m-d H:i:s'),
         ]);
 
-        $this->mockFileModel->method('insert')->willReturn(1);
-        $this->mockFileModel->method('find')->willReturn($savedEntity);
+        $this->mockFileRepository->method('insert')->willReturn(1);
+        $this->mockFileRepository->method('find')->willReturn($savedEntity);
 
         $tempFile = tempnam(sys_get_temp_dir(), 'upload_test_');
         file_put_contents($tempFile, 'fake contents');
@@ -523,7 +485,6 @@ class FileServiceTest extends CIUnitTestCase
         $this->assertInstanceOf(\App\DTO\Response\Files\FileResponseDTO::class, $result);
         $this->assertEquals($filename, $result->toArray()['original_name']);
         @unlink($tempFile);
-        // The fact that storage->put was called with logo_1.png validates the logic
     }
 
     public function testUploadWithUploadPrefixCleansFilename(): void
@@ -551,8 +512,8 @@ class FileServiceTest extends CIUnitTestCase
             'uploaded_at' => date('Y-m-d H:i:s'),
         ]);
 
-        $this->mockFileModel->method('insert')->willReturn(1);
-        $this->mockFileModel->method('find')->willReturn($savedEntity);
+        $this->mockFileRepository->method('insert')->willReturn(1);
+        $this->mockFileRepository->method('find')->willReturn($savedEntity);
 
         $result = $this->service->upload(new \App\DTO\Request\Files\FileUploadRequestDTO([
             'file' => $base64,
@@ -598,8 +559,8 @@ class FileServiceTest extends CIUnitTestCase
             'uploaded_at' => date('Y-m-d H:i:s'),
         ]);
 
-        $this->mockFileModel->method('insert')->willReturn(1);
-        $this->mockFileModel->method('find')->willReturn($savedEntity);
+        $this->mockFileRepository->method('insert')->willReturn(1);
+        $this->mockFileRepository->method('find')->willReturn($savedEntity);
 
         $result = $this->service->upload(new \App\DTO\Request\Files\FileUploadRequestDTO([
             'file' => $mockFile,

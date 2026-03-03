@@ -8,7 +8,7 @@ use App\DTO\SecurityContext;
 use App\Exceptions\NotFoundException;
 use App\Interfaces\DataTransferObjectInterface;
 use App\Interfaces\Mappers\ResponseMapperInterface;
-use App\Models\AuditLogModel;
+use App\Interfaces\System\AuditRepositoryInterface;
 use App\Services\System\AuditService;
 use CodeIgniter\Test\CIUnitTestCase;
 use Tests\Support\Traits\CustomAssertionsTrait;
@@ -23,7 +23,7 @@ class AuditServiceTest extends CIUnitTestCase
     use CustomAssertionsTrait;
 
     protected AuditService $service;
-    protected AuditLogModel $mockAuditLogModel;
+    protected AuditRepositoryInterface $mockAuditRepository;
 
     protected function setUp(): void
     {
@@ -31,7 +31,7 @@ class AuditServiceTest extends CIUnitTestCase
 
         \App\Services\System\AuditService::$forceEnabledInTests = true;
 
-        $this->mockAuditLogModel = $this->createMock(AuditLogModel::class);
+        $this->mockAuditRepository = $this->createMock(AuditRepositoryInterface::class);
 
         // Mock UserModel via factory to satisfy defensive existence checks
         $mockUserModel = $this->createMock(\App\Models\UserModel::class);
@@ -46,7 +46,7 @@ class AuditServiceTest extends CIUnitTestCase
             }
         };
 
-        $this->service = new AuditService($this->mockAuditLogModel, $responseMapper);
+        $this->service = new AuditService($this->mockAuditRepository, $responseMapper);
     }
 
     protected function tearDown(): void
@@ -61,7 +61,7 @@ class AuditServiceTest extends CIUnitTestCase
     {
         $context = new SecurityContext(99, 'admin', ['ip_address' => '127.0.0.1']);
 
-        $this->mockAuditLogModel
+        $this->mockAuditRepository
             ->expects($this->once())
             ->method('insert')
             ->with($this->callback(function ($data) {
@@ -88,7 +88,7 @@ class AuditServiceTest extends CIUnitTestCase
         $oldValues = ['email' => 'old@example.com'];
         $newValues = ['email' => 'new@example.com'];
 
-        $this->mockAuditLogModel
+        $this->mockAuditRepository
             ->expects($this->once())
             ->method('insert')
             ->with($this->callback(function ($data) use ($oldValues, $newValues) {
@@ -127,12 +127,12 @@ class AuditServiceTest extends CIUnitTestCase
             ],
         ];
 
-        $this->mockAuditLogModel
+        $this->mockAuditRepository
             ->expects($this->once())
             ->method('insert')
             ->with($this->callback(function ($data) {
-                $old = json_decode((string) $data['old_values'], true);
-                $new = json_decode((string) $data['new_values'], true);
+                $old = json_decode((string) $data['old_values'] ?: '{}', true);
+                $new = json_decode((string) $data['new_values'] ?: '{}', true);
 
                 return !isset($old['password'])
                     && !isset($old['profile']['token'])
@@ -160,7 +160,7 @@ class AuditServiceTest extends CIUnitTestCase
         $context = new SecurityContext(99);
         $newData = ['first_name' => 'New', 'email' => 'new@example.com'];
 
-        $this->mockAuditLogModel
+        $this->mockAuditRepository
             ->expects($this->once())
             ->method('insert')
             ->with($this->callback(function ($data) use ($newData) {
@@ -181,7 +181,7 @@ class AuditServiceTest extends CIUnitTestCase
         $newValues = ['email' => 'same@example.com'];
 
         // insert should NOT be called when values are the same
-        $this->mockAuditLogModel
+        $this->mockAuditRepository
             ->expects($this->never())
             ->method('insert');
 
@@ -194,7 +194,7 @@ class AuditServiceTest extends CIUnitTestCase
         $oldValues = ['email' => 'old@example.com'];
         $newValues = ['email' => 'new@example.com'];
 
-        $this->mockAuditLogModel
+        $this->mockAuditRepository
             ->expects($this->once())
             ->method('insert')
             ->with($this->callback(function ($data) {
@@ -218,7 +218,7 @@ class AuditServiceTest extends CIUnitTestCase
             'profile' => ['token' => 'new-token'],
         ];
 
-        $this->mockAuditLogModel
+        $this->mockAuditRepository
             ->expects($this->never())
             ->method('insert');
 
@@ -232,7 +232,7 @@ class AuditServiceTest extends CIUnitTestCase
         $context = new SecurityContext(99);
         $oldData = ['first_name' => 'Deleted', 'email' => 'deleted@example.com'];
 
-        $this->mockAuditLogModel
+        $this->mockAuditRepository
             ->expects($this->once())
             ->method('insert')
             ->with($this->callback(function ($data) use ($oldData) {
@@ -261,7 +261,7 @@ class AuditServiceTest extends CIUnitTestCase
             'created_at' => '2024-01-01 00:00:00',
         ]);
 
-        $this->mockAuditLogModel
+        $this->mockAuditRepository
             ->expects($this->once())
             ->method('find')
             ->with(1)
@@ -277,7 +277,7 @@ class AuditServiceTest extends CIUnitTestCase
 
     public function testShowWithNonExistentIdThrowsNotFoundException(): void
     {
-        $this->mockAuditLogModel
+        $this->mockAuditRepository
             ->method('find')
             ->willReturn(null);
 
@@ -317,7 +317,7 @@ class AuditServiceTest extends CIUnitTestCase
             ]),
         ];
 
-        $this->mockAuditLogModel
+        $this->mockAuditRepository
             ->expects($this->once())
             ->method('getByEntity')
             ->with('users', 5)
@@ -337,7 +337,7 @@ class AuditServiceTest extends CIUnitTestCase
 
     public function testByEntityNormalizesSingularEntityType(): void
     {
-        $this->mockAuditLogModel
+        $this->mockAuditRepository
             ->expects($this->once())
             ->method('getByEntity')
             ->with('users', 5)

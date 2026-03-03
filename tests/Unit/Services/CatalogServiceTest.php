@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Services;
 
 use App\DTO\Request\Catalogs\AuditFacetsRequestDTO;
-use App\Models\AuditLogModel;
+use App\Interfaces\System\AuditRepositoryInterface;
 use App\Services\System\CatalogService;
 use CodeIgniter\Test\CIUnitTestCase;
 
@@ -16,8 +16,8 @@ final class CatalogServiceTest extends CIUnitTestCase
 {
     public function testIndexReturnsExpectedCatalogSections(): void
     {
-        $model = $this->createMock(AuditLogModel::class);
-        $service = new CatalogService($model);
+        $repository = $this->createMock(AuditRepositoryInterface::class);
+        $service = new CatalogService($repository);
 
         $data = $service->index()->toArray();
 
@@ -31,21 +31,21 @@ final class CatalogServiceTest extends CIUnitTestCase
 
     public function testAuditFacetsUsesModelDistinctData(): void
     {
-        $model = $this->createMock(AuditLogModel::class);
-        $model->expects($this->once())
+        $repository = $this->createMock(AuditRepositoryInterface::class);
+        $repository->expects($this->once())
             ->method('getActionFacets')
             ->with(90, 100)
             ->willReturn([
                 ['value' => 'login_success', 'count' => 12],
             ]);
-        $model->expects($this->once())
+        $repository->expects($this->once())
             ->method('getEntityTypeFacets')
             ->with(90, 100)
             ->willReturn([
                 ['value' => 'users', 'count' => 7],
             ]);
 
-        $service = new CatalogService($model);
+        $service = new CatalogService($repository);
         $request = new AuditFacetsRequestDTO([]);
 
         $data = $service->auditFacets($request)->toArray();

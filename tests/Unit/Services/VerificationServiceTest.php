@@ -10,7 +10,7 @@ use App\Exceptions\ConflictException;
 use App\Exceptions\NotFoundException;
 use App\Interfaces\System\AuditServiceInterface;
 use App\Interfaces\System\EmailServiceInterface;
-use App\Models\UserModel;
+use App\Interfaces\Users\UserRepositoryInterface;
 use App\Services\Auth\VerificationService;
 use CodeIgniter\Test\CIUnitTestCase;
 use Tests\Support\Traits\CustomAssertionsTrait;
@@ -45,52 +45,28 @@ class VerificationServiceTest extends CIUnitTestCase
     }
 
     /**
-     * Create service with mocked user model
+     * Create service with mocked user repository
      */
     private function createServiceWithUser(?UserEntity $user, bool $allowUpdate = true): VerificationService
     {
-        $mockUserModel = new class ($user, $allowUpdate) extends UserModel {
-            private ?UserEntity $returnUser;
-            private bool $allowUpdate;
+        $mockUserRepository = $this->createMock(UserRepositoryInterface::class);
+        $mockUserRepository->method('find')->willReturn($user);
+        $mockUserRepository->method('findByVerificationToken')->willReturn($user);
 
-            public function __construct(?UserEntity $user, bool $allowUpdate)
-            {
-                $this->returnUser = $user;
-                $this->allowUpdate = $allowUpdate;
+        $mockUserRepository->method('update')->willReturnCallback(function ($id, $row) use ($user, $allowUpdate) {
+            if (!$allowUpdate) {
+                return false;
             }
-
-            public function find($id = null)
-            {
-                return $this->returnUser;
-            }
-
-            public function where($key, $value = null, ?bool $escape = null): static
-            {
-                return $this;
-            }
-
-            public function first()
-            {
-                return $this->returnUser;
-            }
-
-            public function update($id = null, $row = null): bool
-            {
-                if (!$this->allowUpdate) {
-                    return false;
+            if ($user && is_array($row)) {
+                foreach ($row as $key => $value) {
+                    $user->{$key} = $value;
                 }
-                // Simulate updating the user entity
-                if ($this->returnUser && is_array($row)) {
-                    foreach ($row as $key => $value) {
-                        $this->returnUser->{$key} = $value;
-                    }
-                }
-                return true;
             }
-        };
+            return true;
+        });
 
         return new VerificationService(
-            $mockUserModel,
+            $mockUserRepository,
             $this->mockEmailService,
             $this->mockAuditService
         );

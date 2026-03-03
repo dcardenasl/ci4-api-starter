@@ -39,7 +39,7 @@ class FilterConventionsTest extends CIUnitTestCase
                 $violations[] = "{$relative}: missing declare(strict_types=1);";
             }
 
-            if (preg_match('/\bservice\s*\(\s*[\"\"][^\"\"]+[\"\"]\s*\)/', $source) === 1) {
+            if (preg_match('/\bservice\s*\(\s*(?:\'[^\']+\'|"[^"]+")\s*\)/', $source) === 1) {
                 $violations[] = "{$relative}: use Config\\Services facade instead of service('...')";
             }
         }

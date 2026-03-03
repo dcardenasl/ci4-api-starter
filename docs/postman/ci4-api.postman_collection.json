@@ -6,15 +6,15 @@
   },
   "variable": [
     { "key": "baseUrl", "value": "http://localhost:8080" },
-    { "key": "accessToken", "value": "" },
-    { "key": "refreshToken", "value": "" },
-    { "key": "userId", "value": "" },
+    { "key": "access_token", "value": "" },
+    { "key": "refresh_token", "value": "" },
+    { "key": "user_id", "value": "" },
     { "key": "fileId", "value": "" }
   ],
   "auth": {
     "type": "bearer",
     "bearer": [
-      { "key": "token", "value": "{{accessToken}}", "type": "string" }
+      { "key": "token", "value": "{{access_token}}", "type": "string" }
     ]
   },
   "item": [
@@ -99,7 +99,7 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"refresh_token\": \"{{refreshToken}}\"\n}"
+              "raw": "{\n  \"refresh_token\": \"{{refresh_token}}\"\n}"
             },
             "url": "{{baseUrl}}/api/v1/auth/refresh"
           }
@@ -111,7 +111,7 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"refresh_token\": \"{{refreshToken}}\"\n}"
+              "raw": "{\n  \"refresh_token\": \"{{refresh_token}}\"\n}"
             },
             "url": "{{baseUrl}}/api/v1/auth/revoke"
           }
@@ -201,7 +201,7 @@
           "name": "Get User",
           "request": {
             "method": "GET",
-            "url": "{{baseUrl}}/api/v1/users/{{userId}}"
+            "url": "{{baseUrl}}/api/v1/users/{{user_id}}"
           }
         },
         {
@@ -225,21 +225,21 @@
               "mode": "raw",
               "raw": "{\n  \"first_name\": \"Updated\"\n}"
             },
-            "url": "{{baseUrl}}/api/v1/users/{{userId}}"
+            "url": "{{baseUrl}}/api/v1/users/{{user_id}}"
           }
         },
         {
           "name": "Delete User (Admin)",
           "request": {
             "method": "DELETE",
-            "url": "{{baseUrl}}/api/v1/users/{{userId}}"
+            "url": "{{baseUrl}}/api/v1/users/{{user_id}}"
           }
         },
         {
           "name": "Approve User (Admin)",
           "request": {
             "method": "POST",
-            "url": "{{baseUrl}}/api/v1/users/{{userId}}/approve"
+            "url": "{{baseUrl}}/api/v1/users/{{user_id}}/approve"
           }
         }
       ]
@@ -349,7 +349,7 @@
           "name": "Audit Logs By Entity",
           "request": {
             "method": "GET",
-            "url": "{{baseUrl}}/api/v1/audit/entity/user/{{userId}}"
+            "url": "{{baseUrl}}/api/v1/audit/entity/user/{{user_id}}"
           }
         }
       ]

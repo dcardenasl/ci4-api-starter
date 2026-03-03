@@ -12,7 +12,7 @@ use CodeIgniter\Config\Services;
  * API Smoke Test & Contract Inspector
  *
  * This command simulates requests to key endpoints and prints their JSON response
- * to verify that the camelCase contract is being respected.
+ * to verify that the snake_case contract is being respected.
  */
 class ApiSmokeTest extends BaseCommand
 {
@@ -120,7 +120,7 @@ class ApiSmokeTest extends BaseCommand
         }
 
         foreach ($keys as $key) {
-            $color = preg_match('/[A-Z]/', $key) ? 'green' : 'white';
+            $color = preg_match('/[A-Z]/', $key) ? 'red' : 'green';
             CLI::write("  • $key", $color);
         }
 

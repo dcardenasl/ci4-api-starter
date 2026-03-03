@@ -265,15 +265,14 @@ use App\DTO\Request\BaseRequestDTO;
 readonly class {$resource}IndexRequestDTO extends BaseRequestDTO
 {
     public int \$page;
-    public int \$perPage;
+    public int \$per_page;
     public ?string \$search;
 
     protected function rules(): array
     {
         return [
             'page'     => 'permit_empty|is_natural_no_zero',
-            'perPage'  => 'permit_empty|is_natural_no_zero|less_than[101]',
-            'per_page' => 'permit_empty|is_natural_no_zero|less_than[101]',
+            'per_page'  => 'permit_empty|is_natural_no_zero|less_than[101]',
             'search'   => 'permit_empty|string|max_length[100]',
         ];
     }
@@ -281,9 +280,7 @@ readonly class {$resource}IndexRequestDTO extends BaseRequestDTO
     protected function map(array \$data): void
     {
         \$this->page = isset(\$data['page']) ? (int) \$data['page'] : 1;
-        \$this->perPage = isset(\$data['perPage'])
-            ? (int) \$data['perPage']
-            : (isset(\$data['per_page']) ? (int) \$data['per_page'] : 20);
+        \$this->per_page = isset(\$data['per_page']) ? (int) \$data['per_page'] : 20;
         \$this->search = \$data['search'] ?? null;
     }
 
@@ -291,7 +288,7 @@ readonly class {$resource}IndexRequestDTO extends BaseRequestDTO
     {
         return [
             'page' => \$this->page,
-            'perPage' => \$this->perPage,
+            'per_page' => \$this->per_page,
             'search' => \$this->search,
         ];
     }

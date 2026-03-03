@@ -37,6 +37,7 @@ abstract class ApiTestCase extends CIUnitTestCase
         parent::setUp();
         \App\Services\System\AuditService::$forceEnabledInTests = false;
         \App\Libraries\ContextHolder::flush();
+        $this->resetCacheState();
         $this->resetState();
     }
 
@@ -47,6 +48,7 @@ abstract class ApiTestCase extends CIUnitTestCase
     {
         \App\Services\System\AuditService::$forceEnabledInTests = false;
         \App\Libraries\ContextHolder::flush();
+        $this->resetCacheState();
         $this->resetState();
         parent::tearDown();
     }
@@ -81,6 +83,15 @@ abstract class ApiTestCase extends CIUnitTestCase
         $this->request = null;
 
         $this->reapplyTestRequestHeaders();
+    }
+
+    protected function resetCacheState(): void
+    {
+        try {
+            Services::cache()->clean();
+        } catch (\Throwable $e) {
+            // Ignore cache reset issues in tests that do not use cache-backed features.
+        }
     }
 
     /**

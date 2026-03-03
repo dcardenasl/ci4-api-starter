@@ -60,13 +60,14 @@ class Base64Processor implements FileProcessorInterface
 
     private function validate(int $size, string $mimeType, array $options): void
     {
-        $maxSize = $options['maxSize'] ?? (int) env('FILE_MAX_SIZE', 10485760);
+        $apiConfig = config('Api');
+        $maxSize = $options['maxSize'] ?? $apiConfig->fileMaxSize;
         if ($size > $maxSize) {
             throw new ValidationException(lang('Files.file_too_large'), ['file' => lang('Files.file_too_large')]);
         }
 
         $extension = \Config\Mimes::guessExtensionFromType($mimeType) ?? 'bin';
-        $allowedTypes = $options['allowedTypes'] ?? explode(',', env('FILE_ALLOWED_TYPES', 'jpg,jpeg,png,gif,pdf,doc,docx,txt,zip'));
+        $allowedTypes = $options['allowedTypes'] ?? explode(',', $apiConfig->fileAllowedTypes);
         if (!in_array(strtolower($extension), $allowedTypes, true)) {
             throw new ValidationException(lang('Files.invalid_file_type'), ['file' => lang('Files.invalid_file_type')]);
         }

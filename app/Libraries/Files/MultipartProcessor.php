@@ -39,12 +39,13 @@ class MultipartProcessor implements FileProcessorInterface
 
     private function validate(UploadedFile $file, array $options): void
     {
-        $maxSize = $options['maxSize'] ?? (int) env('FILE_MAX_SIZE', 10485760);
+        $apiConfig = config('Api');
+        $maxSize = $options['maxSize'] ?? $apiConfig->fileMaxSize;
         if ($file->getSize() > $maxSize) {
             throw new ValidationException(lang('Files.file_too_large'), ['file' => lang('Files.file_too_large')]);
         }
 
-        $allowedTypes = $options['allowedTypes'] ?? explode(',', env('FILE_ALLOWED_TYPES', 'jpg,jpeg,png,gif,pdf,doc,docx,txt,zip'));
+        $allowedTypes = $options['allowedTypes'] ?? explode(',', $apiConfig->fileAllowedTypes);
         if (!in_array(strtolower($file->getExtension()), $allowedTypes, true)) {
             throw new ValidationException(lang('Files.invalid_file_type'), ['file' => lang('Files.invalid_file_type')]);
         }

@@ -13,7 +13,7 @@ class Base64Processor implements FileProcessorInterface
     public function process(mixed $input, array $options = []): ProcessedFile
     {
         if (!is_string($input) || str_contains($input, 'Resource id #')) {
-            throw new BadRequestException(lang('Files.invalidFileObject'));
+            throw new BadRequestException(lang('Files.invalid_file_object'));
         }
 
         // Detect Data URI or Raw Base64
@@ -27,7 +27,7 @@ class Base64Processor implements FileProcessorInterface
 
         $contents = base64_decode($base64Data, true);
         if ($contents === false) {
-            throw new BadRequestException(lang('Files.invalidFileObject'));
+            throw new BadRequestException(lang('Files.invalid_file_object'));
         }
 
         if ($mimeType === 'application/octet-stream') {
@@ -43,7 +43,7 @@ class Base64Processor implements FileProcessorInterface
 
         $stream = fopen('php://temp', 'r+b');
         if ($stream === false) {
-            throw new \RuntimeException(lang('Files.storageError'));
+            throw new \RuntimeException(lang('Files.storage_error'));
         }
 
         fwrite($stream, $contents);
@@ -60,15 +60,15 @@ class Base64Processor implements FileProcessorInterface
 
     private function validate(int $size, string $mimeType, array $options): void
     {
-        $maxSize = $options['maxSize'] ?? (int) env('FILE_MAX_SIZE', 20971520);
+        $maxSize = $options['maxSize'] ?? (int) env('FILE_MAX_SIZE', 10485760);
         if ($size > $maxSize) {
-            throw new ValidationException(lang('Files.fileTooLarge'), ['file' => lang('Files.fileTooLarge')]);
+            throw new ValidationException(lang('Files.file_too_large'), ['file' => lang('Files.file_too_large')]);
         }
 
         $extension = \Config\Mimes::guessExtensionFromType($mimeType) ?? 'bin';
-        $allowedTypes = $options['allowedTypes'] ?? explode(',', env('FILE_ALLOWED_TYPES', 'jpg,jpeg,png,gif,pdf'));
+        $allowedTypes = $options['allowedTypes'] ?? explode(',', env('FILE_ALLOWED_TYPES', 'jpg,jpeg,png,gif,pdf,doc,docx,txt,zip'));
         if (!in_array(strtolower($extension), $allowedTypes, true)) {
-            throw new ValidationException(lang('Files.invalidFileType'), ['file' => lang('Files.invalidFileType')]);
+            throw new ValidationException(lang('Files.invalid_file_type'), ['file' => lang('Files.invalid_file_type')]);
         }
     }
 }

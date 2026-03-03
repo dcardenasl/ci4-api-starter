@@ -70,7 +70,7 @@ class FileService implements FileServiceInterface
 
         // Save physical file
         if (!$this->storage->put($path, $file->contents)) {
-            throw new \RuntimeException(lang('Files.storageError'));
+            throw new \RuntimeException(lang('Files.storage_error'));
         }
 
         // Save metadata
@@ -89,7 +89,7 @@ class FileService implements FileServiceInterface
 
         if (!$fileId) {
             $this->storage->delete($path);
-            throw new ValidationException(lang('Files.saveFailed'), $this->fileModel->errors());
+            throw new ValidationException(lang('Files.save_failed'), $this->fileModel->errors());
         }
 
         $savedFile = $this->fileModel->find($fileId);
@@ -193,7 +193,7 @@ class FileService implements FileServiceInterface
         /** @var \App\Entities\FileEntity|null $file */
         $file = $this->fileModel->find($id);
         if (!$file) {
-            throw new NotFoundException(lang('Files.fileNotFound'));
+            throw new NotFoundException(lang('Files.file_not_found'));
         }
 
         if (!$bypassOwnership && (int) $file->user_id !== $userId) {

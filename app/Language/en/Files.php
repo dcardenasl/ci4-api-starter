@@ -5,24 +5,24 @@
  */
 return [
     // Success messages
-    'uploadSuccess'      => 'File uploaded successfully',
-    'deleteSuccess'      => 'File deleted successfully',
+    'upload_success'      => 'File uploaded successfully',
+    'delete_success'      => 'File deleted successfully',
 
     // Error messages
-    'fileRequired'       => 'File is required',
-    'invalidFileObject'  => 'Invalid file object',
-    'uploadFailed'       => 'File upload failed: {0}',
-    'fileTooLarge'       => 'File size exceeds maximum allowed size',
-    'invalidFileType'    => 'File type not allowed',
-    'storageFailed'      => 'Failed to store file',
-    'fileNotFound'       => 'File not found or access denied',
-    'idRequired'         => 'File ID is required',
+    'file_required'       => 'File is required',
+    'invalid_file_object'  => 'Invalid file object',
+    'upload_failed'       => 'File upload failed: {0}',
+    'file_too_large'       => 'File size exceeds maximum allowed size',
+    'invalid_file_type'    => 'File type not allowed',
+    'storage_failed'      => 'Failed to store file',
+    'file_not_found'       => 'File not found or access denied',
+    'id_required'         => 'File ID is required',
     'unauthorized'       => 'You are not authorized to access this file',
-    'saveFailed'         => 'Failed to save file metadata',
+    'save_failed'         => 'Failed to save file metadata',
 
     // Request messages
-    'invalidRequest'     => 'Invalid request',
-    'storageError'       => 'Storage error',
+    'invalid_request'     => 'Invalid request',
+    'storage_error'       => 'Storage error',
     'notFound'           => 'Not found',
     'useDeleteWithContext' => 'Use delete() with FileGetRequestDTO to enforce ownership checks',
     'upload' => [

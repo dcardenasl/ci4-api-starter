@@ -6,7 +6,7 @@ namespace App\Services\Auth\Support;
 
 use App\Exceptions\ValidationException;
 use App\Interfaces\Tokens\RefreshTokenServiceInterface;
-use App\Models\UserModel;
+use App\Interfaces\Users\UserRepositoryInterface;
 
 /**
  * Google Auth Handler
@@ -18,7 +18,7 @@ class GoogleAuthHandler
     use \App\Traits\HandlesTransactions;
 
     public function __construct(
-        protected UserModel $userModel,
+        protected UserRepositoryInterface $userRepository,
         protected RefreshTokenServiceInterface $refreshTokenService
     ) {
     }
@@ -28,24 +28,29 @@ class GoogleAuthHandler
      */
     public function createPendingUser(array $identity): \App\Entities\UserEntity
     {
-        $userId = $this->userModel->insert([
+        $requiresVerification = is_email_verification_required();
+        $status = $requiresVerification ? 'pending_approval' : 'active';
+        $now = date('Y-m-d H:i:s');
+
+        $userId = $this->userRepository->insert([
             'email' => strtolower(trim((string) $identity['email'])),
             'first_name' => $identity['first_name'] ?? null,
             'last_name' => $identity['last_name'] ?? null,
             'avatar_url' => $identity['avatar_url'] ?? null,
             'role' => 'user',
-            'status' => 'pending_approval',
+            'status' => $status,
             'oauth_provider' => 'google',
             'oauth_provider_id' => $identity['provider_id'],
-            'email_verified_at' => date('Y-m-d H:i:s'),
+            'email_verified_at' => $now,
+            'approved_at' => $status === 'active' ? $now : null,
         ]);
 
         if (!$userId) {
-            throw new ValidationException(lang('Api.validationFailed'), $this->userModel->errors());
+            throw new ValidationException(lang('Api.validationFailed'), $this->userRepository->errors());
         }
 
         /** @var \App\Entities\UserEntity $user */
-        $user = $this->userModel->find($userId);
+        $user = $this->userRepository->find((int) $userId);
         return $user;
     }
 
@@ -55,19 +60,36 @@ class GoogleAuthHandler
     public function reactivateDeletedUser(object $user, array $identity): \App\Entities\UserEntity
     {
         return $this->wrapInTransaction(function () use ($user, $identity) {
-            $this->userModel->withDeleted()->update((int) $user->id, [
-                'deleted_at' => null,
-                'status' => 'pending_approval',
+            $requiresVerification = is_email_verification_required();
+            $status = $requiresVerification ? 'pending_approval' : 'active';
+            $now = date('Y-m-d H:i:s');
+
+            $this->userRepository->restore((int) $user->id, [
+                'status' => $status,
                 'oauth_provider' => 'google',
                 'oauth_provider_id' => $identity['provider_id'],
-                'email_verified_at' => date('Y-m-d H:i:s'),
+                'email_verified_at' => $now,
+                'approved_at' => $status === 'active' ? $now : null,
             ]);
 
             $this->syncProfileIfEmpty((int) $user->id, $identity);
             $this->refreshTokenService->revokeAllUserTokens((int) $user->id);
 
-            /** @var \App\Entities\UserEntity $updatedUser */
-            $updatedUser = $this->userModel->find((int) $user->id);
+            /** @var \App\Entities\UserEntity|null $updatedUser */
+            $updatedUser = $this->userRepository->find((int) $user->id);
+
+            if (!$updatedUser instanceof \App\Entities\UserEntity) {
+                // If not found by standard find (e.g. restoration took a moment or failed quietly),
+                // we try to find it with deleted just to satisfy the return type contract,
+                // but this shouldn't normally happen.
+                $withDeleted = $this->userRepository->getModel()->withDeleted()->find((int) $user->id);
+                if ($withDeleted instanceof \App\Entities\UserEntity) {
+                    return $withDeleted;
+                }
+
+                throw new \RuntimeException(lang('Auth.googleUserMissing'));
+            }
+
             return $updatedUser;
         });
     }
@@ -77,7 +99,7 @@ class GoogleAuthHandler
      */
     public function syncProfileIfEmpty(int $userId, array $identity): void
     {
-        $currentUser = $this->userModel->find($userId);
+        $currentUser = $this->userRepository->find($userId);
         if (!$currentUser) {
             return;
         }
@@ -95,7 +117,7 @@ class GoogleAuthHandler
         }
 
         if ($updateData !== []) {
-            $this->userModel->update($userId, array_filter($updateData));
+            $this->userRepository->update($userId, array_filter($updateData));
         }
     }
 }

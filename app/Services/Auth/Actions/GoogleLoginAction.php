@@ -10,7 +10,7 @@ use App\Entities\UserEntity;
 use App\Interfaces\Auth\GoogleIdentityServiceInterface;
 use App\Interfaces\System\AuditServiceInterface;
 use App\Interfaces\System\EmailServiceInterface;
-use App\Models\UserModel;
+use App\Interfaces\Users\UserRepositoryInterface;
 use App\Services\Auth\Support\AuthUserMapper;
 use App\Services\Auth\Support\GoogleAuthHandler;
 use App\Services\Auth\Support\SessionManager;
@@ -20,7 +20,7 @@ use App\Support\OperationResult;
 class GoogleLoginAction
 {
     public function __construct(
-        protected UserModel $userModel,
+        protected UserRepositoryInterface $userRepository,
         protected GoogleIdentityServiceInterface $googleIdentityService,
         protected GoogleAuthHandler $googleHandler,
         protected SessionManager $sessionManager,
@@ -37,7 +37,7 @@ class GoogleLoginAction
         $email = strtolower($identity->email);
 
         /** @var UserEntity|null $user */
-        $user = $this->userModel->withDeleted()->where('email', $email)->first();
+        $user = $this->userRepository->findByEmailWithDeleted($email);
 
         if (!$user) {
             $pending = $this->googleHandler->createPendingUser($identity->toArray());
@@ -87,9 +87,9 @@ class GoogleLoginAction
             }
 
             if ($updateData !== []) {
-                $this->userModel->update((int) $user->id, $updateData);
+                $this->userRepository->update((int) $user->id, $updateData);
                 /** @var UserEntity|null $refreshed */
-                $refreshed = $this->userModel->find((int) $user->id);
+                $refreshed = $this->userRepository->find((int) $user->id);
                 if ($refreshed === null) {
                     throw new \RuntimeException(lang('Auth.googleUserMissing'));
                 }
@@ -101,7 +101,7 @@ class GoogleLoginAction
         $this->googleHandler->syncProfileIfEmpty((int) $user->id, $identity->toArray());
 
         /** @var UserEntity|null $freshUser */
-        $freshUser = $this->userModel->find((int) $user->id);
+        $freshUser = $this->userRepository->find((int) $user->id);
         if ($freshUser === null) {
             throw new \RuntimeException(lang('Auth.googleUserMissing'));
         }

@@ -7,10 +7,9 @@ namespace App\Services\Core;
 use App\DTO\Response\Common\PaginatedResponseDTO;
 use App\DTO\SecurityContext;
 use App\Exceptions\NotFoundException;
+use App\Interfaces\Core\RepositoryInterface;
 use App\Interfaces\DataTransferObjectInterface;
 use App\Interfaces\Mappers\ResponseMapperInterface;
-use App\Libraries\Query\QueryBuilder;
-use CodeIgniter\Model;
 
 /**
  * Enhanced Base CRUD Service
@@ -23,9 +22,9 @@ abstract class BaseCrudService implements \App\Interfaces\Core\CrudServiceContra
     use \App\Traits\HandlesTransactions;
 
     /**
-     * @var Model The primary model for this service
+     * @var RepositoryInterface The primary repository for this service
      */
-    protected \CodeIgniter\Model $model;
+    protected RepositoryInterface $repository;
 
     /**
      * @var ResponseMapperInterface Mapper responsible for turning entities into DTOs
@@ -42,19 +41,18 @@ abstract class BaseCrudService implements \App\Interfaces\Core\CrudServiceContra
      */
     public function index(DataTransferObjectInterface $request, ?SecurityContext $context = null): DataTransferObjectInterface
     {
-        $builder = new QueryBuilder($this->model);
-
-        // Apply global security/business criteria defined by the service
-        $this->applyBaseCriteria($this->model);
-
-        // Apply optional query filtering/options
-        $this->applyQueryOptions($builder, $request->toArray());
-
         $requestData = $request->toArray();
         $page = $requestData['page'] ?? 1;
         $per_page = $requestData['per_page'] ?? 20;
 
-        $result = $builder->paginate((int) $page, (int) $per_page);
+        // The base criteria callable allows services to inject base constraints
+        $baseCriteria = function ($model) {
+            $this->applyBaseCriteria($model);
+        };
+
+        // Pass the request data directly to the repository as criteria
+        $criteria = $this->applyQueryOptions($requestData);
+        $result = $this->repository->paginateCriteria($criteria, (int) $page, (int) $per_page, $baseCriteria);
 
         // Auto-map entities to response DTOs
         $result['data'] = array_map(
@@ -79,7 +77,7 @@ abstract class BaseCrudService implements \App\Interfaces\Core\CrudServiceContra
     public function show(int $id, ?SecurityContext $context = null): DataTransferObjectInterface
     {
         /** @var object|null $entity */
-        $entity = $this->model->find($id);
+        $entity = $this->repository->find($id);
 
         if (!$entity) {
             throw new NotFoundException(lang('Api.resourceNotFound'));
@@ -93,12 +91,12 @@ abstract class BaseCrudService implements \App\Interfaces\Core\CrudServiceContra
      */
     public function destroy(int $id, ?SecurityContext $context = null): bool
     {
-        if (!$this->model->find($id)) {
+        if (!$this->repository->find($id)) {
             throw new NotFoundException(lang('Api.resourceNotFound'));
         }
 
         return $this->wrapInTransaction(function () use ($id) {
-            if (!$this->model->delete($id)) {
+            if (!$this->repository->delete($id)) {
                 throw new \RuntimeException(lang('Api.deleteError'));
             }
             return true;
@@ -107,18 +105,19 @@ abstract class BaseCrudService implements \App\Interfaces\Core\CrudServiceContra
 
     /**
      * Optional hook for child services to apply global criteria (e.g. security filters)
+     * Note: Currently receives the underlying object (e.g. CI Model) for backwards compatibility.
      */
-    protected function applyBaseCriteria(Model $model): void
+    protected function applyBaseCriteria(object $model): void
     {
         // Default: no criteria
     }
 
     /**
-     * Optional hook for child services to apply additional query options (filtering, sorting, etc.)
+     * Optional hook for child services to apply/modify query options (filtering, sorting, etc.)
      */
-    protected function applyQueryOptions(QueryBuilder $builder, array $data): void
+    protected function applyQueryOptions(array $criteria): array
     {
-        // Default: no additional options
+        return $criteria; // Default: pass through unmodified
     }
 
     /**

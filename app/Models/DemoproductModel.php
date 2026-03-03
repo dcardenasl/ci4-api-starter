@@ -23,6 +23,7 @@ class DemoproductModel extends Model
     protected $useTimestamps = true;
     protected $allowedFields = [
         'name',
+        'deleted_at',
     ];
 
     /** @var array<int, string> */

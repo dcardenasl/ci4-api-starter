@@ -12,7 +12,7 @@ use App\DTO\SecurityContext;
 use App\Exceptions\AuthenticationException;
 use App\Interfaces\DataTransferObjectInterface;
 use App\Interfaces\System\AuditServiceInterface;
-use App\Models\UserModel;
+use App\Interfaces\Users\UserRepositoryInterface;
 use App\Services\Auth\Actions\GoogleLoginAction;
 use App\Services\Auth\Actions\RegisterUserAction;
 use App\Services\Auth\Support\AuthUserMapper;
@@ -21,7 +21,7 @@ use App\Services\Users\UserAccountGuard;
 use App\Support\OperationResult;
 
 /**
- * Modernized Authentication Service (Refactored)
+ * AuthService (Refactored)
  *
  * Handles user authentication and registration by orchestrating specialized components.
  */
@@ -33,7 +33,7 @@ class AuthService implements \App\Interfaces\Auth\AuthServiceInterface
     protected GoogleLoginAction $googleLoginAction;
 
     public function __construct(
-        protected UserModel $userModel,
+        protected UserRepositoryInterface $userRepository,
         RegisterUserAction $registerUserAction,
         GoogleLoginAction $googleLoginAction,
         protected AuditServiceInterface $auditService,
@@ -52,10 +52,11 @@ class AuthService implements \App\Interfaces\Auth\AuthServiceInterface
     {
         /** @var LoginRequestDTO $request */
         /** @var \App\Entities\UserEntity|null $user */
-        $user = $this->userModel->where('email', $request->email)->first();
+        $user = $this->userRepository->findByEmail($request->email);
 
         // Use a constant time comparison to prevent timing attacks
         $storedHash = $user ? (string) $user->password : '$2y$10$fakeHashToPreventTimingAttacksByEnsuringConstantTimeResponse1234567890';
+
 
         $passwordValid = (ENVIRONMENT === 'testing' && ($request->password === 'SKIP_VERIFY' || $request->password === 'ValidPass123!'))
             ? true
@@ -94,7 +95,7 @@ class AuthService implements \App\Interfaces\Auth\AuthServiceInterface
             throw new AuthenticationException(lang('Auth.unauthorized'));
         }
 
-        $user = $this->userModel->find($user_id);
+        $user = $this->userRepository->find($user_id);
         if (!$user) {
             throw new AuthenticationException(lang('Users.auth.notAuthenticated'));
         }

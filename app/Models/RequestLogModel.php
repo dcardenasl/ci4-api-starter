@@ -71,7 +71,7 @@ class RequestLogModel extends Model
 
         $errorRate = $totalRequests > 0 ? ($failedRequests / $totalRequests) * 100 : 0.0;
         $availability = $totalRequests > 0 ? ($successfulRequests / $totalRequests) * 100 : 100.0;
-        $latencyTarget = (int) env('SLO_API_P95_TARGET_MS', 500);
+        $latencyTarget = config('Api')->sloP95TargetMs;
 
         return [
             'period' => $period,

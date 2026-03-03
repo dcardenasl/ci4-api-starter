@@ -25,12 +25,12 @@ class Services extends BaseService
             return static::getSharedInstance('authService');
         }
 
-        $userModel = static::userModel();
+        $userRepository = static::userRepository();
 
         return new \App\Services\Auth\AuthService(
-            $userModel,
-            static::registerUserAction($userModel),
-            static::googleLoginAction($userModel),
+            $userRepository,
+            static::registerUserAction($userRepository),
+            static::googleLoginAction($userRepository),
             static::auditService(),
             static::authUserMapper(),
             static::sessionManager(),
@@ -62,28 +62,29 @@ class Services extends BaseService
         );
     }
 
-    public static function googleAuthHandler(\App\Models\UserModel $userModel)
+    public static function googleAuthHandler(\App\Interfaces\Users\UserRepositoryInterface $userRepository)
     {
         return new \App\Services\Auth\Support\GoogleAuthHandler(
-            $userModel,
+            $userRepository,
             static::refreshTokenService()
         );
     }
 
-    public static function registerUserAction(\App\Models\UserModel $userModel)
+    public static function registerUserAction(\App\Interfaces\Users\UserRepositoryInterface $userRepository)
     {
         return new \App\Services\Auth\Actions\RegisterUserAction(
-            $userModel,
-            static::verificationService()
+            $userRepository,
+            static::verificationService(),
+            static::emailService()
         );
     }
 
-    public static function googleLoginAction(\App\Models\UserModel $userModel)
+    public static function googleLoginAction(\App\Interfaces\Users\UserRepositoryInterface $userRepository)
     {
         return new \App\Services\Auth\Actions\GoogleLoginAction(
-            $userModel,
+            $userRepository,
             static::googleIdentityService(),
-            static::googleAuthHandler($userModel),
+            static::googleAuthHandler($userRepository),
             static::sessionManager(),
             static::authUserMapper(),
             static::userAccountGuard(),
@@ -98,15 +99,15 @@ class Services extends BaseService
             return static::getSharedInstance('userService');
         }
 
-        $userModel = static::userModel();
+        $userRepository = static::userRepository();
 
         return new \App\Services\Users\UserService(
-            $userModel,
+            $userRepository,
             static::userResponseMapper(),
             static::userRoleGuard(),
-            static::approveUserAction($userModel),
-            static::createUserAction($userModel),
-            static::updateUserAction($userModel)
+            static::approveUserAction($userRepository),
+            static::createUserAction($userRepository),
+            static::updateUserAction($userRepository)
         );
     }
 
@@ -142,27 +143,27 @@ class Services extends BaseService
         );
     }
 
-    public static function createUserAction(\App\Models\UserModel $userModel)
+    public static function createUserAction(\App\Interfaces\Users\UserRepositoryInterface $userRepository)
     {
         return new \App\Services\Users\Actions\CreateUserAction(
-            $userModel,
+            $userRepository,
             static::userInvitationService()
         );
     }
 
-    public static function approveUserAction(\App\Models\UserModel $userModel)
+    public static function approveUserAction(\App\Interfaces\Users\UserRepositoryInterface $userRepository)
     {
         return new \App\Services\Users\Actions\ApproveUserAction(
-            $userModel,
+            $userRepository,
             static::auditService(),
             static::emailService()
         );
     }
 
-    public static function updateUserAction(\App\Models\UserModel $userModel)
+    public static function updateUserAction(\App\Interfaces\Users\UserRepositoryInterface $userRepository)
     {
         return new \App\Services\Users\Actions\UpdateUserAction(
-            $userModel,
+            $userRepository,
             static::userRoleGuard()
         );
     }
@@ -174,7 +175,7 @@ class Services extends BaseService
         }
 
         return new \App\Services\Auth\GoogleIdentityService(
-            trim((string) env('GOOGLE_CLIENT_ID', ''))
+            config('Api')->googleClientId
         );
     }
 
@@ -185,7 +186,7 @@ class Services extends BaseService
         }
 
         return new \App\Services\Auth\PasswordResetService(
-            static::userModel(),
+            static::userRepository(),
             new \App\Models\PasswordResetModel(),
             static::emailService(),
             static::refreshTokenService(),
@@ -200,7 +201,7 @@ class Services extends BaseService
         }
 
         return new \App\Services\Auth\VerificationService(
-            static::userModel(),
+            static::userRepository(),
             static::emailService(),
             static::auditService()
         );
@@ -232,8 +233,9 @@ class Services extends BaseService
             return static::getSharedInstance('jwtService');
         }
 
-        $secretKey = trim((string) (getenv('JWT_SECRET_KEY') ?: env('JWT_SECRET_KEY', '')));
-        $ttl = (int) (getenv('JWT_ACCESS_TOKEN_TTL') ?: env('JWT_ACCESS_TOKEN_TTL', 3600));
+        $apiConfig = config('Api');
+        $secretKey = $apiConfig->jwtSecretKey;
+        $ttl = $apiConfig->jwtAccessTokenTtl;
         $issuer = (string) env('app.baseURL', 'http://localhost:8080');
 
         return new \App\Services\Tokens\JwtService(
@@ -249,8 +251,9 @@ class Services extends BaseService
             return static::getSharedInstance('refreshTokenService');
         }
 
-        $refreshTokenTtl = (int) (getenv('JWT_REFRESH_TOKEN_TTL') ?: env('JWT_REFRESH_TOKEN_TTL', 604800));
-        $accessTokenTtl = (int) (getenv('JWT_ACCESS_TOKEN_TTL') ?: env('JWT_ACCESS_TOKEN_TTL', 3600));
+        $apiConfig = config('Api');
+        $refreshTokenTtl = $apiConfig->jwtRefreshTokenTtl;
+        $accessTokenTtl = $apiConfig->jwtAccessTokenTtl;
 
         return new \App\Services\Tokens\RefreshTokenService(
             new \App\Models\RefreshTokenModel(),
@@ -268,6 +271,7 @@ class Services extends BaseService
             return static::getSharedInstance('tokenRevocationService');
         }
 
+        $apiConfig = config('Api');
         return new \App\Services\Tokens\TokenRevocationService(
             new \App\Models\TokenBlacklistModel(),
             new \App\Models\RefreshTokenModel(),
@@ -275,8 +279,8 @@ class Services extends BaseService
             static::auditService(),
             static::cache(),
             static::bearerTokenService(),
-            (int) (getenv('JWT_ACCESS_TOKEN_TTL') ?: 3600),
-            (int) (getenv('JWT_REVOCATION_CACHE_TTL') ?: 60)
+            $apiConfig->jwtAccessTokenTtl,
+            $apiConfig->jwtRevocationCacheTtl
         );
     }
 
@@ -357,7 +361,7 @@ class Services extends BaseService
         $storage = static::storageManager();
 
         return new \App\Services\Files\FileService(
-            new \App\Models\FileModel(),
+            static::fileRepository(),
             $storage,
             static::auditService(),
             new \App\Libraries\Files\FilenameGenerator($storage),
@@ -408,7 +412,7 @@ class Services extends BaseService
         }
 
         return new \App\Services\System\AuditService(
-            new \App\Models\AuditLogModel(),
+            static::auditRepository(),
             static::auditResponseMapper()
         );
     }
@@ -430,8 +434,9 @@ class Services extends BaseService
             return static::getSharedInstance('metricsService');
         }
 
-        $slowQueryThreshold = (int) env('SLOW_QUERY_THRESHOLD', 1000);
-        $p95Target = (int) env('SLO_API_P95_TARGET_MS', 500);
+        $apiConfig = config('Api');
+        $slowQueryThreshold = $apiConfig->slowQueryThreshold;
+        $p95Target = $apiConfig->sloP95TargetMs;
 
         return new \App\Services\System\MetricsService(
             new \App\Models\RequestLogModel(),
@@ -448,7 +453,7 @@ class Services extends BaseService
         }
 
         return new \App\Services\System\CatalogService(
-            new \App\Models\AuditLogModel()
+            static::auditRepository()
         );
     }
 
@@ -459,6 +464,39 @@ class Services extends BaseService
         }
 
         return new \App\Libraries\Queue\QueueManager();
+    }
+
+    /*
+     |--------------------------------------------------------------------------
+     | REPOSITORIES
+     |--------------------------------------------------------------------------
+     */
+
+    public static function userRepository(bool $getShared = true)
+    {
+        if ($getShared) {
+            return static::getSharedInstance('userRepository');
+        }
+
+        return new \App\Repositories\Users\UserRepository(static::userModel());
+    }
+
+    public static function auditRepository(bool $getShared = true)
+    {
+        if ($getShared) {
+            return static::getSharedInstance('auditRepository');
+        }
+
+        return new \App\Repositories\System\AuditRepository(new \App\Models\AuditLogModel());
+    }
+
+    public static function fileRepository(bool $getShared = true)
+    {
+        if ($getShared) {
+            return static::getSharedInstance('fileRepository');
+        }
+
+        return new \App\Repositories\Files\FileRepository(new \App\Models\FileModel());
     }
 
     /*
@@ -523,7 +561,7 @@ class Services extends BaseService
         }
 
         return new \App\Services\Catalog\DemoproductService(
-            new \App\Models\DemoproductModel(),
+            new \App\Repositories\GenericRepository(new \App\Models\DemoproductModel()),
             static::demoproductResponseMapper()
         );
     }

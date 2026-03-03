@@ -11,7 +11,6 @@ use App\Interfaces\System\AuditServiceInterface;
 use App\Interfaces\System\EmailServiceInterface;
 use App\Interfaces\Tokens\RefreshTokenServiceInterface;
 use App\Models\PasswordResetModel;
-use App\Models\UserModel;
 use App\Traits\ResolvesWebAppLinks;
 
 /**
@@ -23,7 +22,7 @@ class PasswordResetService implements \App\Interfaces\Auth\PasswordResetServiceI
     use \App\Traits\HandlesTransactions;
 
     public function __construct(
-        protected UserModel $userModel,
+        protected \App\Interfaces\Users\UserRepositoryInterface $userRepository,
         protected PasswordResetModel $passwordResetModel,
         protected EmailServiceInterface $emailService,
         protected RefreshTokenServiceInterface $refreshTokenService,
@@ -38,7 +37,7 @@ class PasswordResetService implements \App\Interfaces\Auth\PasswordResetServiceI
     {
         /** @var \App\DTO\Request\Identity\ForgotPasswordRequestDTO $request */
         $email = $request->email;
-        $user = $this->userModel->where('email', $email)->first();
+        $user = $this->userRepository->findByEmail($email);
 
         if ($user instanceof \App\Entities\UserEntity) {
             $this->auditService->log('password_reset_request', 'users', (int) $user->id, [], ['email' => $email], $context);
@@ -58,7 +57,7 @@ class PasswordResetService implements \App\Interfaces\Auth\PasswordResetServiceI
                 log_message('error', 'Failed to queue password reset email: ' . $e->getMessage());
             }
         } else {
-            $deletedUser = $this->userModel->withDeleted()->where('email', $email)->first();
+            $deletedUser = $this->userRepository->findByEmailWithDeleted($email);
             if ($deletedUser instanceof \App\Entities\UserEntity && $deletedUser->deleted_at !== null) {
                 $this->reactivateDeletedUserForApproval($deletedUser, $email, $context);
             }
@@ -94,7 +93,7 @@ class PasswordResetService implements \App\Interfaces\Auth\PasswordResetServiceI
             throw new NotFoundException(lang('PasswordReset.invalidToken'));
         }
 
-        $user = $this->userModel->where('email', $request->email)->first();
+        $user = $this->userRepository->findByEmail($request->email);
         if (!$user) {
             throw new NotFoundException(lang('PasswordReset.userNotFound'));
         }
@@ -110,7 +109,7 @@ class PasswordResetService implements \App\Interfaces\Auth\PasswordResetServiceI
                 $updateData['status'] = 'active';
             }
 
-            $this->userModel->update($user->id, $updateData);
+            $this->userRepository->update($user->id, $updateData);
 
             // Elevate context on success
             $userContext = new SecurityContext((int) $user->id, (string) $user->role, $context?->metadata ?? []);
@@ -125,11 +124,13 @@ class PasswordResetService implements \App\Interfaces\Auth\PasswordResetServiceI
     private function reactivateDeletedUserForApproval(\App\Entities\UserEntity $user, string $email, ?SecurityContext $context = null): void
     {
         $this->wrapInTransaction(function () use ($user, $email, $context) {
-            $db = \Config\Database::connect();
-            $db->table('users')->where('id', (int) $user->id)->update([
-                'deleted_at'  => null,
-                'status'      => 'pending_approval',
-                'approved_at' => null,
+            $requiresVerification = is_email_verification_required();
+            $status = $requiresVerification ? 'pending_approval' : 'active';
+            $now = date('Y-m-d H:i:s');
+
+            $this->userRepository->restore((int) $user->id, [
+                'status'      => $status,
+                'approved_at' => $status === 'active' ? $now : null,
                 'approved_by' => null,
             ]);
             $this->refreshTokenService->revokeAllUserTokens((int) $user->id);

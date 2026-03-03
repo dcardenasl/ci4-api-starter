@@ -9,16 +9,17 @@ use App\DTO\Response\Files\FileDownloadResponseDTO;
 use App\DTO\Response\Files\FileResponseDTO;
 use App\DTO\SecurityContext;
 use App\Exceptions\AuthorizationException;
+use App\Exceptions\BadRequestException;
 use App\Exceptions\NotFoundException;
 use App\Exceptions\ValidationException;
+use App\Interfaces\Files\FileRepositoryInterface;
 use App\Interfaces\Files\FileServiceInterface;
+use App\Interfaces\Files\VirusScannerServiceInterface;
 use App\Interfaces\System\AuditServiceInterface;
 use App\Libraries\Files\Base64Processor;
 use App\Libraries\Files\FilenameGenerator;
 use App\Libraries\Files\MultipartProcessor;
-use App\Libraries\Query\QueryBuilder;
 use App\Libraries\Storage\StorageManager;
-use App\Models\FileModel;
 use App\Support\Files\ProcessedFile;
 use App\Traits\AppliesQueryOptions;
 
@@ -33,12 +34,13 @@ class FileService implements FileServiceInterface
     use \App\Traits\HandlesTransactions;
 
     public function __construct(
-        protected FileModel $fileModel,
+        protected FileRepositoryInterface $fileRepository,
         protected StorageManager $storage,
         protected AuditServiceInterface $auditService,
         protected FilenameGenerator $filenameGenerator,
         protected MultipartProcessor $multipartProcessor,
-        protected Base64Processor $base64Processor
+        protected Base64Processor $base64Processor,
+        protected ?VirusScannerServiceInterface $virusScanner = null
     ) {
     }
 
@@ -64,6 +66,32 @@ class FileService implements FileServiceInterface
      */
     protected function storeAndSaveMetadata(ProcessedFile $file, int $userId): FileResponseDTO
     {
+        // 1. Virus Scanning Phase
+        if ($this->virusScanner !== null) {
+            $tempPath = tempnam(sys_get_temp_dir(), 'api_upload_');
+            if ($tempPath === false) {
+                throw new \RuntimeException('Failed to create temporary file for virus scanning');
+            }
+            $tempStream = fopen($tempPath, 'wb');
+
+            if ($tempStream !== false) {
+                // Rewind the stream to ensure we read from start
+                rewind($file->contents);
+                stream_copy_to_stream($file->contents, $tempStream);
+                fclose($tempStream);
+
+                try {
+                    if (!$this->virusScanner->isSafe($tempPath)) {
+                        throw new BadRequestException(lang('Files.malware_detected', ['Malware or virus detected in the uploaded file']));
+                    }
+                } finally {
+                    @unlink($tempPath);
+                    // Rewind again for the final storage process
+                    rewind($file->contents);
+                }
+            }
+        }
+
         $datePath = date('Y/m/d');
         $storedName = $this->filenameGenerator->generate($file->originalName, $file->extension, $datePath);
         $path = $datePath . '/' . $storedName;
@@ -74,7 +102,7 @@ class FileService implements FileServiceInterface
         }
 
         // Save metadata
-        $fileId = $this->fileModel->insert([
+        $fileId = $this->fileRepository->insert([
             'user_id' => $userId,
             'original_name' => sanitize_filename($file->originalName, false),
             'stored_name' => $storedName,
@@ -87,12 +115,12 @@ class FileService implements FileServiceInterface
             'uploaded_at' => date('Y-m-d H:i:s'),
         ]);
 
-        if (!$fileId) {
+        if ($fileId === false || $fileId === true) {
             $this->storage->delete($path);
-            throw new ValidationException(lang('Files.save_failed'), $this->fileModel->errors());
+            throw new ValidationException(lang('Files.save_failed'), $this->fileRepository->errors());
         }
 
-        $savedFile = $this->fileModel->find($fileId);
+        $savedFile = $this->fileRepository->find($fileId);
         return FileResponseDTO::fromArray($savedFile->toArray());
     }
 
@@ -104,14 +132,12 @@ class FileService implements FileServiceInterface
         /** @var \App\DTO\Request\Files\FileIndexRequestDTO $request */
         $userId = $this->resolveUserId($request, $context);
 
-        $builder = new QueryBuilder($this->fileModel);
-        $builder->filter(['user_id' => $userId]);
-
-        $this->applyQueryOptions($builder, $request->toArray(), function (): void {
-            $this->fileModel->orderBy('uploaded_at', 'DESC');
-        });
-
-        $result = $builder->paginate($request->page, $request->per_page);
+        $result = $this->fileRepository->paginateCriteria(
+            $request->toArray(),
+            $request->page,
+            $request->per_page,
+            fn ($model) => $model->where('user_id', $userId)
+        );
 
         $formattedData = array_map(function ($file) {
             return FileResponseDTO::fromArray([
@@ -157,7 +183,7 @@ class FileService implements FileServiceInterface
 
         return $this->wrapInTransaction(function () use ($file) {
             $this->storage->delete($file->path);
-            return $this->fileModel->delete($file->id);
+            return $this->fileRepository->delete($file->id);
         });
     }
 
@@ -174,7 +200,7 @@ class FileService implements FileServiceInterface
 
         return $this->wrapInTransaction(function () use ($file) {
             $this->storage->delete($file->path);
-            return $this->fileModel->delete($file->id);
+            return $this->fileRepository->delete($file->id);
         });
     }
 
@@ -191,7 +217,7 @@ class FileService implements FileServiceInterface
     protected function findFileAndAuthorize(int $id, int $userId, string $action, bool $bypassOwnership = false): \App\Entities\FileEntity
     {
         /** @var \App\Entities\FileEntity|null $file */
-        $file = $this->fileModel->find($id);
+        $file = $this->fileRepository->find($id);
         if (!$file) {
             throw new NotFoundException(lang('Files.file_not_found'));
         }

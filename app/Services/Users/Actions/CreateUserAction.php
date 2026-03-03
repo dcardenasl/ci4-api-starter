@@ -4,21 +4,21 @@ declare(strict_types=1);
 
 namespace App\Services\Users\Actions;
 
-use App\DTO\Request\Users\UserStoreRequestDTO;
+use App\DTO\Request\Users\UserCreateRequestDTO;
 use App\DTO\SecurityContext;
 use App\Exceptions\ValidationException;
-use App\Models\UserModel;
+use App\Interfaces\Users\UserRepositoryInterface;
 use App\Services\Auth\UserInvitationService;
 
 class CreateUserAction
 {
     public function __construct(
-        protected UserModel $userModel,
+        protected UserRepositoryInterface $userRepository,
         protected UserInvitationService $invitationService
     ) {
     }
 
-    public function execute(UserStoreRequestDTO $request, ?SecurityContext $context = null): \App\Entities\UserEntity
+    public function execute(UserCreateRequestDTO $request, ?SecurityContext $context = null): \App\Entities\UserEntity
     {
         $actorRole = $context?->user_role ?? 'user';
         $adminId = $context?->user_id;
@@ -34,20 +34,20 @@ class CreateUserAction
             'password'    => password_hash($generatedPassword, PASSWORD_BCRYPT),
             'role'        => $request->role,
             'status'      => $status,
-            'approved_at' => $isPrivilegedCreator ? $now : null,
+            'approved_at' => $status === 'active' ? $now : null,
             'approved_by' => $isPrivilegedCreator ? $adminId : null,
             'invited_at'  => $now,
             'invited_by'  => $adminId,
         ];
 
-        $userId = $this->userModel->insert($data);
+        $userId = $this->userRepository->insert($data);
 
         if (!$userId) {
-            throw new ValidationException(lang('Api.validationFailed'), $this->userModel->errors());
+            throw new ValidationException(lang('Api.validationFailed'), $this->userRepository->errors());
         }
 
         /** @var \App\Entities\UserEntity|null $user */
-        $user = $this->userModel->find($userId);
+        $user = $this->userRepository->find((int) $userId);
         if ($user === null) {
             throw new ValidationException(lang('Api.validationFailed'), ['user' => lang('Api.resourceNotFound')]);
         }

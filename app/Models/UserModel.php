@@ -47,6 +47,7 @@ class UserModel extends Model
         'email_verification_token',
         'verification_token_expires',
         'email_verified_at',
+        'deleted_at',
     ];
 
     protected $useTimestamps      = true;

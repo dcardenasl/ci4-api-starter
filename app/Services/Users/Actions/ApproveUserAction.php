@@ -10,7 +10,7 @@ use App\Exceptions\ConflictException;
 use App\Exceptions\NotFoundException;
 use App\Interfaces\System\AuditServiceInterface;
 use App\Interfaces\System\EmailServiceInterface;
-use App\Models\UserModel;
+use App\Interfaces\Users\UserRepositoryInterface;
 use App\Traits\ResolvesWebAppLinks;
 
 class ApproveUserAction
@@ -18,7 +18,7 @@ class ApproveUserAction
     use ResolvesWebAppLinks;
 
     public function __construct(
-        protected UserModel $userModel,
+        protected UserRepositoryInterface $userRepository,
         protected AuditServiceInterface $auditService,
         protected EmailServiceInterface $emailService
     ) {
@@ -27,7 +27,7 @@ class ApproveUserAction
     public function execute(int $id, ?SecurityContext $context = null, ?string $clientBaseUrl = null): UserEntity
     {
         /** @var UserEntity|null $user */
-        $user = $this->userModel->find($id);
+        $user = $this->userRepository->find($id);
         if ($user === null) {
             throw new NotFoundException(lang('Users.notFound'));
         }
@@ -43,7 +43,7 @@ class ApproveUserAction
             throw new ConflictException(lang('Users.invalidApprovalState'));
         }
 
-        $this->userModel->update($id, [
+        $this->userRepository->update($id, [
             'status' => 'active',
             'approved_at' => date('Y-m-d H:i:s'),
             'approved_by' => $context?->user_id,
@@ -58,7 +58,7 @@ class ApproveUserAction
         ]);
 
         /** @var UserEntity|null $approvedUser */
-        $approvedUser = $this->userModel->find($id);
+        $approvedUser = $this->userRepository->find($id);
         if ($approvedUser === null) {
             throw new NotFoundException(lang('Users.notFound'));
         }

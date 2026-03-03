@@ -25,7 +25,7 @@ class ApiKeyService extends BaseCrudService implements ApiKeyServiceInterface
         UpdateApiKeyAction $updateApiKeyAction
     ) {
         parent::__construct($responseMapper);
-        $this->model = $apiKeyModel;
+        $this->repository = new \App\Repositories\GenericRepository($apiKeyModel);
         $this->createApiKeyAction = $createApiKeyAction;
         $this->updateApiKeyAction = $updateApiKeyAction;
     }

@@ -6,12 +6,11 @@ namespace App\Services\System;
 
 use App\DTO\Response\Common\PayloadResponseDTO;
 use App\Interfaces\DataTransferObjectInterface;
-use App\Models\AuditLogModel;
 
 readonly class CatalogService
 {
     public function __construct(
-        private AuditLogModel $auditLogModel
+        private \App\Interfaces\System\AuditRepositoryInterface $auditRepository
     ) {
     }
 
@@ -62,8 +61,8 @@ readonly class CatalogService
         /** @var \App\DTO\Request\Catalogs\AuditFacetsRequestDTO $request */
         return PayloadResponseDTO::fromArray([
             'window_days'  => $request->window_days,
-            'actions'      => $this->auditLogModel->getActionFacets($request->window_days, $request->limit),
-            'entity_types' => $this->auditLogModel->getEntityTypeFacets($request->window_days, $request->limit),
+            'actions'      => $this->auditRepository->getActionFacets($request->window_days, $request->limit),
+            'entity_types' => $this->auditRepository->getEntityTypeFacets($request->window_days, $request->limit),
         ]);
     }
 }

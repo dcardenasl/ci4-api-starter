@@ -11,7 +11,7 @@ use App\Exceptions\NotFoundException;
 use App\Interfaces\DataTransferObjectInterface;
 use App\Interfaces\System\AuditServiceInterface;
 use App\Interfaces\System\EmailServiceInterface;
-use App\Models\UserModel;
+use App\Interfaces\Users\UserRepositoryInterface;
 use App\Traits\ResolvesWebAppLinks;
 use CodeIgniter\I18n\Time;
 
@@ -24,7 +24,7 @@ class VerificationService implements \App\Interfaces\Auth\VerificationServiceInt
     use \App\Traits\HandlesTransactions;
 
     public function __construct(
-        protected UserModel $userModel,
+        protected UserRepositoryInterface $userRepository,
         protected EmailServiceInterface $emailService,
         protected AuditServiceInterface $auditService
     ) {
@@ -35,7 +35,7 @@ class VerificationService implements \App\Interfaces\Auth\VerificationServiceInt
      */
     public function sendVerificationEmail(int $userId, ?SecurityContext $context = null): bool
     {
-        $user = $this->userModel->find($userId);
+        $user = $this->userRepository->find($userId);
 
         if (!$user instanceof \App\Entities\UserEntity) {
             throw new NotFoundException(lang('Verification.userNotFound'));
@@ -52,7 +52,7 @@ class VerificationService implements \App\Interfaces\Auth\VerificationServiceInt
         $finalTimestamp = is_int($timestamp) ? $timestamp : (time() + 86400);
         $expiresAt = date('Y-m-d H:i:s', $finalTimestamp);
 
-        $this->userModel->update($userId, [
+        $this->userRepository->update($userId, [
             'email_verification_token' => $token,
             'verification_token_expires' => $expiresAt,
         ]);
@@ -74,7 +74,7 @@ class VerificationService implements \App\Interfaces\Auth\VerificationServiceInt
     public function verifyEmail(DataTransferObjectInterface $request, ?SecurityContext $context = null): bool
     {
         /** @var \App\DTO\Request\Identity\VerificationRequestDTO $request */
-        $user = $this->userModel->where('email_verification_token', $request->token)->first();
+        $user = $this->userRepository->findByVerificationToken($request->token);
 
         if (! $user) {
             throw new NotFoundException(lang('Verification.invalidToken'));
@@ -101,7 +101,7 @@ class VerificationService implements \App\Interfaces\Auth\VerificationServiceInt
         $now = date('Y-m-d H:i:s');
 
         $this->wrapInTransaction(function () use ($user, $now, $context) {
-            $this->userModel->update($user->id, [
+            $this->userRepository->update($user->id, [
                 'email_verified_at' => $now,
                 'email_verification_token' => null,
                 'verification_token_expires' => null,

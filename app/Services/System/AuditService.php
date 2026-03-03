@@ -8,7 +8,7 @@ use App\DTO\Response\Common\PayloadResponseDTO;
 use App\DTO\SecurityContext;
 use App\Interfaces\DataTransferObjectInterface;
 use App\Interfaces\Mappers\ResponseMapperInterface;
-use App\Models\AuditLogModel;
+use App\Interfaces\System\AuditRepositoryInterface;
 use App\Services\Core\BaseCrudService;
 
 /**
@@ -19,8 +19,6 @@ use App\Services\Core\BaseCrudService;
  */
 class AuditService extends BaseCrudService implements \App\Interfaces\System\AuditServiceInterface
 {
-    use \App\Traits\AppliesQueryOptions;
-
     private const SENSITIVE_FIELDS = [
         'password', 'password_confirmation', 'token', 'accesstoken', 'refreshtoken', 'apikey', 'access_token', 'refresh_token', 'api_key', 'key_hash'
     ];
@@ -31,13 +29,13 @@ class AuditService extends BaseCrudService implements \App\Interfaces\System\Aud
     public static bool $forceEnabledInTests = false;
 
     public function __construct(
-        protected readonly AuditLogModel $auditLogModel,
+        protected readonly AuditRepositoryInterface $auditRepository,
         ResponseMapperInterface $responseMapper,
         protected string $defaultIpAddress = '127.0.0.1',
         protected string $defaultUserAgent = 'system'
     ) {
         parent::__construct($responseMapper);
-        $this->model = $auditLogModel;
+        $this->repository = $auditRepository;
     }
 
     /**
@@ -83,7 +81,7 @@ class AuditService extends BaseCrudService implements \App\Interfaces\System\Aud
         ];
 
         try {
-            $this->model->insert($data);
+            $this->auditRepository->insert($data);
         } catch (\Throwable $e) {
             if (!($e instanceof \CodeIgniter\Database\Exceptions\DatabaseException)) {
                 throw $e;
@@ -92,7 +90,7 @@ class AuditService extends BaseCrudService implements \App\Interfaces\System\Aud
             // Retry logic for foreign key constraints (when user might have been deleted)
             if ($userId !== null && (str_contains($e->getMessage(), '1452') || str_contains($e->getMessage(), 'foreign key'))) {
                 $data['user_id'] = null;
-                $this->model->insert($data);
+                $this->auditRepository->insert($data);
             } else {
                 throw $e;
             }
@@ -148,7 +146,7 @@ class AuditService extends BaseCrudService implements \App\Interfaces\System\Aud
         $entityId = $request->entity_id;
         $entityType = $this->normalizeEntityType($request->entity_type);
 
-        $logs = $this->auditLogModel->getByEntity($entityType, $entityId);
+        $logs = $this->auditRepository->getByEntity($entityType, $entityId);
 
         $payload = array_map(
             fn ($log) => $this->mapToResponse($log)->toArray(),

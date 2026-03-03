@@ -7,14 +7,13 @@ namespace App\Services\Users;
 use App\DTO\SecurityContext;
 use App\Exceptions\NotFoundException;
 use App\Interfaces\Mappers\ResponseMapperInterface;
+use App\Interfaces\Users\UserRepositoryInterface;
 use App\Interfaces\Users\UserServiceInterface;
 use App\Libraries\Security\UserRoleGuard;
-use App\Models\UserModel;
 use App\Services\Core\BaseCrudService;
 use App\Services\Users\Actions\ApproveUserAction;
 use App\Services\Users\Actions\CreateUserAction;
 use App\Services\Users\Actions\UpdateUserAction;
-use App\Traits\AppliesQueryOptions;
 
 /**
  * User Service (Refactored)
@@ -24,7 +23,6 @@ use App\Traits\AppliesQueryOptions;
  */
 class UserService extends BaseCrudService implements UserServiceInterface
 {
-    use AppliesQueryOptions;
     use \App\Traits\ValidatesRequiredFields;
 
     protected ApproveUserAction $approveUserAction;
@@ -32,7 +30,7 @@ class UserService extends BaseCrudService implements UserServiceInterface
     protected UpdateUserAction $updateUserAction;
 
     public function __construct(
-        protected UserModel $userModel,
+        protected UserRepositoryInterface $userRepository,
         ResponseMapperInterface $responseMapper,
         protected UserRoleGuard $roleGuard,
         ApproveUserAction $approveUserAction,
@@ -40,7 +38,7 @@ class UserService extends BaseCrudService implements UserServiceInterface
         UpdateUserAction $updateUserAction
     ) {
         parent::__construct($responseMapper);
-        $this->model = $userModel;
+        $this->repository = $userRepository;
         $this->approveUserAction = $approveUserAction;
         $this->createUserAction = $createUserAction;
         $this->updateUserAction = $updateUserAction;
@@ -49,7 +47,7 @@ class UserService extends BaseCrudService implements UserServiceInterface
     /**
      * Enforce security criteria for user listings
      */
-    protected function applyBaseCriteria(\CodeIgniter\Model $model): void
+    protected function applyBaseCriteria(object $model): void
     {
         $model->where('role !=', 'superadmin');
     }
@@ -59,7 +57,7 @@ class UserService extends BaseCrudService implements UserServiceInterface
      */
     public function store(\App\Interfaces\DataTransferObjectInterface $request, ?SecurityContext $context = null): \App\Interfaces\DataTransferObjectInterface
     {
-        /** @var \App\DTO\Request\Users\UserStoreRequestDTO $request */
+        /** @var \App\DTO\Request\Users\UserCreateRequestDTO $request */
         return $this->wrapInTransaction(function () use ($request, $context) {
             $actorRole = $context?->user_role ?? 'user';
             $this->roleGuard->assertCanAssignRole($actorRole, (string) $request->role);
@@ -113,7 +111,7 @@ class UserService extends BaseCrudService implements UserServiceInterface
      */
     public function destroy(int $id, ?SecurityContext $context = null): bool
     {
-        $targetUser = $this->model->find($id);
+        $targetUser = $this->repository->find($id);
         if (!$targetUser) {
             throw new NotFoundException(lang('Users.notFound'));
         }

@@ -8,13 +8,13 @@ use App\DTO\Request\Users\UserUpdateRequestDTO;
 use App\DTO\SecurityContext;
 use App\Exceptions\NotFoundException;
 use App\Exceptions\ValidationException;
+use App\Interfaces\Users\UserRepositoryInterface;
 use App\Libraries\Security\UserRoleGuard;
-use App\Models\UserModel;
 
 class UpdateUserAction
 {
     public function __construct(
-        protected UserModel $userModel,
+        protected UserRepositoryInterface $userRepository,
         protected UserRoleGuard $roleGuard
     ) {
     }
@@ -22,7 +22,7 @@ class UpdateUserAction
     public function execute(int $userId, UserUpdateRequestDTO $request, ?SecurityContext $context = null): \App\Entities\UserEntity
     {
         /** @var \App\Entities\UserEntity|null $targetUser */
-        $targetUser = $this->userModel->find($userId);
+        $targetUser = $this->userRepository->find($userId);
         if ($targetUser === null) {
             throw new NotFoundException(lang('Users.notFound'));
         }
@@ -45,10 +45,10 @@ class UpdateUserAction
             throw new ValidationException(lang('Api.validationFailed'), ['update' => lang('Api.noFieldsToUpdate')]);
         }
 
-        $this->userModel->update($userId, $updateData);
+        $this->userRepository->update($userId, $updateData);
 
         /** @var \App\Entities\UserEntity|null $updatedUser */
-        $updatedUser = $this->userModel->find($userId);
+        $updatedUser = $this->userRepository->find($userId);
         if ($updatedUser === null) {
             throw new NotFoundException(lang('Users.notFound'));
         }

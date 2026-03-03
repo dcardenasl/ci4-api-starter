@@ -113,7 +113,7 @@ class AuditLogModel extends Model
     public function getActionFacets(int $windowDays = 90, int $limit = 100): array
     {
         $since = date('Y-m-d H:i:s', strtotime('-' . max(1, $windowDays) . ' days'));
-        $rows = $this->builder()
+        $query = $this->builder()
             ->select('action AS value, COUNT(*) AS count')
             ->where('created_at >=', $since)
             ->where('action IS NOT NULL', null, false)
@@ -122,8 +122,9 @@ class AuditLogModel extends Model
             ->orderBy('count', 'DESC')
             ->orderBy('action', 'ASC')
             ->limit(max(1, min($limit, 500)))
-            ->get()
-            ->getResultArray();
+            ->get();
+
+        $rows = $query ? $query->getResultArray() : [];
 
         return array_map(static fn (array $row): array => [
             'value' => (string) ($row['value'] ?? ''),
@@ -137,7 +138,7 @@ class AuditLogModel extends Model
     public function getEntityTypeFacets(int $windowDays = 90, int $limit = 100): array
     {
         $since = date('Y-m-d H:i:s', strtotime('-' . max(1, $windowDays) . ' days'));
-        $rows = $this->builder()
+        $query = $this->builder()
             ->select('entity_type AS value, COUNT(*) AS count')
             ->where('created_at >=', $since)
             ->where('entity_type IS NOT NULL', null, false)
@@ -146,8 +147,9 @@ class AuditLogModel extends Model
             ->orderBy('count', 'DESC')
             ->orderBy('entity_type', 'ASC')
             ->limit(max(1, min($limit, 500)))
-            ->get()
-            ->getResultArray();
+            ->get();
+
+        $rows = $query ? $query->getResultArray() : [];
 
         return array_map(static fn (array $row): array => [
             'value' => (string) ($row['value'] ?? ''),

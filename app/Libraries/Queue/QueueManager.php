@@ -161,6 +161,7 @@ class QueueManager
      */
     protected function processJob(object $jobRecord): void
     {
+        $job = null;
         try {
             $payload = json_decode($jobRecord->payload, true);
             $jobClass = $payload['job'];
@@ -181,7 +182,7 @@ class QueueManager
             // Job succeeded - delete it
             $this->db->table('jobs')->delete(['id' => $jobRecord->id]);
         } catch (Throwable $e) {
-            $this->handleFailedJob($jobRecord, $e);
+            $this->handleFailedJob($jobRecord, $e, $job);
         }
     }
 
@@ -190,13 +191,15 @@ class QueueManager
      *
      * @param object $jobRecord
      * @param Throwable $exception
+     * @param Job|null $job
      * @return void
      */
-    protected function handleFailedJob(object $jobRecord, Throwable $exception): void
+    protected function handleFailedJob(object $jobRecord, Throwable $exception, ?Job $job = null): void
     {
         $attempts = (int) $jobRecord->attempts + 1;
+        $maxAttempts = $job->maxAttempts ?? $this->config->maxAttempts;
 
-        if ($attempts >= $this->config->maxAttempts) {
+        if ($attempts >= $maxAttempts) {
             // Move to failed_jobs table
             $this->moveToFailedJobs($jobRecord, $exception);
 
@@ -205,21 +208,26 @@ class QueueManager
 
             // Call the job's failed method
             try {
-                $payload = json_decode($jobRecord->payload, true);
-                $jobClass = $payload['job'];
-                $jobData = $payload['data'] ?? [];
-
-                if (class_exists($jobClass)) {
-                    /** @var Job $job */
-                    $job = new $jobClass($jobData);
+                if ($job) {
                     $job->failed($exception);
+                } else {
+                    $payload = json_decode($jobRecord->payload, true);
+                    $jobClass = $payload['job'] ?? '';
+                    $jobData = $payload['data'] ?? [];
+
+                    if (class_exists($jobClass)) {
+                        /** @var Job $fallbackJob */
+                        $fallbackJob = new $jobClass($jobData);
+                        $fallbackJob->failed($exception);
+                    }
                 }
             } catch (Throwable $e) {
                 log_message('error', 'Failed to call job failed handler: ' . $e->getMessage());
             }
         } else {
-            // Retry the job
-            $retryAt = time() + $this->config->retryAfter;
+            // Retry the job with exponential backoff if job is available, or fixed delay
+            $delay = $job ? $job->getRetryDelay() : $this->config->retryAfter;
+            $retryAt = time() + $delay;
 
             $this->db->table('jobs')
                 ->where('id', $jobRecord->id)
@@ -229,7 +237,7 @@ class QueueManager
                     'available_at' => $retryAt,
                 ]);
 
-            log_message('info', "Job {$jobRecord->id} failed, will retry (attempt {$attempts})");
+            log_message('info', "Job {$jobRecord->id} failed, will retry in {$delay}s (attempt {$attempts})");
         }
     }
 

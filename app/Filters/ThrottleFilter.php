@@ -72,7 +72,8 @@ class ThrottleFilter implements FilterInterface
         // ------------------------------------------------------------------
         // 3. Apply rate limits according to strategy matrix
         // ------------------------------------------------------------------
-        $window = (int) env('RATE_LIMIT_WINDOW', 60);
+        $apiConfig = config('Api');
+        $window = $apiConfig->rateLimitWindow;
 
         if ($appKey instanceof ApiKeyEntity) {
             $apiKeyResult = $this->enforceApiKeyRateLimit(
@@ -96,8 +97,8 @@ class ThrottleFilter implements FilterInterface
             }
         } else {
             // ---- Fallback path (no API key) ----
-            $ipLimit   = (int) env('RATE_LIMIT_REQUESTS', 60);
-            $userLimit = (int) env('RATE_LIMIT_USER_REQUESTS', 100);
+            $ipLimit   = $apiConfig->rateLimitRequests;
+            $userLimit = $apiConfig->rateLimitUserRequests;
 
             // IP-based rate limit (always applied)
             $ipKey       = 'rate_limit_ip_' . md5($ip);

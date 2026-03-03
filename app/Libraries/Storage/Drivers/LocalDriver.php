@@ -18,7 +18,7 @@ class LocalDriver implements StorageDriverInterface
 
     public function __construct()
     {
-        $this->basePath = env('FILE_UPLOAD_PATH', 'writable/uploads/');
+        $this->basePath = config('Api')->fileUploadPath;
 
         // Ensure path is absolute
         if (!str_starts_with($this->basePath, '/')) {
@@ -112,7 +112,7 @@ class LocalDriver implements StorageDriverInterface
      */
     public function url(string $path): string
     {
-        $relativePath = env('FILE_UPLOAD_PATH', 'writable/uploads/');
+        $relativePath = config('Api')->fileUploadPath;
         return base_url($relativePath . $path);
     }
 

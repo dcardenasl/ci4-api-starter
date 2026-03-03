@@ -23,23 +23,14 @@ class AuthThrottleFilter implements FilterInterface
     use ApiKeyThrottleHelpers;
     use RateLimitResponseHelpers;
 
-    /**
-     * Maximum authentication attempts per window (per IP)
-     */
-    private const MAX_AUTH_ATTEMPTS = 5;
-
-    /**
-     * Time window in seconds (15 minutes)
-     */
-    private const AUTH_WINDOW = 900;
-
     public function before(RequestInterface $request, $arguments = null)
     {
         $cache = Services::cache();
         $response = Services::response();
 
-        $maxAttempts = (int) env('AUTH_RATE_LIMIT_REQUESTS', self::MAX_AUTH_ATTEMPTS);
-        $window = (int) env('AUTH_RATE_LIMIT_WINDOW', self::AUTH_WINDOW);
+        $apiConfig = config('Api');
+        $maxAttempts = $apiConfig->authRateLimitRequests;
+        $window = $apiConfig->authRateLimitWindow;
         $ip = $request->getIPAddress();
         $user_id = $request instanceof ApiRequest ? $request->getAuthUserId() : null;
 

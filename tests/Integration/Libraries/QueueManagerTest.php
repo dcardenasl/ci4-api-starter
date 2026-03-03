@@ -168,6 +168,11 @@ class TestQueueAlwaysFailJob extends Job
 {
     public static int $failedCalls = 0;
 
+    public function getRetryDelay(): int
+    {
+        return 0; // Bypass exponential backoff for immediate retry in tests
+    }
+
     public function handle(): void
     {
         throw new \RuntimeException('forced test failure');

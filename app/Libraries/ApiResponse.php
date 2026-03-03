@@ -109,12 +109,12 @@ class ApiResponse
     {
         $dtoData = $result->toArray();
 
-        if (isset($dtoData['data'], $dtoData['total'], $dtoData['page'], $dtoData['perPage'])) {
+        if (isset($dtoData['data'], $dtoData['total'], $dtoData['page'], $dtoData['per_page'])) {
             $body = self::paginated(
                 (array) $dtoData['data'],
                 (int) $dtoData['total'],
                 (int) $dtoData['page'],
-                (int) $dtoData['perPage']
+                (int) $dtoData['per_page']
             );
         } else {
             $body = self::success($dtoData);
@@ -140,12 +140,12 @@ class ApiResponse
 
     private static function handleArray(array $result, int $status): ApiResult
     {
-        if (isset($result['data'], $result['total'], $result['page'], $result['perPage'])) {
+        if (isset($result['data'], $result['total'], $result['page'], $result['per_page'])) {
             $body = self::paginated(
                 $result['data'],
                 $result['total'],
                 (int) $result['page'],
-                (int) $result['perPage']
+                (int) $result['per_page']
             );
         } elseif (!isset($result['status'])) {
             $body = self::success($result);
@@ -199,9 +199,9 @@ class ApiResponse
     ): array {
         return self::success($items, null, [
             'total' => $total,
-            'perPage' => $perPage,
+            'per_page' => $perPage,
             'page' => $page,
-            'lastPage' => (int) ceil($total / $perPage),
+            'last_page' => (int) ceil($total / $perPage),
             'from' => ($page - 1) * $perPage + 1,
             'to' => min($page * $perPage, $total),
         ]);

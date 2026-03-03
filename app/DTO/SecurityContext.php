@@ -13,8 +13,8 @@ namespace App\DTO;
 readonly class SecurityContext
 {
     public function __construct(
-        public ?int $userId = null,
-        public ?string $role = null,
+        public ?int $user_id = null,
+        public ?string $user_role = null,
         public array $metadata = []
     ) {
     }
@@ -24,7 +24,7 @@ readonly class SecurityContext
      */
     public function isAdmin(): bool
     {
-        return in_array($this->role, ['admin', 'superadmin'], true);
+        return in_array($this->user_role, ['admin', 'superadmin'], true);
     }
 
     /**
@@ -32,7 +32,7 @@ readonly class SecurityContext
      */
     public function isSuperadmin(): bool
     {
-        return $this->role === 'superadmin';
+        return $this->user_role === 'superadmin';
     }
 
     /**
@@ -40,7 +40,7 @@ readonly class SecurityContext
      */
     public function isUser(int $id): bool
     {
-        return $this->userId === $id;
+        return $this->user_id === $id;
     }
 
     /**

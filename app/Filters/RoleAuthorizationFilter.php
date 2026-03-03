@@ -42,7 +42,7 @@ class RoleAuthorizationFilter implements FilterInterface
         $context = ContextHolder::get();
 
         $userRole = $request instanceof ApiRequest ? $request->getAuthUserRole() : null;
-        $userRole ??= $context?->role;
+        $userRole ??= $context?->user_role;
         $userRole ??= $request->getHeaderLine('X-Test-User-Role') ?: null;
 
         if (!$userRole) {

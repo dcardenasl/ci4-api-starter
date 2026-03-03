@@ -18,9 +18,9 @@ class JwtAuthFilter implements FilterInterface
     public function before(RequestInterface $request, $arguments = null)
     {
         $context = ContextHolder::get();
-        if ($context !== null && $context->userId !== null) {
+        if ($context !== null && $context->user_id !== null) {
             if ($request instanceof ApiRequest) {
-                $request->setAuthContext((int) $context->userId, (string) $context->role);
+                $request->setAuthContext((int) $context->user_id, (string) $context->user_role);
             }
             return $request;
         }

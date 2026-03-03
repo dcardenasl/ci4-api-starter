@@ -87,7 +87,7 @@ abstract class ApiController extends Controller
     {
         // If a context is already established (e.g., by a Filter or a Test), respect it
         $existingContext = ContextHolder::get();
-        if ($existingContext !== null && $existingContext->userId !== null) {
+        if ($existingContext !== null && $existingContext->user_id !== null) {
             return $existingContext;
         }
 
@@ -150,12 +150,12 @@ abstract class ApiController extends Controller
      */
     private function withSecurityContext(array $data, \App\DTO\SecurityContext $context): array
     {
-        if (!isset($data['userId']) && $context->userId !== null) {
-            $data['userId'] = $context->userId;
+        if (!isset($data['user_id']) && $context->user_id !== null) {
+            $data['user_id'] = $context->user_id;
         }
 
-        if (!isset($data['userRole']) && $context->role !== null) {
-            $data['userRole'] = $context->role;
+        if (!isset($data['user_role']) && $context->user_role !== null) {
+            $data['user_role'] = $context->user_role;
         }
 
         return $data;

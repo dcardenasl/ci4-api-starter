@@ -28,9 +28,9 @@ class TestAuthFilter implements FilterInterface
         $context = \App\Libraries\ContextHolder::get();
 
         // If test established context, populate request and allow
-        if ($context !== null && $context->userId !== null) {
+        if ($context !== null && $context->user_id !== null) {
             if ($request instanceof ApiRequest) {
-                $request->setAuthContext((int) $context->userId, (string) $context->role);
+                $request->setAuthContext((int) $context->user_id, (string) $context->user_role);
             }
             return $request;
         }

@@ -29,7 +29,7 @@ class ContextHolder
 
     public static function getUserId(): ?int
     {
-        return self::$context?->userId;
+        return self::$context?->user_id;
     }
 
     public static function flush(): void

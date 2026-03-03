@@ -16,6 +16,7 @@ readonly class AuditIndexRequestDTO extends BaseRequestDTO
     public int $page;
     public int $per_page;
     public ?string $search;
+    public ?string $action;
     public ?string $entity_type;
     public ?int $entity_id;
     public ?int $user_id;
@@ -26,6 +27,7 @@ readonly class AuditIndexRequestDTO extends BaseRequestDTO
             'page'       => 'permit_empty|is_natural_no_zero',
             'per_page'    => 'permit_empty|is_natural_no_zero|less_than[101]',
             'search'     => 'permit_empty|string|max_length[100]',
+            'action'      => 'permit_empty|string|max_length[50]',
             'entity_type' => 'permit_empty|string|max_length[50]',
             'entity_id'   => 'permit_empty|is_natural_no_zero',
             'user_id'     => 'permit_empty|is_natural_no_zero',
@@ -34,12 +36,15 @@ readonly class AuditIndexRequestDTO extends BaseRequestDTO
 
     protected function map(array $data): void
     {
+        $filter = is_array($data['filter'] ?? null) ? $data['filter'] : [];
+
         $this->page = isset($data['page']) ? (int) $data['page'] : 1;
         $this->per_page = isset($data['per_page']) ? (int) $data['per_page'] : 20;
         $this->search = $data['search'] ?? null;
-        $this->entity_type = $data['entity_type'] ?? null;
-        $this->entity_id = isset($data['entity_id']) ? (int) $data['entity_id'] : null;
-        $this->user_id = isset($data['user_id']) ? (int) $data['user_id'] : null;
+        $this->action = $this->extractString($data, $filter, 'action');
+        $this->entity_type = $this->extractString($data, $filter, 'entity_type');
+        $this->entity_id = $this->extractInt($data, $filter, 'entity_id');
+        $this->user_id = $this->extractInt($data, $filter, 'user_id');
     }
 
     public function toArray(): array
@@ -50,6 +55,9 @@ readonly class AuditIndexRequestDTO extends BaseRequestDTO
             'search'  => $this->search,
         ];
 
+        if ($this->action) {
+            $data['filter']['action'] = ['eq' => $this->action];
+        }
         if ($this->entity_type) {
             $data['filter']['entity_type'] = ['eq' => $this->entity_type];
         }
@@ -61,5 +69,29 @@ readonly class AuditIndexRequestDTO extends BaseRequestDTO
         }
 
         return $data;
+    }
+
+    private function extractString(array $data, array $filter, string $key): ?string
+    {
+        $value = $data[$key] ?? $filter[$key] ?? null;
+        if (! is_scalar($value)) {
+            return null;
+        }
+
+        $normalized = trim((string) $value);
+
+        return $normalized === '' ? null : $normalized;
+    }
+
+    private function extractInt(array $data, array $filter, string $key): ?int
+    {
+        $value = $data[$key] ?? $filter[$key] ?? null;
+        if (! is_scalar($value) || ! is_numeric($value)) {
+            return null;
+        }
+
+        $intValue = (int) $value;
+
+        return $intValue > 0 ? $intValue : null;
     }
 }

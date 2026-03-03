@@ -104,6 +104,8 @@ $routes->group('api/v1', function ($routes) {
             $routes->get('audit', '\App\Controllers\Api\V1\Admin\AuditController::index');
             $routes->get('audit/(:num)', '\App\Controllers\Api\V1\Admin\AuditController::show/$1');
             $routes->get('audit/entity/(:segment)/(:num)', '\App\Controllers\Api\V1\Admin\AuditController::byEntity/$1/$2');
+            $routes->get('catalogs', '\App\Controllers\Api\V1\Admin\CatalogController::index');
+            $routes->get('catalogs/audit-facets', '\App\Controllers\Api\V1\Admin\CatalogController::auditFacets');
 
             $routes->group('demo-products', ['namespace' => '\App\Controllers\Api\V1\Catalog'], function ($routes) {
                 $routes->get('', 'DemoproductController::index');

@@ -36,13 +36,20 @@ readonly class UserIndexRequestDTO extends BaseRequestDTO
 
     protected function map(array $data): void
     {
+        $filter = is_array($data['filter'] ?? null) ? $data['filter'] : [];
+
         // Define default values if not provided
         $this->page = isset($data['page']) ? (int) $data['page'] : 1;
         $this->per_page = isset($data['per_page']) ? (int) $data['per_page'] : 20;
         $this->search = $data['search'] ?? null;
 
-        $this->role = $data['role'] ?? null;
-        $this->status = $data['status'] ?? null;
+        if ($this->search === null && isset($filter['search']) && is_scalar($filter['search'])) {
+            $candidate = trim((string) $filter['search']);
+            $this->search = $candidate === '' ? null : $candidate;
+        }
+
+        $this->role = $this->extractString($data, $filter, 'role');
+        $this->status = $this->extractString($data, $filter, 'status');
 
         $this->order_by = $data['order_by'] ?? 'id';
         $this->order_dir = strtoupper($data['order_dir'] ?? 'DESC');
@@ -66,5 +73,17 @@ readonly class UserIndexRequestDTO extends BaseRequestDTO
         }
 
         return $data;
+    }
+
+    private function extractString(array $data, array $filter, string $key): ?string
+    {
+        $value = $data[$key] ?? $filter[$key] ?? null;
+        if (! is_scalar($value)) {
+            return null;
+        }
+
+        $normalized = trim((string) $value);
+
+        return $normalized === '' ? null : $normalized;
     }
 }

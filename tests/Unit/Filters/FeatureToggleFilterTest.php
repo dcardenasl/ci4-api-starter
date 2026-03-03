@@ -12,10 +12,13 @@ use Config\Services;
 class FeatureToggleFilterTest extends CIUnitTestCase
 {
     private FeatureToggleFilter $filter;
+    private \App\Interfaces\System\MetricsServiceInterface $metricsService;
 
     protected function setUp(): void
     {
         parent::setUp();
+        $this->metricsService = $this->createMock(\App\Interfaces\System\MetricsServiceInterface::class);
+        Services::injectMock('metricsService', $this->metricsService);
         $this->filter = new FeatureToggleFilter();
     }
 

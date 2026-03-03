@@ -441,6 +441,17 @@ class Services extends BaseService
         );
     }
 
+    public static function catalogService(bool $getShared = true)
+    {
+        if ($getShared) {
+            return static::getSharedInstance('catalogService');
+        }
+
+        return new \App\Services\System\CatalogService(
+            new \App\Models\AuditLogModel()
+        );
+    }
+
     public static function queueManager(bool $getShared = true)
     {
         if ($getShared) {

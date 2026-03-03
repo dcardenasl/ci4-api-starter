@@ -36,11 +36,11 @@ class CreateFailedJobsTable extends Migration
         ]);
 
         $this->forge->addKey('id', true);
-        $this->forge->createTable('failed_jobs');
+        $this->forge->createTable('failed_jobs', true);
     }
 
     public function down()
     {
-        $this->forge->dropTable('failed_jobs');
+        $this->forge->dropTable('failed_jobs', true);
     }
 }

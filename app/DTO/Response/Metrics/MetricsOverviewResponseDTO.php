@@ -14,24 +14,24 @@ use OpenApi\Attributes as OA;
     schema: 'MetricsOverview',
     title: 'Metrics Overview',
     description: 'Overview of request stats, slow requests, and SLO indicators',
-    required: ['requestStats', 'slowRequests', 'slo', 'timestamp']
+    required: ['request_stats', 'slow_requests', 'slo', 'timestamp']
 )]
 readonly class MetricsOverviewResponseDTO implements DataTransferObjectInterface
 {
     public function __construct(
         #[OA\Property(
-            property: 'requestStats',
+            property: 'request_stats',
             description: 'Aggregated request statistics',
             ref: '#/components/schemas/MetricsRequestStats'
         )]
-        public array $requestStats,
+        public array $request_stats,
         #[OA\Property(
-            property: 'slowRequests',
+            property: 'slow_requests',
             description: 'Slow requests list',
             type: 'array',
             items: new OA\Items(ref: '#/components/schemas/MetricsSlowRequest')
         )]
-        public array $slowRequests,
+        public array $slow_requests,
         #[OA\Property(
             property: 'slo',
             description: 'Service level objectives summary',
@@ -54,8 +54,8 @@ readonly class MetricsOverviewResponseDTO implements DataTransferObjectInterface
     public static function fromArray(array $data): self
     {
         return new self(
-            requestStats: $data['request_stats'] ?? [],
-            slowRequests: $data['slow_requests'] ?? [],
+            request_stats: $data['request_stats'] ?? [],
+            slow_requests: $data['slow_requests'] ?? [],
             slo: $data['slo'] ?? [],
             timestamp: date('Y-m-d H:i:s')
         );
@@ -64,8 +64,8 @@ readonly class MetricsOverviewResponseDTO implements DataTransferObjectInterface
     public function toArray(): array
     {
         return [
-            'requestStats' => $this->requestStats,
-            'slowRequests' => $this->slowRequests,
+            'request_stats' => $this->request_stats,
+            'slow_requests' => $this->slow_requests,
             'slo' => $this->slo,
             'timestamp' => $this->timestamp,
         ];

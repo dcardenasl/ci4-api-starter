@@ -82,7 +82,7 @@
                                                     "type": "integer",
                                                     "example": 5
                                                 },
-                                                "perPage": {
+                                                "per_page": {
                                                     "type": "integer",
                                                     "example": 20
                                                 },
@@ -90,7 +90,7 @@
                                                     "type": "integer",
                                                     "example": 1
                                                 },
-                                                "lastPage": {
+                                                "last_page": {
                                                     "type": "integer",
                                                     "example": 1
                                                 },
@@ -430,7 +430,7 @@
                         }
                     },
                     {
-                        "name": "perPage",
+                        "name": "per_page",
                         "in": "query",
                         "required": false,
                         "schema": {
@@ -447,7 +447,7 @@
                         }
                     },
                     {
-                        "name": "entityType",
+                        "name": "entity_type",
                         "in": "query",
                         "required": false,
                         "schema": {
@@ -455,7 +455,7 @@
                         }
                     },
                     {
-                        "name": "entityId",
+                        "name": "entity_id",
                         "in": "query",
                         "required": false,
                         "schema": {
@@ -464,7 +464,7 @@
                         }
                     },
                     {
-                        "name": "userId",
+                        "name": "user_id",
                         "in": "query",
                         "required": false,
                         "schema": {
@@ -496,7 +496,7 @@
                                                     "type": "integer",
                                                     "example": 120
                                                 },
-                                                "perPage": {
+                                                "per_page": {
                                                     "type": "integer",
                                                     "example": 20
                                                 },
@@ -504,7 +504,7 @@
                                                     "type": "integer",
                                                     "example": 1
                                                 },
-                                                "lastPage": {
+                                                "last_page": {
                                                     "type": "integer",
                                                     "example": 6
                                                 },
@@ -1052,10 +1052,10 @@
                         "application/json": {
                             "schema": {
                                 "required": [
-                                    "refreshToken"
+                                    "refresh_token"
                                 ],
                                 "properties": {
-                                    "refreshToken": {
+                                    "refresh_token": {
                                         "description": "Refresh token issued at login/register",
                                         "type": "string"
                                     }
@@ -1327,7 +1327,7 @@
                         }
                     },
                     {
-                        "name": "perPage",
+                        "name": "per_page",
                         "in": "query",
                         "required": false,
                         "schema": {
@@ -1359,7 +1359,7 @@
                                                     "type": "integer",
                                                     "example": 45
                                                 },
-                                                "perPage": {
+                                                "per_page": {
                                                     "type": "integer",
                                                     "example": 20
                                                 },
@@ -1367,7 +1367,7 @@
                                                     "type": "integer",
                                                     "example": 1
                                                 },
-                                                "lastPage": {
+                                                "last_page": {
                                                     "type": "integer",
                                                     "example": 3
                                                 },
@@ -2034,7 +2034,7 @@
                         }
                     },
                     {
-                        "name": "perPage",
+                        "name": "per_page",
                         "in": "query",
                         "required": false,
                         "schema": {
@@ -2078,7 +2078,7 @@
                         }
                     },
                     {
-                        "name": "orderBy",
+                        "name": "order_by",
                         "in": "query",
                         "required": false,
                         "schema": {
@@ -2095,7 +2095,7 @@
                         }
                     },
                     {
-                        "name": "orderDir",
+                        "name": "order_dir",
                         "in": "query",
                         "required": false,
                         "schema": {
@@ -2132,7 +2132,7 @@
                                                     "type": "integer",
                                                     "example": 100
                                                 },
-                                                "perPage": {
+                                                "per_page": {
                                                     "type": "integer",
                                                     "example": 20
                                                 },
@@ -2140,7 +2140,7 @@
                                                     "type": "integer",
                                                     "example": 1
                                                 },
-                                                "lastPage": {
+                                                "last_page": {
                                                     "type": "integer",
                                                     "example": 5
                                                 },
@@ -3084,63 +3084,64 @@
             },
             "TokenResponse": {
                 "title": "Token Response",
-                "description": "Refresh token operation result",
+                "description": "Token Response DTO",
                 "required": [
-                    "accessToken",
-                    "refreshToken",
-                    "expiresIn"
+                    "access_token",
+                    "refresh_token",
+                    "expires_in"
                 ],
                 "properties": {
-                    "accessToken": {
+                    "access_token": {
                         "description": "New JWT access token",
                         "type": "string"
                     },
-                    "refreshToken": {
+                    "refresh_token": {
                         "description": "New opaque refresh token",
                         "type": "string"
                     },
-                    "expiresIn": {
+                    "expires_in": {
                         "description": "Token expiration in seconds",
                         "type": "integer",
                         "example": 3600
                     },
-                    "tokenType": {
-                        "description": "Token type",
-                        "type": "string",
-                        "example": "Bearer"
+                    "user": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/UserResponse"
+                            }
+                        ],
+                        "nullable": true,
+                        "description": "Associated user data"
                     }
                 },
                 "type": "object"
             },
             "VerificationResponse": {
                 "title": "Verification Response",
-                "description": "Email verification result",
+                "description": "Verification Response DTO",
                 "required": [
                     "message",
-                    "userId",
+                    "user_id",
                     "email",
-                    "verifiedAt"
+                    "verified_at"
                 ],
                 "properties": {
                     "message": {
-                        "description": "Result message",
-                        "type": "string",
-                        "example": "Email verified successfully"
+                        "description": "Success message",
+                        "type": "string"
                     },
-                    "userId": {
+                    "user_id": {
                         "description": "Verified user id",
                         "type": "integer",
                         "example": 1
                     },
                     "email": {
-                        "description": "Verified email",
-                        "type": "string",
-                        "example": "user@example.com"
+                        "description": "User email",
+                        "type": "string"
                     },
-                    "verifiedAt": {
+                    "verified_at": {
                         "description": "Verification timestamp",
-                        "type": "string",
-                        "example": "2026-02-26 12:00:00"
+                        "type": "string"
                     }
                 },
                 "type": "object"
@@ -3149,16 +3150,16 @@
                 "title": "Metrics Overview",
                 "description": "Overview of request stats, slow requests, and SLO indicators",
                 "required": [
-                    "requestStats",
-                    "slowRequests",
+                    "request_stats",
+                    "slow_requests",
                     "slo",
                     "timestamp"
                 ],
                 "properties": {
-                    "requestStats": {
+                    "request_stats": {
                         "$ref": "#/components/schemas/MetricsRequestStats"
                     },
-                    "slowRequests": {
+                    "slow_requests": {
                         "description": "Slow requests list",
                         "type": "array",
                         "items": {
@@ -3411,17 +3412,17 @@
                             "required": [
                                 "email",
                                 "password",
-                                "firstName",
-                                "lastName"
+                                "first_name",
+                                "last_name"
                             ],
                             "properties": {
-                                "firstName": {
-                                    "description": "First name",
+                                "first_name": {
+                                    "description": "User first name",
                                     "type": "string",
-                                    "example": "Alex"
+                                    "example": "Jane"
                                 },
-                                "lastName": {
-                                    "description": "Last name",
+                                "last_name": {
+                                    "description": "User last name",
                                     "type": "string",
                                     "example": "Doe"
                                 },
@@ -3453,12 +3454,12 @@
                                 "email"
                             ],
                             "properties": {
-                                "firstName": {
+                                "first_name": {
                                     "description": "First name",
                                     "type": "string",
                                     "example": "Alex"
                                 },
-                                "lastName": {
+                                "last_name": {
                                     "description": "Last name",
                                     "type": "string",
                                     "example": "Doe"
@@ -3474,17 +3475,17 @@
                                     "type": "string",
                                     "example": "user"
                                 },
-                                "oauthProvider": {
+                                "oauth_provider": {
                                     "description": "Optional OAuth provider for externally managed accounts",
                                     "type": "string",
                                     "example": "google"
                                 },
-                                "oauthProviderId": {
+                                "oauth_provider_id": {
                                     "description": "Provider-specific identifier",
                                     "type": "string",
                                     "example": "113337022221111122223"
                                 },
-                                "avatarUrl": {
+                                "avatar_url": {
                                     "description": "Optional avatar URL",
                                     "type": "string",
                                     "format": "uri",
@@ -3503,13 +3504,13 @@
                     "application/json": {
                         "schema": {
                             "properties": {
-                                "firstName": {
-                                    "description": "Updated first name",
+                                "first_name": {
+                                    "description": "User first name",
                                     "type": "string",
-                                    "example": "Alex"
+                                    "example": "John"
                                 },
-                                "lastName": {
-                                    "description": "Updated last name",
+                                "last_name": {
+                                    "description": "User last name",
                                     "type": "string",
                                     "example": "Doe"
                                 },

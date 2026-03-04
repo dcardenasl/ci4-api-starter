@@ -30,6 +30,34 @@ trait Auditable
      */
     protected ?AuditServiceInterface $auditService = null;
 
+    public function setAuditService(AuditServiceInterface $auditService): void
+    {
+        $this->auditService = $auditService;
+    }
+
+    protected function initAuditable(): void
+    {
+        if (property_exists($this, 'beforeUpdate')) {
+            $this->beforeUpdate = array_values(array_unique(array_merge($this->beforeUpdate, ['auditBeforeUpdate'])));
+        }
+
+        if (property_exists($this, 'beforeDelete')) {
+            $this->beforeDelete = array_values(array_unique(array_merge($this->beforeDelete, ['auditBeforeDelete'])));
+        }
+
+        if (property_exists($this, 'afterInsert')) {
+            $this->afterInsert = array_values(array_unique(array_merge($this->afterInsert, ['auditInsert'])));
+        }
+
+        if (property_exists($this, 'afterUpdate')) {
+            $this->afterUpdate = array_values(array_unique(array_merge($this->afterUpdate, ['auditUpdate'])));
+        }
+
+        if (property_exists($this, 'afterDelete')) {
+            $this->afterDelete = array_values(array_unique(array_merge($this->afterDelete, ['auditDelete'])));
+        }
+    }
+
     /**
      * Temporary storage for old values before update/delete
      */

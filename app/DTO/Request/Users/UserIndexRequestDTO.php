@@ -5,20 +5,39 @@ declare(strict_types=1);
 namespace App\DTO\Request\Users;
 
 use App\DTO\Request\BaseRequestDTO;
+use OpenApi\Attributes as OA;
 
 /**
  * User Index Request DTO
  *
  * Handles filtering, sorting, and pagination for user listing.
  */
+#[OA\Schema(
+    schema: 'UserIndexRequest',
+    title: 'User Index Request',
+    description: 'Parameters for filtering and paginating the user list'
+)]
 readonly class UserIndexRequestDTO extends BaseRequestDTO
 {
+    #[OA\Property(description: 'Current page number', default: 1, example: 1)]
     public int $page;
+
+    #[OA\Property(description: 'Items per page', default: 20, example: 20, maximum: 100)]
     public int $per_page;
+
+    #[OA\Property(description: 'Search term for email, first name or last name', nullable: true, example: 'john')]
     public ?string $search;
+
+    #[OA\Property(description: 'Filter by account role', enum: ['user', 'admin', 'superadmin'], nullable: true)]
     public ?string $role;
+
+    #[OA\Property(description: 'Filter by account status', enum: ['active', 'inactive', 'pending_approval', 'invited'], nullable: true)]
     public ?string $status;
+
+    #[OA\Property(description: 'Field to sort by', enum: ['id', 'email', 'created_at', 'role', 'status', 'first_name', 'last_name'], default: 'id')]
     public string $order_by;
+
+    #[OA\Property(description: 'Sort direction', enum: ['ASC', 'DESC'], default: 'DESC')]
     public string $order_dir;
 
     protected function rules(): array

@@ -5,17 +5,31 @@ declare(strict_types=1);
 namespace App\DTO\Request\Auth;
 
 use App\DTO\Request\BaseRequestDTO;
+use OpenApi\Attributes as OA;
 
 /**
  * Register Request DTO
  *
  * Validates data for user self-registration.
  */
+#[OA\Schema(
+    schema: 'RegisterRequest',
+    title: 'Register Request',
+    description: 'User data for self-registration',
+    required: ['email', 'first_name', 'last_name', 'password']
+)]
 readonly class RegisterRequestDTO extends BaseRequestDTO
 {
+    #[OA\Property(description: 'User email address', example: 'newuser@example.com')]
     public string $email;
+
+    #[OA\Property(description: 'User first name', example: 'John')]
     public string $first_name;
+
+    #[OA\Property(description: 'User last name', example: 'Doe')]
     public string $last_name;
+
+    #[OA\Property(description: 'User password (must be strong)', example: 'P@ssw0rd123!', format: 'password')]
     public string $password;
 
     protected function rules(): array

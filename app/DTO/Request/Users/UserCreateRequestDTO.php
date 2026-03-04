@@ -5,20 +5,40 @@ declare(strict_types=1);
 namespace App\DTO\Request\Users;
 
 use App\DTO\Request\BaseRequestDTO;
+use OpenApi\Attributes as OA;
 
 /**
  * User Store Request DTO
  *
  * Validates data for creating a new user.
  */
+#[OA\Schema(
+    schema: 'UserCreateRequest',
+    title: 'User Create Request',
+    description: 'Data needed to create a new user',
+    required: ['email']
+)]
 readonly class UserCreateRequestDTO extends BaseRequestDTO
 {
+    #[OA\Property(description: 'Unique email address', example: 'user@example.com')]
     public string $email;
+
+    #[OA\Property(description: 'User first name', example: 'John', nullable: true)]
     public ?string $first_name;
+
+    #[OA\Property(description: 'User last name', example: 'Doe', nullable: true)]
     public ?string $last_name;
+
+    #[OA\Property(description: 'Account role', enum: ['user', 'admin', 'superadmin'], example: 'user')]
     public ?string $role;
+
+    #[OA\Property(description: 'OAuth provider name', enum: ['google', 'github'], nullable: true)]
     public ?string $oauth_provider;
+
+    #[OA\Property(description: 'OAuth unique identifier from provider', nullable: true)]
     public ?string $oauth_provider_id;
+
+    #[OA\Property(description: 'URL to user avatar image', example: 'https://example.com/avatar.jpg', nullable: true)]
     public ?string $avatar_url;
 
     protected function rules(): array

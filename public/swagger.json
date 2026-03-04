@@ -2630,6 +2630,231 @@
                 },
                 "type": "object"
             },
+            "LoginRequest": {
+                "title": "Login Request",
+                "description": "User credentials for authentication",
+                "required": [
+                    "email",
+                    "password"
+                ],
+                "properties": {
+                    "email": {
+                        "description": "User registered email",
+                        "type": "string",
+                        "example": "user@example.com"
+                    },
+                    "password": {
+                        "description": "User password",
+                        "type": "string",
+                        "format": "password",
+                        "example": "P@ssw0rd123!"
+                    }
+                },
+                "type": "object"
+            },
+            "RegisterRequest": {
+                "title": "Register Request",
+                "description": "User data for self-registration",
+                "required": [
+                    "email",
+                    "first_name",
+                    "last_name",
+                    "password"
+                ],
+                "properties": {
+                    "email": {
+                        "description": "User email address",
+                        "type": "string",
+                        "example": "newuser@example.com"
+                    },
+                    "first_name": {
+                        "description": "User first name",
+                        "type": "string",
+                        "example": "John"
+                    },
+                    "last_name": {
+                        "description": "User last name",
+                        "type": "string",
+                        "example": "Doe"
+                    },
+                    "password": {
+                        "description": "User password (must be strong)",
+                        "type": "string",
+                        "format": "password",
+                        "example": "P@ssw0rd123!"
+                    }
+                },
+                "type": "object"
+            },
+            "UserCreateRequest": {
+                "title": "User Create Request",
+                "description": "Data needed to create a new user",
+                "required": [
+                    "email"
+                ],
+                "properties": {
+                    "email": {
+                        "description": "Unique email address",
+                        "type": "string",
+                        "example": "user@example.com"
+                    },
+                    "first_name": {
+                        "description": "User first name",
+                        "type": "string",
+                        "example": "John",
+                        "nullable": true
+                    },
+                    "last_name": {
+                        "description": "User last name",
+                        "type": "string",
+                        "example": "Doe",
+                        "nullable": true
+                    },
+                    "role": {
+                        "description": "Account role",
+                        "type": "string",
+                        "enum": [
+                            "user",
+                            "admin",
+                            "superadmin"
+                        ],
+                        "example": "user",
+                        "nullable": true
+                    },
+                    "oauth_provider": {
+                        "description": "OAuth provider name",
+                        "type": "string",
+                        "enum": [
+                            "google",
+                            "github"
+                        ],
+                        "nullable": true
+                    },
+                    "oauth_provider_id": {
+                        "description": "OAuth unique identifier from provider",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "avatar_url": {
+                        "description": "URL to user avatar image",
+                        "type": "string",
+                        "example": "https://example.com/avatar.jpg",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "UserIndexRequest": {
+                "title": "User Index Request",
+                "description": "Parameters for filtering and paginating the user list",
+                "properties": {
+                    "page": {
+                        "description": "Current page number",
+                        "type": "integer",
+                        "default": 1,
+                        "example": 1
+                    },
+                    "per_page": {
+                        "description": "Items per page",
+                        "type": "integer",
+                        "default": 20,
+                        "maximum": 100,
+                        "example": 20
+                    },
+                    "search": {
+                        "description": "Search term for email, first name or last name",
+                        "type": "string",
+                        "example": "john",
+                        "nullable": true
+                    },
+                    "role": {
+                        "description": "Filter by account role",
+                        "type": "string",
+                        "enum": [
+                            "user",
+                            "admin",
+                            "superadmin"
+                        ],
+                        "nullable": true
+                    },
+                    "status": {
+                        "description": "Filter by account status",
+                        "type": "string",
+                        "enum": [
+                            "active",
+                            "inactive",
+                            "pending_approval",
+                            "invited"
+                        ],
+                        "nullable": true
+                    },
+                    "order_by": {
+                        "description": "Field to sort by",
+                        "type": "string",
+                        "default": "id",
+                        "enum": [
+                            "id",
+                            "email",
+                            "created_at",
+                            "role",
+                            "status",
+                            "first_name",
+                            "last_name"
+                        ]
+                    },
+                    "order_dir": {
+                        "description": "Sort direction",
+                        "type": "string",
+                        "default": "DESC",
+                        "enum": [
+                            "ASC",
+                            "DESC"
+                        ]
+                    }
+                },
+                "type": "object"
+            },
+            "UserUpdateRequest": {
+                "title": "User Update Request",
+                "description": "Data needed to update an existing user",
+                "properties": {
+                    "email": {
+                        "description": "Updated email address",
+                        "type": "string",
+                        "example": "user@example.com",
+                        "nullable": true
+                    },
+                    "first_name": {
+                        "description": "Updated first name",
+                        "type": "string",
+                        "example": "John",
+                        "nullable": true
+                    },
+                    "last_name": {
+                        "description": "Updated last name",
+                        "type": "string",
+                        "example": "Doe",
+                        "nullable": true
+                    },
+                    "password": {
+                        "description": "New password (must be strong)",
+                        "type": "string",
+                        "example": "P@ssw0rd123!",
+                        "nullable": true
+                    },
+                    "role": {
+                        "description": "Updated account role",
+                        "type": "string",
+                        "enum": [
+                            "user",
+                            "admin",
+                            "superadmin"
+                        ],
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
             "ApiKeyResponse": {
                 "title": "API Key Response",
                 "description": "API key object metadata",

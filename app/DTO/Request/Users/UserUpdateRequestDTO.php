@@ -5,18 +5,33 @@ declare(strict_types=1);
 namespace App\DTO\Request\Users;
 
 use App\DTO\Request\BaseRequestDTO;
+use OpenApi\Attributes as OA;
 
 /**
  * User Update Request DTO
  *
  * Validates data for updating an existing user.
  */
+#[OA\Schema(
+    schema: 'UserUpdateRequest',
+    title: 'User Update Request',
+    description: 'Data needed to update an existing user'
+)]
 readonly class UserUpdateRequestDTO extends BaseRequestDTO
 {
+    #[OA\Property(description: 'Updated email address', example: 'user@example.com', nullable: true)]
     public ?string $email;
+
+    #[OA\Property(description: 'Updated first name', example: 'John', nullable: true)]
     public ?string $first_name;
+
+    #[OA\Property(description: 'Updated last name', example: 'Doe', nullable: true)]
     public ?string $last_name;
+
+    #[OA\Property(description: 'New password (must be strong)', example: 'P@ssw0rd123!', nullable: true)]
     public ?string $password;
+
+    #[OA\Property(description: 'Updated account role', enum: ['user', 'admin', 'superadmin'], nullable: true)]
     public ?string $role;
 
     protected function rules(): array

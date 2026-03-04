@@ -29,7 +29,7 @@ abstract class BaseRepository implements RepositoryInterface
         return method_exists($this->model, "errors") ? $this->model->errors() : [];
     }
 
-    public function find(int $id): ?object
+    public function find(int|string $id): ?object
     {
         /** @var object|null $result */
         $result = $this->model->find($id);

@@ -6,13 +6,13 @@ namespace App\Controllers\Api\V1\Admin;
 
 use App\Controllers\ApiController;
 use App\DTO\Request\Catalogs\AuditFacetsRequestDTO;
-use App\Services\System\CatalogService;
+use App\Interfaces\System\CatalogServiceInterface;
 use CodeIgniter\HTTP\ResponseInterface;
 use Config\Services;
 
 class CatalogController extends ApiController
 {
-    private CatalogService $catalogService;
+    private CatalogServiceInterface $catalogService;
 
     protected function resolveDefaultService(): object
     {

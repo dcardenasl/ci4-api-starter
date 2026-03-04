@@ -6,8 +6,9 @@ namespace App\Services\System;
 
 use App\DTO\Response\Common\PayloadResponseDTO;
 use App\Interfaces\DataTransferObjectInterface;
+use App\Interfaces\System\CatalogServiceInterface;
 
-readonly class CatalogService
+readonly class CatalogService implements CatalogServiceInterface
 {
     public function __construct(
         private \App\Interfaces\System\AuditRepositoryInterface $auditRepository

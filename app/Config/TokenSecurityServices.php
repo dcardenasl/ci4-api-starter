@@ -78,13 +78,11 @@ trait TokenSecurityServices
             return static::getSharedInstance('apiKeyService');
         }
 
-        $apiKeyModel = new \App\Models\ApiKeyModel();
-
         return new \App\Services\Tokens\ApiKeyService(
-            $apiKeyModel,
+            static::apiKeyRepository(),
             static::apiKeyResponseMapper(),
-            static::createApiKeyAction($apiKeyModel),
-            static::updateApiKeyAction($apiKeyModel)
+            static::createApiKeyAction(),
+            static::updateApiKeyAction()
         );
     }
 
@@ -99,17 +97,35 @@ trait TokenSecurityServices
         );
     }
 
-    public static function createApiKeyAction(\App\Models\ApiKeyModel $apiKeyModel): \App\Services\Tokens\Actions\CreateApiKeyAction
+    public static function apiKeyMaterialService(bool $getShared = true): \App\Services\Tokens\Support\ApiKeyMaterialService
     {
+        if ($getShared) {
+            return static::getSharedInstance('apiKeyMaterialService');
+        }
+
+        return new \App\Services\Tokens\Support\ApiKeyMaterialService();
+    }
+
+    public static function createApiKeyAction(bool $getShared = true): \App\Services\Tokens\Actions\CreateApiKeyAction
+    {
+        if ($getShared) {
+            return static::getSharedInstance('createApiKeyAction');
+        }
+
         return new \App\Services\Tokens\Actions\CreateApiKeyAction(
-            $apiKeyModel
+            static::apiKeyRepository(),
+            static::apiKeyMaterialService()
         );
     }
 
-    public static function updateApiKeyAction(\App\Models\ApiKeyModel $apiKeyModel): \App\Services\Tokens\Actions\UpdateApiKeyAction
+    public static function updateApiKeyAction(bool $getShared = true): \App\Services\Tokens\Actions\UpdateApiKeyAction
     {
+        if ($getShared) {
+            return static::getSharedInstance('updateApiKeyAction');
+        }
+
         return new \App\Services\Tokens\Actions\UpdateApiKeyAction(
-            $apiKeyModel
+            static::apiKeyRepository()
         );
     }
 

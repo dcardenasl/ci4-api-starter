@@ -59,4 +59,13 @@ trait RepositoryModelServices
 
         return new \App\Models\ApiKeyModel();
     }
+
+    public static function apiKeyRepository(bool $getShared = true): \App\Interfaces\Tokens\ApiKeyRepositoryInterface
+    {
+        if ($getShared) {
+            return static::getSharedInstance('apiKeyRepository');
+        }
+
+        return new \App\Repositories\Tokens\ApiKeyRepository(static::apiKeyModel());
+    }
 }

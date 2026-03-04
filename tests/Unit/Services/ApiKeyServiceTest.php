@@ -12,12 +12,80 @@ use App\Exceptions\BadRequestException;
 use App\Exceptions\NotFoundException;
 use App\Interfaces\DataTransferObjectInterface;
 use App\Interfaces\Mappers\ResponseMapperInterface;
-use App\Models\ApiKeyModel;
+use App\Interfaces\Tokens\ApiKeyRepositoryInterface;
 use App\Services\Tokens\Actions\CreateApiKeyAction;
 use App\Services\Tokens\Actions\UpdateApiKeyAction;
 use App\Services\Tokens\ApiKeyService;
 use CodeIgniter\Test\CIUnitTestCase;
 use Tests\Support\Traits\CustomAssertionsTrait;
+
+class FakeApiKeyRepository implements ApiKeyRepositoryInterface
+{
+    public ?ApiKeyEntity $returnEntity = null;
+    public int|false $insertReturn    = 1;
+    public bool $updateReturn         = true;
+    public bool $deleteReturn         = true;
+    public array $validationErrors    = [];
+
+    public function findByHash(string $hash): ?ApiKeyEntity
+    {
+        return $this->returnEntity;
+    }
+
+    public function find(int|string $id): ?object
+    {
+        return $this->returnEntity;
+    }
+
+    public function setEntityContext(int|string $id, object|array $entity): void
+    {
+    }
+
+    public function errors(): array
+    {
+        return $this->validationErrors;
+    }
+
+    public function findAll(int $limit = 0, int $offset = 0): array
+    {
+        return [];
+    }
+
+    public function insert(array|object $data, bool $returnID = true): int|string|bool
+    {
+        return $this->insertReturn;
+    }
+
+    public function update(int|string|array $id = null, array|object|null $data = null): bool
+    {
+        return $this->updateReturn;
+    }
+
+    public function delete(int|string|array $id = null, bool $purge = false): bool
+    {
+        return $this->deleteReturn;
+    }
+
+    public function restore(int|string $id, array $data = []): bool
+    {
+        return true;
+    }
+
+    public function getModel(): \CodeIgniter\Model
+    {
+        throw new \RuntimeException('Not used in test');
+    }
+
+    public function paginateCriteria(array $criteria, int $page = 1, int $perPage = 20, ?callable $baseCriteria = null): array
+    {
+        return [
+            'data' => [],
+            'total' => 0,
+            'page' => $page,
+            'per_page' => $perPage,
+        ];
+    }
+}
 
 /**
  * ApiKeyService Unit Tests
@@ -27,7 +95,7 @@ class ApiKeyServiceTest extends CIUnitTestCase
     use CustomAssertionsTrait;
 
     protected ApiKeyService $service;
-    protected ApiKeyModel $mockApiKeyModel;
+    protected FakeApiKeyRepository $mockApiKeyRepository;
     protected CreateApiKeyAction $mockCreateApiKeyAction;
     protected UpdateApiKeyAction $mockUpdateApiKeyAction;
     protected ResponseMapperInterface $responseMapper;
@@ -36,45 +104,7 @@ class ApiKeyServiceTest extends CIUnitTestCase
     {
         parent::setUp();
 
-        $this->mockApiKeyModel = new class () extends ApiKeyModel {
-            public ?ApiKeyEntity $returnEntity = null;
-            public int|false $insertReturn    = 1;
-            public bool $updateReturn         = true;
-            public bool $deleteReturn         = true;
-            public array $validationErrors    = [];
-
-            public function __construct()
-            {
-            }
-            public function find($id = null, bool $purge = false)
-            {
-                return $this->returnEntity;
-            }
-            public function insert($row = null, bool $returnID = true)
-            {
-                return $this->insertReturn;
-            }
-            public function update($id = null, $row = null): bool
-            {
-                return $this->updateReturn;
-            }
-            public function delete($id = null, bool $purge = false)
-            {
-                return $this->deleteReturn;
-            }
-            public function errors(bool $forceDB = false): array
-            {
-                return $this->validationErrors;
-            }
-            public function where($key, $value = null, ?bool $escape = null): static
-            {
-                return $this;
-            }
-            public function first()
-            {
-                return $this->returnEntity;
-            }
-        };
+        $this->mockApiKeyRepository = new FakeApiKeyRepository();
         $this->mockCreateApiKeyAction = $this->createMock(CreateApiKeyAction::class);
         $this->mockUpdateApiKeyAction = $this->createMock(UpdateApiKeyAction::class);
         $this->responseMapper = new class () implements ResponseMapperInterface {
@@ -85,7 +115,7 @@ class ApiKeyServiceTest extends CIUnitTestCase
         };
 
         $this->service = new ApiKeyService(
-            $this->mockApiKeyModel,
+            $this->mockApiKeyRepository,
             $this->responseMapper,
             $this->mockCreateApiKeyAction,
             $this->mockUpdateApiKeyAction
@@ -97,7 +127,7 @@ class ApiKeyServiceTest extends CIUnitTestCase
     public function testShowReturnsApiKeyData(): void
     {
         $entity = $this->makeEntity(['id' => 1, 'name' => 'Test Key', 'key_prefix' => 'apk_abc123de']);
-        $this->mockApiKeyModel->returnEntity = $entity;
+        $this->mockApiKeyRepository->returnEntity = $entity;
 
         $result = $this->service->show(1);
 
@@ -108,7 +138,7 @@ class ApiKeyServiceTest extends CIUnitTestCase
 
     public function testShowNonExistentKeyThrowsNotFoundException(): void
     {
-        $this->mockApiKeyModel->returnEntity = null;
+        $this->mockApiKeyRepository->returnEntity = null;
         $this->expectException(NotFoundException::class);
         $this->service->show(999);
     }
@@ -124,7 +154,7 @@ class ApiKeyServiceTest extends CIUnitTestCase
             'is_active'            => 1,
             'rate_limit_requests'  => 600,
         ]);
-        $request = new ApiKeyCreateRequestDTO(['name' => 'My App'], service('validation'));
+        $request = new ApiKeyCreateRequestDTO(['name' => 'My App']);
         $this->mockCreateApiKeyAction->expects($this->once())
             ->method('execute')
             ->with($this->isInstanceOf(ApiKeyCreateRequestDTO::class))
@@ -148,7 +178,7 @@ class ApiKeyServiceTest extends CIUnitTestCase
             ->with(1, $this->isInstanceOf(ApiKeyUpdateRequestDTO::class))
             ->willReturn($entity);
 
-        $request = new ApiKeyUpdateRequestDTO(['name' => 'New Name'], service('validation'));
+        $request = new ApiKeyUpdateRequestDTO(['name' => 'New Name']);
         $result  = $this->service->update(1, $request);
 
         $this->assertInstanceOf(DataTransferObjectInterface::class, $result);
@@ -159,28 +189,28 @@ class ApiKeyServiceTest extends CIUnitTestCase
     {
         $this->mockUpdateApiKeyAction->method('execute')->willThrowException(new NotFoundException(lang('Api.resourceNotFound')));
         $this->expectException(NotFoundException::class);
-        $this->service->update(99, new ApiKeyUpdateRequestDTO(['name' => 'X'], service('validation')));
+        $this->service->update(99, new ApiKeyUpdateRequestDTO(['name' => 'X']));
     }
 
     public function testUpdateWithNoFieldsThrowsBadRequestException(): void
     {
         $this->mockUpdateApiKeyAction->method('execute')->willThrowException(new BadRequestException(lang('Api.noFieldsToUpdate')));
         $this->expectException(BadRequestException::class);
-        $this->service->update(1, new ApiKeyUpdateRequestDTO([], service('validation')));
+        $this->service->update(1, new ApiKeyUpdateRequestDTO([]));
     }
 
     // ==================== DESTROY TESTS ====================
 
     public function testDestroyDeletesApiKey(): void
     {
-        $this->mockApiKeyModel->returnEntity = $this->makeEntity(['id' => 1, 'name' => 'To Delete']);
+        $this->mockApiKeyRepository->returnEntity = $this->makeEntity(['id' => 1, 'name' => 'To Delete']);
         $result = $this->service->destroy(1);
         $this->assertTrue($result);
     }
 
     public function testDestroyNonExistentKeyThrowsNotFoundException(): void
     {
-        $this->mockApiKeyModel->returnEntity = null;
+        $this->mockApiKeyRepository->returnEntity = null;
         $this->expectException(NotFoundException::class);
         $this->service->destroy(99);
     }

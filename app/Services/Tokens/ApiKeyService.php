@@ -7,8 +7,8 @@ namespace App\Services\Tokens;
 use App\DTO\Response\ApiKeys\ApiKeyResponseDTO;
 use App\DTO\SecurityContext;
 use App\Interfaces\Mappers\ResponseMapperInterface;
+use App\Interfaces\Tokens\ApiKeyRepositoryInterface;
 use App\Interfaces\Tokens\ApiKeyServiceInterface;
-use App\Models\ApiKeyModel;
 use App\Services\Core\BaseCrudService;
 use App\Services\Tokens\Actions\CreateApiKeyAction;
 use App\Services\Tokens\Actions\UpdateApiKeyAction;
@@ -16,12 +16,12 @@ use App\Services\Tokens\Actions\UpdateApiKeyAction;
 class ApiKeyService extends BaseCrudService implements ApiKeyServiceInterface
 {
     public function __construct(
-        protected ApiKeyModel $apiKeyModel,
+        ApiKeyRepositoryInterface $apiKeyRepository,
         ResponseMapperInterface $responseMapper,
         protected CreateApiKeyAction $createApiKeyAction,
         protected UpdateApiKeyAction $updateApiKeyAction
     ) {
-        parent::__construct(new \App\Repositories\GenericRepository($apiKeyModel), $responseMapper);
+        parent::__construct($apiKeyRepository, $responseMapper);
     }
 
     /**

@@ -20,9 +20,6 @@ class ServiceModelDependencyConventionsTest extends CIUnitTestCase
             'app/Services/Auth/PasswordResetService.php',
             'app/Services/Auth/UserInvitationService.php',
             'app/Services/System/MetricsService.php',
-            'app/Services/Tokens/Actions/CreateApiKeyAction.php',
-            'app/Services/Tokens/Actions/UpdateApiKeyAction.php',
-            'app/Services/Tokens/ApiKeyService.php',
             'app/Services/Tokens/RefreshTokenService.php',
             'app/Services/Tokens/TokenRevocationService.php',
         ];

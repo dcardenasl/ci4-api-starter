@@ -6,21 +6,21 @@ namespace App\Services\Tokens\Actions;
 
 use App\DTO\Request\ApiKeys\ApiKeyCreateRequestDTO;
 use App\Exceptions\ValidationException;
-use App\Models\ApiKeyModel;
+use App\Interfaces\Tokens\ApiKeyRepositoryInterface;
+use App\Services\Tokens\Support\ApiKeyMaterialService;
 
 class CreateApiKeyAction
 {
     public function __construct(
-        protected ApiKeyModel $apiKeyModel
+        protected ApiKeyRepositoryInterface $apiKeyRepository,
+        protected ApiKeyMaterialService $apiKeyMaterialService
     ) {
     }
 
     public function execute(ApiKeyCreateRequestDTO $request): array
     {
-        helper('security');
-
-        $rawKey = \generate_api_key();
-        $hash = \hash_api_key($rawKey);
+        $rawKey = $this->apiKeyMaterialService->generateRawKey();
+        $hash = $this->apiKeyMaterialService->hash($rawKey);
 
         $data = [
             'name' => $request->name,
@@ -33,14 +33,14 @@ class CreateApiKeyAction
             'ip_rate_limit' => $request->ip_rate_limit ?? 200,
         ];
 
-        $id = $this->apiKeyModel->insert($data);
+        $id = $this->apiKeyRepository->insert($data);
 
-        if (!$id) {
-            throw new ValidationException(lang('Api.validationFailed'), $this->apiKeyModel->errors());
+        if ($id === false || $id === 0 || $id === '' || $id === true) {
+            throw new ValidationException(lang('Api.validationFailed'), $this->apiKeyRepository->errors());
         }
 
         /** @var \App\Entities\ApiKeyEntity|null $apiKey */
-        $apiKey = $this->apiKeyModel->find($id);
+        $apiKey = $this->apiKeyRepository->find($id);
         if ($apiKey === null) {
             throw new ValidationException(lang('Api.validationFailed'), ['apiKey' => lang('Api.resourceNotFound')]);
         }

@@ -8,19 +8,19 @@ use App\DTO\Request\ApiKeys\ApiKeyUpdateRequestDTO;
 use App\Exceptions\BadRequestException;
 use App\Exceptions\NotFoundException;
 use App\Exceptions\ValidationException;
-use App\Models\ApiKeyModel;
+use App\Interfaces\Tokens\ApiKeyRepositoryInterface;
 
 class UpdateApiKeyAction
 {
     public function __construct(
-        protected ApiKeyModel $apiKeyModel
+        protected ApiKeyRepositoryInterface $apiKeyRepository
     ) {
     }
 
     public function execute(int $id, ApiKeyUpdateRequestDTO $request): \App\Entities\ApiKeyEntity
     {
         /** @var \App\Entities\ApiKeyEntity|null $existing */
-        $existing = $this->apiKeyModel->find($id);
+        $existing = $this->apiKeyRepository->find($id);
         if ($existing === null) {
             throw new NotFoundException(lang('Api.resourceNotFound'));
         }
@@ -38,12 +38,12 @@ class UpdateApiKeyAction
             throw new BadRequestException(lang('Api.noFieldsToUpdate'));
         }
 
-        if (!$this->apiKeyModel->update($id, $data)) {
-            throw new ValidationException(lang('Api.validationFailed'), $this->apiKeyModel->errors());
+        if (!$this->apiKeyRepository->update($id, $data)) {
+            throw new ValidationException(lang('Api.validationFailed'), $this->apiKeyRepository->errors());
         }
 
         /** @var \App\Entities\ApiKeyEntity|null $updated */
-        $updated = $this->apiKeyModel->find($id);
+        $updated = $this->apiKeyRepository->find($id);
         if ($updated === null) {
             throw new NotFoundException(lang('Api.resourceNotFound'));
         }

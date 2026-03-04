@@ -23,7 +23,12 @@ class FeatureToggleFilter implements FilterInterface
         /** @var FeatureFlags $flags */
         $flags = config(FeatureFlags::class);
         $enabled = $flags->isEnabled($flag);
-        Services::metricsService()->recordFeatureToggle($flag, $enabled);
+        try {
+            Services::metricsService()->recordFeatureToggle($flag, $enabled);
+        } catch (\Throwable $e) {
+            // Feature evaluation must not fail because observability is unavailable.
+            log_message('warning', '[FeatureToggleFilter] Failed to record feature metric: ' . $e->getMessage());
+        }
 
         if ($enabled) {
             return $request;

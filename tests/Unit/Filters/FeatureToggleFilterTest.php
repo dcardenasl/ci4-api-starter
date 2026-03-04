@@ -54,6 +54,24 @@ class FeatureToggleFilterTest extends CIUnitTestCase
         $this->assertInstanceOf(IncomingRequest::class, $result);
     }
 
+    public function testBeforeAllowsRequestWhenMetricRecordingFails(): void
+    {
+        putenv('METRICS_ENABLED=true');
+
+        $mockMetrics = $this->createMock(\App\Interfaces\System\MetricsServiceInterface::class);
+        $mockMetrics
+            ->expects($this->once())
+            ->method('recordFeatureToggle')
+            ->willThrowException(new \RuntimeException('metrics unavailable'));
+
+        Services::injectMock('metricsService', $mockMetrics);
+
+        $request = $this->createMock(IncomingRequest::class);
+        $result = $this->filter->before($request, ['metrics']);
+
+        $this->assertInstanceOf(IncomingRequest::class, $result);
+    }
+
     public function testBeforeBlocksRequestWhenFeatureIsDisabled(): void
     {
         putenv('METRICS_ENABLED=false');

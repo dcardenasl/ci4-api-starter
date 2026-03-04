@@ -56,6 +56,24 @@ class ModuleCheck extends BaseCommand
             }
         }
 
+        $placeholderPatterns = [
+            'markTestIncomplete',
+            'TODO',
+            'FIXME',
+        ];
+        foreach ($checks as $path) {
+            if (!is_file($path)) {
+                continue;
+            }
+
+            $source = (string) file_get_contents($path);
+            foreach ($placeholderPatterns as $pattern) {
+                if (str_contains($source, $pattern)) {
+                    $missing[] = "Placeholder `{$pattern}` found in {$path}";
+                }
+            }
+        }
+
         $servicesPath = APPPATH . 'Config/Services.php';
         $servicesSource = is_file($servicesPath) ? (string) file_get_contents($servicesPath) : '';
         $serviceMethod = "function {$resourceLower}Service(";

@@ -345,7 +345,8 @@ class Services extends BaseService
 
         return new \App\Services\Tokens\AuthTokenService(
             static::refreshTokenService(),
-            static::tokenRevocationService()
+            static::tokenRevocationService(),
+            static::requestDtoFactory()
         );
     }
 
@@ -372,6 +373,17 @@ class Services extends BaseService
             new \App\Libraries\Files\MultipartProcessor(),
             new \App\Libraries\Files\Base64Processor(),
             static::virusScannerService()
+        );
+    }
+
+    public static function fileResponseMapper(bool $getShared = true)
+    {
+        if ($getShared) {
+            return static::getSharedInstance('fileResponseMapper');
+        }
+
+        return new \App\Services\Core\Mappers\DtoResponseMapper(
+            \App\DTO\Response\Files\FileResponseDTO::class
         );
     }
 

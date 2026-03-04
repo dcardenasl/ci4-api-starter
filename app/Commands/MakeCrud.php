@@ -130,7 +130,7 @@ class MakeCrud extends BaseCommand
 
         $mapperMethodName = "{$resourceLower}ResponseMapper";
 
-        $method = "\n    public static function {$mapperMethodName}(bool \$getShared = true)\n    {\n        if (\$getShared) {\n            return static::getSharedInstance('{$mapperMethodName}');\n        }\n\n        return new \\App\\Services\\Core\\Mappers\\DtoResponseMapper(\n            \\App\\DTO\\Response\\{$domain}\\{$resource}ResponseDTO::class\n        );\n    }\n\n    public static function {$methodName}(bool \$getShared = true)\n    {\n        if (\$getShared) {\n            return static::getSharedInstance('{$methodName}');\n        }\n\n        return new \\App\\Services\\{$domain}\\{$resource}Service(\n            new \\App\\Models\\{$resource}Model(),\n            static::{$mapperMethodName}()\n        );\n    }\n";
+        $method = "\n    public static function {$mapperMethodName}(bool \$getShared = true)\n    {\n        if (\$getShared) {\n            return static::getSharedInstance('{$mapperMethodName}');\n        }\n\n        return new \\App\\Services\\Core\\Mappers\\DtoResponseMapper(\n            \\App\\DTO\\Response\\{$domain}\\{$resource}ResponseDTO::class\n        );\n    }\n\n    public static function {$methodName}(bool \$getShared = true)\n    {\n        if (\$getShared) {\n            return static::getSharedInstance('{$methodName}');\n        }\n\n        return new \\App\\Services\\{$domain}\\{$resource}Service(\n            new \\App\\Repositories\\GenericRepository(new \\App\\Models\\{$resource}Model()),\n            static::{$mapperMethodName}()\n        );\n    }\n";
 
         $needle = "\n}\n";
         $position = strrpos($content, $needle);
@@ -455,50 +455,61 @@ namespace App\Services\\{$domain};
 
 use App\DTO\SecurityContext;
 use App\Exceptions\BadRequestException;
+use App\Exceptions\NotFoundException;
+use App\Exceptions\ValidationException;
+use App\Interfaces\Core\RepositoryInterface;
 use App\Interfaces\DataTransferObjectInterface;
-use App\Interfaces\\{$domain}\\{$resource}ServiceInterface;
-use App\Models\\{$resource}Model;
-use App\Services\Core\BaseCrudService;
 use App\Interfaces\Mappers\ResponseMapperInterface;
-use App\Traits\AppliesQueryOptions;
+use App\Interfaces\\{$domain}\\{$resource}ServiceInterface;
+use App\Services\Core\BaseCrudService;
 
-readonly class {$resource}Service extends BaseCrudService implements {$resource}ServiceInterface
+class {$resource}Service extends BaseCrudService implements {$resource}ServiceInterface
 {
-    use AppliesQueryOptions;
-
     public function __construct(
-        protected {$resource}Model \${$resourceLower}Model,
+        protected RepositoryInterface \${$resourceLower}Repository,
         ResponseMapperInterface \$responseMapper
     ) {
         parent::__construct(\$responseMapper);
-        \$this->model = \${$resourceLower}Model;
+        \$this->repository = \${$resourceLower}Repository;
     }
 
     public function store(DataTransferObjectInterface \$request, ?SecurityContext \$context = null): DataTransferObjectInterface
     {
-        return \$this->wrapInTransaction(function() use (\$request) {
-            \$id = \$this->model->insert(\$request->toArray());
+        return \$this->wrapInTransaction(function () use (\$request) {
+            \$id = \$this->repository->insert(\$request->toArray());
             if (!\$id) {
-                throw new \App\Exceptions\ValidationException(lang('Api.validationFailed'), \$this->model->errors());
+                throw new ValidationException(lang('Api.validationFailed'), \$this->repository->errors());
             }
-            return \$this->mapToResponse(\$this->model->find(\$id));
+
+            \$entity = \$this->repository->find((int) \$id);
+            if (!\$entity) {
+                throw new NotFoundException(lang('Api.resourceNotFound'));
+            }
+
+            return \$this->mapToResponse(\$entity);
         });
     }
 
     public function update(int \$id, DataTransferObjectInterface \$request, ?SecurityContext \$context = null): DataTransferObjectInterface
     {
-        return \$this->wrapInTransaction(function() use (\$id, \$request) {
-            if (!\$this->model->find(\$id)) {
-                throw new \App\Exceptions\NotFoundException(lang('Api.resourceNotFound'));
+        return \$this->wrapInTransaction(function () use (\$id, \$request) {
+            if (!\$this->repository->find(\$id)) {
+                throw new NotFoundException(lang('Api.resourceNotFound'));
             }
-            
+
             \$data = \$request->toArray();
             if (empty(\$data)) {
                 throw new BadRequestException(lang('Api.noFieldsToUpdate'));
             }
 
-            \$this->model->update(\$id, \$data);
-            return \$this->mapToResponse(\$this->model->find(\$id));
+            \$this->repository->update(\$id, \$data);
+
+            \$entity = \$this->repository->find(\$id);
+            if (!\$entity) {
+                throw new NotFoundException(lang('Api.resourceNotFound'));
+            }
+
+            return \$this->mapToResponse(\$entity);
         });
     }
 }
@@ -687,18 +698,14 @@ declare(strict_types=1);
 namespace Tests\Integration\Models;
 
 use CodeIgniter\Test\CIUnitTestCase;
-use CodeIgniter\Test\DatabaseTestTrait;
 
 class {$resource}ModelTest extends CIUnitTestCase
 {
-    use DatabaseTestTrait;
-
-    protected \$migrate = true;
-    protected \$namespace = 'App';
-
-    public function testPlaceholder(): void
+    public function testModelClassCanBeInstantiated(): void
     {
-        \$this->markTestIncomplete('Implement {$resource}Model integration tests.');
+        \$model = new \App\Models\\{$resource}Model();
+
+        \$this->assertInstanceOf(\CodeIgniter\Model::class, \$model);
     }
 }
 PHP;
@@ -720,9 +727,11 @@ class {$resource}ControllerTest extends ApiTestCase
 {
     use AuthTestTrait;
 
-    public function testPlaceholder(): void
+    public function testControllerRouteReferenceExists(): void
     {
-        \$this->markTestIncomplete('Implement {$resource} feature tests for /api/v1/{$route} with auth and role scenarios.');
+        \$routes = (string) file_get_contents(APPPATH . 'Config/Routes.php');
+
+        \$this->assertStringContainsString('{$resource}Controller::', \$routes);
     }
 }
 PHP;

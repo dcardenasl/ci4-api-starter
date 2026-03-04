@@ -15,7 +15,7 @@ readonly class MetricsQueryRequestDTO extends BaseRequestDTO
 {
     public string $period;
 
-    protected function rules(): array
+    public function rules(): array
     {
         return [
             'period' => 'permit_empty|in_list[1h,24h,7d,30d]',

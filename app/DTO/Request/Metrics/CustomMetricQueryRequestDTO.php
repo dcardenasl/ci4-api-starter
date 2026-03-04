@@ -15,7 +15,7 @@ readonly class CustomMetricQueryRequestDTO extends BaseRequestDTO
     public string $period;
     public bool $aggregate;
 
-    protected function rules(): array
+    public function rules(): array
     {
         return [
             'name' => 'required|string|max_length[100]',

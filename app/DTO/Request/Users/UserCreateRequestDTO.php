@@ -41,7 +41,7 @@ readonly class UserCreateRequestDTO extends BaseRequestDTO
     #[OA\Property(description: 'URL to user avatar image', example: 'https://example.com/avatar.jpg', nullable: true)]
     public ?string $avatar_url;
 
-    protected function rules(): array
+    public function rules(): array
     {
         return [
             'email'     => 'required|valid_email_idn|max_length[255]',

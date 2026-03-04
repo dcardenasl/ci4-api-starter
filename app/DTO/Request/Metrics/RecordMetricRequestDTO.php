@@ -15,7 +15,7 @@ readonly class RecordMetricRequestDTO extends BaseRequestDTO
     public float $value;
     public array $tags;
 
-    protected function rules(): array
+    public function rules(): array
     {
         return [
             'name' => 'required|string|max_length[100]',
@@ -24,7 +24,7 @@ readonly class RecordMetricRequestDTO extends BaseRequestDTO
         ];
     }
 
-    protected function messages(): array
+    public function messages(): array
     {
         return [
             'name' => [

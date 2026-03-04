@@ -15,7 +15,7 @@ readonly class GoogleLoginRequestDTO extends BaseRequestDTO
 {
     public string $id_token;
 
-    protected function rules(): array
+    public function rules(): array
     {
         return [
             'id_token' => 'required|string',

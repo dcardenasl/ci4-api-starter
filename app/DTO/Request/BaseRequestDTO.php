@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\DTO\Request;
 
+use App\Exceptions\ValidationException;
 use App\Interfaces\DataTransferObjectInterface;
+use CodeIgniter\Validation\ValidationInterface;
 
 /**
  * Base Request DTO
@@ -16,6 +18,7 @@ abstract readonly class BaseRequestDTO implements DataTransferObjectInterface
 {
     public function __construct(array $data)
     {
+        $this->validate($data);
         $this->map($data);
     }
 
@@ -31,6 +34,28 @@ abstract readonly class BaseRequestDTO implements DataTransferObjectInterface
     public function messages(): array
     {
         return [];
+    }
+
+    protected function validate(array $data): void
+    {
+        $rules = $this->rules();
+        if ($rules === []) {
+            return;
+        }
+
+        $validation = service('validation');
+        if (!$validation instanceof ValidationInterface) {
+            throw new \RuntimeException(lang('Api.serverError'));
+        }
+
+        $validation->reset();
+
+        if (!$validation->setRules($rules, $this->messages())->run($data)) {
+            throw new ValidationException(
+                lang('Api.validationFailed'),
+                $validation->getErrors()
+            );
+        }
     }
 
     /**

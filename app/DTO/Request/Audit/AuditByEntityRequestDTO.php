@@ -14,7 +14,7 @@ readonly class AuditByEntityRequestDTO extends BaseRequestDTO
     public string $entity_type;
     public int $entity_id;
 
-    protected function rules(): array
+    public function rules(): array
     {
         return [
             'entity_type' => 'required|string|max_length[100]',

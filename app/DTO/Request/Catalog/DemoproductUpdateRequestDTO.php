@@ -10,7 +10,7 @@ readonly class DemoproductUpdateRequestDTO extends BaseRequestDTO
 {
     public ?string $name;
 
-    protected function rules(): array
+    public function rules(): array
     {
         return [
             'name' => 'permit_empty|string|max_length[255]',

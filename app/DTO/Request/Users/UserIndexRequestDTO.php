@@ -40,7 +40,7 @@ readonly class UserIndexRequestDTO extends BaseRequestDTO
     #[OA\Property(description: 'Sort direction', enum: ['ASC', 'DESC'], default: 'DESC')]
     public string $order_dir;
 
-    protected function rules(): array
+    public function rules(): array
     {
         return [
             'page'     => 'permit_empty|is_natural_no_zero',

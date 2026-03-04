@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
+use App\DTO\Request\BaseRequestDTO;
 use App\DTO\SecurityContext;
 use App\Exceptions\ValidationException;
 use App\HTTP\ApiRequest;
@@ -127,6 +128,11 @@ abstract class ApiController extends Controller
                 throw new \InvalidArgumentException("DTO class '{$dtoClass}' not found.");
             }
 
+            if (!is_subclass_of($dtoClass, BaseRequestDTO::class)) {
+                throw new \InvalidArgumentException("DTO class '{$dtoClass}' must extend " . BaseRequestDTO::class . '.');
+            }
+
+            /** @var class-string<BaseRequestDTO> $dtoClass */
             $payload = Services::requestDtoFactory()->make(
                 $dtoClass,
                 $this->withSecurityContext($data, $context)

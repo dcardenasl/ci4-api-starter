@@ -17,7 +17,7 @@ readonly class FileGetRequestDTO extends BaseRequestDTO
     public int $id;
     public int $user_id;
 
-    protected function rules(): array
+    public function rules(): array
     {
         return [
             'id' => 'required|is_natural_no_zero',

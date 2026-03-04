@@ -32,7 +32,7 @@ readonly class RegisterRequestDTO extends BaseRequestDTO
     #[OA\Property(description: 'User password (must be strong)', example: 'P@ssw0rd123!', format: 'password')]
     public string $password;
 
-    protected function rules(): array
+    public function rules(): array
     {
         return [
             'email'     => 'required|valid_email_idn|max_length[255]|is_unique[users.email]',

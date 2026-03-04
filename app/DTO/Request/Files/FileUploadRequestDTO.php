@@ -20,7 +20,7 @@ readonly class FileUploadRequestDTO extends BaseRequestDTO
     public int $user_id;
     public ?string $filename;
 
-    protected function rules(): array
+    public function rules(): array
     {
         return []; // Custom validation handled in map() due to complex file logic
     }

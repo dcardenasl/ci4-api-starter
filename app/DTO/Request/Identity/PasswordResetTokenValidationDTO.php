@@ -14,7 +14,7 @@ readonly class PasswordResetTokenValidationDTO extends BaseRequestDTO
     public string $email;
     public string $token;
 
-    protected function rules(): array
+    public function rules(): array
     {
         return [
             'email' => 'required|valid_email',

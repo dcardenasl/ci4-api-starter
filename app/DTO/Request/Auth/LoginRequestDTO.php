@@ -26,7 +26,7 @@ readonly class LoginRequestDTO extends BaseRequestDTO
     #[OA\Property(description: 'User password', example: 'P@ssw0rd123!', format: 'password')]
     public string $password;
 
-    protected function rules(): array
+    public function rules(): array
     {
         return [
             'email'    => 'required|valid_email|max_length[255]',

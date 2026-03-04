@@ -14,7 +14,7 @@ readonly class SlowRequestsQueryRequestDTO extends BaseRequestDTO
     public int $threshold;
     public int $limit;
 
-    protected function rules(): array
+    public function rules(): array
     {
         return [
             'threshold' => 'permit_empty|integer|greater_than_equal_to[1]',

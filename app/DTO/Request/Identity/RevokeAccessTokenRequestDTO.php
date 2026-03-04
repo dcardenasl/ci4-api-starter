@@ -10,7 +10,7 @@ readonly class RevokeAccessTokenRequestDTO extends BaseRequestDTO
 {
     public string $authorization_header;
 
-    protected function rules(): array
+    public function rules(): array
     {
         return [
             'authorization_header' => 'required|string',

@@ -13,7 +13,7 @@ readonly class RefreshTokenRequestDTO extends BaseRequestDTO
 {
     public string $refresh_token;
 
-    protected function rules(): array
+    public function rules(): array
     {
         return [
             'refresh_token' => 'required|string|min_length[10]',

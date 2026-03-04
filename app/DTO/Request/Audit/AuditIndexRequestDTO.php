@@ -24,7 +24,7 @@ readonly class AuditIndexRequestDTO extends BaseRequestDTO
     public ?string $severity;
     public ?string $request_id;
 
-    protected function rules(): array
+    public function rules(): array
     {
         return [
             'page'       => 'permit_empty|is_natural_no_zero',

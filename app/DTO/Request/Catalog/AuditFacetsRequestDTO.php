@@ -11,7 +11,7 @@ readonly class AuditFacetsRequestDTO extends BaseRequestDTO
     public int $window_days;
     public int $limit;
 
-    protected function rules(): array
+    public function rules(): array
     {
         return [
             'window_days' => 'permit_empty|is_natural_no_zero|less_than_equal_to[3650]',

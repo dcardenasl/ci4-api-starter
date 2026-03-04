@@ -34,7 +34,7 @@ readonly class UserUpdateRequestDTO extends BaseRequestDTO
     #[OA\Property(description: 'Updated account role', enum: ['user', 'admin', 'superadmin'], nullable: true)]
     public ?string $role;
 
-    protected function rules(): array
+    public function rules(): array
     {
         return [
             'email'     => 'permit_empty|valid_email_idn|max_length[255]',

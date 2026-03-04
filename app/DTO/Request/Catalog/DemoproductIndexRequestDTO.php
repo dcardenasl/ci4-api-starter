@@ -12,7 +12,7 @@ readonly class DemoproductIndexRequestDTO extends BaseRequestDTO
     public int $per_page;
     public ?string $search;
 
-    protected function rules(): array
+    public function rules(): array
     {
         return [
             'page'     => 'permit_empty|is_natural_no_zero',

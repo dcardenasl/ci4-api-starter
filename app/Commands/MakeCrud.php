@@ -275,7 +275,7 @@ readonly class {$resource}IndexRequestDTO extends BaseRequestDTO
     public int \$per_page;
     public ?string \$search;
 
-    protected function rules(): array
+    public function rules(): array
     {
         return [
             'page'     => 'permit_empty|is_natural_no_zero',
@@ -318,7 +318,7 @@ readonly class {$resource}CreateRequestDTO extends BaseRequestDTO
 {
     public string \$name;
 
-    protected function rules(): array
+    public function rules(): array
     {
         return [
             'name' => 'required|string|max_length[255]',
@@ -355,7 +355,7 @@ readonly class {$resource}UpdateRequestDTO extends BaseRequestDTO
 {
     public ?string \$name;
 
-    protected function rules(): array
+    public function rules(): array
     {
         return [
             'name' => 'permit_empty|string|max_length[255]',

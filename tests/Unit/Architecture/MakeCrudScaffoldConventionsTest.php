@@ -30,4 +30,14 @@ class MakeCrudScaffoldConventionsTest extends CIUnitTestCase
         $this->assertStringContainsString("['filter' => ['jwtauth', 'throttle']]", $source);
         $this->assertStringContainsString("['filter' => ['jwtauth', 'roleauth:admin', 'throttle']]", $source);
     }
+
+    public function testMakeCrudDtoTemplatesUsePublicRulesMethod(): void
+    {
+        $path = rtrim((string) ROOTPATH, DIRECTORY_SEPARATOR) . '/app/Commands/MakeCrud.php';
+        $source = file_get_contents($path);
+
+        $this->assertIsString($source);
+        $this->assertStringContainsString('public function rules(): array', $source);
+        $this->assertStringNotContainsString('protected function rules(): array', $source);
+    }
 }

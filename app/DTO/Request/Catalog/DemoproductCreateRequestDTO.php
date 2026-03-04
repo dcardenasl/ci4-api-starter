@@ -10,7 +10,7 @@ readonly class DemoproductCreateRequestDTO extends BaseRequestDTO
 {
     public string $name;
 
-    protected function rules(): array
+    public function rules(): array
     {
         return [
             'name' => 'required|string|max_length[255]',

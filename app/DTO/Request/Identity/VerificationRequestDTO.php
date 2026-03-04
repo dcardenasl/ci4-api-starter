@@ -16,7 +16,7 @@ readonly class VerificationRequestDTO extends BaseRequestDTO
 {
     public string $token;
 
-    protected function rules(): array
+    public function rules(): array
     {
         return [
             'token' => 'required|string|min_length[10]',

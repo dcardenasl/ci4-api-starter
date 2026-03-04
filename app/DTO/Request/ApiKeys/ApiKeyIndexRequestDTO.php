@@ -16,7 +16,7 @@ readonly class ApiKeyIndexRequestDTO extends BaseRequestDTO
     public ?string $search;
     public ?int $is_active;
 
-    protected function rules(): array
+    public function rules(): array
     {
         return [
             'page'      => 'permit_empty|is_natural_no_zero',

@@ -18,7 +18,7 @@ readonly class FileIndexRequestDTO extends BaseRequestDTO
     public int $per_page;
     public int $user_id;
 
-    protected function rules(): array
+    public function rules(): array
     {
         return [
             'page'    => 'permit_empty|is_natural_no_zero',

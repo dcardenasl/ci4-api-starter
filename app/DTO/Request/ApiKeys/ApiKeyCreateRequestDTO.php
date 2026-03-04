@@ -19,7 +19,7 @@ readonly class ApiKeyCreateRequestDTO extends BaseRequestDTO
     public ?int $user_rate_limit;
     public ?int $ip_rate_limit;
 
-    protected function rules(): array
+    public function rules(): array
     {
         return [
             'name'              => 'required|string|max_length[100]',

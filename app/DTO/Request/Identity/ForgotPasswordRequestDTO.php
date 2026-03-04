@@ -15,7 +15,7 @@ readonly class ForgotPasswordRequestDTO extends BaseRequestDTO
 {
     public string $email;
 
-    protected function rules(): array
+    public function rules(): array
     {
         return [
             'email' => 'required|valid_email|max_length[255]',

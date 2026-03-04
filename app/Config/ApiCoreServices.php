@@ -27,7 +27,7 @@ trait ApiCoreServices
             return static::getSharedInstance('requestDtoFactory');
         }
 
-        return new \App\Support\RequestDtoFactory(service('validation'));
+        return new \App\Support\RequestDtoFactory();
     }
 
     public static function responseDtoFactory(bool $getShared = true): \App\Support\ResponseDtoFactory

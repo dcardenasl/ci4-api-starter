@@ -19,6 +19,11 @@ interface RepositoryInterface
     public function find(int|string $id): ?object;
 
     /**
+     * Set the current entity state to avoid redundant DB lookups in auditable models.
+     */
+    public function setEntityContext(int|string $id, object|array $entity): void;
+
+    /**
      * Get validation errors
      */
     public function errors(): array;

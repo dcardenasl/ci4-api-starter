@@ -36,6 +36,16 @@ abstract class BaseRepository implements RepositoryInterface
         return $result;
     }
 
+    /**
+     * Set the current entity state to avoid redundant DB lookups in auditable models.
+     */
+    public function setEntityContext(int|string $id, object|array $entity): void
+    {
+        if (method_exists($this->model, 'setAuditOldValues')) {
+            $this->model->setAuditOldValues((int) $id, $entity);
+        }
+    }
+
     public function findAll(int $limit = 0, int $offset = 0): array
     {
         return $this->model->findAll($limit, $offset);

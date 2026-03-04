@@ -35,42 +35,30 @@ trait Auditable
      */
     protected array $auditOldValues = [];
 
-    public function setAuditService(AuditServiceInterface $auditService): void
-    {
-        $this->auditService = $auditService;
-    }
-
     /**
-     * Initialize auditable callbacks
-     *
-     * Call this in model constructor:
-     * public function __construct() {
-     *     parent::__construct();
-     *     $this->initAuditable();
-     * }
+     * Inject old values from service layer to avoid redundant DB queries.
      */
-    protected function initAuditable(): void
+    public function setAuditOldValues(int $id, array|object $values): void
     {
-        $this->beforeUpdate[] = 'auditBeforeUpdate';
-        $this->beforeDelete[] = 'auditBeforeDelete';
-        $this->afterInsert[] = 'auditInsert';
-        $this->afterUpdate[] = 'auditUpdate';
-        $this->afterDelete[] = 'auditDelete';
+        $this->auditOldValues[$id] = is_object($values)
+            ? (method_exists($values, 'toArray') ? $values->toArray() : (array) $values)
+            : $values;
     }
 
     /**
-     * Capture old values before update
+     * Capture old values before update (fallback if not injected)
      */
     protected function auditBeforeUpdate(array $data): array
     {
         if (isset($data['id'])) {
             $id = is_array($data['id']) ? (int) $data['id'][0] : (int) $data['id'];
-            $old = $this->find($id);
 
-            if ($old) {
-                $this->auditOldValues[$id] = is_object($old)
-                    ? (method_exists($old, 'toArray') ? $old->toArray() : (array) $old)
-                    : $old;
+            // Only query if not already injected by service layer
+            if (!isset($this->auditOldValues[$id])) {
+                $old = $this->find($id);
+                if ($old) {
+                    $this->setAuditOldValues($id, $old);
+                }
             }
         }
 
@@ -78,18 +66,19 @@ trait Auditable
     }
 
     /**
-     * Capture entity data before delete
+     * Capture entity data before delete (fallback if not injected)
      */
     protected function auditBeforeDelete(array $data): array
     {
         if (isset($data['id'])) {
             $id = is_array($data['id']) ? (int) $data['id'][0] : (int) $data['id'];
-            $entity = $this->find($id);
 
-            if ($entity) {
-                $this->auditOldValues[$id] = is_object($entity)
-                    ? (method_exists($entity, 'toArray') ? $entity->toArray() : (array) $entity)
-                    : $entity;
+            // Only query if not already injected by service layer
+            if (!isset($this->auditOldValues[$id])) {
+                $entity = $this->find($id);
+                if ($entity) {
+                    $this->setAuditOldValues($id, $entity);
+                }
             }
         }
 

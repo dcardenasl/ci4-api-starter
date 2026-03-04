@@ -23,23 +23,15 @@ use App\Services\Users\Actions\UpdateUserAction;
  */
 class UserService extends BaseCrudService implements UserServiceInterface
 {
-    protected ApproveUserAction $approveUserAction;
-    protected CreateUserAction $createUserAction;
-    protected UpdateUserAction $updateUserAction;
-
     public function __construct(
         protected UserRepositoryInterface $userRepository,
         ResponseMapperInterface $responseMapper,
         protected UserRoleGuard $roleGuard,
-        ApproveUserAction $approveUserAction,
-        CreateUserAction $createUserAction,
-        UpdateUserAction $updateUserAction
+        protected ApproveUserAction $approveUserAction,
+        protected CreateUserAction $createUserAction,
+        protected UpdateUserAction $updateUserAction
     ) {
-        parent::__construct($responseMapper);
-        $this->repository = $userRepository;
-        $this->approveUserAction = $approveUserAction;
-        $this->createUserAction = $createUserAction;
-        $this->updateUserAction = $updateUserAction;
+        parent::__construct($userRepository, $responseMapper);
     }
 
     /**

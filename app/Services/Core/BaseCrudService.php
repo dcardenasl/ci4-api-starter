@@ -22,18 +22,13 @@ abstract class BaseCrudService implements \App\Interfaces\Core\CrudServiceContra
     use \App\Traits\HandlesTransactions;
 
     /**
-     * @var RepositoryInterface The primary repository for this service
+     * @param RepositoryInterface $repository The primary repository for this service
+     * @param ResponseMapperInterface $responseMapper Mapper responsible for turning entities into DTOs
      */
-    protected RepositoryInterface $repository;
-
-    /**
-     * @var ResponseMapperInterface Mapper responsible for turning entities into DTOs
-     */
-    protected ResponseMapperInterface $responseMapper;
-
-    public function __construct(ResponseMapperInterface $responseMapper)
-    {
-        $this->responseMapper = $responseMapper;
+    public function __construct(
+        protected RepositoryInterface $repository,
+        protected ResponseMapperInterface $responseMapper
+    ) {
     }
 
     /**
@@ -130,6 +125,9 @@ abstract class BaseCrudService implements \App\Interfaces\Core\CrudServiceContra
                 throw new NotFoundException(lang('Api.resourceNotFound'));
             }
 
+            // Optimization: Pass the loaded entity to the repository for audit purposes
+            $this->repository->setEntityContext($id, $entity);
+
             $data = $request->toArray();
             $data = $this->beforeUpdate($id, $data, $context);
 
@@ -163,6 +161,9 @@ abstract class BaseCrudService implements \App\Interfaces\Core\CrudServiceContra
         if (!$entity) {
             throw new NotFoundException(lang('Api.resourceNotFound'));
         }
+
+        // Optimization: Pass the loaded entity to the repository for audit purposes
+        $this->repository->setEntityContext($id, $entity);
 
         return $this->wrapInTransaction(function () use ($id, $entity, $context) {
             $this->beforeDelete($id, $context);

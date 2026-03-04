@@ -15,19 +15,13 @@ use App\Services\Tokens\Actions\UpdateApiKeyAction;
 
 class ApiKeyService extends BaseCrudService implements ApiKeyServiceInterface
 {
-    protected CreateApiKeyAction $createApiKeyAction;
-    protected UpdateApiKeyAction $updateApiKeyAction;
-
     public function __construct(
         protected ApiKeyModel $apiKeyModel,
         ResponseMapperInterface $responseMapper,
-        CreateApiKeyAction $createApiKeyAction,
-        UpdateApiKeyAction $updateApiKeyAction
+        protected CreateApiKeyAction $createApiKeyAction,
+        protected UpdateApiKeyAction $updateApiKeyAction
     ) {
-        parent::__construct($responseMapper);
-        $this->repository = new \App\Repositories\GenericRepository($apiKeyModel);
-        $this->createApiKeyAction = $createApiKeyAction;
-        $this->updateApiKeyAction = $updateApiKeyAction;
+        parent::__construct(new \App\Repositories\GenericRepository($apiKeyModel), $responseMapper);
     }
 
     /**

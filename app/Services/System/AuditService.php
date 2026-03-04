@@ -29,7 +29,7 @@ class AuditService extends BaseCrudService implements \App\Interfaces\System\Aud
     public static bool $forceEnabledInTests = false;
 
     public function __construct(
-        protected readonly AuditRepositoryInterface $auditRepository,
+        protected AuditRepositoryInterface $auditRepository,
         ResponseMapperInterface $responseMapper,
         protected ?AuditWriter $auditWriter = null,
         protected ?QueueManager $queueManager = null,
@@ -39,8 +39,7 @@ class AuditService extends BaseCrudService implements \App\Interfaces\System\Aud
         protected string $defaultUserAgent = 'system',
         protected ?AuditPayloadSanitizer $payloadSanitizer = null
     ) {
-        parent::__construct($responseMapper);
-        $this->repository = $auditRepository;
+        parent::__construct($auditRepository, $responseMapper);
         $this->payloadSanitizer ??= new AuditPayloadSanitizer();
         $this->auditWriter ??= new AuditWriter($auditRepository);
         $this->auditConfig ??= config('Audit');

@@ -70,6 +70,10 @@ abstract class BaseRepository implements RepositoryInterface
 
     public function paginateCriteria(array $criteria, int $page = 1, int $perPage = 20, ?callable $baseCriteria = null): array
     {
+        // Force reset the underlying model builder to ensure no previous state (filters, sorts) leaks
+        // into this pagination request. This is critical for persistent execution contexts.
+        $this->model->builder()->resetQuery();
+
         $builder = new QueryBuilder($this->model);
 
         if ($baseCriteria !== null) {

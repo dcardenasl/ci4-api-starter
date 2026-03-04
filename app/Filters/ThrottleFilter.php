@@ -55,6 +55,7 @@ class ThrottleFilter implements FilterInterface
 
             if ($appKey === false) {
                 // Key present but invalid or inactive → 401
+                $this->logApiKeyAuthFailure($rawKey, $request);
                 return $this->unauthorizedApiKeyResponse($response);
             }
         }

@@ -75,6 +75,16 @@ class PasswordResetService implements \App\Interfaces\Auth\PasswordResetServiceI
         $this->passwordResetModel->cleanExpired(60);
 
         if (!$this->passwordResetModel->isValidToken($request->email, $request->token, 60)) {
+            $this->auditService->log(
+                'password_reset_token_invalid',
+                'users',
+                null,
+                [],
+                ['email' => $request->email],
+                $context,
+                'failure',
+                'warning'
+            );
             throw new NotFoundException(lang('PasswordReset.invalidToken'));
         }
 
@@ -90,6 +100,16 @@ class PasswordResetService implements \App\Interfaces\Auth\PasswordResetServiceI
         $this->passwordResetModel->cleanExpired(60);
 
         if (!$this->passwordResetModel->isValidToken($request->email, $request->token, 60)) {
+            $this->auditService->log(
+                'password_reset_token_invalid',
+                'users',
+                null,
+                [],
+                ['email' => $request->email],
+                $context,
+                'failure',
+                'warning'
+            );
             throw new NotFoundException(lang('PasswordReset.invalidToken'));
         }
 

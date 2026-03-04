@@ -33,7 +33,21 @@ class GoogleLoginAction
 
     public function execute(GoogleLoginRequestDTO $request, ?SecurityContext $context = null): OperationResult
     {
-        $identity = $this->googleIdentityService->verifyIdToken($request->id_token);
+        try {
+            $identity = $this->googleIdentityService->verifyIdToken($request->id_token);
+        } catch (\Throwable $e) {
+            $this->auditService->log(
+                'google_login_failure',
+                'users',
+                null,
+                [],
+                ['reason' => 'invalid_google_token'],
+                $context,
+                'failure',
+                'warning'
+            );
+            throw $e;
+        }
         $email = strtolower($identity->email);
 
         /** @var UserEntity|null $user */

@@ -118,7 +118,9 @@ class Services extends BaseService
             return static::getSharedInstance('userRoleGuard');
         }
 
-        return new \App\Libraries\Security\UserRoleGuard();
+        return new \App\Libraries\Security\UserRoleGuard(
+            static::securityAuditLogger()
+        );
     }
 
     public static function userInvitationService(bool $getShared = true)
@@ -429,7 +431,40 @@ class Services extends BaseService
         return new \App\Services\System\AuditService(
             static::auditRepository(),
             static::auditResponseMapper(),
-            ENVIRONMENT !== 'testing'
+            ENVIRONMENT !== 'testing',
+            '127.0.0.1',
+            'system',
+            static::auditPayloadSanitizer()
+        );
+    }
+
+    public static function auditPayloadSanitizer(bool $getShared = true)
+    {
+        if ($getShared) {
+            return static::getSharedInstance('auditPayloadSanitizer');
+        }
+
+        return new \App\Services\System\AuditPayloadSanitizer();
+    }
+
+    public static function requestAuditContextFactory(bool $getShared = true)
+    {
+        if ($getShared) {
+            return static::getSharedInstance('requestAuditContextFactory');
+        }
+
+        return new \App\Support\RequestAuditContextFactory();
+    }
+
+    public static function securityAuditLogger(bool $getShared = true)
+    {
+        if ($getShared) {
+            return static::getSharedInstance('securityAuditLogger');
+        }
+
+        return new \App\Services\System\SecurityAuditLogger(
+            static::auditService(),
+            static::requestAuditContextFactory()
         );
     }
 
@@ -503,7 +538,7 @@ class Services extends BaseService
             return static::getSharedInstance('auditRepository');
         }
 
-        return new \App\Repositories\System\AuditRepository(new \App\Models\AuditLogModel());
+        return new \App\Repositories\System\AuditRepository(model(\App\Models\AuditLogModel::class));
     }
 
     public static function fileRepository(bool $getShared = true)
@@ -512,7 +547,7 @@ class Services extends BaseService
             return static::getSharedInstance('fileRepository');
         }
 
-        return new \App\Repositories\Files\FileRepository(new \App\Models\FileModel());
+        return new \App\Repositories\Files\FileRepository(model(\App\Models\FileModel::class));
     }
 
     /*

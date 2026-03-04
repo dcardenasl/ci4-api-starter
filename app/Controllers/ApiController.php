@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
+use App\DTO\SecurityContext;
 use App\Exceptions\ValidationException;
 use App\HTTP\ApiRequest;
 use App\Libraries\ApiResponse;
@@ -12,6 +13,7 @@ use CodeIgniter\API\ResponseTrait;
 use CodeIgniter\Controller;
 use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
+use Config\Services;
 use Exception;
 use Psr\Log\LoggerInterface;
 
@@ -83,7 +85,7 @@ abstract class ApiController extends Controller
     /**
      * Establish the security context
      */
-    private function establishSecurityContext(): \App\DTO\SecurityContext
+    private function establishSecurityContext(): SecurityContext
     {
         // If a context is already established (e.g., by a Filter or a Test), respect it
         $existingContext = ContextHolder::get();
@@ -91,7 +93,7 @@ abstract class ApiController extends Controller
             return $existingContext;
         }
 
-        $securityContext = new \App\DTO\SecurityContext(
+        $securityContext = new SecurityContext(
             $this->getUserId(),
             $this->getUserRole(),
             $this->buildRequestMetadata()
@@ -110,21 +112,13 @@ abstract class ApiController extends Controller
      */
     private function buildRequestMetadata(): array
     {
-        $metadata = [
-            'ip_address' => $this->request->getIPAddress(),
-            'user_agent' => $this->request->getHeaderLine('User-Agent'),
-        ];
-
-        if (method_exists($this->request, 'getLocale')) {
-            $metadata['locale'] = (string) $this->request->getLocale();
-        }
-
-        return $metadata;
+        return Services::requestAuditContextFactory()->buildMetadata($this->request);
     }
+
     /**
      * Execute the target service method or callable
      */
-    private function executeTarget(string|callable $target, ?string $dtoClass, array $data, \App\DTO\SecurityContext $context): mixed
+    private function executeTarget(string|callable $target, ?string $dtoClass, array $data, SecurityContext $context): mixed
     {
         // 1. Resolve Payload (DTO or Array)
         $payload = $data;
@@ -148,7 +142,7 @@ abstract class ApiController extends Controller
     /**
      * Keep context enrichment at the HTTP boundary so DTOs remain pure data objects.
      */
-    private function withSecurityContext(array $data, \App\DTO\SecurityContext $context): array
+    private function withSecurityContext(array $data, SecurityContext $context): array
     {
         if (!isset($data['user_id']) && $context->user_id !== null) {
             $data['user_id'] = $context->user_id;

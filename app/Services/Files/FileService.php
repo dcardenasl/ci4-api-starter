@@ -167,7 +167,7 @@ class FileService implements FileServiceInterface
     {
         /** @var \App\DTO\Request\Files\FileGetRequestDTO $request */
         $userId = $this->resolveUserId($request, $context);
-        $file = $this->findFileAndAuthorize($request->id, $userId, 'download');
+        $file = $this->findFileAndAuthorize($request->id, $userId, 'download', false, $context);
 
         return FileDownloadResponseDTO::fromArray($file->toArray());
     }
@@ -179,7 +179,7 @@ class FileService implements FileServiceInterface
     {
         /** @var \App\DTO\Request\Files\FileGetRequestDTO $request */
         $userId = $this->resolveUserId($request, $context);
-        $file = $this->findFileAndAuthorize($request->id, $userId, 'delete');
+        $file = $this->findFileAndAuthorize($request->id, $userId, 'delete', false, $context);
 
         return $this->wrapInTransaction(function () use ($file) {
             $this->storage->delete($file->path);
@@ -196,7 +196,7 @@ class FileService implements FileServiceInterface
             throw new AuthorizationException(lang('Api.unauthorized'));
         }
 
-        $file = $this->findFileAndAuthorize((int) $id, $context->user_id, 'delete', $context->isAdmin());
+        $file = $this->findFileAndAuthorize((int) $id, $context->user_id, 'delete', $context->isAdmin(), $context);
 
         return $this->wrapInTransaction(function () use ($file) {
             $this->storage->delete($file->path);
@@ -214,8 +214,13 @@ class FileService implements FileServiceInterface
         }
         return $userId;
     }
-    protected function findFileAndAuthorize(int $id, int $userId, string $action, bool $bypassOwnership = false): \App\Entities\FileEntity
-    {
+    protected function findFileAndAuthorize(
+        int $id,
+        int $userId,
+        string $action,
+        bool $bypassOwnership = false,
+        ?SecurityContext $context = null
+    ): \App\Entities\FileEntity {
         /** @var \App\Entities\FileEntity|null $file */
         $file = $this->fileRepository->find($id);
         if (!$file) {
@@ -223,7 +228,17 @@ class FileService implements FileServiceInterface
         }
 
         if (!$bypassOwnership && (int) $file->user_id !== $userId) {
-            $this->auditService->log("unauthorized_file_{$action}", 'files', $id, [], ['requested_by' => $userId]);
+            $deniedAction = $action === 'download' ? 'unauthorized_file_download' : 'unauthorized_file_delete';
+            $this->auditService->log(
+                $deniedAction,
+                'files',
+                $id,
+                [],
+                ['requested_by' => $userId, 'owner_id' => (int) $file->user_id],
+                $context,
+                'denied',
+                'critical'
+            );
             throw new AuthorizationException(lang('Files.unauthorized'));
         }
 

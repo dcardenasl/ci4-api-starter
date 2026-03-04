@@ -72,7 +72,7 @@ trait ApiKeyThrottleHelpers
             $decoded    = $jwtService->decode($token);
 
             return ($decoded && isset($decoded->uid)) ? (int) $decoded->uid : null;
-        } catch (\Throwable $e) {
+        } catch (\Throwable) {
             return null;
         }
     }
@@ -144,6 +144,7 @@ trait ApiKeyThrottleHelpers
         );
 
         if ($keyRemaining === false) {
+            $this->logApiKeyRateLimitExceeded($appKey, $ip, $userId, 'api_key');
             return $onLimitExceeded($appKey->rate_limit_requests, $appKeyWindow);
         }
 
@@ -157,6 +158,7 @@ trait ApiKeyThrottleHelpers
             );
 
             if ($userRemaining === false) {
+                $this->logApiKeyRateLimitExceeded($appKey, $ip, $userId, 'user');
                 return $onLimitExceeded($appKey->user_rate_limit, $appKeyWindow);
             }
         } else {
@@ -169,6 +171,7 @@ trait ApiKeyThrottleHelpers
             );
 
             if ($ipRemaining === false) {
+                $this->logApiKeyRateLimitExceeded($appKey, $ip, null, 'ip');
                 return $onLimitExceeded($appKey->ip_rate_limit, $appKeyWindow);
             }
         }
@@ -178,5 +181,15 @@ trait ApiKeyThrottleHelpers
             'remaining' => max(0, $keyRemaining),
             'reset' => time() + $appKeyWindow,
         ];
+    }
+
+    private function logApiKeyAuthFailure(string $rawKey, RequestInterface $request): void
+    {
+        Services::securityAuditLogger()->logApiKeyAuthFailure($rawKey, $request);
+    }
+
+    private function logApiKeyRateLimitExceeded(ApiKeyEntity $appKey, string $ip, ?int $userId, string $scope): void
+    {
+        Services::securityAuditLogger()->logApiKeyRateLimitExceeded($appKey, $ip, $userId, $scope);
     }
 }

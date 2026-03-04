@@ -77,6 +77,16 @@ class VerificationService implements \App\Interfaces\Auth\VerificationServiceInt
         $user = $this->userRepository->findByVerificationToken($request->token);
 
         if (! $user) {
+            $this->auditService->log(
+                'email_verification_failed',
+                'users',
+                null,
+                [],
+                ['reason' => 'invalid_token', 'token_prefix' => substr($request->token, 0, 8)],
+                $context,
+                'failure',
+                'warning'
+            );
             throw new NotFoundException(lang('Verification.invalidToken'));
         }
 
@@ -94,6 +104,16 @@ class VerificationService implements \App\Interfaces\Auth\VerificationServiceInt
         if ($expiresAtStr !== '') {
             $expiresAtTimestamp = strtotime($expiresAtStr);
             if (is_int($expiresAtTimestamp) && $expiresAtTimestamp < time()) {
+                $this->auditService->log(
+                    'email_verification_failed',
+                    'users',
+                    (int) $user->id,
+                    [],
+                    ['reason' => 'token_expired', 'email' => $user->email],
+                    $context,
+                    'failure',
+                    'warning'
+                );
                 throw new BadRequestException(lang('Verification.tokenExpired'));
             }
         }

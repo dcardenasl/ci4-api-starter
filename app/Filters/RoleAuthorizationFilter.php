@@ -38,20 +38,25 @@ class RoleAuthorizationFilter implements FilterInterface
      */
     public function before(RequestInterface $request, $arguments = null)
     {
-        $requiredRole = $arguments[0] ?? 'user';
+        $requiredRole = is_array($arguments) ? ($arguments[0] ?? 'user') : 'user';
         $context = ContextHolder::get();
+        $securityAuditLogger = Services::securityAuditLogger();
+        $actorId = $request instanceof ApiRequest ? $request->getAuthUserId() : null;
+        $actorId ??= $context?->user_id;
 
-        $user_role = $request instanceof ApiRequest ? $request->getAuthUserRole() : null;
-        $user_role ??= $context?->user_role;
-        $user_role ??= $request->getHeaderLine('X-Test-User-Role') ?: null;
+        $userRole = $request instanceof ApiRequest ? $request->getAuthUserRole() : null;
+        $userRole ??= $context?->user_role;
+        $userRole ??= $request->getHeaderLine('X-Test-User-Role') ?: null;
 
-        if (!$user_role) {
+        if (!$userRole) {
+            $securityAuditLogger->logAuthorizationDeniedFromRequest($request, $requiredRole, null, $actorId);
             return Services::response()
                 ->setJSON(ApiResponse::unauthorized(lang('Auth.authRequired')))
                 ->setStatusCode(ResponseInterface::HTTP_UNAUTHORIZED);
         }
 
-        if (!$this->hasPermission($user_role, $requiredRole)) {
+        if (!$this->hasPermission($userRole, $requiredRole)) {
+            $securityAuditLogger->logAuthorizationDeniedFromRequest($request, $requiredRole, $userRole, $actorId);
             return Services::response()
                 ->setJSON(ApiResponse::forbidden(lang('Auth.insufficientPermissions')))
                 ->setStatusCode(ResponseInterface::HTTP_FORBIDDEN);
@@ -76,13 +81,13 @@ class RoleAuthorizationFilter implements FilterInterface
      *
      * Uses hierarchical role system where higher levels inherit lower permissions.
      *
-     * @param string $user_role Current user's role
+     * @param string $userRole Current user's role
      * @param string $requiredRole Required role for the resource
      * @return bool True if user has permission
      */
-    private function hasPermission(string $user_role, string $requiredRole): bool
+    private function hasPermission(string $userRole, string $requiredRole): bool
     {
-        $userLevel = self::ROLE_HIERARCHY[$user_role] ?? 0;
+        $userLevel = self::ROLE_HIERARCHY[$userRole] ?? 0;
         $requiredLevel = self::ROLE_HIERARCHY[$requiredRole] ?? 0;
 
         return $userLevel >= $requiredLevel;

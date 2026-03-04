@@ -42,6 +42,7 @@ class AuthThrottleFilter implements FilterInterface
             $appKey = $this->resolveApiKey($cache, $rawKey);
 
             if ($appKey === false) {
+                $this->logApiKeyAuthFailure($rawKey, $request);
                 return $this->unauthorizedApiKeyResponse($response);
             }
 

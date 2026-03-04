@@ -29,6 +29,8 @@ class JwtAuthFilter implements FilterInterface
         $jwtService = Services::jwtService();
         $bearerTokenService = Services::bearerTokenService();
         $userAccessPolicy = Services::userAccessPolicyService();
+        $securityAuditLogger = Services::securityAuditLogger();
+        $auditContextFactory = Services::requestAuditContextFactory();
 
         $authHeader = $request->getHeaderLine('Authorization');
 
@@ -56,6 +58,12 @@ class JwtAuthFilter implements FilterInterface
                 $tokenRevocationService = Services::tokenRevocationService();
 
                 if ($tokenRevocationService->isRevoked($jti)) {
+                    $securityAuditLogger->logRevokedTokenReuse(
+                        $request,
+                        (int) ($decoded->uid ?? 0) ?: null,
+                        isset($decoded->role) ? (string) $decoded->role : null,
+                        (string) $jti
+                    );
                     return $this->unauthorized(lang('Auth.tokenRevoked'));
                 }
             }
@@ -82,14 +90,10 @@ class JwtAuthFilter implements FilterInterface
         }
 
         // Also set global context for DTO enrichment
-        ContextHolder::set(new \App\DTO\SecurityContext(
+        ContextHolder::set($auditContextFactory->createContext(
+            $request,
             (int) $decoded->uid,
-            (string) $decoded->role,
-            [
-                'ip_address' => $request->getIPAddress(),
-                'user_agent' => $request->getHeaderLine('User-Agent'),
-                'locale' => method_exists($request, 'getLocale') ? (string) $request->getLocale() : null,
-            ]
+            (string) $decoded->role
         ));
 
         return $request;

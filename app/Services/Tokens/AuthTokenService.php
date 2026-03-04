@@ -10,6 +10,7 @@ use App\Exceptions\AuthenticationException;
 use App\Interfaces\Tokens\RefreshTokenServiceInterface;
 use App\Interfaces\Tokens\TokenRevocationServiceInterface;
 use App\Support\OperationResult;
+use Config\Services;
 
 /**
  * Modernized Auth Token Service
@@ -37,12 +38,12 @@ class AuthTokenService implements \App\Interfaces\Tokens\AuthTokenServiceInterfa
      */
     public function revokeToken(string $authorizationHeader, ?SecurityContext $context = null): OperationResult
     {
-        $this->tokenRevocationService->revokeAccessToken(
-            new RevokeAccessTokenRequestDTO([
-                'authorization_header' => $authorizationHeader,
-            ]),
-            $context
+        $requestDto = Services::requestDtoFactory()->make(
+            RevokeAccessTokenRequestDTO::class,
+            ['authorization_header' => $authorizationHeader]
         );
+
+        $this->tokenRevocationService->revokeAccessToken($requestDto, $context);
 
         return OperationResult::success(null, lang('Tokens.tokenRevokedSuccess'));
     }

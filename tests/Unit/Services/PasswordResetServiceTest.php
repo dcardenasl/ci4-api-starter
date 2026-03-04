@@ -145,7 +145,7 @@ class PasswordResetServiceTest extends CIUnitTestCase
                 })
             );
 
-        $result = $service->sendResetLink(new \App\DTO\Request\Identity\ForgotPasswordRequestDTO(['email' => 'test@example.com']));
+        $result = $service->sendResetLink(new \App\DTO\Request\Identity\ForgotPasswordRequestDTO(['email' => 'test@example.com'], service('validation')));
 
         $this->assertTrue($result);
     }
@@ -158,7 +158,7 @@ class PasswordResetServiceTest extends CIUnitTestCase
         $this->mockEmailService->expects($this->never())
             ->method('queueTemplate');
 
-        $result = $service->sendResetLink(new \App\DTO\Request\Identity\ForgotPasswordRequestDTO(['email' => 'nonexistent@example.com']));
+        $result = $service->sendResetLink(new \App\DTO\Request\Identity\ForgotPasswordRequestDTO(['email' => 'nonexistent@example.com'], service('validation')));
 
         $this->assertTrue($result);
     }
@@ -169,7 +169,7 @@ class PasswordResetServiceTest extends CIUnitTestCase
 
         $this->expectException(ValidationException::class);
 
-        new \App\DTO\Request\Identity\ForgotPasswordRequestDTO(['email' => 'invalid-email']);
+        new \App\DTO\Request\Identity\ForgotPasswordRequestDTO(['email' => 'invalid-email'], service('validation'));
     }
 
     public function testSendResetLinkThrowsExceptionForEmptyEmail(): void
@@ -178,7 +178,7 @@ class PasswordResetServiceTest extends CIUnitTestCase
 
         $this->expectException(ValidationException::class);
 
-        new \App\DTO\Request\Identity\ForgotPasswordRequestDTO(['email' => '']);
+        new \App\DTO\Request\Identity\ForgotPasswordRequestDTO(['email' => ''], service('validation'));
     }
 
     // ==================== VALIDATE TOKEN TESTS ====================
@@ -190,7 +190,7 @@ class PasswordResetServiceTest extends CIUnitTestCase
         $request = new \App\DTO\Request\Identity\PasswordResetTokenValidationDTO([
             'email' => 'test@example.com',
             'token' => self::VALID_RESET_TOKEN,
-        ]);
+        ], service('validation'));
 
         $result = $service->validateToken($request);
 
@@ -206,7 +206,7 @@ class PasswordResetServiceTest extends CIUnitTestCase
         $request = new \App\DTO\Request\Identity\PasswordResetTokenValidationDTO([
             'email' => 'test@example.com',
             'token' => self::UNKNOWN_RESET_TOKEN,
-        ]);
+        ], service('validation'));
 
         $service->validateToken($request);
     }
@@ -227,7 +227,7 @@ class PasswordResetServiceTest extends CIUnitTestCase
             'email' => 'test@example.com',
             'token' => self::VALID_RESET_TOKEN,
             'password' => 'NewSecure123!',
-        ]));
+        ], service('validation')));
 
         $this->assertTrue($result);
     }
@@ -247,7 +247,7 @@ class PasswordResetServiceTest extends CIUnitTestCase
             'email' => 'test@example.com',
             'token' => self::VALID_RESET_TOKEN,
             'password' => 'weak',
-        ]);
+        ], service('validation'));
     }
 
     public function testResetPasswordActivatesInvitedUser(): void
@@ -266,7 +266,7 @@ class PasswordResetServiceTest extends CIUnitTestCase
             'email' => 'invited@example.com',
             'token' => self::VALID_RESET_TOKEN,
             'password' => 'NewPassword123!',
-        ]));
+        ], service('validation')));
 
         $this->assertTrue($result);
     }
@@ -287,7 +287,7 @@ class PasswordResetServiceTest extends CIUnitTestCase
             'email' => 'active-invited@example.com',
             'token' => self::VALID_RESET_TOKEN,
             'password' => 'NewPassword123!',
-        ]));
+        ], service('validation')));
 
         $this->assertTrue($result);
     }
@@ -300,6 +300,6 @@ class PasswordResetServiceTest extends CIUnitTestCase
             'email' => 'test@example.com',
             'token' => self::VALID_RESET_TOKEN,
             // Missing password
-        ]);
+        ], service('validation'));
     }
 }

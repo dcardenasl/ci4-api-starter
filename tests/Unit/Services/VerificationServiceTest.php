@@ -187,7 +187,7 @@ class VerificationServiceTest extends CIUnitTestCase
         $result = $service->verifyEmail(new \App\DTO\Request\Identity\VerificationRequestDTO([
             'token' => 'valid-token-123',
             'email' => 'test@example.com'
-        ]));
+        ], service('validation')));
 
         $this->assertTrue($result);
 
@@ -212,7 +212,7 @@ class VerificationServiceTest extends CIUnitTestCase
         $service->verifyEmail(new \App\DTO\Request\Identity\VerificationRequestDTO([
             'token' => 'expired-token',
             'email' => 'test@example.com'
-        ]));
+        ], service('validation')));
     }
 
     public function testVerifyEmailFailsForInvalidToken(): void
@@ -224,7 +224,7 @@ class VerificationServiceTest extends CIUnitTestCase
         $service->verifyEmail(new \App\DTO\Request\Identity\VerificationRequestDTO([
             'token' => 'invalid-token',
             'email' => 'test@example.com'
-        ]));
+        ], service('validation')));
     }
 
     public function testVerifyEmailThrowsForEmptyToken(): void
@@ -232,7 +232,7 @@ class VerificationServiceTest extends CIUnitTestCase
         // Validation now happens in DTO constructor
         $this->expectException(\App\Exceptions\ValidationException::class);
 
-        new \App\DTO\Request\Identity\VerificationRequestDTO(['token' => '']);
+        new \App\DTO\Request\Identity\VerificationRequestDTO(['token' => ''], service('validation'));
     }
 
     // ==================== RESEND VERIFICATION TESTS ====================

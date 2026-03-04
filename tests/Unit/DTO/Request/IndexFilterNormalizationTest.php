@@ -20,7 +20,7 @@ final class IndexFilterNormalizationTest extends CIUnitTestCase
             'filter' => [
                 'action' => 'login_success',
             ],
-        ]);
+        ], service('validation'));
 
         $data = $dto->toArray();
 
@@ -35,7 +35,7 @@ final class IndexFilterNormalizationTest extends CIUnitTestCase
                 'severity' => 'critical',
                 'request_id' => 'req_abc123',
             ],
-        ]);
+        ], service('validation'));
 
         $data = $dto->toArray();
 
@@ -51,7 +51,7 @@ final class IndexFilterNormalizationTest extends CIUnitTestCase
                 'role' => 'admin',
                 'status' => 'active',
             ],
-        ]);
+        ], service('validation'));
 
         $data = $dto->toArray();
 
@@ -66,7 +66,7 @@ final class IndexFilterNormalizationTest extends CIUnitTestCase
                 'is_active' => '1',
                 'name' => 'integration',
             ],
-        ]);
+        ], service('validation'));
 
         $data = $dto->toArray();
 

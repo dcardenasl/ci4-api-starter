@@ -124,7 +124,7 @@ class ApiKeyServiceTest extends CIUnitTestCase
             'is_active'            => 1,
             'rate_limit_requests'  => 600,
         ]);
-        $request = new ApiKeyCreateRequestDTO(['name' => 'My App']);
+        $request = new ApiKeyCreateRequestDTO(['name' => 'My App'], service('validation'));
         $this->mockCreateApiKeyAction->expects($this->once())
             ->method('execute')
             ->with($this->isInstanceOf(ApiKeyCreateRequestDTO::class))
@@ -148,7 +148,7 @@ class ApiKeyServiceTest extends CIUnitTestCase
             ->with(1, $this->isInstanceOf(ApiKeyUpdateRequestDTO::class))
             ->willReturn($entity);
 
-        $request = new ApiKeyUpdateRequestDTO(['name' => 'New Name']);
+        $request = new ApiKeyUpdateRequestDTO(['name' => 'New Name'], service('validation'));
         $result  = $this->service->update(1, $request);
 
         $this->assertInstanceOf(DataTransferObjectInterface::class, $result);
@@ -159,14 +159,14 @@ class ApiKeyServiceTest extends CIUnitTestCase
     {
         $this->mockUpdateApiKeyAction->method('execute')->willThrowException(new NotFoundException(lang('Api.resourceNotFound')));
         $this->expectException(NotFoundException::class);
-        $this->service->update(99, new ApiKeyUpdateRequestDTO(['name' => 'X']));
+        $this->service->update(99, new ApiKeyUpdateRequestDTO(['name' => 'X'], service('validation')));
     }
 
     public function testUpdateWithNoFieldsThrowsBadRequestException(): void
     {
         $this->mockUpdateApiKeyAction->method('execute')->willThrowException(new BadRequestException(lang('Api.noFieldsToUpdate')));
         $this->expectException(BadRequestException::class);
-        $this->service->update(1, new ApiKeyUpdateRequestDTO([]));
+        $this->service->update(1, new ApiKeyUpdateRequestDTO([], service('validation')));
     }
 
     // ==================== DESTROY TESTS ====================

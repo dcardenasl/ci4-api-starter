@@ -109,7 +109,7 @@ class AuthServiceTest extends CIUnitTestCase
         $result = $service->login(new LoginRequestDTO([
             'email' => 'test@example.com',
             'password' => 'ValidPass123!',
-        ]));
+        ], service('validation')));
 
         $this->assertInstanceOf(\App\Interfaces\DataTransferObjectInterface::class, $result);
         $data = $result->toArray();
@@ -132,7 +132,7 @@ class AuthServiceTest extends CIUnitTestCase
         $service->login(new LoginRequestDTO([
             'email' => 'test@example.com',
             'password' => 'WrongPassword123!',
-        ]));
+        ], service('validation')));
     }
 
     // ==================== REGISTER TESTS ====================
@@ -157,7 +157,7 @@ class AuthServiceTest extends CIUnitTestCase
             'first_name' => 'New',
             'last_name' => 'User',
             'password' => 'StrongPass123!',
-        ]);
+        ], service('validation'));
 
         $registerUserAction
             ->expects($this->once())

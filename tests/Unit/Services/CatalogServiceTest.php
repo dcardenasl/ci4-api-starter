@@ -46,7 +46,7 @@ final class CatalogServiceTest extends CIUnitTestCase
             ]);
 
         $service = new CatalogService($repository);
-        $request = new AuditFacetsRequestDTO([]);
+        $request = new AuditFacetsRequestDTO([], service('validation'));
 
         $data = $service->auditFacets($request)->toArray();
 

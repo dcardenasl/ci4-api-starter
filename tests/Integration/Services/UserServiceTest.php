@@ -43,7 +43,7 @@ class UserServiceTest extends CIUnitTestCase
             'first_name' => 'Integration',
             'last_name' => 'User',
             'role' => 'user',
-        ]);
+        ], service('validation'));
 
         $result = $this->userService->store($request, new SecurityContext(1, 'admin'));
         $data = $result->toArray();
@@ -75,7 +75,7 @@ class UserServiceTest extends CIUnitTestCase
         $request = new UserUpdateRequestDTO([
             'email' => 'new@example.com',
             'first_name' => 'New',
-        ]);
+        ], service('validation'));
 
         $result = $this->userService->update((int) $userId, $request, new SecurityContext(1, 'admin'));
 

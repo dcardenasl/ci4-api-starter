@@ -101,7 +101,7 @@ class RefreshTokenServiceTest extends CIUnitTestCase
 
         $result = $this->service->revoke(new RefreshTokenRequestDTO([
             'refresh_token' => self::VALID_REFRESH_TOKEN,
-        ]));
+        ], service('validation')));
 
         $this->assertSame(\App\Support\OperationResult::SUCCESS, $result->state);
     }
@@ -116,7 +116,7 @@ class RefreshTokenServiceTest extends CIUnitTestCase
 
         $this->service->revoke(new RefreshTokenRequestDTO([
             'refresh_token' => self::UNKNOWN_REFRESH_TOKEN,
-        ]));
+        ], service('validation')));
     }
 
     // ==================== REVOKE ALL USER TOKENS TESTS ====================

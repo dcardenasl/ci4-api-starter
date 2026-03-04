@@ -94,7 +94,7 @@ class UserServiceTest extends CIUnitTestCase
         $request = new \App\DTO\Request\Users\UserCreateRequestDTO([
             'email' => 'new@example.com',
             'role' => 'user',
-        ]);
+        ], service('validation'));
 
         $expectedUser = $this->createUserEntity(['id' => 1, 'email' => 'new@example.com']);
         $this->mockCreateUserAction->expects($this->once())->method('execute')->willReturn($expectedUser);
@@ -111,7 +111,7 @@ class UserServiceTest extends CIUnitTestCase
         $user = $this->createUserEntity(['id' => $id, 'role' => 'user']);
         $request = new \App\DTO\Request\Users\UserUpdateRequestDTO([
             'first_name' => 'Updated',
-        ]);
+        ], service('validation'));
         $this->mockUpdateUserAction->expects($this->once())->method('execute')->with($id, $request)->willReturn($user);
 
         $result = $this->service->update($id, $request);

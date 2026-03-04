@@ -360,7 +360,7 @@ class AuditServiceTest extends CIUnitTestCase
         $result = $this->service->byEntity(new \App\DTO\Request\Audit\AuditByEntityRequestDTO([
             'entity_type' => 'users',
             'entity_id' => 5,
-        ]));
+        ], service('validation')));
         $payload = $result->toArray();
 
         $this->assertInstanceOf(\App\DTO\Response\Common\PayloadResponseDTO::class, $result);
@@ -380,7 +380,7 @@ class AuditServiceTest extends CIUnitTestCase
         $result = $this->service->byEntity(new \App\DTO\Request\Audit\AuditByEntityRequestDTO([
             'entity_type' => 'user',
             'entity_id' => 5,
-        ]));
+        ], service('validation')));
 
         $this->assertSame([], $result->toArray());
     }
@@ -388,7 +388,7 @@ class AuditServiceTest extends CIUnitTestCase
     public function testByEntityWithMissingParamsThrowsValidationException(): void
     {
         $this->expectException(\App\Exceptions\ValidationException::class);
-        new \App\DTO\Request\Audit\AuditByEntityRequestDTO(['entity_type' => 'users']);
+        new \App\DTO\Request\Audit\AuditByEntityRequestDTO(['entity_type' => 'users'], service('validation'));
     }
 
     // ==================== HELPER METHODS ====================

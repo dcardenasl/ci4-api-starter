@@ -9,7 +9,9 @@ use App\Exceptions\NotFoundException;
 use App\Interfaces\DataTransferObjectInterface;
 use App\Interfaces\Mappers\ResponseMapperInterface;
 use App\Interfaces\System\AuditRepositoryInterface;
+use App\Libraries\Queue\QueueManager;
 use App\Services\System\AuditService;
+use App\Services\System\AuditWriter;
 use CodeIgniter\Test\CIUnitTestCase;
 use Tests\Support\Traits\CustomAssertionsTrait;
 
@@ -24,6 +26,7 @@ class AuditServiceTest extends CIUnitTestCase
 
     protected AuditService $service;
     protected AuditRepositoryInterface $mockAuditRepository;
+    protected ResponseMapperInterface $responseMapper;
 
     protected function setUp(): void
     {
@@ -38,7 +41,7 @@ class AuditServiceTest extends CIUnitTestCase
         $mockUserModel->method('find')->willReturn((object)['id' => 99]);
         \CodeIgniter\Config\Factories::injectMock('models', \App\Models\UserModel::class, $mockUserModel);
 
-        $responseMapper = new class () implements ResponseMapperInterface {
+        $this->responseMapper = new class () implements ResponseMapperInterface {
             public function map(object $entity): DataTransferObjectInterface
             {
                 $data = method_exists($entity, 'toArray') ? $entity->toArray() : (array) $entity;
@@ -46,7 +49,7 @@ class AuditServiceTest extends CIUnitTestCase
             }
         };
 
-        $this->service = new AuditService($this->mockAuditRepository, $responseMapper);
+        $this->service = new AuditService($this->mockAuditRepository, $this->responseMapper);
     }
 
     protected function tearDown(): void
@@ -185,6 +188,100 @@ class AuditServiceTest extends CIUnitTestCase
             'critical',
             ['scope' => 'api_key', 'token' => 'secret-token']
         );
+    }
+
+    public function testLogEnqueuesNonCriticalEventWhenAsyncEnabled(): void
+    {
+        $context = new SecurityContext(99, 'admin', ['ip_address' => '127.0.0.1']);
+        $queueManager = $this->createMock(QueueManager::class);
+        $auditConfig = new \Config\Audit();
+        $auditConfig->asyncEnabled = true;
+        $auditConfig->queueName = 'audit';
+
+        $this->mockAuditRepository
+            ->expects($this->never())
+            ->method('insert');
+
+        $queueManager->expects($this->once())
+            ->method('push')
+            ->with(
+                \App\Libraries\Queue\Jobs\WriteAuditLogJob::class,
+                $this->callback(static function (array $data): bool {
+                    return isset($data['audit']) && is_array($data['audit']);
+                }),
+                'audit'
+            )
+            ->willReturn(10);
+
+        $service = new AuditService(
+            $this->mockAuditRepository,
+            $this->responseMapper,
+            new AuditWriter($this->mockAuditRepository),
+            $queueManager,
+            $auditConfig
+        );
+
+        $service->log('create', 'users', 1, [], ['email' => 'test@example.com'], $context);
+    }
+
+    public function testLogPersistsCriticalEventSynchronouslyWhenAsyncEnabled(): void
+    {
+        $context = new SecurityContext(99, 'admin', ['ip_address' => '127.0.0.1']);
+        $queueManager = $this->createMock(QueueManager::class);
+        $auditConfig = new \Config\Audit();
+        $auditConfig->asyncEnabled = true;
+
+        $this->mockAuditRepository
+            ->expects($this->once())
+            ->method('insert');
+
+        $queueManager->expects($this->never())
+            ->method('push');
+
+        $service = new AuditService(
+            $this->mockAuditRepository,
+            $this->responseMapper,
+            new AuditWriter($this->mockAuditRepository),
+            $queueManager,
+            $auditConfig
+        );
+
+        $service->log(
+            'api_key_auth_failed',
+            'api_keys',
+            null,
+            [],
+            ['scope' => 'api_key'],
+            $context,
+            'failure',
+            'critical'
+        );
+    }
+
+    public function testLogFallsBackToSyncWhenQueueFails(): void
+    {
+        $context = new SecurityContext(99, 'admin', ['ip_address' => '127.0.0.1']);
+        $queueManager = $this->createMock(QueueManager::class);
+        $auditConfig = new \Config\Audit();
+        $auditConfig->asyncEnabled = true;
+
+        $queueManager->expects($this->once())
+            ->method('push')
+            ->willThrowException(new \RuntimeException('queue down'));
+
+        $this->mockAuditRepository
+            ->expects($this->once())
+            ->method('insert');
+
+        $service = new AuditService(
+            $this->mockAuditRepository,
+            $this->responseMapper,
+            new AuditWriter($this->mockAuditRepository),
+            $queueManager,
+            $auditConfig
+        );
+
+        $service->log('update', 'users', 1, ['a' => 1], ['a' => 2], $context);
     }
 
     // ==================== LOG CREATE TESTS ====================

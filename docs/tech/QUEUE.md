@@ -1,6 +1,6 @@
 # Queue & Jobs (CI4)
 
-This project ships with a simple database-backed queue and a CLI worker. It is used by the email system (verification, password reset, invitations, etc.).
+This project ships with a simple database-backed queue and a CLI worker. It is used by email flows, request logging, and asynchronous audit logging.
 
 ## How It Works
 
@@ -8,13 +8,19 @@ This project ships with a simple database-backed queue and a CLI worker. It is u
 - Failed jobs are moved to `failed_jobs`.
 - A CLI worker processes jobs from a named queue.
 - Email jobs use the `emails` queue.
+- Request logging uses the `logs` queue.
+- Audit logging uses the `audit` queue for non-critical events.
 
 Main code locations:
 - Queue config: `app/Config/Queue.php`
+- Audit async config: `app/Config/Audit.php`
 - Queue manager: `app/Libraries/Queue/QueueManager.php`
 - Worker command: `app/Commands/QueueWork.php`
 - Email jobs: `app/Libraries/Queue/Jobs/SendEmailJob.php`, `SendTemplateEmailJob.php`
+- Request log job: `app/Libraries/Queue/Jobs/LogRequestJob.php`
+- Audit job: `app/Libraries/Queue/Jobs/WriteAuditLogJob.php`
 - Email enqueuing: `app/Services/System/EmailService.php`
+- Audit orchestration: `app/Services/System/AuditService.php`
 
 ## Configuration (.env)
 
@@ -22,6 +28,9 @@ Main code locations:
 QUEUE_DRIVER = database
 QUEUE_MAX_ATTEMPTS = 3
 QUEUE_RETRY_AFTER = 90
+AUDIT_ASYNC_ENABLED = true
+AUDIT_QUEUE_NAME = audit
+AUDIT_MAX_PAYLOAD_BYTES = 60000
 ```
 
 Notes:
@@ -61,12 +70,27 @@ Limit processing:
 php spark queue:work --queue=emails --max-jobs=10
 ```
 
+Process audit jobs continuously:
+
+```
+php spark queue:work --queue=audit
+```
+
+Process multiple queues with separate workers (recommended):
+
+```
+php spark queue:work --queue=emails
+php spark queue:work --queue=logs
+php spark queue:work --queue=audit
+```
+
 ## Verifying It Works
 
 1. Trigger a job:
    - Register a user (verification email).
    - Request password reset.
-2. Confirm a row exists in `jobs` (queue `emails`).
+   - Hit any API endpoint with request logging enabled.
+2. Confirm rows exist in `jobs` for expected queues (`emails`, `logs`, `audit`).
 3. Run the worker:
    - `php spark queue:work --queue=emails --once`
 4. Confirm job is removed from `jobs` and email is sent.
@@ -89,4 +113,4 @@ Development:
 - Run the worker in a separate terminal while testing features.
 
 Production:
-- Run `php spark queue:work --queue=emails` under a process supervisor (systemd, supervisor, PM2, etc.).
+- Run queue workers under a process supervisor (systemd, supervisor, PM2, etc.) for each active queue (`emails`, `logs`, `audit`).

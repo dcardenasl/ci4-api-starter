@@ -4,13 +4,13 @@ This document is a feature playbook for queue-enabled capabilities.
 
 ## Purpose
 
-Use queues for asynchronous tasks (email, request logging, infrastructure jobs) without blocking HTTP requests.
+Use queues for asynchronous tasks (email, request logging, audit logging, infrastructure jobs) without blocking HTTP requests.
 
 ## Implementation Checklist
 
 1. Confirm job class is idempotent.
 2. Confirm retry strategy (`QUEUE_MAX_ATTEMPTS`, `QUEUE_RETRY_AFTER`).
-3. Confirm queue name conventions (`emails`, `logs`, or domain queue).
+3. Confirm queue name conventions (`emails`, `logs`, `audit`, or domain queue).
 4. Add/adjust tests (unit for job logic, integration for queue execution).
 5. Run `composer quality`.
 
@@ -24,4 +24,12 @@ Use queues for asynchronous tasks (email, request logging, infrastructure jobs) 
 ## Canonical Technical Reference
 
 1. Runtime setup, workers, migrations, and troubleshooting: `../tech/QUEUE.md`.
-2. Related subsystem docs: `../tech/email.md`, `../tech/request-logging.md`.
+2. Related subsystem docs: `../tech/email.md`, `../tech/request-logging.md`, `../tech/audit-logging.md`.
+
+## Audit Queue Notes
+
+- Queue name: `audit` (configurable via `AUDIT_QUEUE_NAME`).
+- Hybrid policy:
+  - critical audit events are written synchronously;
+  - non-critical events are enqueued to `audit`.
+- If enqueue fails, persistence falls back to synchronous write.

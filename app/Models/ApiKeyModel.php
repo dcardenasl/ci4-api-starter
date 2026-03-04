@@ -5,15 +5,11 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Entities\ApiKeyEntity;
-use App\Traits\Auditable;
 use App\Traits\Filterable;
 use App\Traits\Searchable;
-use CodeIgniter\Model;
-use Config\Services;
 
-class ApiKeyModel extends Model
+class ApiKeyModel extends BaseAuditableModel
 {
-    use Auditable;
     use Filterable;
     use Searchable;
 
@@ -120,10 +116,4 @@ class ApiKeyModel extends Model
         return $this->where('key_hash', $hash)->first();
     }
 
-    public function __construct()
-    {
-        parent::__construct();
-        $this->setAuditService(Services::auditService());
-        $this->initAuditable();
-    }
 }

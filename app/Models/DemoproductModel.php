@@ -5,17 +5,13 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Entities\DemoproductEntity;
-use App\Traits\Auditable;
 use App\Traits\Filterable;
 use App\Traits\Searchable;
-use CodeIgniter\Model;
-use Config\Services;
 
-class DemoproductModel extends Model
+class DemoproductModel extends BaseAuditableModel
 {
     use Filterable;
     use Searchable;
-    use Auditable;
 
     protected $table = 'demoproducts';
     protected $primaryKey = 'id';
@@ -44,10 +40,4 @@ class DemoproductModel extends Model
         ],
     ];
 
-    public function __construct()
-    {
-        parent::__construct();
-        $this->setAuditService(Services::auditService());
-        $this->initAuditable();
-    }
 }

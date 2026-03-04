@@ -5,15 +5,11 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Entities\UserEntity;
-use App\Traits\Auditable;
 use App\Traits\Filterable;
 use App\Traits\Searchable;
-use CodeIgniter\Model;
-use Config\Services;
 
-class UserModel extends Model
+class UserModel extends BaseAuditableModel
 {
-    use Auditable;
     use Filterable;
     use Searchable;
 
@@ -94,10 +90,4 @@ class UserModel extends Model
     protected $beforeDelete   = [];
     protected $afterDelete    = [];
 
-    public function __construct()
-    {
-        parent::__construct();
-        $this->setAuditService(Services::auditService());
-        $this->initAuditable();
-    }
 }

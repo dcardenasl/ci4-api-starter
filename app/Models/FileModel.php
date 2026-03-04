@@ -5,20 +5,16 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Entities\FileEntity;
-use App\Traits\Auditable;
 use App\Traits\Filterable;
 use App\Traits\Searchable;
-use CodeIgniter\Model;
-use Config\Services;
 
 /**
  * File Model
  *
  * Manages file metadata in the database
  */
-class FileModel extends Model
+class FileModel extends BaseAuditableModel
 {
-    use Auditable;
     use Filterable;
     use Searchable;
     protected $table = 'files';
@@ -83,56 +79,4 @@ class FileModel extends Model
     /** @var array<int, string> */
     protected array $sortableFields = ['id', 'user_id', 'original_name', 'size', 'uploaded_at', 'mime_type'];
 
-    public function __construct()
-    {
-        parent::__construct();
-        $this->setAuditService(Services::auditService());
-        $this->initAuditable();
-    }
-
-    /**
-     * Get files by user ID
-     *
-     * @param int $userId
-     * @return array
-     */
-    public function getByUser(int $userId): array
-    {
-        return $this->where('user_id', $userId)
-            ->orderBy('uploaded_at', 'DESC')
-            ->findAll();
-    }
-
-    /**
-     * Get file by ID and user ID (ownership check)
-     *
-     * @param int $fileId
-     * @param int $userId
-     * @return FileEntity|null
-     */
-    public function getByIdAndUser(int $fileId, int $userId): ?FileEntity
-    {
-        /** @var FileEntity|null */
-        return $this->where('id', $fileId)
-            ->where('user_id', $userId)
-            ->first();
-    }
-
-    /**
-     * Delete file by ID and user ID (ownership check)
-     *
-     * @param int $fileId
-     * @param int $userId
-     * @return bool
-     */
-    public function deleteByIdAndUser(int $fileId, int $userId): bool
-    {
-        $file = $this->getByIdAndUser($fileId, $userId);
-
-        if (!$file) {
-            return false;
-        }
-
-        return (bool) $this->delete($fileId);
-    }
 }

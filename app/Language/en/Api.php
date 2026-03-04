@@ -14,6 +14,7 @@ return [
     'serverError' => 'An internal server error occurred.',
     'tooManyRequests' => 'Too many requests.',
     'invalidRequest' => 'Invalid request data.',
+    'invalidJsonPayload' => 'Malformed JSON payload.',
     'transactionFailed' => 'Database transaction failed.',
     'updateError' => 'Could not update resource.',
     'deleteError' => 'Could not delete resource.',

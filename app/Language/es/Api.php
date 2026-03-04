@@ -14,6 +14,7 @@ return [
     'serverError' => 'Ha ocurrido un error interno en el servidor.',
     'tooManyRequests' => 'Demasiadas solicitudes.',
     'invalidRequest' => 'Datos de solicitud inválidos.',
+    'invalidJsonPayload' => 'Carga JSON malformada.',
     'transactionFailed' => 'La transacción de base de datos ha fallado.',
     'updateError' => 'No se pudo actualizar el recurso.',
     'deleteError' => 'No se pudo eliminar el recurso.',

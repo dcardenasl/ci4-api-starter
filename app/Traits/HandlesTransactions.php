@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Traits;
 
-use Exception;
+use Throwable;
 
 /**
  * Handles database transactions in a standardized way.
@@ -16,7 +16,7 @@ trait HandlesTransactions
      *
      * @param callable $callback
      * @return mixed
-     * @throws Exception
+     * @throws Throwable
      */
     protected function wrapInTransaction(callable $callback): mixed
     {
@@ -33,7 +33,7 @@ trait HandlesTransactions
 
             $db->transCommit();
             return $result;
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $db->transRollback();
             throw $e;
         }

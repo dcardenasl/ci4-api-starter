@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Support;
 
+use App\Exceptions\BadRequestException;
 use CodeIgniter\HTTP\IncomingRequest;
 
 /**
@@ -32,7 +33,7 @@ class RequestDataCollector
                     if (json_last_error() === JSON_ERROR_NONE && is_array($decodedBody)) {
                         $bodyPayload = $decodedBody;
                     } else {
-                        $bodyPayload = ['file' => $rawBodyString];
+                        throw new BadRequestException(lang('Api.invalidJsonPayload'));
                     }
                 } else {
                     $bodyPayload = ['file' => $rawBodyString];

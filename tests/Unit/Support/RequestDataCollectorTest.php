@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Support;
 
+use App\Exceptions\BadRequestException;
 use App\HTTP\ApiRequest;
 use App\Support\RequestDataCollector;
 use CodeIgniter\Test\CIUnitTestCase;
@@ -59,5 +60,20 @@ final class RequestDataCollectorTest extends CIUnitTestCase
         $result = $collector->collect($request);
 
         $this->assertSame('a@b.com', $result['email']);
+    }
+
+    public function testCollectThrowsBadRequestForMalformedJsonPayload(): void
+    {
+        $request = $this->createMock(ApiRequest::class);
+        $request->method('getHeaderLine')->with('Content-Type')->willReturn('application/json');
+        $request->method('getFiles')->willReturn([]);
+        $request->method('getBody')->willReturn('{"email":');
+        $request->method('getGet')->willReturn([]);
+        $request->method('getPost')->willReturn([]);
+
+        $collector = new RequestDataCollector();
+
+        $this->expectException(BadRequestException::class);
+        $collector->collect($request);
     }
 }

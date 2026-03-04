@@ -16,9 +16,17 @@ class ControllerRouteCoverageTest extends CIUnitTestCase
         $root = rtrim((string) ROOTPATH, DIRECTORY_SEPARATOR);
         $controllersDir = $root . DIRECTORY_SEPARATOR . 'app/Controllers/Api/V1';
         $routesPath = $root . DIRECTORY_SEPARATOR . 'app/Config/Routes.php';
+        $modularRoutesDir = $root . DIRECTORY_SEPARATOR . 'app/Config/Routes/v1';
 
-        $routesSource = file_get_contents($routesPath);
-        $this->assertIsString($routesSource);
+        // Load all route sources to check references
+        $routesSource = (string) file_get_contents($routesPath);
+
+        if (is_dir($modularRoutesDir)) {
+            $files = glob($modularRoutesDir . '/*.php') ?: [];
+            foreach ($files as $file) {
+                $routesSource .= (string) file_get_contents($file);
+            }
+        }
 
         $iterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($controllersDir));
         $violations = [];

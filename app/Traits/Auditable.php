@@ -2,8 +2,8 @@
 
 namespace App\Traits;
 
+use App\Interfaces\System\AuditServiceInterface;
 use App\Libraries\ContextHolder;
-use App\Services\System\AuditService;
 
 /**
  * Auditable Trait
@@ -26,9 +26,19 @@ use App\Services\System\AuditService;
 trait Auditable
 {
     /**
+     * Resolved once by model constructor to keep trait framework-agnostic.
+     */
+    protected ?AuditServiceInterface $auditService = null;
+
+    /**
      * Temporary storage for old values before update/delete
      */
     protected array $auditOldValues = [];
+
+    public function setAuditService(AuditServiceInterface $auditService): void
+    {
+        $this->auditService = $auditService;
+    }
 
     /**
      * Initialize auditable callbacks
@@ -181,14 +191,13 @@ trait Auditable
         );
     }
 
-    /**
-     * Get audit service instance
-     *
-     * @return AuditService
-     */
-    protected function getAuditService(): AuditService
+    protected function getAuditService(): AuditServiceInterface
     {
-        return \Config\Services::auditService();
+        if ($this->auditService === null) {
+            throw new \RuntimeException('Audit service not configured for auditable model.');
+        }
+
+        return $this->auditService;
     }
 
     /**

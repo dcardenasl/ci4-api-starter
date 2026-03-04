@@ -33,7 +33,7 @@ class AuditPayloadSanitizer
         $sanitized = [];
 
         foreach ($values as $key => $value) {
-            if (is_string($key) && in_array(strtolower($key), $this->sensitiveFields, true)) {
+            if (is_string($key) && $this->isSensitiveKey($key)) {
                 continue;
             }
 
@@ -43,5 +43,23 @@ class AuditPayloadSanitizer
         }
 
         return $sanitized;
+    }
+
+    private function isSensitiveKey(string $key): bool
+    {
+        $normalized = strtolower(trim($key));
+        if ($normalized === '') {
+            return false;
+        }
+
+        if (in_array($normalized, $this->sensitiveFields, true)) {
+            return true;
+        }
+
+        // Covers common variants while avoiding broad false positives.
+        return preg_match(
+            '/(^|_)(password|token|secret|api_?key|key_?hash|private_?key|access_?token|refresh_?token|verification_?token)($|_)/i',
+            $normalized
+        ) === 1;
     }
 }

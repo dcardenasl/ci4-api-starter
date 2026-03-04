@@ -15,6 +15,15 @@ use CodeIgniter\Entity\Entity;
 class UserEntity extends Entity
 {
     /**
+     * @var array<int, string>
+     */
+    private array $sensitiveFields = [
+        'password',
+        'email_verification_token',
+        'verification_token_expires',
+        'oauth_provider_id',
+    ];
+    /**
      * Define map for attributes
      *
      * @var array<string, string>
@@ -131,5 +140,19 @@ class UserEntity extends Entity
     public function getAvatarUrl(): string
     {
         return (string) ($this->attributes['avatar_url'] ?? '');
+    }
+
+    /**
+     * Ensure sensitive fields are never leaked to outward layers/audit payloads.
+     */
+    public function toArray(bool $onlyChanged = false, bool $cast = true, bool $recursive = false): array
+    {
+        $data = parent::toArray($onlyChanged, $cast, $recursive);
+
+        foreach ($this->sensitiveFields as $field) {
+            unset($data[$field]);
+        }
+
+        return $data;
     }
 }

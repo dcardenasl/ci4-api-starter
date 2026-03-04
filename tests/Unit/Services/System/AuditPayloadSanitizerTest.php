@@ -35,4 +35,29 @@ final class AuditPayloadSanitizerTest extends CIUnitTestCase
         $this->assertSame('UTC', $result['profile']['timezone']);
         $this->assertTrue($result['profile']['nested']['enabled']);
     }
+
+    public function testSanitizeRemovesTokenAndSecretPatterns(): void
+    {
+        $sanitizer = new AuditPayloadSanitizer();
+
+        $input = [
+            'email_verification_token' => 'abc123',
+            'client_secret' => 'secret-value',
+            'public_value' => 'safe',
+            'nested' => [
+                'auth_token_value' => 'tkn',
+                'api_key_hash' => 'hash',
+                'note' => 'keep',
+            ],
+        ];
+
+        $result = $sanitizer->sanitize($input);
+
+        $this->assertArrayNotHasKey('email_verification_token', $result);
+        $this->assertArrayNotHasKey('client_secret', $result);
+        $this->assertArrayHasKey('public_value', $result);
+        $this->assertArrayNotHasKey('auth_token_value', $result['nested']);
+        $this->assertArrayNotHasKey('api_key_hash', $result['nested']);
+        $this->assertSame('keep', $result['nested']['note']);
+    }
 }

@@ -400,20 +400,6 @@ readonly class {$resource}ResponseDTO implements DataTransferObjectInterface
         public ?string \$createdAt = null
     ) {}
 
-    public static function fromArray(array \$data): self
-    {
-        \$createdAt = \$data['created_at'] ?? null;
-        if (\$createdAt instanceof \DateTimeInterface) {
-            \$createdAt = \$createdAt->format('Y-m-d H:i:s');
-        }
-
-        return new self(
-            id: (int) (\$data['id'] ?? 0),
-            name: (string) (\$data['name'] ?? ''),
-            createdAt: \$createdAt ? (string) \$createdAt : null
-        );
-    }
-
     public function toArray(): array
     {
         return [
@@ -453,12 +439,7 @@ declare(strict_types=1);
 
 namespace App\Services\\{$domain};
 
-use App\DTO\SecurityContext;
-use App\Exceptions\BadRequestException;
-use App\Exceptions\NotFoundException;
-use App\Exceptions\ValidationException;
 use App\Interfaces\Core\RepositoryInterface;
-use App\Interfaces\DataTransferObjectInterface;
 use App\Interfaces\Mappers\ResponseMapperInterface;
 use App\Interfaces\\{$domain}\\{$resource}ServiceInterface;
 use App\Services\Core\BaseCrudService;
@@ -473,45 +454,15 @@ class {$resource}Service extends BaseCrudService implements {$resource}ServiceIn
         \$this->repository = \${$resourceLower}Repository;
     }
 
-    public function store(DataTransferObjectInterface \$request, ?SecurityContext \$context = null): DataTransferObjectInterface
-    {
-        return \$this->wrapInTransaction(function () use (\$request) {
-            \$id = \$this->repository->insert(\$request->toArray());
-            if (!\$id) {
-                throw new ValidationException(lang('Api.validationFailed'), \$this->repository->errors());
-            }
-
-            \$entity = \$this->repository->find((int) \$id);
-            if (!\$entity) {
-                throw new NotFoundException(lang('Api.resourceNotFound'));
-            }
-
-            return \$this->mapToResponse(\$entity);
-        });
-    }
-
-    public function update(int \$id, DataTransferObjectInterface \$request, ?SecurityContext \$context = null): DataTransferObjectInterface
-    {
-        return \$this->wrapInTransaction(function () use (\$id, \$request) {
-            if (!\$this->repository->find(\$id)) {
-                throw new NotFoundException(lang('Api.resourceNotFound'));
-            }
-
-            \$data = \$request->toArray();
-            if (empty(\$data)) {
-                throw new BadRequestException(lang('Api.noFieldsToUpdate'));
-            }
-
-            \$this->repository->update(\$id, \$data);
-
-            \$entity = \$this->repository->find(\$id);
-            if (!\$entity) {
-                throw new NotFoundException(lang('Api.resourceNotFound'));
-            }
-
-            return \$this->mapToResponse(\$entity);
-        });
-    }
+    /**
+     * Optional: Override beforeStore, beforeUpdate, etc. to add business logic.
+     * Example:
+     * protected function beforeStore(array \$data, ?SecurityContext \$context): array
+     * {
+     *     // Add domain logic here
+     *     return \$data;
+     * }
+     */
 }
 PHP;
     }

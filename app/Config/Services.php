@@ -577,6 +577,15 @@ class Services extends BaseService
      |--------------------------------------------------------------------------
      */
 
+    public static function demoproductRepository(bool $getShared = true)
+    {
+        if ($getShared) {
+            return static::getSharedInstance('demoproductRepository');
+        }
+
+        return new \App\Repositories\GenericRepository(new \App\Models\DemoproductModel());
+    }
+
     public static function userRepository(bool $getShared = true)
     {
         if ($getShared) {
@@ -666,7 +675,7 @@ class Services extends BaseService
         }
 
         return new \App\Services\Catalog\DemoproductService(
-            new \App\Repositories\GenericRepository(new \App\Models\DemoproductModel()),
+            static::demoproductRepository(),
             static::demoproductResponseMapper()
         );
     }

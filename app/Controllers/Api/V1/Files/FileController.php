@@ -84,7 +84,7 @@ class FileController extends ApiController
      */
     public function delete(int $id): ResponseInterface
     {
-        return $this->handleRequest('delete', FileGetRequestDTO::class, ['id' => $id]);
+        return $this->handleRequest(fn ($dto, $context) => $this->fileService->destroy($id, $context));
     }
 
 }

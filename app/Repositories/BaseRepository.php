@@ -68,18 +68,6 @@ abstract class BaseRepository implements RepositoryInterface
             ->update($data);
     }
 
-    public function where(string|array $key, mixed $value = null, ?bool $escape = null): static
-    {
-        $this->model->where($key, $value, $escape);
-        return $this;
-    }
-
-    public function orderBy(string $orderBy, string $direction = '', ?bool $escape = null): static
-    {
-        $this->model->orderBy($orderBy, $direction, $escape);
-        return $this;
-    }
-
     public function paginateCriteria(array $criteria, int $page = 1, int $perPage = 20, ?callable $baseCriteria = null): array
     {
         $builder = new QueryBuilder($this->model);

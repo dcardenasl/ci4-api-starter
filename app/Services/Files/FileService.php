@@ -173,30 +173,15 @@ class FileService implements FileServiceInterface
     }
 
     /**
-     * Delete a file
+     * Delete a file by identifier.
      */
-    public function delete(\App\Interfaces\DataTransferObjectInterface $request, ?SecurityContext $context = null): bool
-    {
-        /** @var \App\DTO\Request\Files\FileGetRequestDTO $request */
-        $userId = $this->resolveUserId($request, $context);
-        $file = $this->findFileAndAuthorize($request->id, $userId, 'delete', false, $context);
-
-        return $this->wrapInTransaction(function () use ($file) {
-            $this->storage->delete($file->path);
-            return $this->fileRepository->delete($file->id);
-        });
-    }
-
-    /**
-     * CRUD implementation
-     */
-    public function destroy(int|string $id, ?SecurityContext $context = null): bool
+    public function destroy(int $id, ?SecurityContext $context = null): bool
     {
         if ($context?->user_id === null) {
             throw new AuthorizationException(lang('Api.unauthorized'));
         }
 
-        $file = $this->findFileAndAuthorize((int) $id, $context->user_id, 'delete', $context->isAdmin(), $context);
+        $file = $this->findFileAndAuthorize($id, $context->user_id, 'delete', $context->isAdmin(), $context);
 
         return $this->wrapInTransaction(function () use ($file) {
             $this->storage->delete($file->path);

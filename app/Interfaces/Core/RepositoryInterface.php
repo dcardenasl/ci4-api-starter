@@ -51,16 +51,6 @@ interface RepositoryInterface
     public function restore(int|string $id, array $data = []): bool;
 
     /**
-     * Set WHERE clause
-     */
-    public function where(string|array $key, mixed $value = null, ?bool $escape = null): static;
-
-    /**
-     * Set ORDER BY clause
-     */
-    public function orderBy(string $orderBy, string $direction = '', ?bool $escape = null): static;
-
-    /**
      * Get the underlying model instance
      */
     public function getModel(): \CodeIgniter\Model;

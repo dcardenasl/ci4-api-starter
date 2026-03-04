@@ -34,7 +34,7 @@ class ControllerDtoRequestContractsTest extends CIUnitTestCase
             'app/Controllers/Api/V1/Files/FileController.php' => [
                 "handleRequest('index', FileIndexRequestDTO::class)",
                 "handleRequest('upload', FileUploadRequestDTO::class)",
-                "handleRequest('delete', FileGetRequestDTO::class",
+                "fileService->destroy(\$id, \$context)",
             ],
             'app/Controllers/Api/V1/Admin/MetricsController.php' => [
                 "handleRequest('getOverview', MetricsQueryRequestDTO::class)",

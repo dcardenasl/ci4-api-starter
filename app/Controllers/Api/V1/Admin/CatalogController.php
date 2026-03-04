@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers\Api\V1\Admin;
 
 use App\Controllers\ApiController;
-use App\DTO\Request\Catalogs\AuditFacetsRequestDTO;
+use App\DTO\Request\Catalog\AuditFacetsRequestDTO;
 use App\Interfaces\System\CatalogServiceInterface;
 use CodeIgniter\HTTP\ResponseInterface;
 use Config\Services;

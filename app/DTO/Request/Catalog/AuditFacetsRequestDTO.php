@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\DTO\Request\Catalogs;
+namespace App\DTO\Request\Catalog;
 
 use App\DTO\Request\BaseRequestDTO;
 

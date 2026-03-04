@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Services;
 
-use App\DTO\Request\Catalogs\AuditFacetsRequestDTO;
+use App\DTO\Request\Catalog\AuditFacetsRequestDTO;
 use App\Interfaces\System\AuditRepositoryInterface;
 use App\Services\System\CatalogService;
 use CodeIgniter\Test\CIUnitTestCase;

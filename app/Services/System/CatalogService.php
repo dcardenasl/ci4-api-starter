@@ -59,7 +59,7 @@ readonly class CatalogService implements CatalogServiceInterface
 
     public function auditFacets(DataTransferObjectInterface $request): PayloadResponseDTO
     {
-        /** @var \App\DTO\Request\Catalogs\AuditFacetsRequestDTO $request */
+        /** @var \App\DTO\Request\Catalog\AuditFacetsRequestDTO $request */
         return PayloadResponseDTO::fromArray([
             'window_days'  => $request->window_days,
             'actions'      => $this->auditRepository->getActionFacets($request->window_days, $request->limit),

@@ -15,7 +15,10 @@ return [
     'tooManyRequests' => 'Too many requests.',
     'invalidRequest' => 'Invalid request data.',
     'transactionFailed' => 'Database transaction failed.',
+    'updateError' => 'Could not update resource.',
     'deleteError' => 'Could not delete resource.',
     'saveFailed' => 'Could not save resource.',
-    'responseDtoNotDefined' => 'Response DTO class not defined for {0}.',    'fieldRequired' => 'The field {0} is required.',
+    'responseDtoNotDefined' => 'Response DTO class not defined for {0}.',
+    'responseDtoMustImplement' => 'Class {0} must implement DataTransferObjectInterface.',
+    'fieldRequired' => 'The field {0} is required.',
 ];

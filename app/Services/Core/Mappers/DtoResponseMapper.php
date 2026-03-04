@@ -29,7 +29,7 @@ class DtoResponseMapper implements ResponseMapperInterface
         if (method_exists($this->responseDtoClass, 'fromArray')) {
             $instance = ($this->responseDtoClass)::fromArray($data);
             if (!$instance instanceof DataTransferObjectInterface) {
-                throw new \RuntimeException("Class {$this->responseDtoClass} must implement DataTransferObjectInterface");
+                throw new \RuntimeException(lang('Api.responseDtoMustImplement', [$this->responseDtoClass]));
             }
             return $instance;
         }
@@ -49,7 +49,7 @@ class DtoResponseMapper implements ResponseMapperInterface
         if ($constructor === null) {
             $instance = new ($this->responseDtoClass)();
             if (!$instance instanceof DataTransferObjectInterface) {
-                throw new \RuntimeException("Class {$this->responseDtoClass} must implement DataTransferObjectInterface");
+                throw new \RuntimeException(lang('Api.responseDtoMustImplement', [$this->responseDtoClass]));
             }
             return $instance;
         }
@@ -76,7 +76,7 @@ class DtoResponseMapper implements ResponseMapperInterface
 
         $instance = $reflection->newInstanceArgs($args);
         if (!$instance instanceof DataTransferObjectInterface) {
-            throw new \RuntimeException("Class {$this->responseDtoClass} must implement DataTransferObjectInterface");
+            throw new \RuntimeException(lang('Api.responseDtoMustImplement', [$this->responseDtoClass]));
         }
         return $instance;
     }

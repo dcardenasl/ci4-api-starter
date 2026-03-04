@@ -15,7 +15,10 @@ return [
     'tooManyRequests' => 'Demasiadas solicitudes.',
     'invalidRequest' => 'Datos de solicitud inválidos.',
     'transactionFailed' => 'La transacción de base de datos ha fallado.',
+    'updateError' => 'No se pudo actualizar el recurso.',
     'deleteError' => 'No se pudo eliminar el recurso.',
     'saveFailed' => 'No se pudo guardar el recurso.',
-    'responseDtoNotDefined' => 'Clase Response DTO no definida para {0}.',    'fieldRequired' => 'El campo {0} es obligatorio.',
+    'responseDtoNotDefined' => 'Clase Response DTO no definida para {0}.',
+    'responseDtoMustImplement' => 'La clase {0} debe implementar DataTransferObjectInterface.',
+    'fieldRequired' => 'El campo {0} es obligatorio.',
 ];

@@ -7,7 +7,9 @@ namespace Tests\Unit\Config;
 use App\Interfaces\Files\FileServiceInterface;
 use App\Interfaces\Mappers\ResponseMapperInterface;
 use CodeIgniter\Test\CIUnitTestCase;
+use Config\Email;
 use Config\Services;
+use Symfony\Component\Mailer\MailerInterface;
 
 final class ServicesWiringTest extends CIUnitTestCase
 {
@@ -23,5 +25,34 @@ final class ServicesWiringTest extends CIUnitTestCase
         $service = Services::fileService(false);
 
         $this->assertInstanceOf(FileServiceInterface::class, $service);
+    }
+
+    public function testBuildMailerFromConfigReturnsMailerForSmtpProvider(): void
+    {
+        $emailConfig = new Email();
+        $emailConfig->provider = 'smtp';
+        $emailConfig->SMTPHost = 'localhost';
+        $emailConfig->SMTPPort = 1025;
+        $emailConfig->SMTPUser = '';
+        $emailConfig->SMTPPass = '';
+        $emailConfig->SMTPCrypto = '';
+
+        $method = new \ReflectionMethod(Services::class, 'buildMailerFromConfig');
+        $method->setAccessible(true);
+        $mailer = $method->invoke(null, $emailConfig);
+
+        $this->assertInstanceOf(MailerInterface::class, $mailer);
+    }
+
+    public function testBuildMailerFromConfigReturnsNullWhenProviderDisabled(): void
+    {
+        $emailConfig = new Email();
+        $emailConfig->provider = 'none';
+
+        $method = new \ReflectionMethod(Services::class, 'buildMailerFromConfig');
+        $method->setAccessible(true);
+        $mailer = $method->invoke(null, $emailConfig);
+
+        $this->assertNull($mailer);
     }
 }

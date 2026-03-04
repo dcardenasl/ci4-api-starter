@@ -6,6 +6,12 @@ use CodeIgniter\Config\BaseConfig;
 
 class Email extends BaseConfig
 {
+    /**
+     * Email provider selector used by App\Services\System\EmailService wiring.
+     * Supported values: smtp, none.
+     */
+    public string $provider = 'none';
+
     public string $fromEmail  = '';
     public string $fromName   = '';
     public string $recipients = '';
@@ -118,4 +124,18 @@ class Email extends BaseConfig
      * Enable notify message from server
      */
     public bool $DSN = false;
+
+    public function __construct()
+    {
+        parent::__construct();
+
+        $this->provider = strtolower(trim((string) env('EMAIL_PROVIDER', 'none')));
+        $this->fromEmail = (string) env('EMAIL_FROM_ADDRESS', $this->fromEmail);
+        $this->fromName = (string) env('EMAIL_FROM_NAME', $this->fromName);
+        $this->SMTPHost = (string) env('EMAIL_SMTP_HOST', $this->SMTPHost);
+        $this->SMTPPort = (int) env('EMAIL_SMTP_PORT', (string) $this->SMTPPort);
+        $this->SMTPUser = (string) env('EMAIL_SMTP_USER', $this->SMTPUser);
+        $this->SMTPPass = (string) env('EMAIL_SMTP_PASS', $this->SMTPPass);
+        $this->SMTPCrypto = strtolower(trim((string) env('EMAIL_SMTP_CRYPTO', $this->SMTPCrypto)));
+    }
 }

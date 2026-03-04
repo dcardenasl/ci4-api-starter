@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace Config;
 
+use Symfony\Component\Mailer\Mailer;
+use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Component\Mailer\Transport;
+
 /**
  * System Monitoring Services
  *
@@ -18,12 +22,14 @@ trait SystemMonitoringServices
             return static::getSharedInstance('emailService');
         }
 
-        $fromAddress = (string) (env('EMAIL_FROM_ADDRESS') ?: 'no-reply@example.com');
-        $fromName = (string) (env('EMAIL_FROM_NAME') ?: 'CI4 API');
+        $emailConfig = config('Email');
+        $fromAddress = (string) ($emailConfig->fromEmail ?: 'no-reply@example.com');
+        $fromName = (string) ($emailConfig->fromName ?: 'CI4 API');
         $defaultLocale = (string) config('App')->defaultLocale;
+        $mailer = self::buildMailerFromConfig($emailConfig);
 
         return new \App\Services\System\EmailService(
-            null,
+            $mailer,
             static::queueManager(),
             $fromAddress,
             $fromName,
@@ -129,5 +135,46 @@ trait SystemMonitoringServices
         return new \App\Services\System\CatalogService(
             static::auditRepository()
         );
+    }
+
+    private static function buildMailerFromConfig(\Config\Email $config): ?MailerInterface
+    {
+        $provider = strtolower(trim((string) $config->provider));
+
+        if ($provider === '' || in_array($provider, ['none', 'null', 'disabled'], true)) {
+            return null;
+        }
+
+        if ($provider !== 'smtp') {
+            log_message('warning', "EmailService: Unsupported EMAIL_PROVIDER '{$provider}'.");
+            return null;
+        }
+
+        $host = trim((string) $config->SMTPHost);
+        $port = (int) $config->SMTPPort;
+        $user = (string) $config->SMTPUser;
+        $pass = (string) $config->SMTPPass;
+        $crypto = strtolower(trim((string) $config->SMTPCrypto));
+
+        if ($host === '') {
+            log_message('warning', 'EmailService: EMAIL_SMTP_HOST is empty. Mailer disabled.');
+            return null;
+        }
+
+        $scheme = $crypto === 'ssl' ? 'smtps' : 'smtp';
+        $encryption = $crypto === 'tls' ? '?encryption=tls' : '';
+        $credentials = '';
+        if ($user !== '' || $pass !== '') {
+            $credentials = rawurlencode($user) . ':' . rawurlencode($pass) . '@';
+        }
+
+        $dsn = sprintf('%s://%s%s:%d%s', $scheme, $credentials, $host, $port, $encryption);
+
+        try {
+            return new Mailer(Transport::fromDsn($dsn));
+        } catch (\Throwable $e) {
+            log_message('error', 'EmailService: Invalid mailer configuration - ' . $e->getMessage());
+            return null;
+        }
     }
 }

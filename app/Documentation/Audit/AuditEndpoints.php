@@ -48,6 +48,24 @@ use OpenApi\Attributes as OA;
             required: false,
             schema: new OA\Schema(type: 'integer', minimum: 1)
         ),
+        new OA\Parameter(
+            name: 'result',
+            in: 'query',
+            required: false,
+            schema: new OA\Schema(type: 'string', enum: ['success', 'failure', 'denied'])
+        ),
+        new OA\Parameter(
+            name: 'severity',
+            in: 'query',
+            required: false,
+            schema: new OA\Schema(type: 'string', enum: ['info', 'warning', 'critical'])
+        ),
+        new OA\Parameter(
+            name: 'request_id',
+            in: 'query',
+            required: false,
+            schema: new OA\Schema(type: 'string')
+        ),
     ],
     responses: [
         new OA\Response(

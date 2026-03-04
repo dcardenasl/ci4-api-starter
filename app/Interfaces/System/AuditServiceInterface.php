@@ -14,7 +14,18 @@ interface AuditServiceInterface
     /**
      * Log an audit event (Internal)
      */
-    public function log(string $action, string $entityType, ?int $entityId, array $oldValues, array $newValues, ?SecurityContext $context = null): void;
+    public function log(
+        string $action,
+        string $entityType,
+        ?int $entityId,
+        array $oldValues,
+        array $newValues,
+        ?SecurityContext $context = null,
+        string $result = 'success',
+        string $severity = 'info',
+        array $metadata = [],
+        ?string $requestId = null
+    ): void;
 
     /**
      * Log structured events (Internal)

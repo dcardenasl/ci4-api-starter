@@ -34,6 +34,10 @@ class AuditLogModel extends Model
         'new_values',
         'ip_address',
         'user_agent',
+        'result',
+        'severity',
+        'request_id',
+        'metadata',
         'created_at',
     ];
 
@@ -50,6 +54,9 @@ class AuditLogModel extends Model
         'action' => 'required|max_length[50]',
         'entity_type' => 'required|max_length[50]',
         'ip_address' => 'required|max_length[45]',
+        'result' => 'permit_empty|in_list[success,failure,denied]',
+        'severity' => 'permit_empty|in_list[info,warning,critical]',
+        'request_id' => 'permit_empty|max_length[64]',
     ];
 
     protected $validationMessages = [];
@@ -58,13 +65,13 @@ class AuditLogModel extends Model
 
     // Filtering and searching
     /** @var array<int, string> */
-    protected array $filterableFields = ['user_id', 'action', 'entity_type', 'entity_id', 'created_at'];
+    protected array $filterableFields = ['user_id', 'action', 'entity_type', 'entity_id', 'result', 'severity', 'request_id', 'created_at'];
 
     /** @var array<int, string> */
-    protected array $searchableFields = ['action', 'entity_type'];
+    protected array $searchableFields = ['action', 'entity_type', 'request_id'];
 
     /** @var array<int, string> */
-    protected array $sortableFields = ['id', 'user_id', 'action', 'entity_type', 'entity_id', 'created_at'];
+    protected array $sortableFields = ['id', 'user_id', 'action', 'entity_type', 'entity_id', 'result', 'severity', 'created_at'];
 
     /**
      * Get audit logs for an entity

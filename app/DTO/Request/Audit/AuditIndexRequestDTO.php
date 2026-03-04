@@ -20,6 +20,9 @@ readonly class AuditIndexRequestDTO extends BaseRequestDTO
     public ?string $entity_type;
     public ?int $entity_id;
     public ?int $user_id;
+    public ?string $result;
+    public ?string $severity;
+    public ?string $request_id;
 
     protected function rules(): array
     {
@@ -31,6 +34,9 @@ readonly class AuditIndexRequestDTO extends BaseRequestDTO
             'entity_type' => 'permit_empty|string|max_length[50]',
             'entity_id'   => 'permit_empty|is_natural_no_zero',
             'user_id'     => 'permit_empty|is_natural_no_zero',
+            'result'      => 'permit_empty|in_list[success,failure,denied]',
+            'severity'    => 'permit_empty|in_list[info,warning,critical]',
+            'request_id'  => 'permit_empty|string|max_length[64]',
         ];
     }
 
@@ -45,6 +51,9 @@ readonly class AuditIndexRequestDTO extends BaseRequestDTO
         $this->entity_type = $this->extractString($data, $filter, 'entity_type');
         $this->entity_id = $this->extractInt($data, $filter, 'entity_id');
         $this->user_id = $this->extractInt($data, $filter, 'user_id');
+        $this->result = $this->extractString($data, $filter, 'result');
+        $this->severity = $this->extractString($data, $filter, 'severity');
+        $this->request_id = $this->extractString($data, $filter, 'request_id');
     }
 
     public function toArray(): array
@@ -66,6 +75,15 @@ readonly class AuditIndexRequestDTO extends BaseRequestDTO
         }
         if ($this->user_id) {
             $data['filter']['user_id']     = ['eq' => $this->user_id];
+        }
+        if ($this->result) {
+            $data['filter']['result'] = ['eq' => $this->result];
+        }
+        if ($this->severity) {
+            $data['filter']['severity'] = ['eq' => $this->severity];
+        }
+        if ($this->request_id) {
+            $data['filter']['request_id'] = ['eq' => $this->request_id];
         }
 
         return $data;

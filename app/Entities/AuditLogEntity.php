@@ -19,5 +19,6 @@ class AuditLogEntity extends Entity
         'entity_id' => 'integer',
         'old_values' => 'json-array',
         'new_values' => 'json-array',
+        'metadata' => 'json-array',
     ];
 }

@@ -471,6 +471,40 @@
                             "type": "integer",
                             "minimum": 1
                         }
+                    },
+                    {
+                        "name": "result",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "success",
+                                "failure",
+                                "denied"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "severity",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "info",
+                                "warning",
+                                "critical"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "request_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
                     }
                 ],
                 "responses": {
@@ -2737,6 +2771,37 @@
                         "description": "User-Agent of the requester",
                         "type": "string",
                         "example": "Mozilla/5.0...",
+                        "nullable": true
+                    },
+                    "result": {
+                        "description": "Execution result",
+                        "type": "string",
+                        "enum": [
+                            "success",
+                            "failure",
+                            "denied"
+                        ],
+                        "example": "success"
+                    },
+                    "severity": {
+                        "description": "Event severity",
+                        "type": "string",
+                        "enum": [
+                            "info",
+                            "warning",
+                            "critical"
+                        ],
+                        "example": "info"
+                    },
+                    "request_id": {
+                        "description": "Request correlation ID",
+                        "type": "string",
+                        "example": "req_01HZY...",
+                        "nullable": true
+                    },
+                    "metadata": {
+                        "description": "Additional sanitized metadata",
+                        "type": "object",
                         "nullable": true
                     },
                     "created_at": {

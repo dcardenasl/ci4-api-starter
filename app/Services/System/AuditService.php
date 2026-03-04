@@ -6,6 +6,7 @@ namespace App\Services\System;
 
 use App\DTO\Response\Common\PayloadResponseDTO;
 use App\DTO\SecurityContext;
+use App\DTO\System\AuditEventDTO;
 use App\Interfaces\DataTransferObjectInterface;
 use App\Interfaces\Mappers\ResponseMapperInterface;
 use App\Interfaces\System\AuditRepositoryInterface;
@@ -19,10 +20,6 @@ use App\Services\Core\BaseCrudService;
  */
 class AuditService extends BaseCrudService implements \App\Interfaces\System\AuditServiceInterface
 {
-    private const SENSITIVE_FIELDS = [
-        'password', 'password_confirmation', 'token', 'accesstoken', 'refreshtoken', 'apikey', 'access_token', 'refresh_token', 'api_key', 'key_hash'
-    ];
-
     /**
      * @var bool Allow enabling audit logging during tests
      */
@@ -33,10 +30,12 @@ class AuditService extends BaseCrudService implements \App\Interfaces\System\Aud
         ResponseMapperInterface $responseMapper,
         protected bool $enabled = true,
         protected string $defaultIpAddress = '127.0.0.1',
-        protected string $defaultUserAgent = 'system'
+        protected string $defaultUserAgent = 'system',
+        protected ?AuditPayloadSanitizer $payloadSanitizer = null
     ) {
         parent::__construct($responseMapper);
         $this->repository = $auditRepository;
+        $this->payloadSanitizer ??= new AuditPayloadSanitizer();
     }
 
     /**
@@ -48,35 +47,49 @@ class AuditService extends BaseCrudService implements \App\Interfaces\System\Aud
         ?int $entityId,
         array $oldValues,
         array $newValues,
-        ?SecurityContext $context = null
+        ?SecurityContext $context = null,
+        string $result = 'success',
+        string $severity = 'info',
+        array $metadata = [],
+        ?string $requestId = null
     ): void {
         if (!$this->enabled && !self::$forceEnabledInTests) {
             return;
         }
 
-        $userId = $context?->user_id;
+        $event = $this->buildEvent(
+            $action,
+            $entityType,
+            $entityId,
+            $oldValues,
+            $newValues,
+            $context,
+            $result,
+            $severity,
+            $metadata,
+            $requestId
+        );
 
-        // Network metadata resolution (prefer context, fallback to request helper if safe)
-        $ipAddress = trim((string) ($context?->metadata['ip_address'] ?? ''));
-        $userAgent = trim((string) ($context?->metadata['user_agent'] ?? ''));
+        $userId = $event->context?->user_id;
+        $ipAddress = trim((string) ($event->context?->metadata['ip_address'] ?? ''));
+        $userAgent = trim((string) ($event->context?->metadata['user_agent'] ?? ''));
 
-        if ($ipAddress === '') {
-            $ipAddress = $this->defaultIpAddress;
-        }
-
-        if ($userAgent === '') {
-            $userAgent = $this->defaultUserAgent;
-        }
+        $ipAddress = $ipAddress !== '' ? $ipAddress : $this->defaultIpAddress;
+        $userAgent = $userAgent !== '' ? $userAgent : $this->defaultUserAgent;
 
         $data = [
             'user_id'     => $userId,
-            'action'      => $action,
-            'entity_type' => $this->normalizeEntityType($entityType),
-            'entity_id'   => $entityId,
-            'old_values'  => ($old = $this->sanitizeAuditValues($oldValues)) ? json_encode($old) : null,
-            'new_values'  => ($new = $this->sanitizeAuditValues($newValues)) ? json_encode($new) : null,
+            'action'      => $event->action,
+            'entity_type' => $event->entity_type,
+            'entity_id'   => $event->entity_id,
+            'old_values'  => $event->old_values !== [] ? json_encode($event->old_values) : null,
+            'new_values'  => $event->new_values !== [] ? json_encode($event->new_values) : null,
             'ip_address'  => $ipAddress,
             'user_agent'  => $userAgent,
+            'result'      => $event->result,
+            'severity'    => $event->severity,
+            'request_id'  => $event->request_id,
+            'metadata'    => $event->metadata !== [] ? json_encode($event->metadata) : null,
             'created_at'  => date('Y-m-d H:i:s'),
         ];
 
@@ -110,8 +123,8 @@ class AuditService extends BaseCrudService implements \App\Interfaces\System\Aud
      */
     public function logUpdate(string $entityType, int $entityId, array $oldValues, array $newValues, ?SecurityContext $context = null): void
     {
-        $sanitizedOld = $this->sanitizeAuditValues($oldValues);
-        $sanitizedNew = $this->sanitizeAuditValues($newValues);
+        $sanitizedOld = $this->payloadSanitizer->sanitize($oldValues);
+        $sanitizedNew = $this->payloadSanitizer->sanitize($newValues);
 
         if (json_encode($sanitizedOld) !== json_encode($sanitizedNew)) {
             $this->log('update', $entityType, $entityId, $sanitizedOld, $sanitizedNew, $context);
@@ -135,6 +148,44 @@ class AuditService extends BaseCrudService implements \App\Interfaces\System\Aud
             'file' => 'files',
         ];
         return $aliases[$normalized] ?? $normalized;
+    }
+
+    private function normalizeResult(string $result): string
+    {
+        $normalized = strtolower(trim($result));
+        return in_array($normalized, ['success', 'failure', 'denied'], true) ? $normalized : 'success';
+    }
+
+    private function normalizeSeverity(string $severity): string
+    {
+        $normalized = strtolower(trim($severity));
+        return in_array($normalized, ['info', 'warning', 'critical'], true) ? $normalized : 'info';
+    }
+
+    private function buildEvent(
+        string $action,
+        string $entityType,
+        ?int $entityId,
+        array $oldValues,
+        array $newValues,
+        ?SecurityContext $context,
+        string $result,
+        string $severity,
+        array $metadata,
+        ?string $requestId
+    ): AuditEventDTO {
+        return new AuditEventDTO(
+            action: $action,
+            entity_type: $this->normalizeEntityType($entityType),
+            entity_id: $entityId,
+            old_values: $this->payloadSanitizer->sanitize($oldValues),
+            new_values: $this->payloadSanitizer->sanitize($newValues),
+            context: $context,
+            result: $this->normalizeResult($result),
+            severity: $this->normalizeSeverity($severity),
+            metadata: $this->payloadSanitizer->sanitize($metadata),
+            request_id: $requestId ?: ($context?->metadata['request_id'] ?? null)
+        );
     }
 
     /**
@@ -170,17 +221,5 @@ class AuditService extends BaseCrudService implements \App\Interfaces\System\Aud
     public function update(int $id, DataTransferObjectInterface $request, ?SecurityContext $context = null): DataTransferObjectInterface
     {
         throw new \BadMethodCallException(lang('Audit.immutable'));
-    }
-
-    private function sanitizeAuditValues(array $values): array
-    {
-        $sanitized = [];
-        foreach ($values as $key => $value) {
-            if (is_string($key) && in_array(strtolower($key), self::SENSITIVE_FIELDS, true)) {
-                continue;
-            }
-            $sanitized[$key] = is_array($value) ? $this->sanitizeAuditValues($value) : $value;
-        }
-        return $sanitized;
     }
 }

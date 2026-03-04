@@ -41,6 +41,14 @@ readonly class AuditResponseDTO implements DataTransferObjectInterface
         public ?string $ip_address,
         #[OA\Property(property: 'user_agent', description: 'User-Agent of the requester', example: 'Mozilla/5.0...', nullable: true)]
         public ?string $user_agent,
+        #[OA\Property(property: 'result', description: 'Execution result', example: 'success', enum: ['success', 'failure', 'denied'])]
+        public string $result,
+        #[OA\Property(property: 'severity', description: 'Event severity', example: 'info', enum: ['info', 'warning', 'critical'])]
+        public string $severity,
+        #[OA\Property(property: 'request_id', description: 'Request correlation ID', example: 'req_01HZY...', nullable: true)]
+        public ?string $request_id,
+        #[OA\Property(property: 'metadata', description: 'Additional sanitized metadata', type: 'object', nullable: true)]
+        public array $metadata,
         #[OA\Property(property: 'created_at', description: 'Log timestamp', example: '2026-02-26 12:00:00')]
         public string $created_at
     ) {
@@ -64,6 +72,10 @@ readonly class AuditResponseDTO implements DataTransferObjectInterface
             user_email: $data['user_email'] ?? null,
             ip_address: $data['ip_address'] ?? null,
             user_agent: $data['user_agent'] ?? null,
+            result: (string) ($data['result'] ?? 'success'),
+            severity: (string) ($data['severity'] ?? 'info'),
+            request_id: isset($data['request_id']) ? (string) $data['request_id'] : null,
+            metadata: is_string($data['metadata'] ?? null) ? json_decode($data['metadata'], true) : ($data['metadata'] ?? []),
             created_at: (string) $created_at
         );
     }
@@ -81,6 +93,10 @@ readonly class AuditResponseDTO implements DataTransferObjectInterface
             'user_email' => $this->user_email,
             'ip_address' => $this->ip_address,
             'user_agent' => $this->user_agent,
+            'result' => $this->result,
+            'severity' => $this->severity,
+            'request_id' => $this->request_id,
+            'metadata' => $this->metadata,
             'created_at' => $this->created_at,
         ];
     }

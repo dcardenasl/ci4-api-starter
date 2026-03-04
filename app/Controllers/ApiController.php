@@ -126,7 +126,11 @@ abstract class ApiController extends Controller
             if (!class_exists($dtoClass)) {
                 throw new \InvalidArgumentException("DTO class '{$dtoClass}' not found.");
             }
-            $payload = new $dtoClass($this->withSecurityContext($data, $context));
+
+            $payload = Services::requestDtoFactory()->make(
+                $dtoClass,
+                $this->withSecurityContext($data, $context)
+            );
         }
 
         // 2. Resolve and execute target
@@ -187,44 +191,7 @@ abstract class ApiController extends Controller
     {
         /** @var \App\HTTP\ApiRequest $request */
         $request = $this->request;
-
-        $contentType = strtolower($request->getHeaderLine('Content-Type'));
-        $filesArray = $request->getFiles();
-        $isMultipart = str_contains($contentType, 'multipart/form-data') || !empty($filesArray);
-
-        $bodyPayload = [];
-        if (!$isMultipart) {
-            $rawBody = $request->getBody();
-            $rawBodyString = is_string($rawBody) ? $rawBody : '';
-
-            if ($rawBodyString !== '') {
-                if (str_contains($contentType, 'json')) {
-                    $decodedBody = json_decode($rawBodyString, true);
-                    if (json_last_error() === JSON_ERROR_NONE && is_array($decodedBody)) {
-                        $bodyPayload = $decodedBody;
-                    } else {
-                        $bodyPayload = ['file' => $rawBodyString];
-                    }
-                } else {
-                    $bodyPayload = ['file' => $rawBodyString];
-                }
-            }
-        }
-
-        $rawInput = [];
-        if (!$isMultipart && !str_contains($contentType, 'json')) {
-            $rawInput = (array) $request->getRawInput();
-        }
-
-        $data = array_merge(
-            (array) $request->getGet(),
-            $rawInput,
-            (array) $request->getPost(),
-            $bodyPayload,
-            $filesArray
-        );
-
-        return array_merge($data, $params ?? []);
+        return Services::requestDataCollector()->collect($request, $params);
     }
 
     protected function handleException(Exception $e): ResponseInterface

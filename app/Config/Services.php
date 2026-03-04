@@ -456,6 +456,24 @@ class Services extends BaseService
         return new \App\Support\RequestAuditContextFactory();
     }
 
+    public static function requestDataCollector(bool $getShared = true)
+    {
+        if ($getShared) {
+            return static::getSharedInstance('requestDataCollector');
+        }
+
+        return new \App\Support\RequestDataCollector();
+    }
+
+    public static function requestDtoFactory(bool $getShared = true)
+    {
+        if ($getShared) {
+            return static::getSharedInstance('requestDtoFactory');
+        }
+
+        return new \App\Support\RequestDtoFactory(service('validation'));
+    }
+
     public static function securityAuditLogger(bool $getShared = true)
     {
         if ($getShared) {

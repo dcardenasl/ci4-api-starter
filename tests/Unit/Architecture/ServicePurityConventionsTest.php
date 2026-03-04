@@ -36,6 +36,14 @@ class ServicePurityConventionsTest extends CIUnitTestCase
                 $violations[] = "{$relative}: direct Config\\Services usage is forbidden in Services layer";
             }
 
+            if (preg_match('/^use\s+Config\\\\Services(?:\s+as\s+\w+)?\s*;/m', $source) === 1) {
+                $violations[] = "{$relative}: importing Config\\Services is forbidden in Services layer";
+            }
+
+            if (preg_match('/\bServices::/', $source) === 1) {
+                $violations[] = "{$relative}: static Services facade usage is forbidden in Services layer";
+            }
+
             if (preg_match('/\benv\s*\(/', $source) === 1 || preg_match('/\bgetenv\s*\(/', $source) === 1) {
                 $violations[] = "{$relative}: direct env()/getenv() usage is forbidden in Services layer";
             }

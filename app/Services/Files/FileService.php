@@ -70,7 +70,7 @@ class FileService implements FileServiceInterface
         if ($this->virusScanner !== null) {
             $tempPath = tempnam(sys_get_temp_dir(), 'api_upload_');
             if ($tempPath === false) {
-                throw new \RuntimeException('Failed to create temporary file for virus scanning');
+                throw new \RuntimeException(lang('Files.temp_file_creation_failed'));
             }
             $tempStream = fopen($tempPath, 'wb');
 
@@ -82,7 +82,7 @@ class FileService implements FileServiceInterface
 
                 try {
                     if (!$this->virusScanner->isSafe($tempPath)) {
-                        throw new BadRequestException(lang('Files.malware_detected', ['Malware or virus detected in the uploaded file']));
+                        throw new BadRequestException(lang('Files.malware_detected'));
                     }
                 } finally {
                     @unlink($tempPath);

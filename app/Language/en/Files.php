@@ -19,6 +19,9 @@ return [
     'id_required'         => 'File ID is required',
     'unauthorized'       => 'You are not authorized to access this file',
     'save_failed'         => 'Failed to save file metadata',
+    'malware_detected'    => 'Malware or virus detected in the uploaded file',
+    'temp_file_creation_failed' => 'Failed to create temporary file for virus scanning',
+    'virus_scan_read_error' => 'Unable to read file for virus scanning',
 
     // Request messages
     'invalid_request'     => 'Invalid request',

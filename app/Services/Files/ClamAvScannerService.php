@@ -33,7 +33,7 @@ readonly class ClamAvScannerService implements VirusScannerServiceInterface
 
         if (!file_exists($filePath) || !is_readable($filePath)) {
             $this->logger->error("Virus scanner cannot read file: {$filePath}");
-            throw new \RuntimeException("Unable to read file for virus scanning.");
+            throw new \RuntimeException(lang('Files.virus_scan_read_error'));
         }
 
         // Implementation note:

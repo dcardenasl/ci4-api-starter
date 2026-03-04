@@ -34,7 +34,8 @@ class Services extends BaseService
             static::auditService(),
             static::authUserMapper(),
             static::sessionManager(),
-            static::userAccountGuard()
+            static::userAccountGuard(),
+            ENVIRONMENT === 'testing'
         );
     }
 
@@ -366,7 +367,21 @@ class Services extends BaseService
             static::auditService(),
             new \App\Libraries\Files\FilenameGenerator($storage),
             new \App\Libraries\Files\MultipartProcessor(),
-            new \App\Libraries\Files\Base64Processor()
+            new \App\Libraries\Files\Base64Processor(),
+            static::virusScannerService()
+        );
+    }
+
+    public static function virusScannerService(bool $getShared = true)
+    {
+        if ($getShared) {
+            return static::getSharedInstance('virusScannerService');
+        }
+
+        return new \App\Services\Files\ClamAvScannerService(
+            static::logger(),
+            (bool) env('FILES_VIRUS_SCAN_ENABLED', false),
+            (string) env('FILES_CLAMAV_ADDRESS', 'tcp://127.0.0.1:3310')
         );
     }
 
@@ -413,7 +428,8 @@ class Services extends BaseService
 
         return new \App\Services\System\AuditService(
             static::auditRepository(),
-            static::auditResponseMapper()
+            static::auditResponseMapper(),
+            ENVIRONMENT !== 'testing'
         );
     }
 
@@ -446,7 +462,7 @@ class Services extends BaseService
         );
     }
 
-    public static function catalogService(bool $getShared = true)
+    public static function catalogService(bool $getShared = true): \App\Interfaces\System\CatalogServiceInterface
     {
         if ($getShared) {
             return static::getSharedInstance('catalogService');

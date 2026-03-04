@@ -19,6 +19,9 @@ return [
     'id_required'         => 'El ID del archivo es obligatorio',
     'unauthorized'       => 'No está autorizado para acceder a este archivo',
     'save_failed'         => 'Error al guardar los metadatos del archivo',
+    'malware_detected'    => 'Se detectó malware o virus en el archivo subido',
+    'temp_file_creation_failed' => 'No se pudo crear un archivo temporal para el escaneo de virus',
+    'virus_scan_read_error' => 'No se puede leer el archivo para el escaneo de virus',
 
     // Mensajes de solicitud
     'invalid_request'     => 'Solicitud inválida',

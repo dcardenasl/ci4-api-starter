@@ -1,6 +1,6 @@
 # The Architecture Layers
 
-This document explains each layer in detail: Controller, DTO, Service, Model, and Entity.
+This document explains each layer in detail: Controller, DTO, Service, Repository, Model, and Entity.
 
 ---
 
@@ -13,9 +13,9 @@ This document explains each layer in detail: Controller, DTO, Service, Model, an
 ### ApiController (Base Class)
 
 All API controllers extend `ApiController.php`. It provides a declarative `handleRequest` method that automates:
-1. Data collection from all sources (GET, POST, JSON, Files).
-2. Request DTO instantiation and self-validation (when DTO class is provided).
-3. Exception handling and transformation to JSON.
+1. **RequestDataCollector:** Centralizes data merging from all sources (GET, POST, JSON, Files) using a shared service.
+2. **RequestDtoFactory:** Instantiates the requested DTO class, injecting a shared `ValidationInterface` to ensure consistent rules without static calls.
+3. Exception handling and transformation to JSON via specialized formatters.
 4. Response normalization (success/error wrapping and `data` keying).
 
 ### Pattern: Declarative Orchestration
@@ -38,14 +38,10 @@ public function create(): ResponseInterface
 
 ### Request DTOs (Input Guardians)
 - **Base Class:** Extend `BaseRequestDTO`.
-- **Auto-validation:** Validation happens in the constructor via the `rules()` method. 
+- **Constructor Injection:** Receives a `ValidationInterface` instance from the `RequestDtoFactory`.
+- **Self-validation:** Validation happens in the constructor via the `rules()` method. 
 - **Safety:** If a DTO object exists in memory, the data is guaranteed to be valid.
-- **Inmutability:** PHP 8.2 `readonly` classes.
-
-### Response DTOs (Output Contracts)
-- **Explicit Contract:** Define exactly what the client receives.
-- **Mapeo:** Use `fromArray()` to normalize data from entities.
-- **Documentation:** Contain OpenAPI `#[OA\Property]` attributes.
+- **Immutability:** PHP 8.2 `readonly` classes.
 
 ---
 
@@ -55,34 +51,38 @@ public function create(): ResponseInterface
 
 **Responsibility:** Business logic, transactional integrity, and domain rules.
 
-### Generic & Pure Services
+### Pure & Stateless Services
 
-Services should extend `BaseCrudService` for standard operations.
+Services must be agnostic of HTTP, JSON, or direct database models. They use **Repositories** for persistence.
 
 ```php
-class UserService extends BaseCrudService implements UserServiceInterface
+readonly class ProductService implements ProductServiceInterface
 {
-    public function store(DataTransferObjectInterface $request): DataTransferObjectInterface
+    public function __construct(
+        protected ProductRepositoryInterface $productRepository
+    ) {}
+
+    public function store(ProductRequestDTO $request): ProductResponseDTO
     {
-        return $this->wrapInTransaction(function() use ($request) {
-            // 1. Business Logic (specific to users)
-            // 2. Delegation to Model
-            // 3. Return typed Response DTO
-        });
+        // 1. Logic
+        // 2. Persistence via Repository
+        $product = $this->productRepository->insert($request->toArray());
+        // 3. Return DTO
     }
 }
 ```
 
-`BaseCrudService` contract:
-- `index()` returns `PaginatedResponseDTO` (`DataTransferObjectInterface`).
-- `show()/store()/update()` return resource Response DTOs.
-- `destroy()` returns `bool` and is normalized by `ApiController`.
+---
 
-### Mandates
-- ✅ **Atomic:** Use `HandlesTransactions` trait for state changes.
-- ✅ **Typed:** Always accept request DTOs and return DTOs for reads.
-- ✅ **Command Outcomes:** Use `OperationResult` for command-style outcomes (accepted, revoke, etc.).
-- ✅ **HTTP Agnostic:** No knowledge of JSON, status codes, or sessions.
+## Repository Layer
+
+**Location:** `app/Repositories/`
+
+**Responsibility:** Data persistence, query building, and database abstraction.
+
+- **Isolation:** Repositories wrap CodeIgniter Models and handle all `QueryBuilder` logic.
+- **Criteria:** Services pass generic criteria arrays to repositories for complex queries.
+- **Stateless:** Repositories ensure that query builders are reset between calls to prevent state leakage.
 
 ---
 
@@ -90,11 +90,11 @@ class UserService extends BaseCrudService implements UserServiceInterface
 
 **Location:** `app/Models/` & `app/Entities/`
 
-**Responsibility:** Data persistence and representation.
+**Responsibility:** Data representation.
 
-- **Models:** Use CodeIgniter 4 Query Builder.
-- **Auditable:** Models use the `Auditable` trait for automatic trail logging.
-- **Entities:** Represent row data. Must be converted to **Response DTOs** in the service layer.
+- **Models:** Inherit from CodeIgniter's Model. They are consumed ONLY by Repositories.
+- **Auditable:** Models use the `Auditable` trait, which receives an injected `AuditServiceInterface` via the Service Container.
+- **Entities:** Represent row data. `UserEntity` explicitly sanitizes sensitive fields in its `toArray()` method.
 
 ---
 
@@ -102,13 +102,14 @@ class UserService extends BaseCrudService implements UserServiceInterface
 
 | Layer | Responsibility | Pattern |
 |-------|----------------|---------|
-| **Controller** | Orchestration | Declarative via `handleRequest` |
-| **DTO** | Integrity | Self-validating constructor |
-| **Service** | Logic | Pure & Transactional |
+| **Controller** | Orchestration | `RequestDataCollector` + `RequestDtoFactory` |
+| **DTO** | Integrity | Validated `readonly` class |
+| **Service** | Logic | Pure, Stateless, `readonly` |
+| **Repository** | Abstraction | Decouples Service from Model |
 | **Model** | Persistence | Auditable Query Builder |
-| **Entity** | Representation | Strongly Typed Row |
+| **Entity** | Representation | Strongly Typed Row with sanitization |
 
 **Flow:**
 ```
-Request → Controller (Orchestrator) → RequestDTO (Guardian) → Service (Logic) → Model → Entity → ResponseDTO (Contract) → JSON
+Request → Controller (Orchestrator) → RequestDTO (Guardian) → Service (Logic) → Repository (Storage) → Model → Entity → ResponseDTO (Contract) → JSON
 ```

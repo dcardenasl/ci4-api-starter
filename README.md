@@ -13,11 +13,11 @@ A production-ready REST API starter template for CodeIgniter 4 with a **modern D
 This project follows an advanced layered architecture designed for scalability and high-stakes business logic:
 
 - **Immutable DTOs:** Uses PHP 8.2 `readonly` classes for all data transfer between layers.
-- **Pure Services:** Business logic is 100% decoupled from HTTP/API concerns.
-- **Explicit Command Outcomes:** Non-CRUD command flows use `OperationResult` instead of message-based heuristics.
-- **Auto-Validation:** Data is validated at the boundary (DTO construction).
+- **Repository Pattern:** Business logic is decoupled from data persistence via Repository interfaces.
+- **Pure Services:** Orchestrate domains without knowledge of HTTP or DB frameworks.
+- **Explicit Command Outcomes:** Non-CRUD flows use `OperationResult` for deterministic results.
+- **Auto-Validation:** Data integrity is guaranteed via DTO constructor validation (shared validator).
 - **Living Documentation:** Swagger schemas are integrated directly into code contracts.
-- **Output Normalization:** Automatic recursive conversion of complex objects to standardized JSON.
 
 ## Features
 
@@ -27,8 +27,8 @@ This project follows an advanced layered architecture designed for scalability a
 - **Email System** - Verification, password reset, queue support
 - **File Management** - Multipart & Base64 uploads ([Docs](docs/features/FILE_MANAGEMENT.md))
 - **Queue System** - Background job processing ([Docs](docs/features/QUEUE_SYSTEM.md))
-- **Advanced Querying** - Pagination, filtering, searching, sorting
-- **Audit Trail** - Automatic logging of data changes with sensitive field sanitization
+- **Advanced Querying** - Pagination, filtering, searching, sorting via Repositories
+- **Audit Trail** - Hybrid (sync/async) logging with sanitization and severity levels
 - **Health Checks** - Kubernetes-ready endpoints (`/health`, `/ready`, `/live`)
 - **OpenAPI Documentation** - Auto-generated Swagger docs from DTOs
 - **Comprehensive Test Suite** - Unit, integration, and feature tests ([Docs](docs/features/TESTING_API.md))
@@ -301,13 +301,9 @@ GET /api/v1/users?search=john
 
 ### Sorting
 ```
-GET /api/v1/users?sort=created_at&direction=desc
+GET /api/v1/users?sort=-created_at,email
 ```
-
-### Combined
-```
-GET /api/v1/users?search=john&filter[role][eq]=user&sort=created_at&direction=desc&page=1&limit=10
-```
+Prefix `-` for descending order. Comma-separated for multiple fields.
 
 ## Configuration
 

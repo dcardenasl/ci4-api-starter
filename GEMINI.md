@@ -7,7 +7,7 @@ This file provides the foundational context and operational mandates for working
 A production-ready REST API starter template for CodeIgniter 4 (v4.6+) with an advanced **DTO-first architecture**, strict typing, and comprehensive test coverage.
 
 - **Primary Stack:** PHP 8.2+, MySQL 8.0+, CodeIgniter 4.
-- **Architecture:** Layered REST API: **Controller → [RequestDTO] → Service → Model → Entity → [ResponseDTO]**.
+- **Architecture:** Layered REST API: **Controller → [RequestDTO] → Service → Repository → Model → Entity → [ResponseDTO]**.
 - **Core Features:** JWT Authentication (with revocation), RBAC (User/Admin/Superadmin), File Management (Multipart/Base64), Audit Trail, Health Checks, Rate Limiting.
 
 ## Essential Commands
@@ -34,11 +34,13 @@ A production-ready REST API starter template for CodeIgniter 4 (v4.6+) with an a
 - **Composition over Inheritance:** Decompose logic into `Support/` classes (Handlers, Mappers, Guards).
 - **Immutability:** Use PHP 8.2 `readonly class` for all new services and DTOs.
 - **Strict DI:** Injected dependencies must be typed via Interfaces. No static calls to `Config\Services`.
+- **Repository Pattern:** Services NEVER touch `CodeIgniter\Model` directly. They inject a `RepositoryInterface` for all persistence and retrieval.
 
 ### 2. DTO-First Development (The "Shield" Pattern)
 **All data transfer must use PHP 8.2 `readonly` classes.**
+- **Request Pipeline:** `ApiController` delegates to `RequestDataCollector` for input merging and `RequestDtoFactory` for instantiation.
+- **Constructor Validation:** DTOs receive an injected `ValidationInterface` in the constructor. If a DTO instance exists, the data is guaranteed valid.
 - **Automatic Context:** `ApiController` enriches DTO payloads with `user_id` and `user_role` using `SecurityContext` before DTO construction.
-- **NO Manual Validation:** Handled by DTO constructor.
 
 ### 3. Controller Standards (The Orchestrator)
 - Extend `ApiController`.

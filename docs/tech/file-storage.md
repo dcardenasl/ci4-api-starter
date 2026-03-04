@@ -3,7 +3,8 @@
 File management follows a decomposed architecture to handle multiple input types and storage drivers seamlessly.
 
 Key Components:
-- **`app/Services/Files/FileService.php`**: Orchestrates storage and database persistence.
+- **`app/Services/Files/FileService.php`**: Orchestrates storage and database persistence. Exposes the unified `destroy` method for atomic cleanup.
+- **`app/Interfaces/Files/FileRepositoryInterface.php`**: Standardizes metadata retrieval and persistence.
 - **`app/Libraries/Files/MultipartProcessor.php`**: Handles standard HTTP file uploads.
 - **`app/Libraries/Files/Base64Processor.php`**: Decodes and validates Data URIs and raw Base64.
 - **`app/Libraries/Files/FilenameGenerator.php`**: Sanitizes names and prevents storage collisions.

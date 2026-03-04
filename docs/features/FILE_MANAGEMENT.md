@@ -57,6 +57,14 @@ Unlike standard implementations that read the entire file into memory (especiall
 2. Passes the stream resource to the storage driver.
 3. Ensures memory usage remains constant regardless of file size (within the limits of `FILE_MAX_SIZE`).
 
+## Deleting Files
+
+File deletion is handled by the `destroy` method, which ensures both the physical file and its database record are removed atomically.
+
+- **Method**: `destroy(int $id, ?SecurityContext $context)`
+- **Security**: The operation requires a `SecurityContext` to verify ownership or administrative privileges before deletion.
+- **Drivers**: The `FileService` delegates the physical removal to the configured `StorageDriver` (Local or S3).
+
 ## Configuration
 
 Control file behavior via `.env`:

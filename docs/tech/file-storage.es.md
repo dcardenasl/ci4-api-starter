@@ -3,7 +3,8 @@
 La gestión de archivos sigue una arquitectura descompuesta para manejar múltiples tipos de entrada y drivers de almacenamiento sin fisuras.
 
 Componentes Clave:
-- **`app/Services/Files/FileService.php`**: Orquesta el almacenamiento y la persistencia en base de datos.
+- **`app/Services/Files/FileService.php`**: Orquesta el almacenamiento y la persistencia en base de datos. Expone el método unificado `destroy` para limpieza atómica.
+- **`app/Interfaces/Files/FileRepositoryInterface.php`**: Estandariza la recuperación y persistencia de metadatos.
 - **`app/Libraries/Files/MultipartProcessor.php`**: Maneja las cargas de archivos HTTP estándar.
 - **`app/Libraries/Files/Base64Processor.php`**: Decodifica y valida Data URIs y Base64 puro.
 - **`app/Libraries/Files/FilenameGenerator.php`**: Sanea nombres y previene colisiones de almacenamiento.

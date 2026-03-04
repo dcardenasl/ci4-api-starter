@@ -1,6 +1,6 @@
 # Service Layer & IoC
 
-The Service layer contains all business logic and orchestrates domain operations. In this architecture, services are **organized into domains** and follow a **composition pattern**.
+The Service layer contains all business logic and orchestrates domain operations. In this architecture, services are **organized into domains**, follow a **composition pattern**, and are decoupled from persistence via **Repositories**.
 
 ---
 
@@ -21,38 +21,55 @@ Services are grouped by functional domain to ensure high cohesion and prevent "G
 Large services are decomposed into specialized components injected via constructor. This keeps orchestrators thin and logic testable.
 
 ### Support Components:
-- **Actions**: Encapsulate command flows with write-side side effects (e.g., `RegisterUserAction`, `ApproveUserAction`, `CreateApiKeyAction`).
+- **Actions**: Encapsulate command flows with write-side side effects (e.g., `RegisterUserAction`).
 - **Handlers**: Encapsulate multi-step logic (e.g., `GoogleAuthHandler`).
 - **Guards**: Centralize security assertions (e.g., `UserRoleGuard`).
 - **Mappers**: Handle entity-to-DTO transformations (e.g., `AuthUserMapper`).
 
 ---
 
-## Pure Service Pattern
+## Repository Pattern
 
-Services are **Pure** and **Stateless**. They should NOT have knowledge of HTTP or JSON.
+To ensure services are completely agnostic of the database framework, they never touch `CodeIgniter\Model` directly. Instead, they inject a **RepositoryInterface**.
 
-- **Input:** Specific DTOs or Scalar types.
+- **Repositories:** Responsible for all data persistence and retrieval.
+- **Interfaces:** Services depend on interfaces (e.g., `UserRepositoryInterface`) rather than concrete implementations.
+- **Testability:** Repositories can be easily mocked for pure unit testing of services.
+
+---
+
+## Pure & Immutable Services
+
+All new services must be **Pure**, **Stateless**, and declared as `readonly class` (PHP 8.2+).
+
+- **Input:** Specific DTOs, SecurityContext, or Scalar types.
 - **Output:** DTOs, Entities, or `OperationResult`.
 - **Errors:** Thrown as custom Exceptions implementing `HasStatusCode`.
+- **Immutability:** Dependencies are injected via constructor and never change.
 
-### Example (Composition)
+### Example (Composition & Repository)
 
 ```php
 // app/Services/Auth/AuthService.php
-public function login(LoginRequestDTO $request): LoginResponseDTO
+readonly class AuthService implements AuthServiceInterface
 {
-    $user = $this->userModel->where('email', $request->email)->first();
-    
-    // Delegate security to Guard
-    $this->userAccessPolicy->assertCanAuthenticate($user);
-    
-    // Delegate session creation to Manager
-    $session = $this->sessionManager->generateSessionResponse(
-        $this->userMapper->mapAuthenticated($user)
-    );
-    
-    return LoginResponseDTO::fromArray($session);
+    public function __construct(
+        protected UserRepositoryInterface $userRepository,
+        protected AuthUserMapper $userMapper,
+        protected UserAccountGuard $userAccessPolicy
+    ) {}
+
+    public function login(LoginRequestDTO $request): LoginResponseDTO
+    {
+        // 1. Retrieval via Repository
+        $user = $this->userRepository->findByEmail($request->email);
+        
+        // 2. Business Assertion via Guard
+        $this->userAccessPolicy->assertCanAuthenticate($user);
+        
+        // 3. Transformation via Mapper
+        return $this->userMapper->mapToResponse($user);
+    }
 }
 ```
 
@@ -60,7 +77,7 @@ public function login(LoginRequestDTO $request): LoginResponseDTO
 
 ## Registering Services (IoC)
 
-All services and their dependencies must be registered in `app/Config/Services.php`.
+All services and their dependencies must be registered in `app/Config/Services.php` (or a domain-specific service provider trait).
 
 ```php
 // app/Config/Services.php
@@ -71,14 +88,9 @@ public static function authService(bool $getShared = true)
     }
     
     return new \App\Services\Auth\AuthService(
-        static::userModel(),
-        static::jwtService(),
-        static::refreshTokenService(),
+        static::userRepository(), // Inject Repository instead of Model
         new \App\Services\Auth\Support\AuthUserMapper(),
-        new \App\Services\Auth\Support\SessionManager(
-            static::jwtService(),
-            static::refreshTokenService()
-        )
+        new \App\Services\Users\UserAccountGuard()
     );
 }
 ```
@@ -87,6 +99,6 @@ public static function authService(bool $getShared = true)
 
 ## Benefits
 
-1. **Testability:** Mock support components to test orchestrators in isolation.
-2. **Immutability:** Most services are `readonly class` (PHP 8.2+), preventing side effects.
-3. **Discoverability:** Clear domain folders make it easy to find relevant logic.
+1. **Isolation:** Business logic is 100% independent of CodeIgniter's Active Record.
+2. **Mockability:** Test orchestrators without a database by mocking the repository interface.
+3. **Discoverability:** Clear domain folders and explicit interfaces.

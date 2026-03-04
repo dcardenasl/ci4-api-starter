@@ -1,6 +1,6 @@
 # Las Capas de Arquitectura
 
-Este documento explica cada capa en detalle: Controller, DTO, Service, Model y Entity.
+Este documento explica cada capa en detalle: Controller, DTO, Service, Repository, Model y Entity.
 
 ---
 
@@ -8,21 +8,22 @@ Este documento explica cada capa en detalle: Controller, DTO, Service, Model y E
 
 **Ubicación:** `app/Controllers/Api/V1/`
 
-**Responsabilidad:** Manejar peticiones HTTP, mapear datos a DTOs y delegar a los servicios.
+**Responsabilidad:** Actuar como un orquestador ligero entre la petición HTTP y la Capa de Servicio.
 
 ### ApiController (Clase Base)
 
-Todos los controllers API extienden `ApiController.php`. Este provee `handleRequest(...)` para:
-1. Recolectar datos de entrada (GET/POST/JSON/Files).
-2. Instanciar y validar Request DTOs cuando se pasa `DTO::class`.
-3. Capturar excepciones y normalizar respuesta JSON.
-4. Estandarizar salida (incluyendo paginación canónica cuando aplica).
+Todos los controllers API extienden `ApiController.php`. Este provee un método declarativo `handleRequest` que automatiza:
+1. **RequestDataCollector:** Centraliza la combinación de datos de todas las fuentes (GET, POST, JSON, Archivos) usando un servicio compartido.
+2. **RequestDtoFactory:** Instancia la clase DTO solicitada, inyectando una `ValidationInterface` compartida para asegurar reglas consistentes sin llamadas estáticas.
+3. Manejo de excepciones y transformación a JSON mediante formateadores especializados.
+4. Normalización de respuesta (envoltura de éxito/error y clave `data`).
 
 ### Patrón: Orquestación Declarativa
 
 ```php
 public function create(): ResponseInterface
 {
+    // El controlador declara QUÉ ejecutar y QUÉ DTO valida la entrada.
     return $this->handleRequest('store', UserStoreRequestDTO::class);
 }
 ```
@@ -35,15 +36,12 @@ public function create(): ResponseInterface
 
 **Responsabilidad:** Garantizar la integridad de los datos, seguridad de tipos y estabilidad del contrato.
 
-### Request DTOs (Entrada)
-- **Auto-validación:** Ejecutan reglas de validación en el constructor (`BaseRequestDTO::validate()`).
+### Request DTOs (Guardianes de Entrada)
+- **Clase Base:** Extienden de `BaseRequestDTO`.
+- **Inyección en Constructor:** Reciben una instancia de `ValidationInterface` desde el `RequestDtoFactory`.
+- **Auto-validación:** La validación ocurre en el constructor mediante el método `rules()`. 
+- **Seguridad:** Si un objeto DTO existe en memoria, se garantiza que los datos son válidos.
 - **Inmutabilidad:** Clases `readonly` de PHP 8.2.
-- **Seguridad de Tipos:** Los tipos de propiedades se aplican estrictamente.
-
-### Response DTOs (Salida)
-- **Sanitización:** Definen explícitamente qué campos se exponen al cliente.
-- **Estandarización:** Normalizan datos de Entidades/Arrays (ej. formateo de fechas).
-- **Documentación:** Contienen atributos OpenAPI `#[OA\Property]`.
 
 ---
 
@@ -51,32 +49,40 @@ public function create(): ResponseInterface
 
 **Ubicación:** `app/Services/`
 
-**Responsabilidad:** Lógica de negocio, orquestación y operaciones de dominio.
+**Responsabilidad:** Lógica de negocio, integridad transaccional y reglas de dominio.
 
-### Patrón de Servicio Puro
+### Servicios Puros y Sin Estado
+
+Los servicios deben ser agnósticos de HTTP, JSON o modelos de base de datos directos. Utilizan **Repositorios** para la persistencia.
 
 ```php
-class UserService extends BaseCrudService implements UserServiceInterface
+readonly class ProductService implements ProductServiceInterface
 {
-    public function store(DataTransferObjectInterface $request): DataTransferObjectInterface
+    public function __construct(
+        protected ProductRepositoryInterface $productRepository
+    ) {}
+
+    public function store(ProductRequestDTO $request): ProductResponseDTO
     {
-        // Lógica de negocio + transacción
-        // Retorno DTO tipado (sin ApiResponse aquí)
+        // 1. Lógica
+        // 2. Persistencia mediante Repositorio
+        $product = $this->productRepository->insert($request->toArray());
+        // 3. Retorno de DTO
     }
 }
 ```
 
-Contrato base de `BaseCrudService`:
-- `index()` retorna `PaginatedResponseDTO` (`DataTransferObjectInterface`).
-- `show()/store()/update()` retornan DTOs de recurso.
-- `destroy()` retorna `bool` y `ApiController` normaliza la respuesta.
+---
 
-### Reglas
-- ✅ **Desacoplado:** SIN conocimiento de `ApiResponse`, códigos `status` o JSON.
-- ✅ **Tipado:** Usa Request DTOs como entrada y DTOs como salida en lecturas.
-- ✅ **Comandos:** Usa `OperationResult` para outcomes tipo comando.
-- ✅ **Excepcional:** Usa excepciones personalizadas para todos los estados de error.
-- ❌ NO manejo directo de petición/respuesta.
+## Capa Repository
+
+**Ubicación:** `app/Repositories/`
+
+**Responsabilidad:** Persistencia de datos, construcción de consultas y abstracción de la base de datos.
+
+- **Aislamiento:** Los repositorios envuelven los Modelos de CodeIgniter y manejan toda la lógica del `QueryBuilder`.
+- **Criterios:** Los servicios pasan arrays de criterios genéricos a los repositorios para consultas complejas.
+- **Sin Estado:** Los repositorios aseguran que los query builders se reinicien entre llamadas para evitar fugas de estado.
 
 ---
 
@@ -84,26 +90,26 @@ Contrato base de `BaseCrudService`:
 
 **Ubicación:** `app/Models/` y `app/Entities/`
 
-**Responsabilidad:** Operaciones de base de datos y representación de datos.
+**Responsabilidad:** Representación de datos.
 
-- **Models:** Usan el Query Builder de CodeIgniter 4 y traits `Auditable`.
-- **Entities:** Representan una fila individual. Deben convertirse a **Response DTOs** antes de salir de la capa de servicio para evitar fugas accidentales de datos.
+- **Models:** Heredan del Modelo de CodeIgniter. Son consumidos ÚNICAMENTE por los Repositorios.
+- **Auditable:** Los modelos usan el trait `Auditable`, que recibe una `AuditServiceInterface` inyectada mediante el Contenedor de Servicios.
+- **Entities:** Representan los datos de una fila. `UserEntity` sanitiza explícitamente los campos sensibles en su método `toArray()`.
 
 ---
 
 ## Resumen
 
-| Capa | Responsabilidad | Entrada | Salida |
-|-------|----------------|-------|--------|
-| **Controller** | E/S HTTP y Mapeo | Request | Respuesta JSON |
-| **DTO** | Contrato y Validación | Arreglo Raw | Objeto Tipado |
-| **Service** | Lógica de Negocio | DTO/Objeto | DTO/OperationResult/bool |
-| **Model** | Operaciones de BD | Arreglo/Entidad | Entidad/Objeto |
-| **Entity** | Representación de Fila | Fila de BD | Propiedades Tipadas |
+| Capa | Responsabilidad | Patrón |
+|-------|----------------|---------|
+| **Controller** | Orquestación | `RequestDataCollector` + `RequestDtoFactory` |
+| **DTO** | Integridad | Clase `readonly` validada |
+| **Service** | Lógica | Puro, Sin Estado, `readonly` |
+| **Repository** | Abstracción | Desacopla el Servicio del Modelo |
+| **Model** | Persistencia | Query Builder Auditable |
+| **Entity** | Representación | Fila fuertemente tipada con sanitización |
 
 **Flujo:**
 ```
-Petición → Controller → [RequestDTO] → Service → Model → Entity → [ResponseDTO] → ApiResult → JSON
+Petición → Controller (Orquestador) → RequestDTO (Guardián) → Service (Lógica) → Repository (Almacenamiento) → Model → Entity → ResponseDTO (Contrato) → JSON
 ```
-
-Cada capa es **testeable independientemente** y tiene **una sola razón para cambiar**.

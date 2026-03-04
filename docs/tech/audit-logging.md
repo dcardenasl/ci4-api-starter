@@ -5,10 +5,34 @@ Audit logs capture create, update, and delete actions on entities, plus security
 Key files:
 - `app/Services/System/AuditService.php`
 - `app/Services/System/AuditWriter.php`
+- `app/Traits/Auditable.php`
 - `app/Models/AuditLogModel.php`
 - `app/Libraries/Queue/Jobs/WriteAuditLogJob.php`
 - `app/Config/Audit.php`
 - `app/Database/Migrations/2026-01-29-205241_CreateAuditLogsTable.php`
+
+## Integration with Models (`Auditable`)
+
+Any model requiring an audit trail should use the `App\Traits\Auditable` trait.
+
+### Setup via DI
+To maintain service purity, models no longer use static service calls. They must be configured with an injected `AuditServiceInterface` (typically via `Config\Services` or a Domain Service Provider):
+
+```php
+// app/Config/RepositoryModelServices.php
+public static function productModel()
+{
+    $model = new \App\Models\ProductModel();
+    // Inject the service explicitly
+    $model->setAuditService(static::auditService());
+    $model->initAuditable();
+    return $model;
+}
+```
+
+### Sanitization and Security
+- **AuditPayloadSanitizer:** All payloads are passed through a sanitizer that strips sensitive tokens and secrets before persistence.
+- **Entity Level Sanitization:** `UserEntity::toArray()` explicitly removes `password`, `reset_token`, and other sensitive fields. This ensures that even if an entity is passed directly to the audit system, sensitive data is never logged.
 
 ## Runtime Behavior (Hybrid Mode)
 - Critical audit events are persisted synchronously (best effort).

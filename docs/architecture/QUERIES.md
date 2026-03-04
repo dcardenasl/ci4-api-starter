@@ -1,9 +1,6 @@
 # Advanced Querying
 
-
-## QueryBuilder
-
-Models with `Filterable` and `Searchable` traits support advanced querying.
+The architecture decouples query construction from business logic using the **Repository Pattern** and a centralized `QueryBuilder`.
 
 ## Features
 
@@ -18,36 +15,50 @@ GET /api/v1/products?filter[price][gte]=100&filter[name][like]=%phone%
 ```bash
 GET /api/v1/products?search=laptop
 ```
-Searches across `$searchableFields` using FULLTEXT or LIKE.
+Searches across `$searchableFields` defined in the Model using FULLTEXT or LIKE.
 
 ### Sorting
 ```bash
 GET /api/v1/products?sort=-created_at,name
 ```
-Prefix `-` for descending. Only `$sortableFields` allowed.
+A comma-separated list of fields. Prefix `-` for descending. Only fields in `$sortableFields` are allowed.
 
 ### Pagination
 ```bash
 GET /api/v1/products?page=2&limit=50
 ```
 
-## Usage in Services
+## Usage in Services (Repository Pattern)
+
+Services should never instantiate a `QueryBuilder` or touch the `Model` directly for queries. Instead, they use the `paginateCriteria` method provided by the `RepositoryInterface`.
 
 ```php
-$builder = new QueryBuilder($this->productModel);
+// app/Services/Products/ProductService.php
 
-if (!empty($data['filter'])) {
-    $builder->filter($data['filter']);
+public function index(array $criteria): array
+{
+    // The service simply passes the raw criteria array (filter, search, sort)
+    // to the repository. The repository handles validation and execution.
+    return $this->productRepository->paginateCriteria(
+        $criteria, 
+        (int) ($criteria['page'] ?? 1), 
+        (int) ($criteria['limit'] ?? 20)
+    );
 }
+```
 
-if (!empty($data['search'])) {
-    $builder->search($data['search']);
-}
+### Base Criteria (Advanced)
 
-if (!empty($data['sort'])) {
-    $builder->sort($data['sort']);
-}
+If you need to apply static criteria (e.g., "only active products") before the user's filters, use the `baseCriteria` callback:
 
-$result = $builder->paginate($page, $limit);
+```php
+return $this->productRepository->paginateCriteria(
+    $criteria,
+    $page,
+    $limit,
+    function($builder) {
+        $builder->where('status', 'active');
+    }
+);
 ```
 

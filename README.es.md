@@ -13,11 +13,11 @@ Una plantilla de API REST lista para producción con CodeIgniter 4 con una **arq
 Este proyecto sigue una arquitectura de capas avanzada diseñada para la escalabilidad y lógica de negocio de alto nivel:
 
 - **DTOs Inmutables:** Utiliza clases `readonly` de PHP 8.2 para todo el transporte de datos entre capas.
-- **Servicios Puros:** La lógica de negocio está 100% desacoplada de las preocupaciones de HTTP/API.
-- **Resultados de Comando Explícitos:** Los flujos no-CRUD usan `OperationResult` sin heurísticas basadas en mensajes.
-- **Auto-Validación:** Los datos se validan en la frontera (al construir el DTO).
+- **Patrón Repository:** La lógica de negocio está desacoplada de la persistencia de datos mediante interfaces de Repositorio.
+- **Servicios Puros:** Orquestan dominios sin conocimiento de HTTP o frameworks de base de datos.
+- **Resultados de Comando Explícitos:** Los flujos no-CRUD usan `OperationResult` para resultados deterministas.
+- **Auto-Validación:** La integridad de los datos se garantiza mediante la validación en el constructor del DTO (validador compartido).
 - **Documentación Viva:** Los esquemas de Swagger están integrados directamente en los contratos de código.
-- **Normalización de Salida:** Conversión recursiva automática de objetos complejos a JSON estandarizado.
 
 ## Caracteristicas
 
@@ -27,11 +27,17 @@ Este proyecto sigue una arquitectura de capas avanzada diseñada para la escalab
 - **Sistema de Email** - Verificacion, restablecimiento de contrasena, soporte de colas
 - **Gestion de Archivos** - Subida/descarga con drivers local y S3 ([Docs](docs/features/FILE_MANAGEMENT.md))
 - **Queue System** - Procesamiento de trabajos en segundo plano ([Docs](docs/features/QUEUE_SYSTEM.md))
-- **Consultas Avanzadas** - Paginacion, filtrado, busqueda, ordenamiento
-- **Auditoría** - Registro automático de cambios con sanitización de campos sensibles
+- **Consultas Avanzadas** - Paginacion, filtrado, busqueda, ordenamiento mediante Repositorios
+- **Auditoría** - Registro híbrido (sinc/asinc) con sanitización y niveles de severidad
 - **Health Checks** - Endpoints listos para Kubernetes (`/health`, `/ready`, `/live`)
 - **Documentacion OpenAPI** - Swagger docs auto-generados desde los DTOs
 - **Suite de Tests Completa** - Tests unitarios, de integracion y funcionales ([Docs](docs/features/TESTING_API.md))
+
+## Aspectos Destacados del Pipeline de Peticiones
+
+- `RequestDataCollector` centraliza la combinación de todas las entradas HTTP (query, post, raw/json, archivos) para que `ApiController` permanezca ligero.
+- `RequestDtoFactory` asegura que cada DTO reciba la `ValidationInterface` compartida, permitiendo una validación consistente basada en el constructor sin llamadas a servicios estáticos.
+- `Auditable` y todos los `app/Models/*` que lo usan reciben `AuditServiceInterface` vía DI, y `UserEntity::toArray()` elimina explícitamente campos sensibles antes de cualquier log/respuesta.
 
 ## Inicio Rapido
 
@@ -294,13 +300,9 @@ GET /api/v1/users?search=juan
 
 ### Ordenamiento
 ```
-GET /api/v1/users?sort=created_at&direction=desc
+GET /api/v1/users?sort=-created_at,email
 ```
-
-### Combinado
-```
-GET /api/v1/users?search=juan&filter[role][eq]=user&sort=created_at&direction=desc&page=1&limit=10
-```
+Prefijo `-` para orden descendente. Separado por comas para múltiples campos.
 
 ## Configuracion
 

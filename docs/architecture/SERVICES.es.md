@@ -1,6 +1,6 @@
 # Capa de Servicio e Inversión de Control (IoC)
 
-La capa de Servicio contiene toda la lógica de negocio y orquesta las operaciones del dominio. En esta arquitectura, los servicios están **organizados por dominios** y siguen un **patrón de composición**.
+La capa de Servicio contiene toda la lógica de negocio y orquesta las operaciones del dominio. En esta arquitectura, los servicios están **organizados por dominios**, siguen un **patrón de composición** y están desacoplados de la persistencia mediante **Repositorios**.
 
 ---
 
@@ -21,38 +21,55 @@ Los servicios se agrupan por dominio funcional para garantizar una alta cohesió
 Los servicios grandes se descomponen en componentes especializados inyectados a través del constructor. Esto mantiene a los orquestadores ligeros y a la lógica testeable.
 
 ### Componentes de Soporte (Support):
-- **Actions**: Encapsulan flujos de comando con efectos de escritura (ej. `RegisterUserAction`, `ApproveUserAction`, `CreateApiKeyAction`).
+- **Actions**: Encapsulan flujos de comando con efectos de escritura (ej. `RegisterUserAction`).
 - **Handlers**: Encapsulan lógica de múltiples pasos (ej. `GoogleAuthHandler`).
 - **Guards**: Centralizan aserciones de seguridad (ej. `UserRoleGuard`).
 - **Mappers**: Manejan transformaciones de entidades a DTOs (ej. `AuthUserMapper`).
 
 ---
 
-## Patrón de Servicio Puro
+## Patrón Repository
 
-Los servicios son **Puros** y **Sin Estado** (Stateless). NO deben tener conocimiento de HTTP o JSON.
+Para asegurar que los servicios sean completamente agnósticos del framework de base de datos, nunca tocan `CodeIgniter\Model` directamente. En su lugar, inyectan un **RepositoryInterface**.
 
-- **Entrada:** DTOs específicos o tipos escalares.
+- **Repositories:** Responsables de toda la persistencia y recuperación de datos.
+- **Interfaces:** Los servicios dependen de interfaces (ej. `UserRepositoryInterface`) en lugar de implementaciones concretas.
+- **Testabilidad:** Los repositorios se pueden mockear fácilmente para pruebas unitarias puras de los servicios.
+
+---
+
+## Servicios Puros e Inmutables
+
+Todos los nuevos servicios deben ser **Puros**, **Sin Estado** (Stateless) y declarados como `readonly class` (PHP 8.2+).
+
+- **Entrada:** DTOs específicos, SecurityContext o tipos escalares.
 - **Salida:** DTOs, Entidades o `OperationResult`.
 - **Errores:** Lanzados como Excepciones personalizadas que implementan `HasStatusCode`.
+- **Inmutabilidad:** Las dependencias se inyectan a través del constructor y nunca cambian.
 
-### Ejemplo (Composición)
+### Ejemplo (Composición y Repositorio)
 
 ```php
 // app/Services/Auth/AuthService.php
-public function login(LoginRequestDTO $request): LoginResponseDTO
+readonly class AuthService implements AuthServiceInterface
 {
-    $user = $this->userModel->where('email', $request->email)->first();
-    
-    // Delegar seguridad al Guard
-    $this->userAccessPolicy->assertCanAuthenticate($user);
-    
-    // Delegar creación de sesión al Manager
-    $session = $this->sessionManager->generateSessionResponse(
-        $this->userMapper->mapAuthenticated($user)
-    );
-    
-    return LoginResponseDTO::fromArray($session);
+    public function __construct(
+        protected UserRepositoryInterface $userRepository,
+        protected AuthUserMapper $userMapper,
+        protected UserAccountGuard $userAccessPolicy
+    ) {}
+
+    public function login(LoginRequestDTO $request): LoginResponseDTO
+    {
+        // 1. Recuperación mediante Repositorio
+        $user = $this->userRepository->findByEmail($request->email);
+        
+        // 2. Aserción de negocio mediante Guard
+        $this->userAccessPolicy->assertCanAuthenticate($user);
+        
+        // 3. Transformación mediante Mapper
+        return $this->userMapper->mapToResponse($user);
+    }
 }
 ```
 
@@ -60,7 +77,7 @@ public function login(LoginRequestDTO $request): LoginResponseDTO
 
 ## Registro de Servicios (IoC)
 
-Todos los servicios y sus dependencias deben registrarse en `app/Config/Services.php`.
+Todos los servicios y sus dependencias deben registrarse en `app/Config/Services.php` (o en un trait de proveedor de servicios específico del dominio).
 
 ```php
 // app/Config/Services.php
@@ -71,14 +88,9 @@ public static function authService(bool $getShared = true)
     }
     
     return new \App\Services\Auth\AuthService(
-        static::userModel(),
-        static::jwtService(),
-        static::refreshTokenService(),
+        static::userRepository(), // Inyectar Repositorio en lugar de Modelo
         new \App\Services\Auth\Support\AuthUserMapper(),
-        new \App\Services\Auth\Support\SessionManager(
-            static::jwtService(),
-            static::refreshTokenService()
-        )
+        new \App\Services\Users\UserAccountGuard()
     );
 }
 ```
@@ -87,6 +99,6 @@ public static function authService(bool $getShared = true)
 
 ## Beneficios
 
-1. **Testabilidad:** Mockea los componentes de soporte para testear orquestadores de forma aislada.
-2. **Inmutabilidad:** La mayoría de los servicios son `readonly class` (PHP 8.2+), evitando efectos secundarios.
-3. **Descubribilidad:** Carpetas de dominio claras facilitan la localización de la lógica.
+1. **Aislamiento:** La lógica de negocio es 100% independiente de Active Record de CodeIgniter.
+2. **Mockability:** Testea orquestadores sin base de datos mockeando la interfaz del repositorio.
+3. **Descubribilidad:** Carpetas de dominio claras e interfaces explícitas.

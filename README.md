@@ -33,6 +33,12 @@ This project follows an advanced layered architecture designed for scalability a
 - **OpenAPI Documentation** - Auto-generated Swagger docs from DTOs
 - **Comprehensive Test Suite** - Unit, integration, and feature tests ([Docs](docs/features/TESTING_API.md))
 
+## Request Pipeline Highlights
+
+- `RequestDataCollector` centralizes all HTTP input merging (query, post, raw/json, files) so `ApiController` stays thin.
+- `RequestDtoFactory` ensures every DTO receives the shared `ValidationInterface`, enabling consistent constructor-based validation without static service calls.
+- `Auditable` and all `app/Models/*` that use it receive `AuditServiceInterface` via DI, and `UserEntity::toArray()` explicitly drops sensitive fields before any log/response.
+
 ## Quick Start
 
 ### Option 1: Use GitHub Template (Recommended)
@@ -78,6 +84,7 @@ For new projects created from this repository, follow these docs first:
 2. [Module Bootstrap Checklist](docs/template/MODULE_BOOTSTRAP_CHECKLIST.md)
 3. [CRUD From Zero Playbook](docs/template/CRUD_FROM_ZERO.md)
 4. [Quality Gates](docs/template/QUALITY_GATES.md)
+5. [Latest Release Notes](docs/release/RELEASE_2026-03-04.md)
 
 ## API Endpoints
 

@@ -25,8 +25,11 @@ HTTP Request
      ▼
 ┌─────────────────────────────────────────┐
 │ 3. CONTROLLER (Orchestration)           │
-│    - collectRequestData() merges inputs │
+│    - `RequestDataCollector` merges      │
+│      GET/POST/JSON/files cleanly        │
 │    - establishSecurityContext()         │
+│    - `RequestDtoFactory` creates DTO     │
+│      instances with shared validator    │
 │    - handleRequest() executes target    │
 └─────────────────────────────────────────┘
      │
@@ -114,5 +117,6 @@ If an exception occurs:
 1. **Linear flow** - Orderly transition through layers.
 2. **Composition** - Services delegate specialized tasks.
 3. **Fail fast** - DTOs stop bad data before logic.
+4. **Centralized boundaries** - `RequestDtoFactory` + `Auditable` guards keep sanitization/validation consistent and testable; `AuditServiceInterface` is injected into every model so the trait never touches the container.
 4. **Consistent responses** - `ApiResult` ensures universal format.
 5. **Contextual awareness** - `SecurityContext` is injected at the HTTP boundary before DTO creation.

@@ -27,6 +27,23 @@ final class IndexFilterNormalizationTest extends CIUnitTestCase
         $this->assertSame('login_success', $data['filter']['action']['eq']);
     }
 
+    public function testAuditIndexReadsResultSeverityAndRequestIdFromFilterArray(): void
+    {
+        $dto = new AuditIndexRequestDTO([
+            'filter' => [
+                'result' => 'denied',
+                'severity' => 'critical',
+                'request_id' => 'req_abc123',
+            ],
+        ]);
+
+        $data = $dto->toArray();
+
+        $this->assertSame('denied', $data['filter']['result']['eq']);
+        $this->assertSame('critical', $data['filter']['severity']['eq']);
+        $this->assertSame('req_abc123', $data['filter']['request_id']['eq']);
+    }
+
     public function testUserIndexReadsRoleAndStatusFromFilterArray(): void
     {
         $dto = new UserIndexRequestDTO([

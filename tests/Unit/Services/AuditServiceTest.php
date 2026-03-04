@@ -153,6 +153,40 @@ class AuditServiceTest extends CIUnitTestCase
         );
     }
 
+    public function testLogPersistsControlFieldsAndSanitizedMetadata(): void
+    {
+        $context = new SecurityContext(99, 'admin', [
+            'ip_address' => '10.0.0.10',
+            'user_agent' => 'PHPUnit',
+            'request_id' => 'req-test-123',
+        ]);
+
+        $this->mockAuditRepository
+            ->expects($this->once())
+            ->method('insert')
+            ->with($this->callback(function ($data) {
+                $metadata = json_decode((string) ($data['metadata'] ?? '{}'), true);
+
+                return ($data['result'] ?? null) === 'denied'
+                    && ($data['severity'] ?? null) === 'critical'
+                    && ($data['request_id'] ?? null) === 'req-test-123'
+                    && !isset($metadata['token'])
+                    && ($metadata['scope'] ?? null) === 'api_key';
+            }));
+
+        $this->service->log(
+            'api_key_rate_limit_exceeded',
+            'api_keys',
+            12,
+            [],
+            [],
+            $context,
+            'denied',
+            'critical',
+            ['scope' => 'api_key', 'token' => 'secret-token']
+        );
+    }
+
     // ==================== LOG CREATE TESTS ====================
 
     public function testLogCreateLogsWithEmptyOldValues(): void

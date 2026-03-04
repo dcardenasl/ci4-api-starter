@@ -23,8 +23,6 @@ use App\Services\Users\Actions\UpdateUserAction;
  */
 class UserService extends BaseCrudService implements UserServiceInterface
 {
-    use \App\Traits\ValidatesRequiredFields;
-
     protected ApproveUserAction $approveUserAction;
     protected CreateUserAction $createUserAction;
     protected UpdateUserAction $updateUserAction;
@@ -47,9 +45,9 @@ class UserService extends BaseCrudService implements UserServiceInterface
     /**
      * Enforce security criteria for user listings
      */
-    protected function applyBaseCriteria(object $model): void
+    protected function applyBaseCriteria(object $builder): void
     {
-        $model->where('role !=', 'superadmin');
+        $builder->where('role !=', 'superadmin');
     }
 
     /**

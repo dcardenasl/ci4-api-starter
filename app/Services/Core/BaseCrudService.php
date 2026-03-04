@@ -43,16 +43,16 @@ abstract class BaseCrudService implements \App\Interfaces\Core\CrudServiceContra
     {
         $requestData = $request->toArray();
         $page = $requestData['page'] ?? 1;
-        $per_page = $requestData['per_page'] ?? 20;
+        $perPage = $requestData['per_page'] ?? 20;
 
         // The base criteria callable allows services to inject base constraints
-        $baseCriteria = function ($model) {
-            $this->applyBaseCriteria($model);
+        $baseCriteria = function ($builder) {
+            $this->applyBaseCriteria($builder);
         };
 
         // Pass the request data directly to the repository as criteria
         $criteria = $this->applyQueryOptions($requestData);
-        $result = $this->repository->paginateCriteria($criteria, (int) $page, (int) $per_page, $baseCriteria);
+        $result = $this->repository->paginateCriteria($criteria, (int) $page, (int) $perPage, $baseCriteria);
 
         // Auto-map entities to response DTOs
         $result['data'] = array_map(
@@ -203,9 +203,9 @@ abstract class BaseCrudService implements \App\Interfaces\Core\CrudServiceContra
 
     /**
      * Optional hook for child services to apply global criteria (e.g. security filters)
-     * Note: Currently receives the underlying object (e.g. CI Model) for backwards compatibility.
+     * Note: Receives the QueryBuilder instance for decoupling from the Model.
      */
-    protected function applyBaseCriteria(object $model): void
+    protected function applyBaseCriteria(object $builder): void
     {
         // Default: no criteria
     }

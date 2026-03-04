@@ -61,6 +61,15 @@ class QueryBuilder
     }
 
     /**
+     * Apply a raw where condition to the model (use for static base criteria)
+     */
+    public function where(string $field, mixed $value): self
+    {
+        $this->model->where($field, $value);
+        return $this;
+    }
+
+    /**
      * Apply sorting to the query
      *
      * SECURITY: Validates sort fields against model's sortableFields whitelist

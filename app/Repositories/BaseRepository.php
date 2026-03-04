@@ -77,7 +77,7 @@ abstract class BaseRepository implements RepositoryInterface
         $builder = new QueryBuilder($this->model);
 
         if ($baseCriteria !== null) {
-            $baseCriteria($this->model);
+            $baseCriteria($builder);
         }
 
         // Apply filters

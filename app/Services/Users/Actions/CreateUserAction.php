@@ -8,13 +8,12 @@ use App\DTO\Request\Users\UserCreateRequestDTO;
 use App\DTO\SecurityContext;
 use App\Exceptions\ValidationException;
 use App\Interfaces\Users\UserRepositoryInterface;
-use App\Services\Auth\UserInvitationService;
+use CodeIgniter\Events\Events;
 
 class CreateUserAction
 {
     public function __construct(
-        protected UserRepositoryInterface $userRepository,
-        protected UserInvitationService $invitationService
+        protected UserRepositoryInterface $userRepository
     ) {
     }
 
@@ -52,11 +51,8 @@ class CreateUserAction
             throw new ValidationException(lang('Api.validationFailed'), ['user' => lang('Api.resourceNotFound')]);
         }
 
-        try {
-            $this->invitationService->sendInvitation($user);
-        } catch (\Throwable $e) {
-            log_message('error', 'Failed to send invitation email: ' . $e->getMessage());
-        }
+        // Trigger Domain Event for side effects (email, logs, etc.)
+        Events::trigger('user.created', $user, $context);
 
         return $user;
     }

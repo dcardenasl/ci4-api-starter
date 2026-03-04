@@ -365,6 +365,7 @@ class Services extends BaseService
 
         return new \App\Services\Files\FileService(
             static::fileRepository(),
+            static::fileResponseMapper(),
             $storage,
             static::auditService(),
             new \App\Libraries\Files\FilenameGenerator($storage),
@@ -472,6 +473,15 @@ class Services extends BaseService
         }
 
         return new \App\Support\RequestDtoFactory(service('validation'));
+    }
+
+    public static function responseDtoFactory(bool $getShared = true)
+    {
+        if ($getShared) {
+            return static::getSharedInstance('responseDtoFactory');
+        }
+
+        return new \App\Support\ResponseDtoFactory();
     }
 
     public static function securityAuditLogger(bool $getShared = true)

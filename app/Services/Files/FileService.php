@@ -35,6 +35,7 @@ class FileService implements FileServiceInterface
 
     public function __construct(
         protected FileRepositoryInterface $fileRepository,
+        protected \App\Interfaces\Mappers\ResponseMapperInterface $responseMapper,
         protected StorageManager $storage,
         protected AuditServiceInterface $auditService,
         protected FilenameGenerator $filenameGenerator,
@@ -121,7 +122,9 @@ class FileService implements FileServiceInterface
         }
 
         $savedFile = $this->fileRepository->find($fileId);
-        return FileResponseDTO::fromArray($savedFile->toArray());
+        /** @var FileResponseDTO $response */
+        $response = $this->responseMapper->map($savedFile);
+        return $response;
     }
 
     /**
@@ -139,25 +142,12 @@ class FileService implements FileServiceInterface
             fn ($model) => $model->where('user_id', $userId)
         );
 
-        $formattedData = array_map(function ($file) {
-            return FileResponseDTO::fromArray([
-                'id'            => $file->id,
-                'original_name' => $file->original_name,
-                'filename'      => $file->stored_name,
-                'mime_type'     => $file->mime_type,
-                'size'          => $file->size,
-                'url'           => $file->url,
-                'uploaded_at'   => $file->uploaded_at,
-                'is_image'      => $file->isImage()
-            ])->toArray();
-        }, (array) $result['data']);
+        $result['data'] = array_map(
+            fn ($entity) => $this->responseMapper->map($entity),
+            (array) $result['data']
+        );
 
-        return PaginatedResponseDTO::fromArray([
-            'data'    => $formattedData,
-            'total'   => $result['total'],
-            'page'    => $result['page'],
-            'per_page' => $result['per_page'],
-        ]);
+        return PaginatedResponseDTO::fromArray($result);
     }
 
     /**

@@ -43,8 +43,13 @@ class FileServiceTest extends CIUnitTestCase
         $this->mockAuditService = $this->createMock(AuditServiceInterface::class);
 
         // Inject real processors and generator as they are mostly stateless and hard to mock without overhead
+        $responseMapper = new \App\Services\Core\Mappers\DtoResponseMapper(
+            \App\DTO\Response\Files\FileResponseDTO::class
+        );
+
         $this->service = new FileService(
             $this->mockFileRepository,
+            $responseMapper,
             $this->mockStorage,
             $this->mockAuditService,
             new \App\Libraries\Files\FilenameGenerator($this->mockStorage),

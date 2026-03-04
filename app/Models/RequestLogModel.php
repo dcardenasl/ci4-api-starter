@@ -53,25 +53,13 @@ class RequestLogModel extends Model
         $avgResponseTimeRaw = $avgResponseTimeQuery ? $avgResponseTimeQuery->getRow() : null;
         $avgResponseTime = $avgResponseTimeRaw ? (float) ($avgResponseTimeRaw->avg_response_time ?? 0) : 0.0;
 
-        $responseTimesQuery = $this->db->table($this->table)
-            ->select('response_time')
-            ->where('created_at >=', $since)
-            ->orderBy('response_time', 'ASC')
-            ->get();
-
-        $responseTimes = $responseTimesQuery ? $responseTimesQuery->getResultArray() : [];
-
-        $latencies = array_map(
-            static fn (array $row): int => (int) ($row['response_time'] ?? 0),
-            $responseTimes
-        );
-
-        $p95 = $this->percentile($latencies, 0.95);
-        $p99 = $this->percentile($latencies, 0.99);
+        // Optimized Percentile Calculation (O(1) Memory)
+        $p95 = $this->getPercentileFromDb($since, $totalRequests, 0.95);
+        $p99 = $this->getPercentileFromDb($since, $totalRequests, 0.99);
 
         $errorRate = $totalRequests > 0 ? ($failedRequests / $totalRequests) * 100 : 0.0;
         $availability = $totalRequests > 0 ? ($successfulRequests / $totalRequests) * 100 : 100.0;
-        $latencyTarget = config('Api')->sloP95TargetMs;
+        $latencyTarget = config('Api')->sloP95TargetMs ?? 500;
 
         return [
             'period' => $period,
@@ -90,6 +78,31 @@ class RequestLogModel extends Model
                 'p95_target_met' => $p95 <= $latencyTarget,
             ],
         ];
+    }
+
+    /**
+     * Efficiently calculates a percentile value directly from the DB using LIMIT/OFFSET.
+     */
+    private function getPercentileFromDb(string $since, int $totalCount, float $percentile): float
+    {
+        if ($totalCount === 0) {
+            return 0.0;
+        }
+
+        $offset = (int) floor($percentile * $totalCount);
+        // Ensure offset is within bounds (0 to totalCount - 1)
+        $offset = max(0, min($offset, $totalCount - 1));
+
+        $query = $this->db->table($this->table)
+            ->select('response_time')
+            ->where('created_at >=', $since)
+            ->orderBy('response_time', 'ASC')
+            ->limit(1, $offset)
+            ->get();
+
+        $row = $query ? $query->getRow() : null;
+
+        return $row ? (float) $row->response_time : 0.0;
     }
 
     /**
@@ -117,23 +130,6 @@ class RequestLogModel extends Model
             'month' => date('Y-m-d H:i:s', strtotime('-1 month')),
             default => date('Y-m-d H:i:s', strtotime('-1 day')),
         };
-    }
-
-    /**
-     * @param array<int, int> $values
-     */
-    private function percentile(array $values, float $percentile): float
-    {
-        if ($values === []) {
-            return 0.0;
-        }
-
-        sort($values);
-        $count = count($values);
-        $index = (int) ceil($percentile * $count) - 1;
-        $index = max(0, min($index, $count - 1));
-
-        return (float) $values[$index];
     }
 
     /**

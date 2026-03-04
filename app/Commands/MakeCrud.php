@@ -121,16 +121,19 @@ class MakeCrud extends BaseCommand
 
     private function registerServiceMethod(string $resource, string $resourceLower, string $domain): void
     {
-        $servicesPath = APPPATH . 'Config/Services.php';
+        $domainTrait = "{$domain}DomainServices";
+        $servicesPath = APPPATH . "Config/{$domainTrait}.php";
+
+        // If domain-specific trait doesn't exist, fallback to main Services.php
         if (!file_exists($servicesPath)) {
-            return;
+            $servicesPath = APPPATH . 'Config/Services.php';
         }
 
         $content = (string) file_get_contents($servicesPath);
         $methodName = "{$resourceLower}Service";
 
         if (str_contains($content, "function {$methodName}(")) {
-            CLI::write('Skipped service registration: method already exists.', 'yellow');
+            CLI::write("Skipped service registration: method already exists in {$servicesPath}.", 'yellow');
             return;
         }
 
@@ -144,7 +147,7 @@ class MakeCrud extends BaseCommand
         if ($position !== false) {
             $updated = substr($content, 0, $position) . $method . substr($content, $position);
             file_put_contents($servicesPath, $updated);
-            CLI::write('Updated: app/Config/Services.php', 'green');
+            CLI::write("Updated: {$servicesPath}", 'green');
         }
     }
 
@@ -451,21 +454,17 @@ use App\Services\Core\BaseCrudService;
 class {$resource}Service extends BaseCrudService implements {$resource}ServiceInterface
 {
     public function __construct(
-        protected RepositoryInterface \${$resourceLower}Repository,
+        RepositoryInterface \${$resourceLower}Repository,
         ResponseMapperInterface \$responseMapper
     ) {
-        parent::__construct(\$responseMapper);
-        \$this->repository = \${$resourceLower}Repository;
+        parent::__construct(\${$resourceLower}Repository, \$responseMapper);
     }
 
     /**
-     * Optional: Override beforeStore, beforeUpdate, etc. to add business logic.
-     * Example:
-     * protected function beforeStore(array \$data, ?SecurityContext \$context): array
-     * {
-     *     // Add domain logic here
-     *     return \$data;
-     * }
+     * Domain Hooks
+     * 
+     * Implement beforeStore, afterStore, etc., to add specific business logic
+     * while keeping the service layer clean and DRY.
      */
 }
 PHP;
@@ -484,52 +483,25 @@ use App\Controllers\ApiController;
 use App\DTO\Request\\{$domain}\\{$resource}IndexRequestDTO;
 use App\DTO\Request\\{$domain}\\{$resource}CreateRequestDTO;
 use App\DTO\Request\\{$domain}\\{$resource}UpdateRequestDTO;
-use App\Interfaces\\{$domain}\\{$resource}ServiceInterface;
-use CodeIgniter\HTTP\ResponseInterface;
+use App\Traits\Controllers\HasCrudActions;
 use Config\Services;
 
 class {$resource}Controller extends ApiController
 {
-    protected {$resource}ServiceInterface \${$resourceLower}Service;
+    use HasCrudActions;
 
     protected function resolveDefaultService(): object
     {
-        \$this->{$resourceLower}Service = Services::{$resourceLower}Service();
-
-        return \$this->{$resourceLower}Service;
+        return Services::{$resourceLower}Service();
     }
+
+    protected string \$indexDto = {$resource}IndexRequestDTO::class;
+    protected string \$createDto = {$resource}CreateRequestDTO::class;
+    protected string \$updateDto = {$resource}UpdateRequestDTO::class;
 
     protected array \$statusCodes = [
         'store' => 201,
     ];
-
-    public function index(): ResponseInterface
-    {
-        return \$this->handleRequest('index', {$resource}IndexRequestDTO::class);
-    }
-
-    public function create(): ResponseInterface
-    {
-        return \$this->handleRequest('store', {$resource}CreateRequestDTO::class);
-    }
-
-    public function update(int \$id): ResponseInterface
-    {
-        return \$this->handleRequest(
-            fn(\$dto, \$context) => \$this->{$resourceLower}Service->update(\$id, \$dto, \$context),
-            {$resource}UpdateRequestDTO::class
-        );
-    }
-
-    public function show(int \$id): ResponseInterface
-    {
-        return \$this->handleRequest(fn(\$dto, \$context) => \$this->{$resourceLower}Service->show(\$id, \$context));
-    }
-
-    public function delete(int \$id): ResponseInterface
-    {
-        return \$this->handleRequest(fn(\$dto, \$context) => \$this->{$resourceLower}Service->destroy(\$id, \$context));
-    }
 }
 PHP;
     }

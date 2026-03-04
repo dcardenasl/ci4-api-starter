@@ -87,20 +87,118 @@ abstract class BaseCrudService implements \App\Interfaces\Core\CrudServiceContra
     }
 
     /**
+     * Create a new resource
+     */
+    public function store(DataTransferObjectInterface $request, ?SecurityContext $context = null): DataTransferObjectInterface
+    {
+        return $this->wrapInTransaction(function () use ($request, $context) {
+            $data = $request->toArray();
+            $data = $this->beforeStore($data, $context);
+
+            $id = $this->repository->insert($data);
+
+            if ($id === false || $id === 0 || $id === "") {
+                throw new \App\Exceptions\ValidationException(lang('Api.validationFailed'), $this->repository->errors());
+            }
+
+            // $id can be true if no ID is generated, but we need an ID to find the resource.
+            if ($id === true) {
+                throw new \RuntimeException(lang('Api.resourceNotFound'));
+            }
+
+            $entity = $this->repository->find($id);
+
+            if (!$entity) {
+                throw new NotFoundException(lang('Api.resourceNotFound'));
+            }
+
+            $this->afterStore($entity, $context);
+
+            return $this->mapToResponse($entity);
+        });
+    }
+
+    /**
+     * Update an existing resource
+     */
+    public function update(int $id, DataTransferObjectInterface $request, ?SecurityContext $context = null): DataTransferObjectInterface
+    {
+        return $this->wrapInTransaction(function () use ($id, $request, $context) {
+            $entity = $this->repository->find($id);
+
+            if (!$entity) {
+                throw new NotFoundException(lang('Api.resourceNotFound'));
+            }
+
+            $data = $request->toArray();
+            $data = $this->beforeUpdate($id, $data, $context);
+
+            if (empty($data)) {
+                throw new \App\Exceptions\BadRequestException(lang('Api.noFieldsToUpdate'));
+            }
+
+            if (!$this->repository->update($id, $data)) {
+                throw new \App\Exceptions\ValidationException(lang('Api.updateError'), $this->repository->errors());
+            }
+
+            $updatedEntity = $this->repository->find($id);
+
+            if (!$updatedEntity) {
+                throw new NotFoundException(lang('Api.resourceNotFound'));
+            }
+
+            $this->afterUpdate($updatedEntity, $context);
+
+            return $this->mapToResponse($updatedEntity);
+        });
+    }
+
+    /**
      * Delete a resource (soft delete by default)
      */
     public function destroy(int $id, ?SecurityContext $context = null): bool
     {
-        if (!$this->repository->find($id)) {
+        $entity = $this->repository->find($id);
+
+        if (!$entity) {
             throw new NotFoundException(lang('Api.resourceNotFound'));
         }
 
-        return $this->wrapInTransaction(function () use ($id) {
+        return $this->wrapInTransaction(function () use ($id, $entity, $context) {
+            $this->beforeDelete($id, $context);
+
             if (!$this->repository->delete($id)) {
                 throw new \RuntimeException(lang('Api.deleteError'));
             }
+
+            $this->afterDelete($entity, $context);
+
             return true;
         });
+    }
+
+    /**
+     * Hooks for domain logic (Override in child services)
+     */
+    protected function beforeStore(array $data, ?SecurityContext $context): array
+    {
+        return $data;
+    }
+    protected function afterStore(object $entity, ?SecurityContext $context): void
+    {
+    }
+    protected function beforeUpdate(int $id, array $data, ?SecurityContext $context): array
+    {
+        return $data;
+    }
+    protected function afterUpdate(object $entity, ?SecurityContext $context): void
+    {
+    }
+    protected function beforeDelete(int $id, ?SecurityContext $context): void
+    {
+    }
+    protected function afterDelete(object $entity, ?SecurityContext $context): void
+    {
     }
 
     /**

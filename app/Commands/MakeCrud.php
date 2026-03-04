@@ -91,18 +91,24 @@ class MakeCrud extends BaseCommand
         CLI::write('Next steps:', 'cyan');
         CLI::write("1) Add specific validation rules to DTOs in app/DTO/Request/{$domain}/");
         CLI::write("2) Define your DB schema in a new migration.");
-        CLI::write("3) Update app/Config/Routes.php with the following snippet:");
+        CLI::write("3) Add routes in app/Config/Routes/v1/" . strtolower($domain) . ".php with the following snippet:");
         CLI::write("4) Run module bootstrap validation: php spark module:check {$resource} --domain {$domain}");
         CLI::newLine();
 
-        $routePrefix = "\$routes->group('{$route}', ['namespace' => 'App\\Controllers\\Api\\V1\\{$domain}'], function(\$routes) {";
+        $routePrefix = "\$routes->group('{$route}', ['namespace' => '\\\\App\\\\Controllers\\\\Api\\\\V1\\\\{$domain}'], function (\$routes) {";
         CLI::write($routePrefix, 'yellow');
         if ($publicRead) {
-            CLI::write("    \$routes->get('', '{$resource}Controller::index');", 'yellow');
-            CLI::write("    \$routes->get('(:num)', '{$resource}Controller::show/$1');", 'yellow');
+            CLI::write("    \$routes->group('', ['filter' => ['jwtauth', 'throttle']], function (\$routes) {", 'yellow');
+            CLI::write("        \$routes->get('', '{$resource}Controller::index');", 'yellow');
+            CLI::write("        \$routes->get('(:num)', '{$resource}Controller::show/$1');", 'yellow');
+            CLI::write("    });", 'yellow');
         }
         if ($adminWrite) {
-            CLI::write("    \$routes->group('', ['filter' => 'roleauth:admin'], function(\$routes) {", 'yellow');
+            CLI::write("    \$routes->group('', ['filter' => ['jwtauth', 'roleauth:admin', 'throttle']], function (\$routes) {", 'yellow');
+            if (!$publicRead) {
+                CLI::write("        \$routes->get('', '{$resource}Controller::index');", 'yellow');
+                CLI::write("        \$routes->get('(:num)', '{$resource}Controller::show/$1');", 'yellow');
+            }
             CLI::write("        \$routes->post('', '{$resource}Controller::create');", 'yellow');
             CLI::write("        \$routes->put('(:num)', '{$resource}Controller::update/$1');", 'yellow');
             CLI::write("        \$routes->delete('(:num)', '{$resource}Controller::delete/$1');", 'yellow');
@@ -214,16 +220,13 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Entities\{$resource}Entity;
-use App\Traits\Auditable;
 use App\Traits\Filterable;
 use App\Traits\Searchable;
-use CodeIgniter\Model;
 
-class {$resource}Model extends Model
+class {$resource}Model extends BaseAuditableModel
 {
     use Filterable;
     use Searchable;
-    use Auditable;
 
     protected \$table = '{$table}';
     protected \$primaryKey = 'id';
@@ -247,6 +250,7 @@ class {$resource}Model extends Model
             ],
         ],
     ];
+
 }
 PHP;
     }
@@ -681,6 +685,11 @@ class {$resource}ControllerTest extends ApiTestCase
     public function testControllerRouteReferenceExists(): void
     {
         \$routes = (string) file_get_contents(APPPATH . 'Config/Routes.php');
+        \$modularDir = APPPATH . 'Config/Routes/v1';
+        \$files = is_dir(\$modularDir) ? (glob(\$modularDir . '/*.php') ?: []) : [];
+        foreach (\$files as \$file) {
+            \$routes .= (string) file_get_contents(\$file);
+        }
 
         \$this->assertStringContainsString('{$resource}Controller::', \$routes);
     }

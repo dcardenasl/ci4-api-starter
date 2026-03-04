@@ -3,7 +3,7 @@
 namespace App\Libraries\Queue\Jobs;
 
 use App\Libraries\Queue\Job;
-use App\Services\System\EmailService;
+use Config\Services;
 
 class SendTemplateEmailJob extends Job
 {
@@ -22,7 +22,7 @@ class SendTemplateEmailJob extends Job
             throw new \InvalidArgumentException('Missing required email data');
         }
 
-        $emailService = new EmailService();
+        $emailService = Services::emailService(false);
         $success = $emailService->sendTemplate($template, $to, $templateData);
 
         if (! $success) {

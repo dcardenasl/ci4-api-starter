@@ -42,4 +42,10 @@ class DemoproductModel extends Model
             ],
         ],
     ];
+
+    public function __construct()
+    {
+        parent::__construct();
+        $this->initAuditable();
+    }
 }

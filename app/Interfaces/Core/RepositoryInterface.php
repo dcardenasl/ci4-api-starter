@@ -48,7 +48,7 @@ interface RepositoryInterface
     /**
      * Restore a soft-deleted record
      */
-    public function restore(int $id, array $data = []): bool;
+    public function restore(int|string $id, array $data = []): bool;
 
     /**
      * Set WHERE clause

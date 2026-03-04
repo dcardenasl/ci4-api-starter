@@ -130,7 +130,7 @@ class MakeCrud extends BaseCommand
 
         $mapperMethodName = "{$resourceLower}ResponseMapper";
 
-        $method = "\n    public static function {$mapperMethodName}(bool \$getShared = true)\n    {\n        if (\$getShared) {\n            return static::getSharedInstance('{$mapperMethodName}');\n        }\n\n        return new \\App\\Services\\Core\\Mappers\\DtoResponseMapper(\n            \\App\\DTO\\Response\\{$domain}\\{$resource}ResponseDTO::class\n        );\n    }\n\n    public static function {$methodName}(bool \$getShared = true)\n    {\n        if (\$getShared) {\n            return static::getSharedInstance('{$methodName}');\n        }\n\n        return new \\App\\Services\\{$domain}\\{$resource}Service(\n            new \\App\\Repositories\\GenericRepository(new \\App\\Models\\{$resource}Model()),\n            static::{$mapperMethodName}()\n        );\n    }\n";
+        $method = "\n    public static function {$mapperMethodName}(bool \$getShared = true)\n    {\n        if (\$getShared) {\n            return static::getSharedInstance('{$mapperMethodName}');\n        }\n\n        return new \\App\\Services\\Core\\Mappers\\DtoResponseMapper(\n            \\App\\DTO\\Response\\{$domain}\\{$resource}ResponseDTO::class\n        );\n    }\n\n    public static function {$methodName}(bool \$getShared = true)\n    {\n        if (\$getShared) {\n            return static::getSharedInstance('{$methodName}');\n        }\n\n        return new \\App\\Services\\{$domain}\\{$resource}Service(\n            new \\App\\Repositories\\GenericRepository(model(\\App\\Models\\{$resource}Model::class)),\n            static::{$mapperMethodName}()\n        );\n    }\n";
 
         $needle = "\n}\n";
         $position = strrpos($content, $needle);
@@ -703,9 +703,9 @@ class {$resource}ModelTest extends CIUnitTestCase
 {
     public function testModelClassCanBeInstantiated(): void
     {
-        \$model = new \App\Models\\{$resource}Model();
+        \$model = model(\\\\App\\\\Models\\\\{$resource}Model::class);
 
-        \$this->assertInstanceOf(\CodeIgniter\Model::class, \$model);
+        \$this->assertInstanceOf(\\\\CodeIgniter\\\\Model::class, \$model);
     }
 }
 PHP;

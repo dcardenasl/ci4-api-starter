@@ -56,7 +56,7 @@ abstract class BaseRepository implements RepositoryInterface
         return $this->model->delete($id, $purge);
     }
 
-    public function restore(int $id, array $data = []): bool
+    public function restore(int|string $id, array $data = []): bool
     {
         // Clear the soft-delete timestamp
         $data['deleted_at'] = null;

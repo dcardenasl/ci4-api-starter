@@ -444,10 +444,24 @@ class Services extends BaseService
         return new \App\Services\System\AuditService(
             static::auditRepository(),
             static::auditResponseMapper(),
+            static::auditWriter(),
+            static::queueManager(),
+            config('Audit'),
             ENVIRONMENT !== 'testing',
             '127.0.0.1',
             'system',
             static::auditPayloadSanitizer()
+        );
+    }
+
+    public static function auditWriter(bool $getShared = true)
+    {
+        if ($getShared) {
+            return static::getSharedInstance('auditWriter');
+        }
+
+        return new \App\Services\System\AuditWriter(
+            static::auditRepository()
         );
     }
 

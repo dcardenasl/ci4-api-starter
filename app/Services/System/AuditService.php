@@ -10,7 +10,10 @@ use App\DTO\System\AuditEventDTO;
 use App\Interfaces\DataTransferObjectInterface;
 use App\Interfaces\Mappers\ResponseMapperInterface;
 use App\Interfaces\System\AuditRepositoryInterface;
+use App\Libraries\Queue\Jobs\WriteAuditLogJob;
+use App\Libraries\Queue\QueueManager;
 use App\Services\Core\BaseCrudService;
+use Config\Audit as AuditConfig;
 
 /**
  * Modernized Audit Service
@@ -28,6 +31,9 @@ class AuditService extends BaseCrudService implements \App\Interfaces\System\Aud
     public function __construct(
         protected readonly AuditRepositoryInterface $auditRepository,
         ResponseMapperInterface $responseMapper,
+        protected ?AuditWriter $auditWriter = null,
+        protected ?QueueManager $queueManager = null,
+        protected ?AuditConfig $auditConfig = null,
         protected bool $enabled = true,
         protected string $defaultIpAddress = '127.0.0.1',
         protected string $defaultUserAgent = 'system',
@@ -36,6 +42,8 @@ class AuditService extends BaseCrudService implements \App\Interfaces\System\Aud
         parent::__construct($responseMapper);
         $this->repository = $auditRepository;
         $this->payloadSanitizer ??= new AuditPayloadSanitizer();
+        $this->auditWriter ??= new AuditWriter($auditRepository);
+        $this->auditConfig ??= config('Audit');
     }
 
     /**
@@ -93,21 +101,16 @@ class AuditService extends BaseCrudService implements \App\Interfaces\System\Aud
             'created_at'  => date('Y-m-d H:i:s'),
         ];
 
-        try {
-            $this->auditRepository->insert($data);
-        } catch (\Throwable $e) {
-            if (!($e instanceof \CodeIgniter\Database\Exceptions\DatabaseException)) {
-                throw $e;
-            }
-
-            // Retry logic for foreign key constraints (when user might have been deleted)
-            if ($userId !== null && (str_contains($e->getMessage(), '1452') || str_contains($e->getMessage(), 'foreign key'))) {
-                $data['user_id'] = null;
-                $this->auditRepository->insert($data);
-            } else {
-                throw $e;
-            }
+        if ($this->shouldPersistSynchronously($event->action, $event->severity)) {
+            $this->persistSynchronously($data);
+            return;
         }
+
+        if ($this->enqueueAudit($data)) {
+            return;
+        }
+
+        $this->persistSynchronously($data);
     }
 
     /**
@@ -186,6 +189,111 @@ class AuditService extends BaseCrudService implements \App\Interfaces\System\Aud
             metadata: $this->payloadSanitizer->sanitize($metadata),
             request_id: $requestId ?: ($context?->metadata['request_id'] ?? null)
         );
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     */
+    private function persistSynchronously(array $data): void
+    {
+        try {
+            $this->auditWriter?->write($data);
+        } catch (\Throwable $e) {
+            // Audit logging must be non-blocking for primary flows.
+            log_message('error', '[Audit] Synchronous write failed: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     */
+    private function enqueueAudit(array $data): bool
+    {
+        if (!$this->auditConfig?->asyncEnabled || $this->queueManager === null) {
+            return false;
+        }
+
+        try {
+            $payload = $this->shrinkForQueue($data);
+            $jobId = $this->queueManager->push(
+                WriteAuditLogJob::class,
+                ['audit' => $payload],
+                $this->auditConfig->queueName
+            );
+
+            return $jobId > 0;
+        } catch (\Throwable $e) {
+            log_message('error', '[Audit] Failed to enqueue audit log: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    private function shouldPersistSynchronously(string $action, string $severity): bool
+    {
+        if ($severity === 'critical') {
+            return true;
+        }
+
+        $criticalActions = $this->auditConfig?->criticalActions ?? [];
+        return in_array($action, $criticalActions, true);
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     * @return array<string, mixed>
+     */
+    private function shrinkForQueue(array $data): array
+    {
+        $maxBytes = max(1024, (int) ($this->auditConfig?->maxPayloadBytes ?? 60000));
+
+        if ($this->jsonByteLength($data) <= $maxBytes) {
+            return $data;
+        }
+
+        $reduced = $data;
+        $reduced['metadata'] = $this->truncateString((string) ($reduced['metadata'] ?? ''), 4096);
+        $reduced['old_values'] = $this->truncateString((string) ($reduced['old_values'] ?? ''), 8192);
+        $reduced['new_values'] = $this->truncateString((string) ($reduced['new_values'] ?? ''), 8192);
+
+        if ($this->jsonByteLength($reduced) <= $maxBytes) {
+            return $reduced;
+        }
+
+        $reduced['metadata'] = null;
+        if ($this->jsonByteLength($reduced) <= $maxBytes) {
+            return $reduced;
+        }
+
+        $reduced['old_values'] = null;
+        $reduced['new_values'] = null;
+        return $reduced;
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     */
+    private function jsonByteLength(array $data): int
+    {
+        $encoded = json_encode($data);
+        if (!is_string($encoded)) {
+            return PHP_INT_MAX;
+        }
+
+        return strlen($encoded);
+    }
+
+    private function truncateString(string $value, int $maxLength): ?string
+    {
+        if ($value === '') {
+            return null;
+        }
+
+        if (strlen($value) <= $maxLength) {
+            return $value;
+        }
+
+        $suffix = '...[truncated]';
+        return substr($value, 0, max(0, $maxLength - strlen($suffix))) . $suffix;
     }
 
     /**

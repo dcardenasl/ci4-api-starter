@@ -9,6 +9,7 @@ use CodeIgniter\Config\BaseService;
 require_once __DIR__ . '/AuthIdentityServices.php';
 require_once __DIR__ . '/TokenSecurityServices.php';
 require_once __DIR__ . '/FileDomainServices.php';
+require_once __DIR__ . '/ApiCoreServices.php';
 require_once __DIR__ . '/SystemMonitoringServices.php';
 require_once __DIR__ . '/RepositoryModelServices.php';
 require_once __DIR__ . '/CatalogDomainServices.php';
@@ -24,6 +25,7 @@ class Services extends BaseService
     use AuthIdentityServices;
     use TokenSecurityServices;
     use FileDomainServices;
+    use ApiCoreServices;
     use SystemMonitoringServices;
     use RepositoryModelServices;
     use CatalogDomainServices;

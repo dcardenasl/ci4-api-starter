@@ -39,7 +39,8 @@ class AuthService implements \App\Interfaces\Auth\AuthServiceInterface
         protected AuditServiceInterface $auditService,
         protected AuthUserMapper $userMapper,
         protected SessionManager $sessionManager,
-        protected UserAccountGuard $userAccessPolicy
+        protected UserAccountGuard $userAccessPolicy,
+        protected bool $allowTestPasswordBypass = false
     ) {
         $this->registerUserAction = $registerUserAction;
         $this->googleLoginAction = $googleLoginAction;
@@ -58,7 +59,7 @@ class AuthService implements \App\Interfaces\Auth\AuthServiceInterface
         $storedHash = $user ? (string) $user->password : '$2y$10$fakeHashToPreventTimingAttacksByEnsuringConstantTimeResponse1234567890';
 
 
-        $passwordValid = (ENVIRONMENT === 'testing' && ($request->password === 'SKIP_VERIFY' || $request->password === 'ValidPass123!'))
+        $passwordValid = ($this->allowTestPasswordBypass && ($request->password === 'SKIP_VERIFY' || $request->password === 'ValidPass123!'))
             ? true
             : password_verify($request->password, $storedHash);
 

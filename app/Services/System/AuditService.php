@@ -31,6 +31,7 @@ class AuditService extends BaseCrudService implements \App\Interfaces\System\Aud
     public function __construct(
         protected readonly AuditRepositoryInterface $auditRepository,
         ResponseMapperInterface $responseMapper,
+        protected bool $enabled = true,
         protected string $defaultIpAddress = '127.0.0.1',
         protected string $defaultUserAgent = 'system'
     ) {
@@ -49,8 +50,7 @@ class AuditService extends BaseCrudService implements \App\Interfaces\System\Aud
         array $newValues,
         ?SecurityContext $context = null
     ): void {
-        // BYPASS IN TESTING: Audit logging is disabled in tests unless explicitly forced
-        if (ENVIRONMENT === 'testing' && !self::$forceEnabledInTests) {
+        if (!$this->enabled && !self::$forceEnabledInTests) {
             return;
         }
 

@@ -1,90 +1,42 @@
-# Referencia Rápida para Agentes - CI4 API Starter (Arquitectura Orientada a Dominios)
+# ⚡ Guía de Referencia Rápida para Desarrolladores e IAs
 
-**Propósito**: Patrones y restricciones esenciales para que los agentes de IA mantengan la consistencia arquitectónica.
+Esta "Hoja de Trucos" está diseñada para un onboarding rápido y un desarrollo de alta velocidad.
 
----
+## 🚀 Comandos Core
 
-## 1. Organización Orientada a Dominios
+| Comando | Propósito | ¿Cuándo usarlo? |
+|---------|-----------|-----------------|
+| `php spark make:crud {Nombre}` | **Scaffold Module** | Al empezar un nuevo recurso CRUD. |
+| `php spark migrate` | **Aplicar cambios DB** | Después de generar un nuevo CRUD. |
+| `php spark swagger:generate` | **Actualizar OpenAPI** | Al añadir endpoints o DTOs. |
+| `composer quality` | **Check de Salud Total**| Antes de hacer push de cualquier código. |
+| `composer cs-fix` | **Corregir Estilo** | Para auto-formatear tu código. |
 
-Cada nuevo componente **debe** residir en un subdirectorio de dominio:
-- `app/Services/{Domain}/`
-- `app/Interfaces/{Domain}/`
-- `app/DTO/Request/{Domain}/`
-- `app/DTO/Response/{Domain}/`
+## 🏗️ Sintaxis de Scaffolding (Modo CLI)
 
----
+Usa la opción `--fields` para una generación rápida:
+`php spark make:crud Nombre --domain Dominio --fields="col:tipo:opciones"`
 
-## 2. Flujo de Solicitud (Inmutable y Descompuesto)
+**Tipos Disponibles:** `string`, `text`, `int`, `bool`, `decimal`, `email`, `date`, `datetime`, `fk`, `json`.
+**Opciones Comunes:** `required`, `nullable`, `searchable`, `filterable`, `fk:tableName`.
 
-```
-Solicitud HTTP → Controlador → [RequestDTO] → Servicio de Dominio (Guards/Handlers) → Modelo → Entidad → [ResponseDTO] → ApiResult → JSON
-```
+*Ejemplo:*
+`php spark make:crud Producto --fields="nombre:string:required|searchable,categoria_id:fk:categorias"`
 
-### Innovaciones Clave:
-- **`BaseRequestDTO`**: Objeto puro de validación/mapeo (sin lecturas de framework o contexto).
-- **`ApiResult`**: Estandarización de `body` y `status` entre capas.
-- **`ExceptionFormatter`**: Gestión de errores centralizada y consciente del entorno.
+## ✅ Lista de Estándares de Calidad
 
----
+1.  **Inmutabilidad:** Usa siempre `readonly class` para los DTOs.
+2.  **DTO-First:** Sin mapeo directo en Controladores; usa `RequestDataCollector`.
+3.  **Auditoría:** Usa el trait `Auditable` para cualquier modelo con datos sensibles.
+4.  **Tests:** Los nuevos servicios deben incluir tests unitarios; los controladores, tests de feature.
+5.  **Docs:** Asegúrate de que los tags y resúmenes de OpenAPI sean claros y agrupados por Dominio.
 
-## 3. Checklist de Implementación
+## 📁 Mapa de Estructura de Archivos (API por Capas)
 
-### Paso 0: Scaffold Primero
-```bash
-php spark make:crud {Nombre} --domain {Dominio} --route {endpoint}
-```
-
-Luego validar:
-```bash
-php spark module:check {Nombre} --domain {Dominio}
-```
-
-Importante: `make:crud` no genera migraciones. Crear migración(es) inmediatamente después de validar el scaffold.
-
-### Paso 1: DTOs Inmutables
-- Extender de `BaseRequestDTO`.
-- Usar **`readonly class`** para todos los DTOs y Servicios.
-- Los DTOs de respuesta deben incluir atributos OpenAPI `#[OA\Property]`.
-
-### Paso 2: Servicios Compuestos
-- Heredar de `BaseCrudService` para CRUD estándar.
-- Descomponer la lógica en componentes `Support/` (Handlers, Mappers, Guards).
-- Usar **inyección por constructor** para todas las dependencias (Sin llamadas estáticas).
-- Usar `GenericRepository` por defecto; crear repositorios dedicados solo para consultas de dominio no triviales.
-- Registrar en `app/Config/Services.php`.
-
-### Paso 3: Controlador Declarativo
-- Extender de `ApiController`.
-- Resolver el servicio principal explícitamente en `resolveDefaultService()`.
-- Usar `handleRequest()` para mapeo automático y propagación de contexto.
-
----
-
-## 4. Referencia de Excepciones (HasStatusCode)
-
-Las excepciones deben implementar `HasStatusCode`:
-- `NotFoundException` (404)
-- `AuthenticationException` (401)
-- `AuthorizationException` (403)
-- `ValidationException` (422)
-- `BadRequestException` (400)
-
----
-
-## 5. Seguridad y Estilo
-
-- ✅ **Inmutabilidad:** PHP 8.2 `readonly class` obligatorio.
-- ✅ **Atómico:** Usar `HandlesTransactions` para cambios de estado.
-- ✅ **Contexto:** Acceder a la identidad vía `SecurityContext` inyectado en los métodos del servicio.
-- ✅ **i18n:** Usar el helper `lang()`. Proveer archivos `en` y `es`.
-
----
-
-## Comandos Rápidos
-
-```bash
-php spark make:crud {Nombre} --domain {Dominio} --route {endpoint}
-php spark swagger:generate
-composer quality
-vendor/bin/phpunit
-```
+- `app/Controllers/Api/V1/{Dominio}/` -> Punto de entrada.
+- `app/DTO/Request/{Dominio}/` -> Validación de entrada.
+- `app/DTO/Response/{Dominio}/` -> Transformación de salida.
+- `app/Interfaces/{Dominio}/` -> Contratos de servicio.
+- `app/Services/{Dominio}/` -> Lógica de negocio.
+- `app/Models/` -> Orquestación de base de datos.
+- `app/Documentation/{Dominio}/` -> Definiciones de OpenAPI.

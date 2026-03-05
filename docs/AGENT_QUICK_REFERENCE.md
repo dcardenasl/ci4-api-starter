@@ -1,90 +1,42 @@
-# Agent Quick Reference - CI4 API Starter (Domain-Driven Architecture)
+# ⚡ Agent & Developer Quick Reference Guide
 
-**Purpose**: Essential patterns and constraints for AI agents to maintain architectural consistency.
+This "Cheat Sheet" is designed for rapid onboarding and high-speed development.
 
----
+## 🚀 Core Commands
 
-## 1. Domain-Driven Organization
+| Command | Purpose | When to use? |
+|---------|---------|--------------|
+| `php spark make:crud {Name}` | **Scaffold Module** | Starting a new CRUD resource. |
+| `php spark migrate` | **Apply DB changes** | After generating a new CRUD. |
+| `php spark swagger:generate` | **Update OpenAPI** | After adding endpoints or DTOs. |
+| `composer quality` | **Full Health Check** | Before pushing any code. |
+| `composer cs-fix` | **Fix Linting** | To auto-format your code. |
 
-Every new component **must** reside in a domain subdirectory:
-- `app/Services/{Domain}/`
-- `app/Interfaces/{Domain}/`
-- `app/DTO/Request/{Domain}/`
-- `app/DTO/Response/{Domain}/`
+## 🏗️ Scaffolding Syntax (CLI Mode)
 
----
+Use the `--fields` option for rapid generation:
+`php spark make:crud Name --domain Domain --fields="col:type:options"`
 
-## 2. Request Flow (Immutable & Decomposed)
+**Available Types:** `string`, `text`, `int`, `bool`, `decimal`, `email`, `date`, `datetime`, `fk`, `json`.
+**Common Options:** `required`, `nullable`, `searchable`, `filterable`, `fk:tableName`.
 
-```
-HTTP Request → Controller → [RequestDTO] → Domain Service (Guards/Handlers) → Model → Entity → [ResponseDTO] → ApiResult → JSON
-```
+*Example:*
+`php spark make:crud Product --fields="name:string:required|searchable,category_id:fk:categories"`
 
-### Key Innovations:
-- **`BaseRequestDTO`**: Pure validation/mapping object (no framework or context lookups).
-- **`ApiResult`**: Standardization of `body` and `status` between layers.
-- **`ExceptionFormatter`**: Centralized, environment-aware error handling.
+## ✅ Quality Standards Checklist
 
----
+1.  **Immutability:** Always use `readonly class` for DTOs.
+2.  **DTO-First:** No direct input mapping in Controllers; use `RequestDataCollector`.
+3.  **Audit:** Use the `Auditable` trait for any model with sensitive data.
+4.  **Tests:** New services must include Unit tests; controllers must have Feature tests.
+5.  **Docs:** Ensure OpenAPI tags and summaries are clear and grouped by Domain.
 
-## 3. Implementation Checklist
+## 📁 File Structure Map (Layered API)
 
-### Step 0: Scaffold First
-```bash
-php spark make:crud {Name} --domain {Domain} --route {endpoint}
-```
-
-Then validate:
-```bash
-php spark module:check {Name} --domain {Domain}
-```
-
-Important: `make:crud` does not generate migration files. Create migration(s) right after scaffold validation.
-
-### Step 1: Immutable DTOs
-- Extend `BaseRequestDTO`.
-- Use **`readonly class`** for all DTOs and Services.
-- Response DTOs must include OpenAPI `#[OA\Property]` attributes.
-
-### Step 2: Composed Services
-- Inherit from `BaseCrudService` for CRUD.
-- Decompose logic into `Support/` components (Handlers, Mappers, Guards).
-- Use **constructor injection** for all dependencies (No static calls).
-- Use `GenericRepository` by default; add dedicated repositories only for non-trivial domain queries.
-- Register in `app/Config/Services.php`.
-
-### Step 3: Declarative Controller
-- Extend `ApiController`.
-- Resolve the primary service explicitly in `resolveDefaultService()`.
-- Use `handleRequest()` for automatic mapping and context propagation.
-
----
-
-## 4. Exception Reference (HasStatusCode)
-
-Exceptions should implement `HasStatusCode`:
-- `NotFoundException` (404)
-- `AuthenticationException` (401)
-- `AuthorizationException` (403)
-- `ValidationException` (422)
-- `BadRequestException` (400)
-
----
-
-## 5. Security & Style
-
-- ✅ **Immutability:** PHP 8.2 `readonly class` mandatory.
-- ✅ **Atomic:** Use `HandlesTransactions` for state changes.
-- ✅ **Context:** Access identity via `SecurityContext` injected in service methods.
-- ✅ **i18n:** Use `lang()` helper. Provide `en` and `es` files.
-
----
-
-## Quick Commands
-
-```bash
-php spark make:crud {Name} --domain {Domain} --route {endpoint}
-php spark swagger:generate
-composer quality
-vendor/bin/phpunit
-```
+- `app/Controllers/Api/V1/{Domain}/` -> Entry point.
+- `app/DTO/Request/{Domain}/` -> Request validation.
+- `app/DTO/Response/{Domain}/` -> Response transformation.
+- `app/Interfaces/{Domain}/` -> Service contracts.
+- `app/Services/{Domain}/` -> Business logic.
+- `app/Models/` -> Database orchestration.
+- `app/Documentation/{Domain}/` -> OpenAPI definitions.

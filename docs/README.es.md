@@ -1,42 +1,37 @@
-# Directorio de Documentación
+# 📚 Índice de Documentación del API Starter
 
-Este directorio contiene la documentación técnica para desarrolladores y agentes que trabajan en este proyecto.
+Bienvenido a la documentación detallada del **CodeIgniter 4 API Starter Kit**. Este espacio está diseñado para servicios RESTful de alto rendimiento, basados en DTOs y con una automatización profunda.
 
-## Inicio recomendado
+## 🚀 Sistemas Core
 
-1. `../GETTING_STARTED.md` para arranque práctico.
-2. `architecture/README.es.md` para la ruta de aprendizaje de arquitectura.
-3. `AGENT_QUICK_REFERENCE.es.md` para ejecución rápida por agentes.
+### [Motor de Scaffolding (Generación de Código)](tech/scaffolding-engine.es.md)
+*¡Nuevo!* Nuestro motor modular de "error cero". Aprende cómo generar módulos CRUD completos y funcionales en segundos.
+- [Orquestador de Scaffolding](tech/scaffolding-engine.es.md#orquestador)
+- [Sistema de Cableado Inteligente (Smart Wiring)](tech/scaffolding-engine.es.md#smart-wiring)
+- [Lógica de Mapeo de Tipos](tech/scaffolding-engine.es.md#type-mapper)
 
-## Contrato del template (obligatorio)
+### [Vista General de la Arquitectura](architecture/README.md)
+Desglose detallado de nuestro diseño por capas.
+- [Patrón DTO-First](architecture/dto-first.md)
+- [Diseño de la Capa de Servicio](architecture/service-layer.md)
+- [Estrategia de Repositorios](architecture/repositories.md)
 
-1. `template/ARCHITECTURE_CONTRACT.md`
-2. `template/MODULE_BOOTSTRAP_CHECKLIST.md`
-3. `template/CRUD_FROM_ZERO.es.md`
-4. `template/QUALITY_GATES.md`
-5. `template/VERSIONING_POLICY.md`
-6. `template/CONTRIBUTION_RULES.md`
-7. `release/TEMPLATE_AUDIT_CLOSEOUT.md`
+---
 
-## Cobertura EN/ES
+## 🛠️ Guías para Desarrolladores
 
-La documentación activa debe existir en ambos idiomas (`.md` y `.es.md`).
+### [Guía de Referencia Rápida](AGENT_QUICK_REFERENCE.es.md)
+La "Hoja de Trucos" para comandos y flujos de trabajo diarios.
 
-## Alcance de documentación
+### [Calidad y Testing](tech/quality-standards.md)
+Cómo forzamos un código 100% limpio usando PHPStan, CS-Fixer y Git Hooks.
 
-Usar `DOCUMENTATION_SCOPE.md` para evitar duplicidad entre secciones.
+### [Base de Datos y Migraciones](tech/database-workflow.md)
+Desde la generación automática hasta los refinamientos manuales.
 
-Regla canónica:
+---
 
-1. `architecture/` = contratos e invariantes
-2. `tech/` = detalle técnico/runtime
-3. `features/` = playbooks de implementación y criterios de aceptación
-
-## Secciones principales
-
-1. `architecture/`: arquitectura de capas, validación, respuestas, servicios, etc.
-2. `features/`: diseño de módulos o funcionalidades específicas.
-3. `flows/`: diagramas y secuencias por caso de uso.
-4. `tech/`: detalles técnicos por subsistema.
-5. `template/`: contrato y checklists de adopción del template.
-6. `reports/`: auditorías e informes históricos.
+## 📋 Estándares del Proyecto
+- [I18n y Traducciones](tech/i18n-standards.md)
+- [Sincronización de OpenAPI y Swagger](tech/swagger-docs.md)
+- [Seguridad y Auditoría](tech/security.md)

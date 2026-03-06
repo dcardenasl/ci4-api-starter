@@ -13,21 +13,31 @@ A production-ready REST API starter template with an advanced **Automated Scaffo
 
 ## Getting Started
 
-1. **Clone and Install:**
+1. **One-command Bootstrap (recommended):**
    ```bash
+   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/dcardenasl/ci4-api-starter/main/install.sh)"
+   ```
+   *This interactive installer clones the template, configures `.env`, creates DBs, runs migrations, and bootstraps the first superadmin.*
+   *Existing local scripts (`init.sh`, `setup-env.sh`) remain available for internal/advanced workflows.*
+
+2. **Manual Clone and Install (advanced/local):**
+   ```bash
+   git clone https://github.com/dcardenasl/ci4-api-starter.git
+   cd ci4-api-starter
    composer install
    ```
    *Note: This automatically installs the Git pre-commit hooks.*
 
-2. **Environment Setup:**
+3. **Environment Setup:**
    ```bash
    cp .env.example .env
    # Update your DB and JWT_SECRET_KEY
    ```
 
-3. **Migrate and Seed:**
+4. **Migrate and Bootstrap Superadmin:**
    ```bash
    php spark migrate
+   php spark users:bootstrap-superadmin --email superadmin@example.com --password 'StrongPass123!' --first-name Super --last-name Admin
    ```
 
 ## Development Workflow

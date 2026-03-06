@@ -45,15 +45,16 @@ Este proyecto sigue una arquitectura de capas avanzada diseñada para la escalab
 
 1. Haz clic en **"Use this template"** en la parte superior de esta pagina
 2. Clona tu nuevo repositorio
-3. Ejecuta el script de inicializacion:
+3. Ejecuta el instalador interactivo:
 
 ```bash
-chmod +x init.sh && ./init.sh
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/dcardenasl/ci4-api-starter/main/install.sh)"
 ```
 
 Tu API estara corriendo en `http://localhost:8080`
+Los scripts locales existentes (`init.sh`, `setup-env.sh`) se mantienen para flujos internos/avanzados.
 
-### Opcion 2: Configuracion Manual
+### Opcion 2: Configuracion Manual (avanzada/local)
 
 ```bash
 # Instalar dependencias

@@ -41,8 +41,10 @@ trait Searchable
      */
     protected function useFulltextSearch(): bool
     {
+        $apiConfig = config('Api', false);
+
         // Check if FULLTEXT is explicitly disabled
-        if (!config('Api')->searchUseFulltext) {
+        if (!$apiConfig->searchUseFulltext) {
             return false;
         }
 
@@ -54,7 +56,7 @@ trait Searchable
         }
 
         // Only use FULLTEXT if explicitly enabled and we have searchable fields
-        return config('Api')->searchEnabled && ! empty($this->searchableFields);
+        return $apiConfig->searchEnabled && ! empty($this->searchableFields);
     }
 
     /**

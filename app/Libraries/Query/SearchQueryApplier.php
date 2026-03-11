@@ -30,18 +30,19 @@ class SearchQueryApplier
         array $searchableFields,
         bool $useFulltext = true
     ): void {
+        $apiConfig = config('Api', false);
         if (empty($searchableFields) || empty($query)) {
             return;
         }
 
         // Check minimum search length
-        $minLength = config('Api')->searchMinLength;
+        $minLength = $apiConfig->searchMinLength;
         if (strlen($query) < $minLength) {
             return;
         }
 
         // Check if search is enabled
-        if (!config('Api')->searchEnabled) {
+        if (!$apiConfig->searchEnabled) {
             return;
         }
         if ($useFulltext) {

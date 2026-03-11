@@ -75,13 +75,13 @@ jobs:
           echo 'app.baseURL = "http://localhost/"' >> .env
 
           # Database configuration for tests
-          echo 'database.tests.hostname = 127.0.0.1' >> .env
-          echo 'database.tests.database = ci4_test' >> .env
-          echo 'database.tests.username = ci4' >> .env
-          echo 'database.tests.password = ci4' >> .env
-          echo 'database.tests.DBDriver = MySQLi' >> .env
-          echo 'database.tests.DBPrefix = ""' >> .env
-          echo 'database.tests.port = 3306' >> .env
+          sed -i 's/^database.tests.hostname =.*/database.tests.hostname = 127.0.0.1/' .env
+          sed -i 's/^database.tests.database =.*/database.tests.database = ci4_test/' .env
+          sed -i 's/^database.tests.username =.*/database.tests.username = ci4/' .env
+          sed -i 's/^database.tests.password =.*/database.tests.password = ci4/' .env
+          sed -i 's/^database.tests.DBDriver =.*/database.tests.DBDriver = MySQLi/' .env
+          sed -i 's/^database.tests.DBPrefix =.*/database.tests.DBPrefix = ""/' .env
+          sed -i 's/^database.tests.port =.*/database.tests.port = 3306/' .env
 
           # Generate JWT secret for testing (properly quoted)
           JWT_KEY=$(openssl rand -base64 64 | tr -d '\n')

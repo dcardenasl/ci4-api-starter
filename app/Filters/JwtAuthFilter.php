@@ -79,9 +79,11 @@ class JwtAuthFilter implements FilterInterface
                 return $this->unauthorized(lang('Auth.invalidToken'));
             }
 
-            $policyViolation = $this->checkAccessPolicyViolation($userAccessPolicy, $user);
-            if ($policyViolation !== null) {
-                return $policyViolation;
+            if (! $this->shouldBypassAccessPolicy($request)) {
+                $policyViolation = $this->checkAccessPolicyViolation($userAccessPolicy, $user);
+                if ($policyViolation !== null) {
+                    return $policyViolation;
+                }
             }
         }
 
@@ -150,5 +152,19 @@ class JwtAuthFilter implements FilterInterface
     public function after(RequestInterface $request, ResponseInterface $response, $arguments = null)
     {
         return $response;
+    }
+
+    private function shouldBypassAccessPolicy(RequestInterface $request): bool
+    {
+        $path = $request->getUri()->getPath();
+        $normalizedPath = ltrim($path, '/');
+
+        return in_array(
+            $normalizedPath,
+            [
+                'api/v1/auth/resend-verification',
+            ],
+            true
+        );
     }
 }

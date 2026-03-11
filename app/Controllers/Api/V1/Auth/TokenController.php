@@ -50,6 +50,10 @@ class TokenController extends ApiController
      */
     public function revokeAll(): ResponseInterface
     {
-        return $this->handleRequest('revokeAllUserTokens');
+        return $this->handleRequest(function ($dto, $context) {
+            $userId = $context->user_id ?? 0;
+
+            return $this->authTokenService->revokeAllUserTokens($userId, $context);
+        });
     }
 }

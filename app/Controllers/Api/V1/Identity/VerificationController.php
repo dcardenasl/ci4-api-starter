@@ -37,6 +37,10 @@ class VerificationController extends ApiController
      */
     public function resend(): ResponseInterface
     {
-        return $this->handleRequest('resendVerification');
+        return $this->handleRequest(function ($dto, $context) {
+            $userId = $context->user_id ?? 0;
+
+            return $this->verificationService->resendVerification($userId, $context);
+        });
     }
 }

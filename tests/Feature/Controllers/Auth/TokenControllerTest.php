@@ -69,4 +69,32 @@ class TokenControllerTest extends ApiTestCase
         $json = json_decode($result->getJSON(), true);
         $this->assertEquals('error', $json['status']);
     }
+
+    public function testRevokeAllWithValidTokenReturnsSuccess(): void
+    {
+        $email = 'revoke-all-test@example.com';
+        $password = 'ValidPass123!';
+        $this->createUser($email, $password);
+
+        $token = $this->loginAndGetToken($email, $password);
+
+        $result = $this->withHeaders([
+            'Authorization' => "Bearer {$token}",
+        ])->post('/api/v1/auth/revoke-all');
+
+        $result->assertStatus(200);
+
+        $json = json_decode($result->getJSON(), true);
+        $this->assertEquals('success', $json['status']);
+    }
+
+    public function testRevokeAllWithoutTokenReturns401(): void
+    {
+        $result = $this->post('/api/v1/auth/revoke-all');
+
+        $result->assertStatus(401);
+
+        $json = json_decode($result->getJSON(), true);
+        $this->assertEquals('error', $json['status']);
+    }
 }

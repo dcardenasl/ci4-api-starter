@@ -6,12 +6,15 @@ namespace Tests\Feature\Controllers;
 
 use App\Models\UserModel;
 use Tests\Support\ApiTestCase;
+use Tests\Support\Traits\AuthTestTrait;
 
 /**
  * VerificationController Feature Tests
  */
 class VerificationControllerTest extends ApiTestCase
 {
+    use AuthTestTrait;
+
     protected UserModel $userModel;
 
     protected function setUp(): void
@@ -67,5 +70,28 @@ class VerificationControllerTest extends ApiTestCase
         ]);
 
         $result->assertStatus(422);
+    }
+
+    public function testResendVerificationWithValidTokenReturnsSuccess(): void
+    {
+        $auth = $this->actAs('user', ['verified' => true]);
+        $this->userModel->update($auth['user_id'], ['email_verified_at' => null]);
+
+        $result = $this->post('/api/v1/auth/resend-verification');
+
+        $result->assertStatus(200);
+
+        $json = json_decode($result->getJSON(), true);
+        $this->assertEquals('success', $json['status']);
+    }
+
+    public function testResendVerificationWithoutTokenReturns401(): void
+    {
+        $result = $this->post('/api/v1/auth/resend-verification');
+
+        $result->assertStatus(401);
+
+        $json = json_decode($result->getJSON(), true);
+        $this->assertEquals('error', $json['status']);
     }
 }

@@ -13,6 +13,5 @@ Generar docs:
 Notas:
 - Swagger UI puede servirse con el ejemplo de Docker en `README.es.md`.
 - La colección de Postman se deriva de `public/swagger.json`.
-  Importa el archivo en Postman y exporta la colección a `docs/postman/ci4-api.postman_collection.json`.
-  Las variables viven a nivel de colección; el entorno opcional está en
-  `docs/postman/ci4-api.postman_environment.json`.
+  Importa el archivo en Postman y genera una colección para tu proyecto.
+  Las variables pueden vivir a nivel de colección (por ejemplo, `baseUrl`, `accessToken`).

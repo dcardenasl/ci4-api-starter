@@ -13,6 +13,5 @@ Generate docs:
 Notes:
 - Swagger UI can be served using the Docker example in `README.md`.
 - Postman collection is derived from `public/swagger.json`.
-  Import the file in Postman and export the collection to `docs/postman/ci4-api.postman_collection.json`.
-  Variables live at the collection level; an optional environment file lives at
-  `docs/postman/ci4-api.postman_environment.json`.
+  Import the file in Postman and generate a collection for your project.
+  Variables can live at the collection level (e.g., `baseUrl`, `accessToken`).

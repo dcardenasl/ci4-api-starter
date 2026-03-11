@@ -150,7 +150,7 @@ class ApiKeyModelTest extends CIUnitTestCase
 
             $this->assertFalse($result);
         } catch (\CodeIgniter\Database\Exceptions\DatabaseException $e) {
-            $this->assertStringContainsString('UNIQUE', strtoupper($e->getMessage()));
+            $this->assertMatchesRegularExpression('/UNIQUE|DUPLICATE/i', $e->getMessage());
         }
     }
 

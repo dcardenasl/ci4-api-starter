@@ -55,34 +55,47 @@ class Api extends BaseConfig
         parent::__construct();
 
         // Initialize from environment with fallbacks
-        $this->jwtRevocationCheck = filter_var(env('JWT_REVOCATION_CHECK', true), FILTER_VALIDATE_BOOLEAN);
-        $this->requireEmailVerification = filter_var(env('AUTH_REQUIRE_EMAIL_VERIFICATION', true), FILTER_VALIDATE_BOOLEAN);
-        $this->jwtSecretKey = trim((string) (getenv('JWT_SECRET_KEY') ?: env('JWT_SECRET_KEY', '')));
-        $this->jwtAccessTokenTtl = (int) (getenv('JWT_ACCESS_TOKEN_TTL') ?: env('JWT_ACCESS_TOKEN_TTL', 3600));
-        $this->jwtRefreshTokenTtl = (int) (getenv('JWT_REFRESH_TOKEN_TTL') ?: env('JWT_REFRESH_TOKEN_TTL', 604800));
-        $this->jwtRevocationCacheTtl = (int) (getenv('JWT_REVOCATION_CACHE_TTL') ?: env('JWT_REVOCATION_CACHE_TTL', 60));
-        $this->googleClientId = trim((string) env('GOOGLE_CLIENT_ID', ''));
+        $this->jwtRevocationCheck = filter_var($this->envValue('JWT_REVOCATION_CHECK', true), FILTER_VALIDATE_BOOLEAN);
+        $this->requireEmailVerification = filter_var($this->envValue('AUTH_REQUIRE_EMAIL_VERIFICATION', true), FILTER_VALIDATE_BOOLEAN);
+        $this->jwtSecretKey = trim((string) $this->envValue('JWT_SECRET_KEY', ''));
+        $this->jwtAccessTokenTtl = (int) $this->envValue('JWT_ACCESS_TOKEN_TTL', 3600);
+        $this->jwtRefreshTokenTtl = (int) $this->envValue('JWT_REFRESH_TOKEN_TTL', 604800);
+        $this->jwtRevocationCacheTtl = (int) $this->envValue('JWT_REVOCATION_CACHE_TTL', 60);
+        $this->googleClientId = trim((string) $this->envValue('GOOGLE_CLIENT_ID', ''));
 
-        $this->rateLimitWindow = (int) env('RATE_LIMIT_WINDOW', 60);
-        $this->rateLimitRequests = (int) env('RATE_LIMIT_REQUESTS', 60);
-        $this->rateLimitUserRequests = (int) env('RATE_LIMIT_USER_REQUESTS', 100);
-        $this->authRateLimitRequests = (int) env('AUTH_RATE_LIMIT_REQUESTS', 5);
-        $this->authRateLimitWindow = (int) env('AUTH_RATE_LIMIT_WINDOW', 900);
+        $this->rateLimitWindow = (int) $this->envValue('RATE_LIMIT_WINDOW', 60);
+        $this->rateLimitRequests = (int) $this->envValue('RATE_LIMIT_REQUESTS', 60);
+        $this->rateLimitUserRequests = (int) $this->envValue('RATE_LIMIT_USER_REQUESTS', 100);
+        $this->authRateLimitRequests = (int) $this->envValue('AUTH_RATE_LIMIT_REQUESTS', 5);
+        $this->authRateLimitWindow = (int) $this->envValue('AUTH_RATE_LIMIT_WINDOW', 900);
 
-        $this->searchEnabled = filter_var(env('SEARCH_ENABLED', true), FILTER_VALIDATE_BOOLEAN);
-        $this->searchUseFulltext = filter_var(env('SEARCH_USE_FULLTEXT', true), FILTER_VALIDATE_BOOLEAN);
-        $this->searchMinLength = (int) env('SEARCH_MIN_LENGTH', 3);
+        $this->searchEnabled = filter_var($this->envValue('SEARCH_ENABLED', true), FILTER_VALIDATE_BOOLEAN);
+        $this->searchUseFulltext = filter_var($this->envValue('SEARCH_USE_FULLTEXT', true), FILTER_VALIDATE_BOOLEAN);
+        $this->searchMinLength = (int) $this->envValue('SEARCH_MIN_LENGTH', 3);
 
-        $this->paginationDefaultLimit = (int) env('PAGINATION_DEFAULT_LIMIT', 20);
-        $this->paginationMaxLimit = (int) env('PAGINATION_MAX_LIMIT', 100);
+        $this->paginationDefaultLimit = (int) $this->envValue('PAGINATION_DEFAULT_LIMIT', 20);
+        $this->paginationMaxLimit = (int) $this->envValue('PAGINATION_MAX_LIMIT', 100);
 
-        $this->fileMaxSize = (int) env('FILE_MAX_SIZE', 10485760);
-        $this->fileAllowedTypes = (string) env('FILE_ALLOWED_TYPES', 'jpg,jpeg,png,gif,pdf,doc,docx,txt,zip');
-        $this->fileStorageDriver = (string) env('FILE_STORAGE_DRIVER', 'local');
-        $this->fileUploadPath = (string) env('FILE_UPLOAD_PATH', 'writable/uploads/');
+        $this->fileMaxSize = (int) $this->envValue('FILE_MAX_SIZE', 10485760);
+        $this->fileAllowedTypes = (string) $this->envValue('FILE_ALLOWED_TYPES', 'jpg,jpeg,png,gif,pdf,doc,docx,txt,zip');
+        $this->fileStorageDriver = (string) $this->envValue('FILE_STORAGE_DRIVER', 'local');
+        $this->fileUploadPath = (string) $this->envValue('FILE_UPLOAD_PATH', 'writable/uploads/');
 
-        $this->requestLoggingEnabled = filter_var(env('REQUEST_LOGGING_ENABLED', true), FILTER_VALIDATE_BOOLEAN);
-        $this->slowQueryThreshold = (int) env('SLOW_QUERY_THRESHOLD', 1000);
-        $this->sloP95TargetMs = (int) env('SLO_API_P95_TARGET_MS', 500);
+        $this->requestLoggingEnabled = filter_var($this->envValue('REQUEST_LOGGING_ENABLED', true), FILTER_VALIDATE_BOOLEAN);
+        $this->slowQueryThreshold = (int) $this->envValue('SLOW_QUERY_THRESHOLD', 1000);
+        $this->sloP95TargetMs = (int) $this->envValue('SLO_API_P95_TARGET_MS', 500);
+    }
+
+    /**
+     * Prefer getenv() (mutable via putenv) over env() which checks $_ENV/$_SERVER first.
+     */
+    private function envValue(string $key, $default = null)
+    {
+        $value = getenv($key);
+        if ($value !== false) {
+            return $value;
+        }
+
+        return env($key, $default);
     }
 }

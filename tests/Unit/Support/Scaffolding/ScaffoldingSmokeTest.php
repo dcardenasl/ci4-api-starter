@@ -15,8 +15,9 @@ use CodeIgniter\Test\CIUnitTestCase;
  */
 class ScaffoldingSmokeTest extends CIUnitTestCase
 {
-    private string $resource = 'SmokeTestResource';
-    private string $domain = 'Testing';
+    private string $resource = 'ScaffoldSmokeTest';
+    private string $domain = 'ScaffoldTesting';
+    private array $createdFiles = [];
 
     protected function tearDown(): void
     {
@@ -35,16 +36,16 @@ class ScaffoldingSmokeTest extends CIUnitTestCase
         $schema = new ResourceSchema(
             resource: $this->resource,
             domain: $this->domain,
-            route: 'smoke-test-resources',
+            route: 'scaffold-smoke-tests',
             fields: $fields
         );
 
         $orchestrator = new ScaffoldingOrchestrator();
-        $createdFiles = $orchestrator->orchestrate($schema);
+        $this->createdFiles = $orchestrator->orchestrate($schema);
 
-        $this->assertNotEmpty($createdFiles, 'No files were generated.');
+        $this->assertNotEmpty($this->createdFiles, 'No files were generated.');
 
-        foreach ($createdFiles as $path) {
+        foreach ($this->createdFiles as $path) {
             $this->assertFileExists($path);
 
             // Syntax check (Lint) the generated file
@@ -58,34 +59,25 @@ class ScaffoldingSmokeTest extends CIUnitTestCase
 
     private function cleanupGeneratedFiles(): void
     {
-        $files = [
-            APPPATH . "Entities/{$this->resource}Entity.php",
-            APPPATH . "Models/{$this->resource}Model.php",
-            APPPATH . "Interfaces/{$this->domain}/{$this->resource}ServiceInterface.php",
-            APPPATH . "Services/{$this->domain}/{$this->resource}Service.php",
-            APPPATH . "Controllers/Api/V1/{$this->domain}/{$this->resource}Controller.php",
-            APPPATH . "Documentation/{$this->domain}/{$this->resource}Endpoints.php",
-            APPPATH . "DTO/Request/{$this->domain}/{$this->resource}IndexRequestDTO.php",
-            APPPATH . "DTO/Request/{$this->domain}/{$this->resource}CreateRequestDTO.php",
-            APPPATH . "DTO/Request/{$this->domain}/{$this->resource}UpdateRequestDTO.php",
-            APPPATH . "DTO/Response/{$this->domain}/{$this->resource}ResponseDTO.php",
-        ];
-
-        foreach ($files as $file) {
+        foreach ($this->createdFiles as $file) {
             if (file_exists($file)) {
                 @unlink($file);
             }
         }
 
-        // Remove domain directories if empty
-        $dirs = [
-            APPPATH . "Interfaces/{$this->domain}",
-            APPPATH . "Services/{$this->domain}",
-            APPPATH . "Controllers/Api/V1/{$this->domain}",
-            APPPATH . "Documentation/{$this->domain}",
-            APPPATH . "DTO/Request/{$this->domain}",
-            APPPATH . "DTO/Response/{$this->domain}",
-        ];
+        $this->cleanupEmptyDirectories();
+        $this->createdFiles = [];
+    }
+
+    private function cleanupEmptyDirectories(): void
+    {
+        $dirs = [];
+        foreach ($this->createdFiles as $file) {
+            $dirs[] = dirname($file);
+        }
+
+        $dirs = array_unique($dirs);
+        usort($dirs, static fn (string $a, string $b): int => strlen($b) <=> strlen($a));
 
         foreach ($dirs as $dir) {
             if (is_dir($dir) && count(scandir($dir)) === 2) {

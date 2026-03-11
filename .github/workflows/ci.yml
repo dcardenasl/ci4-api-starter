@@ -64,9 +64,6 @@ jobs:
           mkdir -p writable/debugbar
           chmod -R 777 writable
 
-      - name: Validate Swagger documentation
-        run: composer swagger-validate
-
       - name: Create .env file from example
         run: cp .env.example .env
 
@@ -74,6 +71,7 @@ jobs:
         run: |
           # Set environment
           echo 'CI_ENVIRONMENT = testing' >> .env
+          echo 'app.baseURL = "http://localhost/"' >> .env
 
           # Database configuration for tests
           echo 'database.tests.hostname = 127.0.0.1' >> .env
@@ -104,6 +102,9 @@ jobs:
 
           # File upload configuration for testing (override to exclude txt)
           sed -i 's/^FILE_ALLOWED_TYPES =.*/FILE_ALLOWED_TYPES = jpg,jpeg,png,gif,pdf/' .env
+
+      - name: Validate Swagger documentation
+        run: composer swagger-validate
 
       - name: Verify PHPUnit configuration
         run: |

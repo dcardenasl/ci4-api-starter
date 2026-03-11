@@ -30,7 +30,7 @@ class CreateSmokeTestResourcesTable extends Migration
             'category_id' => [
                 'type' => 'INT',
                 'unsigned' => true,
-                'null' => false,
+                'null' => true,
             ],
             'created_at' => [
                 'type' => 'DATETIME',

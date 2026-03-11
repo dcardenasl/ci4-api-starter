@@ -114,7 +114,8 @@ PHP;
         $output = "";
         foreach ($schema->fields as $field) {
             if ($field->fkTable) {
-                $output .= "        \$this->forge->addForeignKey('{$field->name}', '{$field->fkTable}', 'id', 'CASCADE', 'SET NULL');\n";
+                $onDelete = $field->nullable ? 'SET NULL' : 'CASCADE';
+                $output .= "        \$this->forge->addForeignKey('{$field->name}', '{$field->fkTable}', 'id', 'CASCADE', '{$onDelete}');\n";
             }
         }
         return $output;

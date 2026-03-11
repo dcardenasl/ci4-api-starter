@@ -1,37 +1,52 @@
-# 📚 API Starter Documentation Index
+# Documentation Index
 
-Welcome to the comprehensive documentation for the **CodeIgniter 4 API Starter Kit**. This workspace is designed for high-performance, DTO-first RESTful services with deep automation.
+Welcome to the documentation for the **CodeIgniter 4 API Starter Kit**. This index only lists files that exist in the template.
 
-## 🚀 Core Systems
+## Core Systems
 
-### [Automation & Scaffolding](tech/scaffolding-engine.md)
-*New!* Our zero-error modular engine. Learn how to generate complete, functional CRUD modules in seconds.
-- [Scaffolding Orchestrator](tech/scaffolding-engine.md#orchestrator)
-- [Smart Wiring System](tech/scaffolding-engine.md#smart-wiring)
-- [Type Mapping Logic](tech/scaffolding-engine.md#type-mapper)
+- [Scaffolding Engine](tech/scaffolding-engine.md)
+- [Architecture Overview](architecture/README.md)
+- [Architecture Contract (SSOT)](template/ARCHITECTURE_CONTRACT.md)
 
-### [Architecture Overview](architecture/README.md)
-Detailed breakdown of our layered design.
-- [DTO-First Pattern](architecture/dto-first.md)
-- [Service Layer Design](architecture/service-layer.md)
-- [Repository Strategy](architecture/repositories.md)
+## Template Standards
 
----
+- [Module Bootstrap Checklist](template/MODULE_BOOTSTRAP_CHECKLIST.md)
+- [CRUD From Zero](template/CRUD_FROM_ZERO.md)
+- [Quality Gates](template/QUALITY_GATES.md)
+- [Versioning Policy](template/VERSIONING_POLICY.md)
+- [Contribution Rules](template/CONTRIBUTION_RULES.md)
 
-## 🛠️ Developer Guides
+## Technical Guides
 
-### [Quick Reference Guide](AGENT_QUICK_REFERENCE.md)
-The "Cheat Sheet" for everyday commands and workflows.
+- [OpenAPI](tech/openapi.md)
+- [JWT Auth](tech/jwt-auth.md)
+- [Rate Limiting](tech/rate-limiting.md)
+- [Request Logging](tech/request-logging.md)
+- [Monitoring & Health](tech/monitoring-health.md)
+- [Audit Logging](tech/audit-logging.md)
+- [File Storage](tech/file-storage.md)
+- [Email](tech/email.md)
+- [Transactions](tech/transactions.md)
+- [Testing Guidelines](tech/TESTING_GUIDELINES.md)
 
-### [Quality & Testing](tech/quality-standards.md)
-How we enforce 100% clean code using PHPStan, CS-Fixer, and Git Hooks.
+## Architecture Deep Dives
 
-### [Database & Migrations](tech/database-workflow.md)
-From automated scaffolding to manual refinements.
+- [Layers](architecture/LAYERS.md)
+- [Services](architecture/SERVICES.md)
+- [Responses](architecture/RESPONSES.md)
+- [Validation](architecture/VALIDATION.md)
+- [Request Flow](architecture/REQUEST_FLOW.md)
 
----
+## ADRs (Architecture Decisions)
 
-## 📋 Project Standards
-- [I18n & Translations](tech/i18n-standards.md)
-- [OpenAPI & Swagger Sync](tech/swagger-docs.md)
-- [Security & Audit Trails](tech/security.md)
+- [0001 - Use DTO-First Architecture](adr/0001-use-dto-first-architecture.md)
+- [0002 - Implement Repository Pattern](adr/0002-implement-repository-pattern.md)
+- [ADR-005 - Service Purity & DI](adr/ADR-005-SERVICE-PURITY-DI.md)
+- [ADR-007 - Service Return Contracts](adr/ADR-007-SERVICE-RETURN-CONTRACTS.md)
+
+## Agent & Scope
+
+- [Agent Quick Reference](AGENT_QUICK_REFERENCE.md)
+- [Documentation Scope](DOCUMENTATION_SCOPE.md)
+
+Spanish version: [README.es.md](README.es.md)

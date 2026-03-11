@@ -21,17 +21,17 @@ Este proyecto sigue una arquitectura de capas avanzada diseñada para la escalab
 
 ## Caracteristicas
 
-- **Autenticacion JWT** - Tokens de acceso, tokens de refresco y revocacion
+- **Autenticacion JWT** - Tokens de acceso, tokens de refresco y revocacion ([Docs](docs/tech/jwt-auth.es.md))
 - **Control de Acceso por Roles** - Roles user, admin y superadmin con proteccion por middleware
-- **Google Authentication** - Soporte de login social ([Docs](docs/features/GOOGLE_AUTH.md))
-- **Sistema de Email** - Verificacion, restablecimiento de contrasena, soporte de colas
-- **Gestion de Archivos** - Subida/descarga con drivers local y S3 ([Docs](docs/features/FILE_MANAGEMENT.md))
-- **Queue System** - Procesamiento de trabajos en segundo plano ([Docs](docs/features/QUEUE_SYSTEM.md))
-- **Consultas Avanzadas** - Paginacion, filtrado, busqueda, ordenamiento mediante Repositorios
-- **Auditoría** - Registro híbrido (sinc/asinc) con sanitización y niveles de severidad
-- **Health Checks** - Endpoints listos para Kubernetes (`/health`, `/ready`, `/live`)
-- **Documentacion OpenAPI** - Swagger docs auto-generados desde los DTOs
-- **Suite de Tests Completa** - Tests unitarios, de integracion y funcionales ([Docs](docs/features/TESTING_API.md))
+- **Google Authentication** - Soporte de login social
+- **Sistema de Email** - Verificacion, restablecimiento de contrasena, soporte de colas ([Docs](docs/tech/email.es.md))
+- **Gestion de Archivos** - Subida/descarga con drivers local y S3 ([Docs](docs/tech/file-storage.es.md))
+- **Queue System** - Procesamiento de trabajos en segundo plano ([Docs](docs/tech/QUEUE.es.md))
+- **Consultas Avanzadas** - Paginacion, filtrado, busqueda, ordenamiento mediante Repositorios ([Docs](docs/architecture/QUERIES.es.md))
+- **Auditoría** - Registro híbrido (sinc/asinc) con sanitización y niveles de severidad ([Docs](docs/tech/audit-logging.es.md))
+- **Health Checks** - Endpoints listos para Kubernetes (`/health`, `/ready`, `/live`) ([Docs](docs/tech/monitoring-health.es.md))
+- **Documentacion OpenAPI** - Swagger docs auto-generados desde los DTOs ([Docs](docs/tech/openapi.es.md))
+- **Suite de Tests Completa** - Tests unitarios, de integracion y funcionales ([Docs](docs/tech/TESTING_GUIDELINES.es.md))
 
 ## Aspectos Destacados del Pipeline de Peticiones
 
@@ -227,9 +227,8 @@ Archivo generado: `public/swagger.json` (servido en `http://localhost:8080/swagg
 - Abrir `http://localhost:8080/docs/`
 
 **Postman:**
-- Coleccion (API completa): `docs/postman/ci4-api.postman_collection.json`
-  Las variables estan en la coleccion (`baseUrl`, `accessToken`, `refreshToken`, `userId`, `fileId`).
-- Entorno opcional: `docs/postman/ci4-api.postman_environment.json`
+- Importa `public/swagger.json` en Postman y genera una colección para tu proyecto.
+  Las variables pueden vivir a nivel de colección (`baseUrl`, `accessToken`, `refreshToken`, `userId`, `fileId`).
 
 ## Estructura del Proyecto
 

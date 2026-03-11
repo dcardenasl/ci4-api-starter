@@ -4,12 +4,12 @@ A production-ready REST API starter template with an advanced **Automated Scaffo
 
 ## Key Features
 
-- **⚡ Zero-Error Scaffolding:** Generate 100% functional CRUD modules in seconds (DTOs, Services, Models, Migrations, OpenAPI).
-- **🛡️ DTO-First Architecture:** Strict data validation and transfer using PHP 8.2 readonly classes.
-- **🔌 Smart Wiring:** Automatic service registration in `Config/Services.php` and domain traits.
-- **📜 OpenAPI 3.0 Documentation:** Automatically generated and synchronized documentation.
-- **✅ Built-in Quality:** Git pre-commit hooks (PHPStan, CS-Fixer, i18n) and comprehensive test suites.
-- **🗃️ Advanced Patterns:** Generic Repository, Filterable/Searchable traits, and Audit Trail.
+- **⚡ Zero-Error Scaffolding:** Generate 100% functional CRUD modules in seconds (DTOs, Services, Models, Migrations, OpenAPI). [Docs](docs/tech/scaffolding-engine.md)
+- **🛡️ DTO-First Architecture:** Strict data validation and transfer using PHP 8.2 readonly classes. [Docs](docs/architecture/README.md)
+- **🔌 Smart Wiring:** Automatic service registration in `Config/Services.php` and domain traits. [Docs](docs/tech/scaffolding-engine.md)
+- **📜 OpenAPI 3.0 Documentation:** Automatically generated and synchronized documentation. [Docs](docs/tech/openapi.md)
+- **✅ Built-in Quality:** Git pre-commit hooks (PHPStan, CS-Fixer, i18n) and comprehensive test suites. [Docs](docs/template/QUALITY_GATES.md)
+- **🗃️ Advanced Patterns:** Generic Repository, Filterable/Searchable traits, and Audit Trail. [Docs](docs/architecture/PATTERNS.md)
 
 ## Getting Started
 

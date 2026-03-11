@@ -1,37 +1,52 @@
-# 📚 Índice de Documentación del API Starter
+# Índice de Documentación
 
-Bienvenido a la documentación detallada del **CodeIgniter 4 API Starter Kit**. Este espacio está diseñado para servicios RESTful de alto rendimiento, basados en DTOs y con una automatización profunda.
+Bienvenido a la documentación del **CodeIgniter 4 API Starter Kit**. Este índice solo lista archivos que existen en el template.
 
-## 🚀 Sistemas Core
+## Sistemas Core
 
-### [Motor de Scaffolding (Generación de Código)](tech/scaffolding-engine.es.md)
-*¡Nuevo!* Nuestro motor modular de "error cero". Aprende cómo generar módulos CRUD completos y funcionales en segundos.
-- [Orquestador de Scaffolding](tech/scaffolding-engine.es.md#orquestador)
-- [Sistema de Cableado Inteligente (Smart Wiring)](tech/scaffolding-engine.es.md#smart-wiring)
-- [Lógica de Mapeo de Tipos](tech/scaffolding-engine.es.md#type-mapper)
+- [Motor de Scaffolding](tech/scaffolding-engine.es.md)
+- [Vista General de Arquitectura](architecture/README.es.md)
+- [Contrato de Arquitectura (SSOT)](template/ARCHITECTURE_CONTRACT.es.md)
 
-### [Vista General de la Arquitectura](architecture/README.md)
-Desglose detallado de nuestro diseño por capas.
-- [Patrón DTO-First](architecture/dto-first.md)
-- [Diseño de la Capa de Servicio](architecture/service-layer.md)
-- [Estrategia de Repositorios](architecture/repositories.md)
+## Estándares del Template
 
----
+- [Checklist de Bootstrap de Módulos](template/MODULE_BOOTSTRAP_CHECKLIST.es.md)
+- [CRUD Desde Cero](template/CRUD_FROM_ZERO.es.md)
+- [Quality Gates](template/QUALITY_GATES.es.md)
+- [Política de Versionado](template/VERSIONING_POLICY.es.md)
+- [Reglas de Contribución](template/CONTRIBUTION_RULES.es.md)
 
-## 🛠️ Guías para Desarrolladores
+## Guías Técnicas
 
-### [Guía de Referencia Rápida](AGENT_QUICK_REFERENCE.es.md)
-La "Hoja de Trucos" para comandos y flujos de trabajo diarios.
+- [OpenAPI](tech/openapi.es.md)
+- [JWT Auth](tech/jwt-auth.es.md)
+- [Rate Limiting](tech/rate-limiting.es.md)
+- [Request Logging](tech/request-logging.es.md)
+- [Monitoring & Health](tech/monitoring-health.es.md)
+- [Audit Logging](tech/audit-logging.es.md)
+- [File Storage](tech/file-storage.es.md)
+- [Email](tech/email.es.md)
+- [Transacciones](tech/transactions.es.md)
+- [Guías de Testing](tech/TESTING_GUIDELINES.es.md)
 
-### [Calidad y Testing](tech/quality-standards.md)
-Cómo forzamos un código 100% limpio usando PHPStan, CS-Fixer y Git Hooks.
+## Profundización de Arquitectura
 
-### [Base de Datos y Migraciones](tech/database-workflow.md)
-Desde la generación automática hasta los refinamientos manuales.
+- [Capas](architecture/LAYERS.es.md)
+- [Servicios](architecture/SERVICES.es.md)
+- [Respuestas](architecture/RESPONSES.es.md)
+- [Validación](architecture/VALIDATION.es.md)
+- [Flujo de Request](architecture/REQUEST_FLOW.es.md)
 
----
+## ADRs (Decisiones de Arquitectura)
 
-## 📋 Estándares del Proyecto
-- [I18n y Traducciones](tech/i18n-standards.md)
-- [Sincronización de OpenAPI y Swagger](tech/swagger-docs.md)
-- [Seguridad y Auditoría](tech/security.md)
+- [0001 - DTO-First Architecture](adr/0001-use-dto-first-architecture.es.md)
+- [0002 - Repository Pattern](adr/0002-implement-repository-pattern.es.md)
+- [ADR-005 - Service Purity & DI](adr/ADR-005-SERVICE-PURITY-DI.es.md)
+- [ADR-007 - Service Return Contracts](adr/ADR-007-SERVICE-RETURN-CONTRACTS.es.md)
+
+## Agente y Alcance
+
+- [Guía Rápida del Agente](AGENT_QUICK_REFERENCE.es.md)
+- [Alcance de Documentación](DOCUMENTATION_SCOPE.es.md)
+
+Versión en inglés: [README.md](README.md)

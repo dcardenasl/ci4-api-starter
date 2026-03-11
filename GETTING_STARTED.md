@@ -10,12 +10,12 @@ This is a **production-ready REST API template** built on CodeIgniter 4 that fol
 
 - 🔐 **JWT Authentication** - Secure token-based auth with refresh tokens
 - 👥 **Role-Based Access** - Admin/user roles with middleware protection
-- 🇬 **Google Auth** - Social login support ([Docs](docs/features/GOOGLE_AUTH.md))
+- 🇬 **Google Auth** - Social login support
 - 📧 **Email System** - Verification, password reset, queue support
-- 📁 **File Management** - Multipart & Base64 uploads ([Docs](docs/features/FILE_MANAGEMENT.md))
-- ⚙️ **Queue System** - Background job processing ([Docs](docs/features/QUEUE_SYSTEM.md))
+- 📁 **File Management** - Multipart & Base64 uploads ([Docs](docs/tech/file-storage.md))
+- ⚙️ **Queue System** - Background job processing ([Docs](docs/tech/QUEUE.md))
 - 🔍 **Advanced Querying** - Filtering, searching, sorting, pagination
-- ✅ **Comprehensive Test Suite** - Unit, integration, and feature tests ([Docs](docs/features/TESTING_API.md))
+- ✅ **Comprehensive Test Suite** - Unit, integration, and feature tests ([Docs](docs/tech/TESTING_GUIDELINES.md))
 - 📚 **OpenAPI Docs** - Auto-generated Swagger documentation
 
 ---

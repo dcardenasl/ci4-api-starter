@@ -20,9 +20,8 @@ jobs:
         image: mysql:8.0
         env:
           MYSQL_ROOT_PASSWORD: root
+          MYSQL_ROOT_HOST: "%"
           MYSQL_DATABASE: ci4_test
-          MYSQL_USER: ci4
-          MYSQL_PASSWORD: ci4
         ports:
           - 3306:3306
         options: >-
@@ -78,8 +77,8 @@ jobs:
           # Database configuration for tests
           echo 'database.tests.hostname = 127.0.0.1' >> .env
           echo 'database.tests.database = ci4_test' >> .env
-          echo 'database.tests.username = ci4' >> .env
-          echo 'database.tests.password = ci4' >> .env
+          echo 'database.tests.username = root' >> .env
+          echo 'database.tests.password = root' >> .env
           echo 'database.tests.DBDriver = MySQLi' >> .env
           echo 'database.tests.DBPrefix = ""' >> .env
           echo 'database.tests.port = 3306' >> .env
@@ -131,7 +130,7 @@ jobs:
       - name: Verify database connection
         run: |
           echo "Testing database connection..."
-          mysql -h 127.0.0.1 -u ci4 -pci4 -e "SHOW DATABASES;"
+          mysql -h 127.0.0.1 -u root -proot -e "SHOW DATABASES;"
           echo "✓ Database connection successful"
 
       - name: Run tests

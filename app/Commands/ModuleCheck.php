@@ -32,6 +32,7 @@ class ModuleCheck extends BaseCommand
         $resourceLower = lcfirst($resource);
         $resourcePlural = $this->pluralize($resource);
         $domain = $this->studly((string) (CLI::getOption('domain') ?: 'Catalog'));
+        $domainKebab = $this->toKebab($domain);
 
         $checks = [
             APPPATH . "Controllers/Api/V1/{$domain}/{$resource}Controller.php",
@@ -74,22 +75,24 @@ class ModuleCheck extends BaseCommand
             }
         }
 
-        $servicesPath = APPPATH . 'Config/Services.php';
-        $servicesSource = is_file($servicesPath) ? (string) file_get_contents($servicesPath) : '';
+        // Check Domain Wiring in Services
+        $domainServicesPath = APPPATH . "Config/{$domain}DomainServices.php";
+        $servicesSource = is_file($domainServicesPath) ? (string) file_get_contents($domainServicesPath) : '';
         $serviceMethod = "function {$resourceLower}Service(";
         $mapperMethod = "function {$resourceLower}ResponseMapper(";
         if (!str_contains($servicesSource, $serviceMethod)) {
-            $missing[] = "Missing service registration method in app/Config/Services.php: {$serviceMethod}";
+            $missing[] = "Missing service registration in {$domain}DomainServices.php: {$serviceMethod}";
         }
         if (!str_contains($servicesSource, $mapperMethod)) {
-            $missing[] = "Missing mapper registration method in app/Config/Services.php: {$mapperMethod}";
+            $missing[] = "Missing mapper registration in {$domain}DomainServices.php: {$mapperMethod}";
         }
 
-        $routesPath = APPPATH . 'Config/Routes.php';
+        // Check Routes in domain-specific route file
+        $routesPath = APPPATH . "Config/Routes/v1/{$domainKebab}.php";
         $routesSource = is_file($routesPath) ? (string) file_get_contents($routesPath) : '';
         $controllerRef = "{$resource}Controller::";
         if (!str_contains($routesSource, $controllerRef)) {
-            $missing[] = "Missing route reference in app/Config/Routes.php: {$controllerRef}";
+            $missing[] = "Missing route reference in {$routesPath}: {$controllerRef}";
         }
 
         if ($missing !== []) {
@@ -123,5 +126,10 @@ class ModuleCheck extends BaseCommand
         }
 
         return $value . 's';
+    }
+
+    private function toKebab(string $value): string
+    {
+        return strtolower((string) preg_replace('/(?<!^)[A-Z]/', '-$0', $value));
     }
 }

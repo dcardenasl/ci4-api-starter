@@ -81,8 +81,18 @@ class MakeCrud extends BaseCommand
             CLI::write("WIRING: Services and Mappers registered successfully.", 'green');
 
             CLI::newLine();
-            CLI::write('✅ CRUD Module generated successfully!', 'white', 'green');
-            CLI::write("Next Steps: Run 'php spark migrate' and 'php spark swagger:generate'", 'yellow');
+            CLI::write('✅ CRUD Module files generated!', 'white', 'green');
+            CLI::newLine();
+
+            // 5. Automatic Validation
+            CLI::write("🔍 Running module bootstrap check...", 'yellow');
+            $this->call('module:check', [$resource, '--domain' => $domain]);
+
+            CLI::newLine();
+            CLI::write("🚀 Next Steps:", 'cyan');
+            CLI::write("1. Run 'php spark migrate' to create the table.", 'yellow');
+            CLI::write("2. Run 'php spark swagger:generate' to update OpenAPI docs.", 'yellow');
+            CLI::write("3. Start exploring: " . base_url("api/v1/{$route}"), 'white');
             CLI::newLine();
 
         } catch (ScaffoldConflictException $e) {
@@ -145,7 +155,7 @@ class MakeCrud extends BaseCommand
                 break;
             }
 
-            $type = CLI::prompt('Field type', ['string', 'text', 'int', 'bool', 'decimal', 'email', 'date', 'datetime', 'fk', 'json'], 'required');
+            $type = CLI::prompt('Field type', ['string', 'text', 'int', 'bool', 'decimal', 'email', 'date', 'datetime', 'fk', 'json'], 'string');
             $required = CLI::prompt('Is required?', ['y', 'n'], 'y') === 'y';
             $searchable = CLI::prompt('Is searchable?', ['y', 'n'], 'n') === 'y';
             $filterable = CLI::prompt('Is filterable?', ['y', 'n'], 'n') === 'y';

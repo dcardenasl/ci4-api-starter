@@ -6,9 +6,12 @@ namespace App\Support\Scaffolding;
 
 use App\Support\Scaffolding\Generators\ControllerGenerator;
 use App\Support\Scaffolding\Generators\DtoGenerator;
+use App\Support\Scaffolding\Generators\LanguageGenerator;
 use App\Support\Scaffolding\Generators\MigrationGenerator;
 use App\Support\Scaffolding\Generators\ModelEntityGenerator;
+use App\Support\Scaffolding\Generators\RouteGenerator;
 use App\Support\Scaffolding\Generators\ServiceGenerator;
+use App\Support\Scaffolding\Generators\TestGenerator;
 
 /**
  * ScaffoldingOrchestrator
@@ -21,6 +24,9 @@ class ScaffoldingOrchestrator
     private ModelEntityGenerator $modelEntityGenerator;
     private ServiceGenerator $serviceGenerator;
     private ControllerGenerator $controllerGenerator;
+    private RouteGenerator $routeGenerator;
+    private LanguageGenerator $languageGenerator;
+    private TestGenerator $testGenerator;
 
     public function __construct()
     {
@@ -29,6 +35,9 @@ class ScaffoldingOrchestrator
         $this->modelEntityGenerator = new ModelEntityGenerator();
         $this->serviceGenerator = new ServiceGenerator();
         $this->controllerGenerator = new ControllerGenerator();
+        $this->routeGenerator = new RouteGenerator();
+        $this->languageGenerator = new LanguageGenerator();
+        $this->testGenerator = new TestGenerator();
     }
 
     /**
@@ -42,7 +51,10 @@ class ScaffoldingOrchestrator
             $this->migrationGenerator->generate($schema),
             $this->modelEntityGenerator->generate($schema),
             $this->serviceGenerator->generate($schema),
-            $this->controllerGenerator->generate($schema)
+            $this->controllerGenerator->generate($schema),
+            $this->routeGenerator->generate($schema),
+            $this->languageGenerator->generate($schema),
+            $this->testGenerator->generate($schema)
         );
 
         $this->validateFilesDoNotExist($filesToCreate);

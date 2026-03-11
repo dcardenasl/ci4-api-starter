@@ -46,4 +46,14 @@ readonly class ResourceSchema
     {
         return lcfirst($this->getResourcePlural());
     }
+
+    public function getResourcePluralKebab(): string
+    {
+        return $this->toKebab($this->getResourcePlural());
+    }
+
+    public function toKebab(string $value): string
+    {
+        return strtolower((string) preg_replace('/(?<!^)[A-Z]/', '-$0', $value));
+    }
 }

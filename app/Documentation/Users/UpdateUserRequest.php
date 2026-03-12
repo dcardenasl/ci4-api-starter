@@ -19,10 +19,16 @@ use OpenApi\Attributes as OA;
     content: new OA\JsonContent(
         properties: [
             new OA\Property(
-                property: 'username',
+                property: 'first_name',
                 type: 'string',
-                description: 'Updated username',
-                example: 'updateduser'
+                description: 'User first name',
+                example: 'John'
+            ),
+            new OA\Property(
+                property: 'last_name',
+                type: 'string',
+                description: 'User last name',
+                example: 'Doe'
             ),
             new OA\Property(
                 property: 'email',
@@ -30,6 +36,19 @@ use OpenApi\Attributes as OA;
                 format: 'email',
                 description: 'Updated email address',
                 example: 'updated@example.com'
+            ),
+            new OA\Property(
+                property: 'password',
+                type: 'string',
+                format: 'password',
+                description: 'Updated password',
+                example: 'NewPassword123'
+            ),
+            new OA\Property(
+                property: 'role',
+                type: 'string',
+                description: 'Updated role (user, admin, superadmin)',
+                example: 'user'
             ),
         ]
     )

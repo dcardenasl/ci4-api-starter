@@ -12,9 +12,14 @@ return [
     'allTokensRevoked'      => 'Todos los tokens de actualización revocados exitosamente',
 
     // Revocación de tokens
-    'revocationFailed'      => 'Error al revocar el token',
-    'tokenRevokedSuccess'   => 'Token revocado exitosamente',
-    'allUserTokensRevoked'  => 'Todos los tokens del usuario revocados exitosamente',
+    'revocationFailed'             => 'Error al revocar el token',
+    'tokenRevokedSuccess'          => 'Token revocado exitosamente',
+    'allUserTokensRevoked'         => 'Todos los tokens del usuario revocados exitosamente',
+    'authorizationHeaderRequired'  => 'El encabezado de autorización es obligatorio',
+    'invalidAuthorizationFormat'   => 'Formato de encabezado de autorización inválido. Se esperaba: Bearer <token>',
+    'invalidToken'                 => 'Token inválido',
+    'tokenDecodeFailed'            => 'No se pudo decodificar el token',
+    'missingRequiredClaims'        => 'El token no contiene los campos requeridos (jti, exp)',
 
     // General
     'invalidRequest'        => 'Solicitud inválida',

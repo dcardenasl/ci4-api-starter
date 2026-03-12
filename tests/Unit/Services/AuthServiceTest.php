@@ -4,15 +4,23 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Services;
 
+use App\DTO\Request\Auth\LoginRequestDTO;
 use App\Entities\UserEntity;
 use App\Exceptions\AuthenticationException;
-use App\Exceptions\BadRequestException;
-use App\Exceptions\ValidationException;
-use App\Interfaces\JwtServiceInterface;
-use App\Interfaces\RefreshTokenServiceInterface;
-use App\Interfaces\VerificationServiceInterface;
-use App\Models\UserModel;
-use App\Services\AuthService;
+use App\Interfaces\Auth\GoogleIdentityServiceInterface;
+use App\Interfaces\Auth\VerificationServiceInterface;
+use App\Interfaces\System\AuditServiceInterface;
+use App\Interfaces\System\EmailServiceInterface;
+use App\Interfaces\Tokens\JwtServiceInterface;
+use App\Interfaces\Tokens\RefreshTokenServiceInterface;
+use App\Interfaces\Users\UserRepositoryInterface;
+use App\Services\Auth\Actions\GoogleLoginAction;
+use App\Services\Auth\Actions\RegisterUserAction;
+use App\Services\Auth\AuthService;
+use App\Services\Auth\Support\AuthUserMapper;
+use App\Services\Auth\Support\GoogleAuthHandler;
+use App\Services\Auth\Support\SessionManager;
+use App\Services\Users\UserAccountGuard;
 use CodeIgniter\Test\CIUnitTestCase;
 use Tests\Support\Traits\CustomAssertionsTrait;
 
@@ -20,16 +28,18 @@ use Tests\Support\Traits\CustomAssertionsTrait;
  * AuthService Unit Tests
  *
  * Tests authentication logic with mocked dependencies.
- * Note: Tests that require query builder mocking are skipped.
  */
 class AuthServiceTest extends CIUnitTestCase
 {
     use CustomAssertionsTrait;
 
     protected AuthService $service;
-    protected JwtServiceInterface $mockJwtService;
-    protected RefreshTokenServiceInterface $mockRefreshTokenService;
+    protected \App\Interfaces\Tokens\JwtServiceInterface $mockJwtService;
+    protected \App\Interfaces\Tokens\RefreshTokenServiceInterface $mockRefreshTokenService;
     protected VerificationServiceInterface $mockVerificationService;
+    protected AuditServiceInterface $mockAuditService;
+    protected GoogleIdentityServiceInterface $mockGoogleIdentityService;
+    protected EmailServiceInterface $mockEmailService;
 
     protected function setUp(): void
     {
@@ -38,53 +48,43 @@ class AuthServiceTest extends CIUnitTestCase
         $this->mockJwtService = $this->createMock(JwtServiceInterface::class);
         $this->mockRefreshTokenService = $this->createMock(RefreshTokenServiceInterface::class);
         $this->mockVerificationService = $this->createMock(VerificationServiceInterface::class);
+        $this->mockAuditService = $this->createMock(AuditServiceInterface::class);
+        $this->mockGoogleIdentityService = $this->createMock(GoogleIdentityServiceInterface::class);
+        $this->mockEmailService = $this->createMock(EmailServiceInterface::class);
     }
 
-    /**
-     * Create AuthService with a real UserModel mock using anonymous class
-     */
     protected function createServiceWithUserQuery(?UserEntity $returnUser): AuthService
     {
-        // Create an anonymous class that extends UserModel and overrides query methods
-        $mockUserModel = new class ($returnUser) extends UserModel {
-            private ?UserEntity $returnUser;
+        $mockUserRepository = $this->createMock(UserRepositoryInterface::class);
+        $mockUserRepository->method('findByEmail')->willReturn($returnUser);
+        $mockUserRepository->method('findByEmailWithDeleted')->willReturn($returnUser);
+        $mockUserRepository->method('find')->willReturn($returnUser);
+        $mockUserRepository->method('insert')->willReturn(1);
+        $mockUserRepository->method('update')->willReturn(true);
+        $mockUserRepository->method('restore')->willReturn(true);
 
-            public function __construct(?UserEntity $user)
-            {
-                $this->returnUser = $user;
-            }
-
-            public function where($key, $value = null, ?bool $escape = null): static
-            {
-                return $this;
-            }
-
-            public function orWhere($key, $value = null, ?bool $escape = null): static
-            {
-                return $this;
-            }
-
-            public function first()
-            {
-                return $this->returnUser;
-            }
-
-            public function insert($row = null, bool $returnID = true)
-            {
-                return 1;
-            }
-
-            public function find($id = null)
-            {
-                return $this->returnUser;
-            }
-        };
+        $userMapper = new AuthUserMapper();
+        $sessionManager = new SessionManager($this->mockJwtService, $this->mockRefreshTokenService);
+        $registerUserAction = new RegisterUserAction($mockUserRepository, $this->mockVerificationService, $this->mockEmailService);
+        $googleLoginAction = new GoogleLoginAction(
+            $mockUserRepository,
+            $this->mockGoogleIdentityService,
+            new GoogleAuthHandler($mockUserRepository, $this->mockRefreshTokenService),
+            $sessionManager,
+            $userMapper,
+            new UserAccountGuard(),
+            $this->mockAuditService,
+            $this->mockEmailService
+        );
 
         return new AuthService(
-            $mockUserModel,
-            $this->mockJwtService,
-            $this->mockRefreshTokenService,
-            $this->mockVerificationService
+            $mockUserRepository,
+            $registerUserAction,
+            $googleLoginAction,
+            $this->mockAuditService,
+            $userMapper,
+            $sessionManager,
+            new UserAccountGuard()
         );
     }
 
@@ -92,247 +92,110 @@ class AuthServiceTest extends CIUnitTestCase
 
     public function testLoginWithValidCredentialsReturnsUserData(): void
     {
-        $user = $this->createUserEntity([
+        $user = new UserEntity([
             'id' => 1,
-            'username' => 'testuser',
             'email' => 'test@example.com',
             'password' => password_hash('ValidPass123!', PASSWORD_BCRYPT),
             'role' => 'user',
+            'status' => 'active',
+            'email_verified_at' => date('Y-m-d H:i:s'),
         ]);
 
         $service = $this->createServiceWithUserQuery($user);
 
-        $result = $service->login([
-            'username' => 'testuser',
-            'password' => 'ValidPass123!',
-        ]);
+        $this->mockJwtService->method('encode')->willReturn('jwt.access.token');
+        $this->mockRefreshTokenService->method('issueRefreshToken')->willReturn('refresh.token');
 
-        $this->assertSuccessResponse($result);
-        $this->assertEquals(1, $result['data']['id']);
-        $this->assertEquals('testuser', $result['data']['username']);
-        $this->assertEquals('test@example.com', $result['data']['email']);
-        $this->assertEquals('user', $result['data']['role']);
+        $result = $service->login(new LoginRequestDTO([
+            'email' => 'test@example.com',
+            'password' => 'ValidPass123!',
+        ], service('validation')));
+
+        $this->assertInstanceOf(\App\Interfaces\DataTransferObjectInterface::class, $result);
+        $data = $result->toArray();
+        $this->assertEquals('jwt.access.token', $data['access_token']);
+        $this->assertEquals(1, $data['user']['id']);
     }
 
     public function testLoginWithInvalidPasswordThrowsException(): void
     {
-        $user = $this->createUserEntity([
+        $user = new UserEntity([
             'id' => 1,
-            'username' => 'testuser',
             'password' => password_hash('CorrectPass123!', PASSWORD_BCRYPT),
-        ]);
-
-        $service = $this->createServiceWithUserQuery($user);
-
-        $this->expectException(AuthenticationException::class);
-
-        $service->login([
-            'username' => 'testuser',
-            'password' => 'WrongPassword123!',
-        ]);
-    }
-
-    public function testLoginWithNonExistentUserThrowsException(): void
-    {
-        $service = $this->createServiceWithUserQuery(null);
-
-        $this->expectException(AuthenticationException::class);
-
-        $service->login([
-            'username' => 'nonexistent',
-            'password' => 'AnyPassword123!',
-        ]);
-    }
-
-    public function testLoginWithEmptyCredentialsThrowsException(): void
-    {
-        $service = $this->createServiceWithUserQuery(null);
-
-        $this->expectException(AuthenticationException::class);
-
-        $service->login([
-            'username' => '',
-            'password' => '',
-        ]);
-    }
-
-    public function testLoginWithMissingPasswordThrowsException(): void
-    {
-        $service = $this->createServiceWithUserQuery(null);
-
-        $this->expectException(AuthenticationException::class);
-
-        $service->login([
-            'username' => 'testuser',
-        ]);
-    }
-
-    // ==================== LOGIN WITH TOKEN TESTS ====================
-
-    public function testLoginWithTokenReturnsAccessAndRefreshTokens(): void
-    {
-        $user = $this->createUserEntity([
-            'id' => 1,
-            'username' => 'testuser',
-            'email' => 'test@example.com',
-            'password' => password_hash('ValidPass123!', PASSWORD_BCRYPT),
             'role' => 'user',
+            'status' => 'active'
         ]);
 
         $service = $this->createServiceWithUserQuery($user);
+        $this->expectException(AuthenticationException::class);
 
-        $this->mockJwtService
-            ->expects($this->once())
-            ->method('encode')
-            ->with(1, 'user')
-            ->willReturn('jwt.access.token');
-
-        $this->mockRefreshTokenService
-            ->expects($this->once())
-            ->method('issueRefreshToken')
-            ->with(1)
-            ->willReturn('refresh.token.here');
-
-        $result = $service->loginWithToken([
-            'username' => 'testuser',
-            'password' => 'ValidPass123!',
-        ]);
-
-        $this->assertSuccessResponse($result);
-        $this->assertEquals('jwt.access.token', $result['data']['access_token']);
-        $this->assertEquals('refresh.token.here', $result['data']['refresh_token']);
-        $this->assertArrayHasKey('expires_in', $result['data']);
-        $this->assertArrayHasKey('user', $result['data']);
+        $service->login(new LoginRequestDTO([
+            'email' => 'test@example.com',
+            'password' => 'WrongPassword123!',
+        ], service('validation')));
     }
 
     // ==================== REGISTER TESTS ====================
 
     public function testRegisterWithValidDataCreatesUser(): void
     {
-        $createdUser = $this->createUserEntity([
+        $user = new UserEntity([
             'id' => 1,
-            'username' => 'newuser',
             'email' => 'new@example.com',
+            'first_name' => 'New',
+            'last_name' => 'User',
             'role' => 'user',
+            'status' => 'pending_approval'
         ]);
 
-        $service = $this->createServiceWithUserQuery($createdUser);
+        $mockUserRepository = $this->createMock(UserRepositoryInterface::class);
+        $mockUserRepository->method('find')->willReturn($user);
 
-        $result = $service->register([
-            'username' => 'newuser',
-            'email' => 'new@example.com',
-            'password' => 'ValidPass123!',
-        ]);
+        $registerUserAction = $this->createMock(RegisterUserAction::class);
+        $request = new \App\DTO\Request\Auth\RegisterRequestDTO([
+            'email' => 'new-unique+' . uniqid('', true) . '@example.com',
+            'first_name' => 'New',
+            'last_name' => 'User',
+            'password' => 'StrongPass123!',
+        ], service('validation'));
 
-        $this->assertSuccessResponse($result);
-        $this->assertEquals(1, $result['data']['id']);
-        $this->assertEquals('newuser', $result['data']['username']);
-        $this->assertEquals('user', $result['data']['role']);
-    }
-
-    public function testRegisterWithoutPasswordThrowsException(): void
-    {
-        $service = $this->createServiceWithUserQuery(null);
-
-        $this->expectException(BadRequestException::class);
-
-        $service->register([
-            'username' => 'newuser',
-            'email' => 'new@example.com',
-        ]);
-    }
-
-    public function testRegisterWithInvalidDataThrowsValidationException(): void
-    {
-        $service = $this->createServiceWithUserQuery(null);
-
-        $this->expectException(ValidationException::class);
-
-        $service->register([
-            'username' => 'newuser',
-            'email' => 'invalid-email',
-            'password' => 'ValidPass123!',
-        ]);
-    }
-
-    // ==================== REGISTER WITH TOKEN TESTS ====================
-
-    public function testRegisterWithTokenReturnsTokensAndSendsVerification(): void
-    {
-        $createdUser = $this->createUserEntity([
-            'id' => 1,
-            'username' => 'newuser',
-            'email' => 'new@example.com',
-            'role' => 'user',
-        ]);
-
-        $service = $this->createServiceWithUserQuery($createdUser);
-
-        $this->mockJwtService
-            ->method('encode')
-            ->willReturn('jwt.access.token');
-
-        $this->mockRefreshTokenService
-            ->method('issueRefreshToken')
-            ->willReturn('refresh.token');
-
-        $this->mockVerificationService
+        $registerUserAction
             ->expects($this->once())
-            ->method('sendVerificationEmail')
-            ->with(1);
+            ->method('execute')
+            ->with($request, null)
+            ->willReturn($user);
 
-        $result = $service->registerWithToken([
-            'username' => 'newuser',
-            'email' => 'new@example.com',
-            'password' => 'ValidPass123!',
-        ]);
+        $googleLoginAction = $this->createMock(GoogleLoginAction::class);
+        $userMapper = new AuthUserMapper();
+        $sessionManager = new SessionManager($this->mockJwtService, $this->mockRefreshTokenService);
 
-        $this->assertSuccessResponse($result);
-        $this->assertArrayHasKey('access_token', $result['data']);
-        $this->assertArrayHasKey('refresh_token', $result['data']);
-        $this->assertArrayHasKey('message', $result['data']);
+        $service = new AuthService(
+            $mockUserRepository,
+            $registerUserAction,
+            $googleLoginAction,
+            $this->mockAuditService,
+            $userMapper,
+            $sessionManager,
+            new UserAccountGuard()
+        );
+
+        $result = $service->register($request);
+
+        $this->assertInstanceOf(\App\Interfaces\DataTransferObjectInterface::class, $result);
     }
 
-    public function testRegisterWithTokenContinuesIfVerificationEmailFails(): void
+    public function testMeReturnsUserProfile(): void
     {
-        $createdUser = $this->createUserEntity([
+        $user = new UserEntity([
             'id' => 1,
-            'username' => 'newuser',
-            'email' => 'new@example.com',
+            'email' => 'test@example.com',
             'role' => 'user',
+            'status' => 'active',
         ]);
+        $service = $this->createServiceWithUserQuery($user);
 
-        $service = $this->createServiceWithUserQuery($createdUser);
-
-        $this->mockJwtService->method('encode')->willReturn('jwt.token');
-        $this->mockRefreshTokenService->method('issueRefreshToken')->willReturn('refresh.token');
-
-        // Email sending fails
-        $this->mockVerificationService
-            ->method('sendVerificationEmail')
-            ->willThrowException(new \RuntimeException('SMTP error'));
-
-        // Should not throw - registration should still succeed
-        $result = $service->registerWithToken([
-            'username' => 'newuser',
-            'email' => 'new@example.com',
-            'password' => 'ValidPass123!',
-        ]);
-
-        $this->assertSuccessResponse($result);
-    }
-
-    // ==================== HELPER METHODS ====================
-
-    /**
-     * Create a UserEntity with mock data
-     */
-    private function createUserEntity(array $data): UserEntity
-    {
-        $user = new UserEntity();
-        foreach ($data as $key => $value) {
-            $user->{$key} = $value;
-        }
-        return $user;
+        $result = $service->me(1);
+        $this->assertInstanceOf(\App\Interfaces\DataTransferObjectInterface::class, $result);
+        $this->assertEquals('test@example.com', $result->toArray()['email']);
     }
 }

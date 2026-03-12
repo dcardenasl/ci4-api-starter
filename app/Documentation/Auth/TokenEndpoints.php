@@ -32,12 +32,7 @@ use OpenApi\Attributes as OA;
                     new OA\Property(property: 'status', type: 'string', example: 'success'),
                     new OA\Property(
                         property: 'data',
-                        type: 'object',
-                        properties: [
-                            new OA\Property(property: 'access_token', type: 'string'),
-                            new OA\Property(property: 'refresh_token', type: 'string'),
-                            new OA\Property(property: 'expires_in', type: 'integer', example: 3600),
-                        ]
+                        ref: '#/components/schemas/TokenResponse'
                     ),
                 ],
                 type: 'object'

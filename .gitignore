@@ -157,8 +157,6 @@ _modules/*
 .phpstan.cache
 
 # Note: composer.lock should be committed in production projects
-# Uncommented here for flexibility
-composer.lock
 
 #-------------------------
 # Docker
@@ -177,6 +175,14 @@ docker/data/
 *.bak
 backup/
 
-CLAUDE.md
+#-------------------------
+# Claude Code
+#-------------------------
+# Keep documentation and agents, but ignore personal settings
+.claude/settings.local.json
 
-AGENTS.md
+public/writable/tests/uploads/
+
+public/writable/uploads/
+
+tests/ci4_test.sqlite

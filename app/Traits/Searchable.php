@@ -41,6 +41,13 @@ trait Searchable
      */
     protected function useFulltextSearch(): bool
     {
+        $apiConfig = config('Api', false);
+
+        // Check if FULLTEXT is explicitly disabled
+        if (!$apiConfig->searchUseFulltext) {
+            return false;
+        }
+
         // Check if database driver is MySQL/MySQLi
         $dbDriver = $this->db->DBDriver ?? '';
 
@@ -49,7 +56,7 @@ trait Searchable
         }
 
         // Only use FULLTEXT if explicitly enabled and we have searchable fields
-        return env('SEARCH_ENABLED', 'true') === 'true' && ! empty($this->searchableFields);
+        return $apiConfig->searchEnabled && ! empty($this->searchableFields);
     }
 
     /**

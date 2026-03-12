@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Libraries\Queue;
 
 use CodeIgniter\Database\BaseConnection;
@@ -10,6 +12,10 @@ use Throwable;
 class QueueManager
 {
     protected QueueConfig $config;
+
+    /**
+     * @var BaseConnection<object, object>
+     */
     protected BaseConnection $db;
 
     public function __construct()
@@ -85,17 +91,19 @@ class QueueManager
      * Process jobs from the queue
      *
      * @param string $queue Queue name
-     * @return void
+     * @return bool True if a job was processed, false if no job was found
      */
-    public function process(string $queue = 'default'): void
+    public function process(string $queue = 'default'): bool
     {
         $job = $this->getNextJob($queue);
 
         if (! $job) {
-            return;
+            return false;
         }
 
         $this->processJob($job);
+
+        return true;
     }
 
     /**
@@ -107,26 +115,42 @@ class QueueManager
     protected function getNextJob(string $queue): ?object
     {
         $now = time();
+        $staleThreshold = $now - $this->config->retryAfter;
 
-        // Find next available job
-        $job = $this->db->table('jobs')
-            ->where('queue', $queue)
-            ->where('reserved_at', null)
-            ->where('available_at <=', $now)
-            ->orderBy('id', 'ASC')
-            ->get()
-            ->getRow();
+        // Attempt multiple times in case another worker reserves the same row first.
+        for ($attempt = 0; $attempt < 5; $attempt++) {
+            $query = $this->db->table('jobs')
+                ->where('queue', $queue)
+                ->where('available_at <=', $now)
+                ->groupStart()
+                    ->where('reserved_at', null)
+                    ->orWhere('reserved_at <=', $staleThreshold)
+                ->groupEnd()
+                ->orderBy('id', 'ASC')
+                ->get();
 
-        if (! $job) {
-            return null;
+            $job = $query ? $query->getRow() : null;
+
+            if (! $job) {
+                return null;
+            }
+
+            // Atomic reservation: update only if still unreserved or stale.
+            $this->db->table('jobs')
+                ->where('id', $job->id)
+                ->groupStart()
+                    ->where('reserved_at', null)
+                    ->orWhere('reserved_at <=', $staleThreshold)
+                ->groupEnd()
+                ->update(['reserved_at' => $now]);
+
+            if ($this->db->affectedRows() === 1) {
+                $job->reserved_at = $now;
+                return $job;
+            }
         }
 
-        // Reserve the job
-        $this->db->table('jobs')
-            ->where('id', $job->id)
-            ->update(['reserved_at' => $now]);
-
-        return $job;
+        return null;
     }
 
     /**
@@ -137,6 +161,7 @@ class QueueManager
      */
     protected function processJob(object $jobRecord): void
     {
+        $job = null;
         try {
             $payload = json_decode($jobRecord->payload, true);
             $jobClass = $payload['job'];
@@ -157,7 +182,7 @@ class QueueManager
             // Job succeeded - delete it
             $this->db->table('jobs')->delete(['id' => $jobRecord->id]);
         } catch (Throwable $e) {
-            $this->handleFailedJob($jobRecord, $e);
+            $this->handleFailedJob($jobRecord, $e, $job);
         }
     }
 
@@ -166,13 +191,15 @@ class QueueManager
      *
      * @param object $jobRecord
      * @param Throwable $exception
+     * @param Job|null $job
      * @return void
      */
-    protected function handleFailedJob(object $jobRecord, Throwable $exception): void
+    protected function handleFailedJob(object $jobRecord, Throwable $exception, ?Job $job = null): void
     {
         $attempts = (int) $jobRecord->attempts + 1;
+        $maxAttempts = $job->maxAttempts ?? $this->config->maxAttempts;
 
-        if ($attempts >= $this->config->maxAttempts) {
+        if ($attempts >= $maxAttempts) {
             // Move to failed_jobs table
             $this->moveToFailedJobs($jobRecord, $exception);
 
@@ -181,21 +208,26 @@ class QueueManager
 
             // Call the job's failed method
             try {
-                $payload = json_decode($jobRecord->payload, true);
-                $jobClass = $payload['job'];
-                $jobData = $payload['data'] ?? [];
-
-                if (class_exists($jobClass)) {
-                    /** @var Job $job */
-                    $job = new $jobClass($jobData);
+                if ($job) {
                     $job->failed($exception);
+                } else {
+                    $payload = json_decode($jobRecord->payload, true);
+                    $jobClass = $payload['job'] ?? '';
+                    $jobData = $payload['data'] ?? [];
+
+                    if (class_exists($jobClass)) {
+                        /** @var Job $fallbackJob */
+                        $fallbackJob = new $jobClass($jobData);
+                        $fallbackJob->failed($exception);
+                    }
                 }
             } catch (Throwable $e) {
                 log_message('error', 'Failed to call job failed handler: ' . $e->getMessage());
             }
         } else {
-            // Retry the job
-            $retryAt = time() + $this->config->retryAfter;
+            // Retry the job with exponential backoff if job is available, or fixed delay
+            $delay = $job ? $job->getRetryDelay() : $this->config->retryAfter;
+            $retryAt = time() + $delay;
 
             $this->db->table('jobs')
                 ->where('id', $jobRecord->id)
@@ -205,7 +237,7 @@ class QueueManager
                     'available_at' => $retryAt,
                 ]);
 
-            log_message('info', "Job {$jobRecord->id} failed, will retry (attempt {$attempts})");
+            log_message('info', "Job {$jobRecord->id} failed, will retry in {$delay}s (attempt {$attempts})");
         }
     }
 
@@ -237,17 +269,17 @@ class QueueManager
      */
     public function getStats(string $queue = 'default'): array
     {
-        $pending = $this->db->table('jobs')
+        $pending = (int) $this->db->table('jobs')
             ->where('queue', $queue)
             ->where('reserved_at', null)
             ->countAllResults();
 
-        $processing = $this->db->table('jobs')
+        $processing = (int) $this->db->table('jobs')
             ->where('queue', $queue)
             ->where('reserved_at IS NOT NULL')
             ->countAllResults();
 
-        $failed = $this->db->table('failed_jobs')
+        $failed = (int) $this->db->table('failed_jobs')
             ->where('queue', $queue)
             ->countAllResults();
 

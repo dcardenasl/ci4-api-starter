@@ -18,7 +18,7 @@ class StorageManager
 
     public function __construct(?string $driver = null)
     {
-        $this->driverName = $driver ?? env('FILE_STORAGE_DRIVER', 'local');
+        $this->driverName = $driver ?? config('Api')->fileStorageDriver;
         $this->driver = $this->createDriver($this->driverName);
     }
 

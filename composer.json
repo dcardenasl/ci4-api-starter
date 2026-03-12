@@ -4,10 +4,11 @@
     "type": "project",
     "license": "MIT",
     "require": {
-        "php": "^8.1",
+        "php": "^8.2",
         "aws/aws-sdk-php": "^3.369",
         "codeigniter4/framework": "^4.5",
         "firebase/php-jwt": "^7.0",
+        "google/apiclient": "^2.17",
         "league/flysystem": "^3.31",
         "league/flysystem-aws-s3-v3": "^3.31",
         "monolog/monolog": "^3.5",
@@ -39,13 +40,50 @@
         }
     },
     "scripts": {
-        "test": "phpunit",
+        "post-install-cmd": [
+            "chmod +x pre-commit",
+            "cp pre-commit .git/hooks/pre-commit"
+        ],
+        "post-update-cmd": [
+            "chmod +x pre-commit",
+            "cp pre-commit .git/hooks/pre-commit"
+        ],
+        "test:prepare-db": "php spark tests:prepare-db",
+        "test:unit": [
+            "@test:prepare-db",
+            "phpunit --testsuite=Unit --configuration=phpunit.xml --no-coverage --testdox"
+        ],
+        "test:integration": [
+            "@test:prepare-db",
+            "phpunit --testsuite=Integration --configuration=phpunit.xml --no-coverage --testdox"
+        ],
+        "test:feature": [
+            "@test:prepare-db",
+            "phpunit --testsuite=Feature --configuration=phpunit.xml --no-coverage --testdox"
+        ],
+        "test": [
+            "@test:prepare-db",
+            "phpunit --configuration=phpunit.xml --no-coverage --testdox"
+        ],
         "phpstan": "phpstan analyse --memory-limit=512M",
         "cs-fix": "php-cs-fixer fix",
-        "cs-check": "php-cs-fixer fix --dry-run --diff",
+        "cs-check": "php-cs-fixer fix --dry-run --diff --sequential",
+        "i18n-check": "php scripts/i18n-check.php",
+        "docs-i18n-check": "php scripts/docs-i18n-parity-check.php",
+        "arch-drift": [
+            "@swagger-validate",
+            "phpunit tests/Unit/Architecture --configuration=phpunit.xml --no-coverage --testdox",
+            "@i18n-check",
+            "@docs-i18n-check"
+        ],
+        "swagger-validate": "sh -c 'php spark swagger:generate && git --no-pager diff --exit-code public/swagger.json >/dev/null || (git --no-pager diff -- public/swagger.json; exit 1)'",
         "quality": [
             "@cs-check",
             "@phpstan",
+            "@swagger-validate",
+            "@arch-drift",
+            "@i18n-check",
+            "@docs-i18n-check",
             "@test"
         ]
     },

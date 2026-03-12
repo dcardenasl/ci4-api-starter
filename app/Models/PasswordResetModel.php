@@ -26,7 +26,8 @@ class PasswordResetModel extends Model
             return;
         }
 
-        $expiredTime = date('Y-m-d H:i:s', strtotime("-{$expiryMinutes} minutes"));
+        $timestamp = strtotime("-{$expiryMinutes} minutes");
+        $expiredTime = date('Y-m-d H:i:s', $timestamp !== false ? $timestamp : time());
 
         $this->where('created_at <', $expiredTime)->delete();
     }
@@ -43,7 +44,8 @@ class PasswordResetModel extends Model
      */
     public function isValidToken(string $email, string $token, int $expiryMinutes = 60): bool
     {
-        $expiredTime = date('Y-m-d H:i:s', strtotime("-{$expiryMinutes} minutes"));
+        $timestamp = strtotime("-{$expiryMinutes} minutes");
+        $expiredTime = date('Y-m-d H:i:s', $timestamp !== false ? $timestamp : time());
 
         // Retrieve all non-expired tokens for this email and compare using hash_equals
         // to prevent timing-based token enumeration

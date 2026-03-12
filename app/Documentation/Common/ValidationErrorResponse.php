@@ -26,14 +26,14 @@ use OpenApi\Attributes as OA;
             new OA\Property(
                 property: 'message',
                 type: 'string',
-                description: 'Main error message',
-                example: 'Validation failed'
+                description: 'Main error message (localized by Accept-Language)',
+                example: 'Validation failed / Validacion fallida'
             ),
             new OA\Property(
                 property: 'errors',
                 type: 'object',
-                description: 'Field-specific error messages',
-                example: ['email' => 'This email is already registered']
+                description: 'Field-specific error messages (localized by Accept-Language)',
+                example: ['email' => 'Localized validation message']
             ),
             new OA\Property(
                 property: 'code',

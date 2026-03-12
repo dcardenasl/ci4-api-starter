@@ -10,7 +10,7 @@ use OpenApi\Attributes as OA;
  * Authentication Token Schema
  *
  * Schema for authentication responses containing JWT token and user data.
- * Used by login and register endpoints.
+ * Used by login and refresh endpoints.
  */
 #[OA\Schema(
     schema: 'AuthToken',
@@ -26,7 +26,7 @@ use OpenApi\Attributes as OA;
         ),
         new OA\Property(
             property: 'user',
-            ref: '#/components/schemas/User',
+            ref: '#/components/schemas/UserResponse',
             description: 'Authenticated user data'
         ),
     ],

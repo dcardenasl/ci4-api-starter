@@ -26,6 +26,7 @@ class GenerateSwagger extends BaseCommand
                     $appPath . 'Config/OpenApi.php',
                     $appPath . 'Controllers/',
                     $appPath . 'Documentation/',
+                    $appPath . 'DTO/',
                 ]);
 
             // Write to file

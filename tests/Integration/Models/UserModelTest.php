@@ -36,8 +36,9 @@ class UserModelTest extends CIUnitTestCase
     public function testInsertCreatesUser(): void
     {
         $userData = [
-            'username' => 'testuser',
             'email' => 'test@example.com',
+            'first_name' => 'Test',
+            'last_name' => 'User',
             'password' => password_hash('ValidPass123!', PASSWORD_BCRYPT),
             'role' => 'user',
         ];
@@ -51,8 +52,9 @@ class UserModelTest extends CIUnitTestCase
     public function testFindReturnsUserEntity(): void
     {
         $userId = $this->userModel->insert([
-            'username' => 'findtest',
             'email' => 'find@example.com',
+            'first_name' => 'Find',
+            'last_name' => 'Test',
             'password' => password_hash('ValidPass123!', PASSWORD_BCRYPT),
             'role' => 'user',
         ]);
@@ -60,31 +62,29 @@ class UserModelTest extends CIUnitTestCase
         $user = $this->userModel->find($userId);
 
         $this->assertInstanceOf(\App\Entities\UserEntity::class, $user);
-        $this->assertEquals('findtest', $user->username);
         $this->assertEquals('find@example.com', $user->email);
     }
 
     public function testUpdateModifiesUser(): void
     {
         $userId = $this->userModel->insert([
-            'username' => 'updatetest',
             'email' => 'update@example.com',
+            'first_name' => 'Update',
             'password' => password_hash('ValidPass123!', PASSWORD_BCRYPT),
             'role' => 'user',
         ]);
 
-        $result = $this->userModel->update($userId, ['username' => 'updated']);
+        $result = $this->userModel->update($userId, ['first_name' => 'Updated']);
 
         $this->assertTrue($result);
 
         $user = $this->userModel->find($userId);
-        $this->assertEquals('updated', $user->username);
+        $this->assertEquals('Updated', $user->first_name);
     }
 
     public function testSoftDeleteRemovesFromResults(): void
     {
         $userId = $this->userModel->insert([
-            'username' => 'deletetest',
             'email' => 'delete@example.com',
             'password' => password_hash('ValidPass123!', PASSWORD_BCRYPT),
             'role' => 'user',
@@ -106,7 +106,6 @@ class UserModelTest extends CIUnitTestCase
     public function testValidationRejectsInvalidEmail(): void
     {
         $result = $this->userModel->validate([
-            'username' => 'testuser',
             'email' => 'invalid-email',
             'password' => 'ValidPass123!',
         ]);
@@ -118,14 +117,12 @@ class UserModelTest extends CIUnitTestCase
     public function testValidationRejectsDuplicateEmail(): void
     {
         $this->userModel->insert([
-            'username' => 'user1',
             'email' => 'duplicate@example.com',
             'password' => password_hash('ValidPass123!', PASSWORD_BCRYPT),
             'role' => 'user',
         ]);
 
         $result = $this->userModel->insert([
-            'username' => 'user2',
             'email' => 'duplicate@example.com',
             'password' => password_hash('ValidPass123!', PASSWORD_BCRYPT),
             'role' => 'user',
@@ -135,39 +132,17 @@ class UserModelTest extends CIUnitTestCase
         $this->assertArrayHasKey('email', $this->userModel->errors());
     }
 
-    public function testValidationRejectsDuplicateUsername(): void
-    {
-        $this->userModel->insert([
-            'username' => 'sameuser',
-            'email' => 'user1@example.com',
-            'password' => password_hash('ValidPass123!', PASSWORD_BCRYPT),
-            'role' => 'user',
-        ]);
-
-        $result = $this->userModel->insert([
-            'username' => 'sameuser',
-            'email' => 'user2@example.com',
-            'password' => password_hash('ValidPass123!', PASSWORD_BCRYPT),
-            'role' => 'user',
-        ]);
-
-        $this->assertFalse($result);
-        $this->assertArrayHasKey('username', $this->userModel->errors());
-    }
-
     // ==================== TRAIT TESTS ====================
 
     public function testFilterableTraitFiltersResults(): void
     {
         $this->userModel->insert([
-            'username' => 'admin1',
             'email' => 'admin1@example.com',
             'password' => password_hash('ValidPass123!', PASSWORD_BCRYPT),
             'role' => 'admin',
         ]);
 
         $this->userModel->insert([
-            'username' => 'user1',
             'email' => 'user1@example.com',
             'password' => password_hash('ValidPass123!', PASSWORD_BCRYPT),
             'role' => 'user',
@@ -188,7 +163,8 @@ class UserModelTest extends CIUnitTestCase
 
         // Verify searchable fields are defined
         $searchableFields = $this->userModel->getSearchableFields();
-        $this->assertContains('username', $searchableFields);
         $this->assertContains('email', $searchableFields);
+        $this->assertContains('first_name', $searchableFields);
+        $this->assertContains('last_name', $searchableFields);
     }
 }

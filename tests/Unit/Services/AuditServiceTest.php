@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Services;
 
-use App\Exceptions\BadRequestException;
+use App\DTO\SecurityContext;
 use App\Exceptions\NotFoundException;
-use App\Models\AuditLogModel;
-use App\Services\AuditService;
-use CodeIgniter\HTTP\RequestInterface;
+use App\Interfaces\DataTransferObjectInterface;
+use App\Interfaces\Mappers\ResponseMapperInterface;
+use App\Interfaces\System\AuditRepositoryInterface;
+use App\Libraries\Queue\QueueManager;
+use App\Services\System\AuditService;
+use App\Services\System\AuditWriter;
 use CodeIgniter\Test\CIUnitTestCase;
 use Tests\Support\Traits\CustomAssertionsTrait;
 
@@ -22,32 +25,51 @@ class AuditServiceTest extends CIUnitTestCase
     use CustomAssertionsTrait;
 
     protected AuditService $service;
-    protected AuditLogModel $mockAuditLogModel;
-    protected RequestInterface $mockRequest;
+    protected AuditRepositoryInterface $mockAuditRepository;
+    protected ResponseMapperInterface $responseMapper;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        $this->mockAuditLogModel = $this->createMock(AuditLogModel::class);
-        $this->mockRequest = $this->createMock(RequestInterface::class);
+        \App\Services\System\AuditService::$forceEnabledInTests = true;
 
-        $this->mockRequest->method('getIPAddress')->willReturn('127.0.0.1');
-        $this->mockRequest->method('getHeaderLine')->willReturn('PHPUnit/Test');
+        $this->mockAuditRepository = $this->createMock(AuditRepositoryInterface::class);
 
-        $this->service = new AuditService($this->mockAuditLogModel);
+        // Mock UserModel via factory to satisfy defensive existence checks
+        $mockUserModel = $this->createMock(\App\Models\UserModel::class);
+        $mockUserModel->method('find')->willReturn((object)['id' => 99]);
+        \CodeIgniter\Config\Factories::injectMock('models', \App\Models\UserModel::class, $mockUserModel);
+
+        $this->responseMapper = new class () implements ResponseMapperInterface {
+            public function map(object $entity): DataTransferObjectInterface
+            {
+                $data = method_exists($entity, 'toArray') ? $entity->toArray() : (array) $entity;
+                return \App\DTO\Response\Audit\AuditResponseDTO::fromArray($data);
+            }
+        };
+
+        $this->service = new AuditService($this->mockAuditRepository, $this->responseMapper);
+    }
+
+    protected function tearDown(): void
+    {
+        \App\Services\System\AuditService::$forceEnabledInTests = false;
+        parent::tearDown();
     }
 
     // ==================== LOG TESTS ====================
 
     public function testLogInsertsAuditRecord(): void
     {
-        $this->mockAuditLogModel
+        $context = new SecurityContext(99, 'admin', ['ip_address' => '127.0.0.1']);
+
+        $this->mockAuditRepository
             ->expects($this->once())
             ->method('insert')
             ->with($this->callback(function ($data) {
                 return $data['action'] === 'create'
-                    && $data['entity_type'] === 'user'
+                    && $data['entity_type'] === 'users'
                     && $data['entity_id'] === 1
                     && $data['user_id'] === 99
                     && $data['ip_address'] === '127.0.0.1';
@@ -55,21 +77,21 @@ class AuditServiceTest extends CIUnitTestCase
 
         $this->service->log(
             'create',
-            'user',
+            'users',
             1,
             [],
-            ['username' => 'newuser'],
-            99,
-            $this->mockRequest
+            ['email' => 'newuser@example.com'],
+            $context
         );
     }
 
     public function testLogEncodesValuesAsJson(): void
     {
+        $context = new SecurityContext(99);
         $oldValues = ['email' => 'old@example.com'];
         $newValues = ['email' => 'new@example.com'];
 
-        $this->mockAuditLogModel
+        $this->mockAuditRepository
             ->expects($this->once())
             ->method('insert')
             ->with($this->callback(function ($data) use ($oldValues, $newValues) {
@@ -79,22 +101,197 @@ class AuditServiceTest extends CIUnitTestCase
 
         $this->service->log(
             'update',
-            'user',
+            'users',
             1,
             $oldValues,
             $newValues,
-            99,
-            $this->mockRequest
+            $context
         );
+    }
+
+    public function testLogRemovesSensitiveFieldsFromAuditPayload(): void
+    {
+        $context = new SecurityContext(99);
+        $oldValues = [
+            'email' => 'old@example.com',
+            'password' => 'old-secret',
+            'profile' => [
+                'token' => 'token-old',
+                'timezone' => 'UTC',
+            ],
+        ];
+        $newValues = [
+            'email' => 'new@example.com',
+            'password' => 'new-secret',
+            'access_token' => 'jwt-token',
+            'profile' => [
+                'refresh_token' => 'refresh-token',
+                'timezone' => 'America/Mexico_City',
+            ],
+        ];
+
+        $this->mockAuditRepository
+            ->expects($this->once())
+            ->method('insert')
+            ->with($this->callback(function ($data) {
+                $old = json_decode((string) $data['old_values'] ?: '{}', true);
+                $new = json_decode((string) $data['new_values'] ?: '{}', true);
+
+                return !isset($old['password'])
+                    && !isset($old['profile']['token'])
+                    && !isset($new['password'])
+                    && !isset($new['access_token'])
+                    && !isset($new['profile']['refresh_token'])
+                    && ($old['email'] ?? null) === 'old@example.com'
+                    && ($new['email'] ?? null) === 'new@example.com';
+            }));
+
+        $this->service->log(
+            'update',
+            'users',
+            1,
+            $oldValues,
+            $newValues,
+            $context
+        );
+    }
+
+    public function testLogPersistsControlFieldsAndSanitizedMetadata(): void
+    {
+        $context = new SecurityContext(99, 'admin', [
+            'ip_address' => '10.0.0.10',
+            'user_agent' => 'PHPUnit',
+            'request_id' => 'req-test-123',
+        ]);
+
+        $this->mockAuditRepository
+            ->expects($this->once())
+            ->method('insert')
+            ->with($this->callback(function ($data) {
+                $metadata = json_decode((string) ($data['metadata'] ?? '{}'), true);
+
+                return ($data['result'] ?? null) === 'denied'
+                    && ($data['severity'] ?? null) === 'critical'
+                    && ($data['request_id'] ?? null) === 'req-test-123'
+                    && !isset($metadata['token'])
+                    && ($metadata['scope'] ?? null) === 'api_key';
+            }));
+
+        $this->service->log(
+            'api_key_rate_limit_exceeded',
+            'api_keys',
+            12,
+            [],
+            [],
+            $context,
+            'denied',
+            'critical',
+            ['scope' => 'api_key', 'token' => 'secret-token']
+        );
+    }
+
+    public function testLogEnqueuesNonCriticalEventWhenAsyncEnabled(): void
+    {
+        $context = new SecurityContext(99, 'admin', ['ip_address' => '127.0.0.1']);
+        $queueManager = $this->createMock(QueueManager::class);
+        $auditConfig = new \Config\Audit();
+        $auditConfig->asyncEnabled = true;
+        $auditConfig->queueName = 'audit';
+
+        $this->mockAuditRepository
+            ->expects($this->never())
+            ->method('insert');
+
+        $queueManager->expects($this->once())
+            ->method('push')
+            ->with(
+                \App\Libraries\Queue\Jobs\WriteAuditLogJob::class,
+                $this->callback(static function (array $data): bool {
+                    return isset($data['audit']) && is_array($data['audit']);
+                }),
+                'audit'
+            )
+            ->willReturn(10);
+
+        $service = new AuditService(
+            $this->mockAuditRepository,
+            $this->responseMapper,
+            new AuditWriter($this->mockAuditRepository),
+            $queueManager,
+            $auditConfig
+        );
+
+        $service->log('create', 'users', 1, [], ['email' => 'test@example.com'], $context);
+    }
+
+    public function testLogPersistsCriticalEventSynchronouslyWhenAsyncEnabled(): void
+    {
+        $context = new SecurityContext(99, 'admin', ['ip_address' => '127.0.0.1']);
+        $queueManager = $this->createMock(QueueManager::class);
+        $auditConfig = new \Config\Audit();
+        $auditConfig->asyncEnabled = true;
+
+        $this->mockAuditRepository
+            ->expects($this->once())
+            ->method('insert');
+
+        $queueManager->expects($this->never())
+            ->method('push');
+
+        $service = new AuditService(
+            $this->mockAuditRepository,
+            $this->responseMapper,
+            new AuditWriter($this->mockAuditRepository),
+            $queueManager,
+            $auditConfig
+        );
+
+        $service->log(
+            'api_key_auth_failed',
+            'api_keys',
+            null,
+            [],
+            ['scope' => 'api_key'],
+            $context,
+            'failure',
+            'critical'
+        );
+    }
+
+    public function testLogFallsBackToSyncWhenQueueFails(): void
+    {
+        $context = new SecurityContext(99, 'admin', ['ip_address' => '127.0.0.1']);
+        $queueManager = $this->createMock(QueueManager::class);
+        $auditConfig = new \Config\Audit();
+        $auditConfig->asyncEnabled = true;
+
+        $queueManager->expects($this->once())
+            ->method('push')
+            ->willThrowException(new \RuntimeException('queue down'));
+
+        $this->mockAuditRepository
+            ->expects($this->once())
+            ->method('insert');
+
+        $service = new AuditService(
+            $this->mockAuditRepository,
+            $this->responseMapper,
+            new AuditWriter($this->mockAuditRepository),
+            $queueManager,
+            $auditConfig
+        );
+
+        $service->log('update', 'users', 1, ['a' => 1], ['a' => 2], $context);
     }
 
     // ==================== LOG CREATE TESTS ====================
 
     public function testLogCreateLogsWithEmptyOldValues(): void
     {
-        $newData = ['username' => 'newuser', 'email' => 'new@example.com'];
+        $context = new SecurityContext(99);
+        $newData = ['first_name' => 'New', 'email' => 'new@example.com'];
 
-        $this->mockAuditLogModel
+        $this->mockAuditRepository
             ->expects($this->once())
             ->method('insert')
             ->with($this->callback(function ($data) use ($newData) {
@@ -103,46 +300,70 @@ class AuditServiceTest extends CIUnitTestCase
                     && $data['new_values'] === json_encode($newData);
             }));
 
-        $this->service->logCreate('user', 1, $newData, 99, $this->mockRequest);
+        $this->service->logCreate('users', 1, $newData, $context);
     }
 
     // ==================== LOG UPDATE TESTS ====================
 
     public function testLogUpdateOnlyLogsIfValuesChanged(): void
     {
+        $context = new SecurityContext(99);
         $oldValues = ['email' => 'same@example.com'];
         $newValues = ['email' => 'same@example.com'];
 
         // insert should NOT be called when values are the same
-        $this->mockAuditLogModel
+        $this->mockAuditRepository
             ->expects($this->never())
             ->method('insert');
 
-        $this->service->logUpdate('user', 1, $oldValues, $newValues, 99, $this->mockRequest);
+        $this->service->logUpdate('users', 1, $oldValues, $newValues, $context);
     }
 
     public function testLogUpdateLogsWhenValuesAreDifferent(): void
     {
+        $context = new SecurityContext(99);
         $oldValues = ['email' => 'old@example.com'];
         $newValues = ['email' => 'new@example.com'];
 
-        $this->mockAuditLogModel
+        $this->mockAuditRepository
             ->expects($this->once())
             ->method('insert')
             ->with($this->callback(function ($data) {
                 return $data['action'] === 'update';
             }));
 
-        $this->service->logUpdate('user', 1, $oldValues, $newValues, 99, $this->mockRequest);
+        $this->service->logUpdate('users', 1, $oldValues, $newValues, $context);
+    }
+
+    public function testLogUpdateDoesNotLogWhenOnlySensitiveValuesChanged(): void
+    {
+        $context = new SecurityContext(99);
+        $oldValues = [
+            'email' => 'same@example.com',
+            'password' => 'old-secret',
+            'profile' => ['token' => 'old-token'],
+        ];
+        $newValues = [
+            'email' => 'same@example.com',
+            'password' => 'new-secret',
+            'profile' => ['token' => 'new-token'],
+        ];
+
+        $this->mockAuditRepository
+            ->expects($this->never())
+            ->method('insert');
+
+        $this->service->logUpdate('users', 1, $oldValues, $newValues, $context);
     }
 
     // ==================== LOG DELETE TESTS ====================
 
     public function testLogDeleteLogsWithEmptyNewValues(): void
     {
-        $oldData = ['username' => 'deleted', 'email' => 'deleted@example.com'];
+        $context = new SecurityContext(99);
+        $oldData = ['first_name' => 'Deleted', 'email' => 'deleted@example.com'];
 
-        $this->mockAuditLogModel
+        $this->mockAuditRepository
             ->expects($this->once())
             ->method('insert')
             ->with($this->callback(function ($data) use ($oldData) {
@@ -151,7 +372,7 @@ class AuditServiceTest extends CIUnitTestCase
                     && $data['new_values'] === null;
             }));
 
-        $this->service->logDelete('user', 1, $oldData, 99, $this->mockRequest);
+        $this->service->logDelete('users', 1, $oldData, $context);
     }
 
     // ==================== SHOW TESTS ====================
@@ -162,44 +383,38 @@ class AuditServiceTest extends CIUnitTestCase
             'id' => 1,
             'user_id' => 99,
             'action' => 'create',
-            'entity_type' => 'user',
+            'entity_type' => 'users',
             'entity_id' => 1,
             'old_values' => null,
-            'new_values' => '{"username":"test"}',
+            'new_values' => '{"first_name":"Test"}',
             'ip_address' => '127.0.0.1',
             'user_agent' => 'Test',
             'created_at' => '2024-01-01 00:00:00',
         ]);
 
-        $this->mockAuditLogModel
+        $this->mockAuditRepository
             ->expects($this->once())
             ->method('find')
             ->with(1)
             ->willReturn($log);
 
-        $result = $this->service->show(['id' => 1]);
+        $result = $this->service->show(1);
 
-        $this->assertSuccessResponse($result);
-        $this->assertEquals(1, $result['data']['id']);
-        $this->assertEquals('create', $result['data']['action']);
-    }
-
-    public function testShowWithoutIdThrowsException(): void
-    {
-        $this->expectException(BadRequestException::class);
-
-        $this->service->show([]);
+        $this->assertInstanceOf(\App\DTO\Response\Audit\AuditResponseDTO::class, $result);
+        $data = $result->toArray();
+        $this->assertEquals(1, $data['id']);
+        $this->assertEquals('create', $data['action']);
     }
 
     public function testShowWithNonExistentIdThrowsNotFoundException(): void
     {
-        $this->mockAuditLogModel
+        $this->mockAuditRepository
             ->method('find')
             ->willReturn(null);
 
         $this->expectException(NotFoundException::class);
 
-        $this->service->show(['id' => 999]);
+        $this->service->show(999);
     }
 
     // ==================== BY ENTITY TESTS ====================
@@ -211,7 +426,7 @@ class AuditServiceTest extends CIUnitTestCase
                 'id' => 1,
                 'user_id' => 99,
                 'action' => 'create',
-                'entity_type' => 'user',
+                'entity_type' => 'users',
                 'entity_id' => 5,
                 'old_values' => null,
                 'new_values' => '{"test":"data"}',
@@ -223,7 +438,7 @@ class AuditServiceTest extends CIUnitTestCase
                 'id' => 2,
                 'user_id' => 99,
                 'action' => 'update',
-                'entity_type' => 'user',
+                'entity_type' => 'users',
                 'entity_id' => 5,
                 'old_values' => '{"old":"value"}',
                 'new_values' => '{"new":"value"}',
@@ -233,36 +448,50 @@ class AuditServiceTest extends CIUnitTestCase
             ]),
         ];
 
-        $this->mockAuditLogModel
+        $this->mockAuditRepository
             ->expects($this->once())
             ->method('getByEntity')
-            ->with('user', 5)
+            ->with('users', 5)
             ->willReturn($logs);
 
-        $result = $this->service->byEntity([
-            'entity_type' => 'user',
+        $result = $this->service->byEntity(new \App\DTO\Request\Audit\AuditByEntityRequestDTO([
+            'entity_type' => 'users',
             'entity_id' => 5,
-        ]);
+        ], service('validation')));
+        $payload = $result->toArray();
 
-        $this->assertSuccessResponse($result);
-        $this->assertCount(2, $result['data']);
+        $this->assertInstanceOf(\App\DTO\Response\Common\PayloadResponseDTO::class, $result);
+        $this->assertCount(2, $payload);
+        $this->assertIsArray($payload[0]);
+        $this->assertSame('create', $payload[0]['action'] ?? null);
     }
 
-    public function testByEntityWithMissingParamsThrowsException(): void
+    public function testByEntityNormalizesSingularEntityType(): void
     {
-        $this->expectException(BadRequestException::class);
+        $this->mockAuditRepository
+            ->expects($this->once())
+            ->method('getByEntity')
+            ->with('users', 5)
+            ->willReturn([]);
 
-        $this->service->byEntity(['entity_type' => 'user']);
+        $result = $this->service->byEntity(new \App\DTO\Request\Audit\AuditByEntityRequestDTO([
+            'entity_type' => 'user',
+            'entity_id' => 5,
+        ], service('validation')));
+
+        $this->assertSame([], $result->toArray());
+    }
+
+    public function testByEntityWithMissingParamsThrowsValidationException(): void
+    {
+        $this->expectException(\App\Exceptions\ValidationException::class);
+        new \App\DTO\Request\Audit\AuditByEntityRequestDTO(['entity_type' => 'users'], service('validation'));
     }
 
     // ==================== HELPER METHODS ====================
 
-    private function createAuditLogEntity(array $data): \stdClass
+    private function createAuditLogEntity(array $data): \App\Entities\AuditLogEntity
     {
-        $entity = new \stdClass();
-        foreach ($data as $key => $value) {
-            $entity->{$key} = $value;
-        }
-        return $entity;
+        return new \App\Entities\AuditLogEntity($data);
     }
 }

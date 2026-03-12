@@ -286,7 +286,7 @@ if [ "$SKIP_SERVER" = false ]; then
     echo "2. Test the API:"
     echo -e "   ${YELLOW}curl -X POST http://localhost:8080/api/v1/auth/register \\${NC}"
     echo -e "   ${YELLOW}  -H \"Content-Type: application/json\" \\${NC}"
-    echo -e "   ${YELLOW}  -d '{\"username\":\"admin\",\"email\":\"admin@example.com\",\"password\":\"Admin123!\"}'${NC}"
+    echo -e "   ${YELLOW}  -d '{\"email\":\"admin@example.com\",\"first_name\":\"Admin\",\"last_name\":\"User\",\"password\":\"Admin123!\"}'${NC}"
     echo ""
     echo "3. View API documentation:"
     echo -e "   ${YELLOW}http://localhost:8080/swagger.json${NC}"

@@ -1,269 +1,53 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Config;
 
 use CodeIgniter\Config\BaseService;
 
+require_once __DIR__ . '/AuthIdentityServices.php';
+require_once __DIR__ . '/TokenSecurityServices.php';
+require_once __DIR__ . '/FileDomainServices.php';
+require_once __DIR__ . '/ApiCoreServices.php';
+require_once __DIR__ . '/SystemMonitoringServices.php';
+require_once __DIR__ . '/RepositoryModelServices.php';
+require_once __DIR__ . '/CatalogDomainServices.php';
+
 /**
  * Services Configuration file.
  *
- * Services are simply other classes/libraries that the system uses
- * to do its job. This is used by CodeIgniter to allow the core of the
- * framework to be swapped out easily without affecting the usage within
- * the rest of your application.
- *
- * This file holds any application-specific services, or service overrides
- * that you might need. An example has been included with the general
- * method format you should use for your service methods. For more examples,
- * see the core Services file at system/Config/Services.php.
+ * Service factories are split by domain using traits under app/Config/Services
+ * to keep this class focused and maintainable as the template grows.
  */
 class Services extends BaseService
 {
+    use AuthIdentityServices;
+    use TokenSecurityServices;
+    use FileDomainServices;
+    use ApiCoreServices;
+    use SystemMonitoringServices;
+    use RepositoryModelServices;
+    use CatalogDomainServices;
+
     /**
-     * User Service
+     * The Request Service
      *
-     * Proporciona UserService con todas sus dependencias inyectadas
-     *
-     * @param bool $getShared
-     * @return \App\Services\UserService
+     * @param \Config\App|bool $getShared
      */
-    public static function userService(bool $getShared = true)
+    public static function request($getShared = true): \App\HTTP\ApiRequest
     {
-        if ($getShared) {
-            return static::getSharedInstance('userService');
+        if (is_bool($getShared) && $getShared) {
+            return static::getSharedInstance('request');
         }
 
-        return new \App\Services\UserService(
-            new \App\Models\UserModel()
+        $config = $getShared instanceof \Config\App ? $getShared : config('App');
+
+        return new \App\HTTP\ApiRequest(
+            $config,
+            static::uri(),
+            'php://input',
+            new \CodeIgniter\HTTP\UserAgent()
         );
-    }
-
-    /**
-     * Auth Service
-     *
-     * Provides authentication and registration functionality
-     *
-     * @param bool $getShared
-     * @return \App\Services\AuthService
-     */
-    public static function authService(bool $getShared = true)
-    {
-        if ($getShared) {
-            return static::getSharedInstance('authService');
-        }
-
-        return new \App\Services\AuthService(
-            new \App\Models\UserModel(),
-            static::jwtService(),
-            static::refreshTokenService(),
-            static::verificationService()
-        );
-    }
-
-    /**
-     * JWT Service
-     *
-     * Provides JWT token encoding and decoding functionality
-     *
-     * @param bool $getShared
-     * @return \App\Services\JwtService
-     */
-    public static function jwtService(bool $getShared = true)
-    {
-        if ($getShared) {
-            return static::getSharedInstance('jwtService');
-        }
-
-        return new \App\Services\JwtService();
-    }
-
-    /**
-     * Email Service
-     *
-     * Provides email functionality using Symfony Mailer
-     *
-     * @param bool $getShared
-     * @return \App\Services\EmailService
-     */
-    public static function emailService(bool $getShared = true)
-    {
-        if ($getShared) {
-            return static::getSharedInstance('emailService');
-        }
-
-        return new \App\Services\EmailService();
-    }
-
-    /**
-     * Queue Manager
-     *
-     * Provides queue management functionality
-     *
-     * @param bool $getShared
-     * @return \App\Libraries\Queue\QueueManager
-     */
-    public static function queueManager(bool $getShared = true)
-    {
-        if ($getShared) {
-            return static::getSharedInstance('queueManager');
-        }
-
-        return new \App\Libraries\Queue\QueueManager();
-    }
-
-    /**
-     * Verification Service
-     *
-     * Provides email verification functionality
-     *
-     * @param bool $getShared
-     * @return \App\Services\VerificationService
-     */
-    public static function verificationService(bool $getShared = true)
-    {
-        if ($getShared) {
-            return static::getSharedInstance('verificationService');
-        }
-
-        return new \App\Services\VerificationService(
-            new \App\Models\UserModel(),
-            static::emailService()
-        );
-    }
-
-    /**
-     * Password Reset Service
-     *
-     * Provides password reset functionality
-     *
-     * @param bool $getShared
-     * @return \App\Services\PasswordResetService
-     */
-    public static function passwordResetService(bool $getShared = true)
-    {
-        if ($getShared) {
-            return static::getSharedInstance('passwordResetService');
-        }
-
-        return new \App\Services\PasswordResetService(
-            new \App\Models\UserModel(),
-            new \App\Models\PasswordResetModel(),
-            static::emailService()
-        );
-    }
-
-    /**
-     * Token Revocation Service
-     *
-     * Provides token revocation and blacklist functionality
-     *
-     * @param bool $getShared
-     * @return \App\Services\TokenRevocationService
-     */
-    public static function tokenRevocationService(bool $getShared = true)
-    {
-        if ($getShared) {
-            return static::getSharedInstance('tokenRevocationService');
-        }
-
-        return new \App\Services\TokenRevocationService(
-            new \App\Models\TokenBlacklistModel(),
-            new \App\Models\RefreshTokenModel(),
-            static::cache()
-        );
-    }
-
-    /**
-     * Refresh Token Service
-     *
-     * Manages refresh token lifecycle
-     *
-     * @param bool $getShared
-     * @return \App\Services\RefreshTokenService
-     */
-    public static function refreshTokenService(bool $getShared = true)
-    {
-        if ($getShared) {
-            return static::getSharedInstance('refreshTokenService');
-        }
-
-        return new \App\Services\RefreshTokenService(
-            new \App\Models\RefreshTokenModel(),
-            static::jwtService(),
-            new \App\Models\UserModel()
-        );
-    }
-
-    /**
-     * File Service
-     *
-     * Provides file upload, download, and deletion with storage abstraction
-     *
-     * @param bool $getShared
-     * @return \App\Services\FileService
-     */
-    public static function fileService(bool $getShared = true)
-    {
-        if ($getShared) {
-            return static::getSharedInstance('fileService');
-        }
-
-        return new \App\Services\FileService(
-            new \App\Models\FileModel(),
-            new \App\Libraries\Storage\StorageManager()
-        );
-    }
-
-    /**
-     * Audit Service
-     *
-     * Provides audit logging functionality
-     *
-     * @param bool $getShared
-     * @return \App\Services\AuditService
-     */
-    public static function auditService(bool $getShared = true)
-    {
-        if ($getShared) {
-            return static::getSharedInstance('auditService');
-        }
-
-        return new \App\Services\AuditService(
-            new \App\Models\AuditLogModel()
-        );
-    }
-
-    /**
-     * Storage Manager
-     *
-     * Provides unified file storage interface
-     *
-     * @param bool $getShared
-     * @return \App\Libraries\Storage\StorageManager
-     */
-    public static function storageManager(bool $getShared = true)
-    {
-        if ($getShared) {
-            return static::getSharedInstance('storageManager');
-        }
-
-        return new \App\Libraries\Storage\StorageManager();
-    }
-
-    /**
-     * Input Validation Service
-     *
-     * Provides centralized input validation functionality
-     *
-     * @param bool $getShared
-     * @return \App\Services\InputValidationService
-     */
-    public static function inputValidationService(bool $getShared = true)
-    {
-        if ($getShared) {
-            return static::getSharedInstance('inputValidationService');
-        }
-
-        return new \App\Services\InputValidationService();
     }
 }

@@ -23,17 +23,17 @@ return [
         'sortDirInvalid'         => 'Sort direction must be either asc or desc',
         'searchTooLong'          => 'Search query is too long',
 
-        // Username
-        'usernameRequired'       => 'Username is required',
-        'usernameAlphaNumeric'   => 'Username can only contain letters and numbers',
-        'usernameMinLength'      => 'Username must be at least 3 characters',
-        'usernameMaxLength'      => 'Username cannot exceed 100 characters',
-        'usernameTooLong'        => 'Username is too long',
+        // Names
+        'nameRequired'            => 'Name is required',
+        'nameMaxLength'           => 'Name cannot exceed 255 characters',
+        'firstNameMaxLength'     => 'First name cannot exceed 100 characters',
+        'lastNameMaxLength'      => 'Last name cannot exceed 100 characters',
 
         // Email
         'emailRequired'          => 'Email is required',
         'emailInvalid'           => 'Please provide a valid email address',
         'emailMaxLength'         => 'Email cannot exceed 255 characters',
+        'emailAlreadyRegistered' => 'This email is already registered',
 
         // Password
         'passwordRequired'       => 'Password is required',
@@ -41,11 +41,22 @@ return [
         'newPasswordRequired'    => 'New password is required',
 
         // Role
-        'roleInvalid'            => 'Role must be either user or admin',
+        'roleInvalid'            => 'Role must be either user, admin, or superadmin',
+
+        // OAuth
+        'oauthProviderInvalid'   => 'OAuth provider is not supported',
+        'oauthProviderIdMaxLength' => 'OAuth provider id cannot exceed 255 characters',
+        'avatarUrlInvalid'       => 'Avatar URL must be a valid URL',
+        'avatarUrlMaxLength'     => 'Avatar URL cannot exceed 255 characters',
 
         // User ID
+        'userIdMustBeInteger'    => 'User ID must be an integer',
         'userIdMustBePositive'   => 'User ID must be a positive integer',
         'userIdRequired'         => 'User ID is required',
+
+        // Validation configuration
+        'unknownValidationDomain' => 'Validation domain "{0}" is not registered',
+        'unknownValidationAction' => 'Validation action "{0}" is not defined for domain "{1}"',
     ],
 
     // ========================================
@@ -53,13 +64,17 @@ return [
     // ========================================
     'auth' => [
         // Login
-        'usernameOrEmailRequired' => 'Username or email is required',
+        'emailRequired'          => 'Email is required',
+        'idTokenRequired'        => 'Google ID token is required',
+        'idTokenInvalid'         => 'Google ID token is invalid',
+        'clientBaseUrlInvalid'   => 'Client base URL must be a valid URL',
 
         // Token
         'resetTokenRequired'      => 'Reset token is required',
         'resetTokenInvalid'       => 'Invalid reset token format',
         'verificationTokenRequired' => 'Verification token is required',
         'verificationTokenInvalid'  => 'Invalid verification token format',
+        'verificationTokenMinLength' => 'Verification token must be at least 10 characters',
         'refreshTokenRequired'    => 'Refresh token is required',
         'refreshTokenInvalid'     => 'Invalid refresh token',
     ],
@@ -79,6 +94,26 @@ return [
     'token' => [
         'refreshTokenRequired'   => 'Refresh token is required',
         'refreshTokenInvalid'    => 'Invalid refresh token format',
+    ],
+
+    // ========================================
+    // API Key Domain
+    // ========================================
+    'apiKey' => [
+        'nameRequired'                => 'API key name is required',
+        'nameMaxLength'               => 'Name cannot exceed {0} characters',
+        'keyPrefixRequired'           => 'Key prefix is required',
+        'keyPrefixMaxLength'          => 'Key prefix cannot exceed {0} characters',
+        'keyHashRequired'             => 'Key hash is required',
+        'keyHashMaxLength'            => 'Key hash cannot exceed {0} characters',
+        'rateLimitRequestsInteger'    => 'Rate limit requests must be an integer',
+        'rateLimitRequestsGreaterThan' => 'Rate limit requests must be greater than 0',
+        'rateLimitWindowInteger'      => 'Rate limit window must be an integer',
+        'rateLimitWindowGreaterThan'  => 'Rate limit window must be greater than 0',
+        'userRateLimitInteger'        => 'User rate limit must be an integer',
+        'userRateLimitGreaterThan'    => 'User rate limit must be greater than 0',
+        'ipRateLimitInteger'          => 'IP rate limit must be an integer',
+        'ipRateLimitGreaterThan'      => 'IP rate limit must be greater than 0',
     ],
 
     // ========================================

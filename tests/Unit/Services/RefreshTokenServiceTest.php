@@ -4,12 +4,11 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Services;
 
-use App\Exceptions\BadRequestException;
-use App\Exceptions\NotFoundException;
-use App\Interfaces\JwtServiceInterface;
+use App\DTO\Request\Identity\RefreshTokenRequestDTO;
+use App\Interfaces\Tokens\JwtServiceInterface;
 use App\Models\RefreshTokenModel;
 use App\Models\UserModel;
-use App\Services\RefreshTokenService;
+use App\Services\Tokens\RefreshTokenService;
 use CodeIgniter\Test\CIUnitTestCase;
 use Tests\Support\Traits\CustomAssertionsTrait;
 
@@ -21,6 +20,9 @@ use Tests\Support\Traits\CustomAssertionsTrait;
 class RefreshTokenServiceTest extends CIUnitTestCase
 {
     use CustomAssertionsTrait;
+
+    private const VALID_REFRESH_TOKEN = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+    private const UNKNOWN_REFRESH_TOKEN = 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb';
 
     protected RefreshTokenService $service;
     protected RefreshTokenModel $mockRefreshTokenModel;
@@ -37,10 +39,13 @@ class RefreshTokenServiceTest extends CIUnitTestCase
         $this->mockJwtService = $this->createMock(JwtServiceInterface::class);
         $this->mockUserModel = $this->createMock(UserModel::class);
 
+        $this->mockUserAccountGuard = $this->createMock(\App\Services\Users\UserAccountGuard::class);
+
         $this->service = new RefreshTokenService(
             $this->mockRefreshTokenModel,
             $this->mockJwtService,
-            $this->mockUserModel
+            $this->mockUserModel,
+            $this->mockUserAccountGuard
         );
     }
 
@@ -86,24 +91,19 @@ class RefreshTokenServiceTest extends CIUnitTestCase
 
     // ==================== REVOKE TESTS ====================
 
-    public function testRevokeWithEmptyTokenThrowsException(): void
-    {
-        $this->expectException(BadRequestException::class);
-
-        $this->service->revoke([]);
-    }
-
     public function testRevokeWithValidTokenReturnsSuccess(): void
     {
         $this->mockRefreshTokenModel
             ->expects($this->once())
             ->method('revokeToken')
-            ->with('valid-token')
+            ->with(self::VALID_REFRESH_TOKEN)
             ->willReturn(true);
 
-        $result = $this->service->revoke(['refresh_token' => 'valid-token']);
+        $result = $this->service->revoke(new RefreshTokenRequestDTO([
+            'refresh_token' => self::VALID_REFRESH_TOKEN,
+        ], service('validation')));
 
-        $this->assertSuccessResponse($result);
+        $this->assertSame(\App\Support\OperationResult::SUCCESS, $result->state);
     }
 
     public function testRevokeWithNonExistentTokenThrowsNotFoundException(): void
@@ -112,9 +112,11 @@ class RefreshTokenServiceTest extends CIUnitTestCase
             ->method('revokeToken')
             ->willReturn(false);
 
-        $this->expectException(NotFoundException::class);
+        $this->expectException(\App\Exceptions\NotFoundException::class);
 
-        $this->service->revoke(['refresh_token' => 'non-existent-token']);
+        $this->service->revoke(new RefreshTokenRequestDTO([
+            'refresh_token' => self::UNKNOWN_REFRESH_TOKEN,
+        ], service('validation')));
     }
 
     // ==================== REVOKE ALL USER TOKENS TESTS ====================
@@ -128,6 +130,6 @@ class RefreshTokenServiceTest extends CIUnitTestCase
 
         $result = $this->service->revokeAllUserTokens(1);
 
-        $this->assertSuccessResponse($result);
+        $this->assertSame(\App\Support\OperationResult::SUCCESS, $result->state);
     }
 }

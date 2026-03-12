@@ -4,6 +4,7 @@ namespace Config;
 
 use App\Filters\AuthThrottleFilter;
 use App\Filters\CorsFilter;
+use App\Filters\FeatureToggleFilter;
 use App\Filters\JwtAuthFilter;
 use App\Filters\LocaleFilter;
 use App\Filters\RequestLoggingFilter;
@@ -30,6 +31,11 @@ class Filters extends BaseFilters
         if (ENVIRONMENT === 'production') {
             array_unshift($this->required['before'], 'forcehttps');
         }
+
+        // Use TestAuthFilter instead of JwtAuthFilter during tests to simplify identity propagation
+        if (ENVIRONMENT === 'testing') {
+            $this->aliases['jwtauth'] = \App\Filters\TestAuthFilter::class;
+        }
     }
 
     /**
@@ -52,11 +58,13 @@ class Filters extends BaseFilters
         'pagecache'     => PageCache::class,
         'performance'   => PerformanceMetrics::class,
         'jwtauth'       => JwtAuthFilter::class,
+        'testauth'      => \App\Filters\TestAuthFilter::class,
         'throttle'      => ThrottleFilter::class,
         'authThrottle'  => AuthThrottleFilter::class,
         'roleauth'      => RoleAuthorizationFilter::class,
         'requestLogging' => RequestLoggingFilter::class,
         'locale'        => LocaleFilter::class,
+        'featureToggle' => FeatureToggleFilter::class,
     ];
 
     /**
@@ -105,7 +113,7 @@ class Filters extends BaseFilters
             'cors', // Add CORS headers to all responses
             // 'honeypot',
             'secureheaders', // Add security headers to all responses
-            'requestLogging', // Log all requests/responses
+            'requestLogging' => ['except' => ['health', 'ping', 'ready', 'live']], // Skip noisy health probes
         ],
     ];
 

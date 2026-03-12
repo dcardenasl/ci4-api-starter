@@ -2,24 +2,42 @@
 
 ![PHP Version](https://img.shields.io/badge/PHP-8.2%20%7C%208.3-blue)
 ![CodeIgniter](https://img.shields.io/badge/CodeIgniter-4.6-orange)
-![Tests](https://img.shields.io/badge/tests-117%20passing-success)
-![License](https://img.shields.io/badge/license-MIT-blue)
+![Arquitectura](https://img.shields.io/badge/Arquitectura-DTO--First-success)
 
 [English](README.md) | Español
 
-Una plantilla de API REST lista para produccion con CodeIgniter 4, autenticacion JWT, arquitectura en capas limpia y cobertura de tests completa.
+Una plantilla de API REST lista para producción con CodeIgniter 4 con una **arquitectura moderna orientada a DTOs**, autenticación JWT y cobertura de tests completa.
+
+## Arquitectura Core
+
+Este proyecto sigue una arquitectura de capas avanzada diseñada para la escalabilidad y lógica de negocio de alto nivel:
+
+- **DTOs Inmutables:** Utiliza clases `readonly` de PHP 8.2 para todo el transporte de datos entre capas.
+- **Patrón Repository:** La lógica de negocio está desacoplada de la persistencia de datos mediante interfaces de Repositorio.
+- **Servicios Puros:** Orquestan dominios sin conocimiento de HTTP o frameworks de base de datos.
+- **Resultados de Comando Explícitos:** Los flujos no-CRUD usan `OperationResult` para resultados deterministas.
+- **Auto-Validación:** La integridad de los datos se garantiza mediante la validación en el constructor del DTO (validador compartido).
+- **Documentación Viva:** Los esquemas de Swagger están integrados directamente en los contratos de código.
 
 ## Caracteristicas
 
-- **Autenticacion JWT** - Tokens de acceso, tokens de refresco y revocacion
-- **Control de Acceso por Roles** - Roles admin y user con proteccion por middleware
-- **Sistema de Email** - Verificacion, restablecimiento de contrasena, soporte de colas
-- **Gestion de Archivos** - Subida/descarga con soporte de almacenamiento en la nube (S3)
-- **Consultas Avanzadas** - Paginacion, filtrado, busqueda, ordenamiento
-- **Health Checks** - Endpoints listos para Kubernetes (`/health`, `/ready`, `/live`)
-- **Auditoria** - Registro automatico de cambios en datos
-- **Documentacion OpenAPI** - Swagger docs auto-generados
-- **117 Tests** - Tests unitarios, de integracion y funcionales
+- **Autenticacion JWT** - Tokens de acceso, tokens de refresco y revocacion ([Docs](docs/tech/jwt-auth.es.md))
+- **Control de Acceso por Roles** - Roles user, admin y superadmin con proteccion por middleware
+- **Google Authentication** - Soporte de login social
+- **Sistema de Email** - Verificacion, restablecimiento de contrasena, soporte de colas ([Docs](docs/tech/email.es.md))
+- **Gestion de Archivos** - Subida/descarga con drivers local y S3 ([Docs](docs/tech/file-storage.es.md))
+- **Queue System** - Procesamiento de trabajos en segundo plano ([Docs](docs/tech/QUEUE.es.md))
+- **Consultas Avanzadas** - Paginacion, filtrado, busqueda, ordenamiento mediante Repositorios ([Docs](docs/architecture/QUERIES.es.md))
+- **Auditoría** - Registro híbrido (sinc/asinc) con sanitización y niveles de severidad ([Docs](docs/tech/audit-logging.es.md))
+- **Health Checks** - Endpoints listos para Kubernetes (`/health`, `/ready`, `/live`) ([Docs](docs/tech/monitoring-health.es.md))
+- **Documentacion OpenAPI** - Swagger docs auto-generados desde los DTOs ([Docs](docs/tech/openapi.es.md))
+- **Suite de Tests Completa** - Tests unitarios, de integracion y funcionales ([Docs](docs/tech/TESTING_GUIDELINES.es.md))
+
+## Aspectos Destacados del Pipeline de Peticiones
+
+- `RequestDataCollector` centraliza la combinación de todas las entradas HTTP (query, post, raw/json, archivos) para que `ApiController` permanezca ligero.
+- `RequestDtoFactory` asegura que cada DTO reciba la `ValidationInterface` compartida, permitiendo una validación consistente basada en el constructor sin llamadas a servicios estáticos.
+- `Auditable` y todos los `app/Models/*` que lo usan reciben `AuditServiceInterface` vía DI, y `UserEntity::toArray()` elimina explícitamente campos sensibles antes de cualquier log/respuesta.
 
 ## Inicio Rapido
 
@@ -27,15 +45,16 @@ Una plantilla de API REST lista para produccion con CodeIgniter 4, autenticacion
 
 1. Haz clic en **"Use this template"** en la parte superior de esta pagina
 2. Clona tu nuevo repositorio
-3. Ejecuta el script de inicializacion:
+3. Ejecuta el instalador interactivo:
 
 ```bash
-chmod +x init.sh && ./init.sh
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/dcardenasl/ci4-api-starter/main/install.sh)"
 ```
 
 Tu API estara corriendo en `http://localhost:8080`
+Los scripts locales existentes (`init.sh`, `setup-env.sh`) se mantienen para flujos internos/avanzados.
 
-### Opcion 2: Configuracion Manual
+### Opcion 2: Configuracion Manual (avanzada/local)
 
 ```bash
 # Instalar dependencias
@@ -51,9 +70,21 @@ php spark key:generate   # Muestra la clave de encriptacion
 # Configurar base de datos (configura .env primero)
 php spark migrate
 
+# Crear el primer superadmin (ejecutar una sola vez)
+php spark users:bootstrap-superadmin --email superadmin@ejemplo.com --password 'ContrasenaFuerte123!' --first-name Super --last-name Admin
+
 # Iniciar servidor
 php spark serve
 ```
+
+## Adopcion del Template
+
+Para nuevos proyectos creados desde este repositorio, sigue primero estos documentos:
+
+1. [Contrato de Arquitectura](docs/template/ARCHITECTURE_CONTRACT.md)
+2. [Checklist de Bootstrap de Modulo](docs/template/MODULE_BOOTSTRAP_CHECKLIST.md)
+3. [Playbook CRUD Desde Cero](docs/template/CRUD_FROM_ZERO.es.md)
+4. [Quality Gates](docs/template/QUALITY_GATES.md)
 
 ## Endpoints de la API
 
@@ -64,31 +95,61 @@ POST /api/v1/auth/login        Iniciar sesion (devuelve tokens)
 POST /api/v1/auth/refresh      Refrescar token de acceso
 POST /api/v1/auth/forgot-password   Solicitar reset de contrasena
 POST /api/v1/auth/reset-password    Restablecer contrasena
-POST /api/v1/auth/verify-email      Verificar email
+GET  /api/v1/auth/validate-reset-token Validar token de reset
+GET  /api/v1/auth/verify-email      Verificar email (token en query)
+POST /api/v1/auth/verify-email      Verificar email (token en body/form)
 ```
+
+### Verificacion de correo (Opcional)
+
+Configura `AUTH_REQUIRE_EMAIL_VERIFICATION` en `.env` para controlar si la verificacion de correo es obligatoria antes de login/refresh/rutas protegidas. El valor por defecto es `true`.
 
 ### Autenticacion (Protegido)
 ```
 GET  /api/v1/auth/me           Obtener usuario actual
 POST /api/v1/auth/revoke       Revocar token actual
 POST /api/v1/auth/revoke-all   Revocar todos los tokens del usuario
+POST /api/v1/auth/resend-verification Reenviar correo de verificacion
 ```
 
 ### Usuarios (Protegido)
 ```
-GET    /api/v1/users           Listar usuarios (paginado, filtrable)
-GET    /api/v1/users/{id}      Obtener usuario por ID
-POST   /api/v1/users           Crear usuario (solo admin)
-PUT    /api/v1/users/{id}      Actualizar usuario (solo admin)
-DELETE /api/v1/users/{id}      Eliminar usuario (solo admin)
+GET    /api/v1/users           Listar usuarios (solo admin; paginado, filtrable)
+GET    /api/v1/users/{id}      Obtener usuario por ID (Propio o Admin)
+POST   /api/v1/users           Crear usuario (admin/superadmin con restricciones)
+PUT    /api/v1/users/{id}      Actualizar usuario (admin/superadmin con restricciones)
+DELETE /api/v1/users/{id}      Eliminar usuario (admin/superadmin con restricciones)
+POST   /api/v1/users/{id}/approve Aprobar usuario (solo admin)
 ```
+Nota: `admin` solo puede gestionar cuentas con rol `user`. `superadmin` puede gestionar roles privilegiados. Las cuentas `superadmin` no aparecen en listados de `/api/v1/users`.
 
 ### Archivos (Protegido)
 ```
 GET    /api/v1/files           Listar archivos del usuario
 POST   /api/v1/files/upload    Subir archivo
-GET    /api/v1/files/{id}      Obtener detalles del archivo
+GET    /api/v1/files/{id}      Descargar archivo (local) o devolver metadata/URL (S3)
 DELETE /api/v1/files/{id}      Eliminar archivo
+```
+
+### API Keys (Admin)
+```
+GET    /api/v1/api-keys           Listar API keys
+GET    /api/v1/api-keys/{id}      Obtener detalle de API key
+POST   /api/v1/api-keys           Crear API key
+PUT    /api/v1/api-keys/{id}      Actualizar API key
+DELETE /api/v1/api-keys/{id}      Eliminar API key
+```
+
+### Metricas y Auditoria (Admin)
+```
+GET  /api/v1/metrics                 Obtener resumen de metricas
+GET  /api/v1/metrics/requests        Obtener metricas recientes de requests
+GET  /api/v1/metrics/slow-requests   Obtener requests lentas
+GET  /api/v1/metrics/custom/{metric} Obtener valores de metrica personalizada
+POST /api/v1/metrics/record          Registrar metrica personalizada
+GET  /api/v1/audit                   Listar logs de auditoria
+GET  /api/v1/audit/{id}              Obtener detalle de log de auditoria
+GET  /api/v1/audit/entity/{type}/{id} Obtener auditoria por entidad
 ```
 
 ### Health (Publico)
@@ -105,14 +166,32 @@ GET /live      Sonda de liveness para Kubernetes
 ```bash
 curl -X POST http://localhost:8080/api/v1/auth/register \
   -H "Content-Type: application/json" \
-  -d '{"username":"juan","email":"juan@ejemplo.com","password":"ContrasenaSegura123!"}'
+  -d '{"email":"juan@ejemplo.com","first_name":"Juan","last_name":"Perez","password":"ContrasenaSegura123!"}'
 ```
+
+Nota de respuesta: el auto-registro crea una cuenta `pending_approval`. El login solo es posible después de la aprobación de un administrador.
+
+**Admin crea usuario (flujo de invitación):**
+```bash
+curl -X POST http://localhost:8080/api/v1/users \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer ADMIN_ACCESS_TOKEN" \
+  -d '{"email":"invitado@ejemplo.com","first_name":"Invitado","last_name":"Usuario","role":"user"}'
+```
+El admin no envía contraseña. El sistema la genera internamente y envía un correo para que el usuario defina la suya.
 
 **Iniciar sesion:**
 ```bash
 curl -X POST http://localhost:8080/api/v1/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"username":"juan","password":"ContrasenaSegura123!"}'
+  -d '{"email":"juan@ejemplo.com","password":"ContrasenaSegura123!"}'
+```
+
+**Refrescar token:**
+```bash
+curl -X POST http://localhost:8080/api/v1/auth/refresh \
+  -H "Content-Type: application/json" \
+  -d '{"refresh_token":"TU_REFRESH_TOKEN"}'
 ```
 
 **Usar endpoint protegido:**
@@ -127,48 +206,75 @@ curl -X GET "http://localhost:8080/api/v1/users?filter[role][eq]=admin&search=ju
   -H "Authorization: Bearer TU_TOKEN_DE_ACCESO"
 ```
 
+## Documentacion interactiva y Postman
+
+**Swagger UI local:**
+```bash
+# Generar/actualizar especificacion OpenAPI
+php spark swagger:generate
+
+# Levantar Swagger UI con Docker
+docker run --rm -p 8081:8080 \
+  -e SWAGGER_JSON=/swagger.json \
+  -v "$(pwd)/public/swagger.json:/swagger.json" \
+  swaggerapi/swagger-ui
+```
+Abrir `http://localhost:8081`.
+Archivo generado: `public/swagger.json` (servido en `http://localhost:8080/swagger.json`)
+
+**Swagger UI embebido (sin Docker):**
+- Archivo: `public/docs/index.html`
+- Abrir `http://localhost:8080/docs/`
+
+**Postman:**
+- Importa `public/swagger.json` en Postman y genera una colección para tu proyecto.
+  Las variables pueden vivir a nivel de colección (`baseUrl`, `accessToken`, `refreshToken`, `userId`, `fileId`).
+
 ## Estructura del Proyecto
 
 ```
 app/
 ├── Controllers/
-│   ├── ApiController.php          # Controlador base
-│   └── Api/V1/                    # Controladores API v1
-├── Services/                      # Logica de negocio
-├── Interfaces/                    # Interfaces de servicios
+│   ├── ApiController.php          # Controlador base con mapeo de DTOs
+│   └── Api/V1/                    # Controladores API
+├── DTO/                           # Objetos de Transferencia de Datos (Inmutables y Validados)
+│   ├── Request/                   # Contratos de entrada
+│   └── Response/                  # Contratos de salida (OpenAPI integrado)
+├── Services/                      # Lógica pura de negocio
+├── Interfaces/                    # Interfaces de servicios y DTOs
 ├── Models/                        # Modelos de base de datos
 ├── Entities/                      # Entidades de datos
-├── Filters/                       # Filtros HTTP (auth, throttle, cors)
+├── Filters/                       # Filtros HTTP
 ├── Exceptions/                    # Excepciones personalizadas
 ├── Libraries/
-│   ├── ApiResponse.php           # Respuestas estandarizadas
-│   └── Query/                    # Utilidades del query builder
-└── Traits/                       # Traits de modelos (Filterable, Searchable)
+│   ├── ApiResponse.php           # Normalización recursiva de DTOs
+│   └── Query/                    # Utilidades de query builder
+└── Traits/                       # Traits de modelos
 
 tests/
-├── Unit/                         # 88 tests - Sin base de datos
+├── Unit/                         # Sin base de datos
 │   ├── Libraries/                # Tests de ApiResponse
 │   └── Services/                 # Tests unitarios de servicios
-├── Integration/                  # 19 tests - Requiere base de datos
+├── Integration/                  # Requiere base de datos
 │   ├── Models/                   # Tests de modelos
 │   └── Services/                 # Tests de integracion de servicios
-└── Feature/                      # 10 tests - Tests HTTP completos
+└── Feature/                      # Tests HTTP completos
     └── Controllers/              # Tests de endpoints
 ```
 
 ## Testing
 
 ```bash
-# Ejecutar todos los tests (117)
+# Ejecutar todos los tests
 vendor/bin/phpunit
 
 # Ejecutar con salida legible
 vendor/bin/phpunit --testdox
 
 # Ejecutar suites especificas
-vendor/bin/phpunit tests/Unit           # Rapidos, sin BD (88 tests)
-vendor/bin/phpunit tests/Integration    # Necesita BD (19 tests)
-vendor/bin/phpunit tests/Feature        # Tests HTTP (10 tests)
+vendor/bin/phpunit tests/Unit           # Rapidos, sin BD
+vendor/bin/phpunit tests/Integration    # Necesita BD
+vendor/bin/phpunit tests/Feature        # Tests HTTP
 ```
 
 ## Funciones de Consulta Avanzada
@@ -194,13 +300,9 @@ GET /api/v1/users?search=juan
 
 ### Ordenamiento
 ```
-GET /api/v1/users?sort=created_at&direction=desc
+GET /api/v1/users?sort=-created_at,email
 ```
-
-### Combinado
-```
-GET /api/v1/users?search=juan&filter[role][eq]=user&sort=created_at&direction=desc&page=1&limit=10
-```
+Prefijo `-` para orden descendente. Separado por comas para múltiples campos.
 
 ## Configuracion
 
@@ -225,12 +327,29 @@ EMAIL_FROM_ADDRESS=noreply@ejemplo.com
 EMAIL_SMTP_HOST=smtp.ejemplo.com
 
 # Almacenamiento de archivos
-STORAGE_DRIVER=local
+FILE_STORAGE_DRIVER=local
 FILE_MAX_SIZE=10485760
+FILE_UPLOAD_PATH=writable/uploads/
 
 # Limite de peticiones
-THROTTLE_LIMIT=60
-THROTTLE_WINDOW=60
+RATE_LIMIT_REQUESTS=60
+RATE_LIMIT_USER_REQUESTS=100
+RATE_LIMIT_WINDOW=60
+AUTH_RATE_LIMIT_REQUESTS=5
+AUTH_RATE_LIMIT_WINDOW=900
+
+# Valores por defecto para API Keys
+API_KEY_RATE_LIMIT_DEFAULT=600
+API_KEY_USER_RATE_LIMIT_DEFAULT=60
+API_KEY_IP_RATE_LIMIT_DEFAULT=200
+API_KEY_WINDOW_DEFAULT=60
+
+# CORS
+CORS_ALLOWED_ORIGINS=http://localhost:3000,https://app.example.com
+CORS_SUPPORTS_CREDENTIALS=false
+
+# Observabilidad SLO
+SLO_API_P95_TARGET_MS=500
 ```
 
 ## Docker
@@ -254,17 +373,73 @@ docker-compose up -d
 - Limite de peticiones
 - Eliminacion suave (soft deletes)
 
+### Rotación de Secretos
+
+Rota los secretos de seguridad regularmente para mantener la postura de seguridad.
+
+**Cuándo Rotar:**
+- Después de una brecha de seguridad o sospecha de compromiso
+- Cada 90 días (recomendado para secretos JWT)
+- Cuando un desarrollador con acceso deja el equipo
+- Antes del despliegue inicial en producción
+
+**Cómo Rotar el Secreto JWT:**
+```bash
+# 1. Generar nuevo secreto (64+ caracteres recomendado)
+openssl rand -base64 64
+
+# 2. Actualizar archivo .env
+JWT_SECRET_KEY='<pegar-nuevo-secreto-aqui>'
+
+# 3. Reiniciar aplicación
+# Todos los tokens existentes serán invalidados - los usuarios deben iniciar sesión nuevamente
+```
+
+**Cómo Rotar la Clave de Encriptación:**
+```bash
+# 1. Generar nueva clave
+openssl rand -hex 32
+
+# 2. Actualizar archivo .env
+encryption.key=hex2bin:<pegar-nueva-clave-aqui>
+
+# 3. Reiniciar aplicación
+# Nota: Los datos encriptados existentes pueden volverse ilegibles
+```
+
+**⚠️ Notas Importantes:**
+- Rotar el secreto JWT invalida todos los tokens activos inmediatamente
+- Rotar la clave de encriptación puede invalidar datos de sesión encriptados
+- Siempre prueba la rotación de secretos en el entorno de staging primero
+- Mantén los secretos antiguos por 24-48 horas en caso de necesitar revertir
+- Documenta la fecha y razón de la rotación para la auditoría
+
 ## Requisitos
 
-- PHP 8.2+
+- PHP 8.1+
 - MySQL 8.0+
 - Composer 2.x
 - Extensiones: mysqli, mbstring, intl, json
 
 ## Documentacion
 
-- **CLAUDE.md** - Guia de desarrollo para asistentes de IA
-- **swagger.json** - Documentacion OpenAPI (generar con `php spark swagger:generate`)
+- **ARCHITECTURE.md** - Decisiones arquitectónicas y patrones de diseño explicados
+- **CLAUDE.md** - Guia de desarrollo para asistentes de IA (Claude Code)
+- **.claude/agents/** - Agente especializado de Claude Code para generación CRUD
+- **public/swagger.json** - Documentacion OpenAPI (generar con `php spark swagger:generate`)
+
+**¿Nuevo en el proyecto?** Empieza con `ARCHITECTURE.md` para entender por qué el código está estructurado así.
+
+### Desarrollo Asistido por IA
+
+Esta plantilla incluye un agente especializado de [Claude Code](https://claude.ai/code) que actúa como arquitecto experto para este proyecto. Cuando usas Claude Code, el agente automáticamente te ayuda a:
+- Crear recursos CRUD completos siguiendo todos los patrones arquitectónicos
+- Generar y alinear las capas CRUD (entidades, modelos, DTOs, servicios, controladores, rutas y tests)
+- Guiar explícitamente el paso de migraciones (los archivos de migración no se generan automáticamente con `make:crud`)
+- Mantener consistencia con las convenciones de código existentes
+- Seguir las mejores prácticas de seguridad y testing
+
+Consulta `.claude/README.md` para detalles sobre el uso del agente.
 
 ## Licencia
 

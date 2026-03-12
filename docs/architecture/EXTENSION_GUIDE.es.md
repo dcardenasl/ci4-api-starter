@@ -1,0 +1,55 @@
+# Guía de Extensión
+
+
+## Añadir un Nuevo Recurso CRUD
+
+Proceso completo paso a paso:
+
+1. **Scaffold primero** - `php spark make:crud Product --domain Catalog --route products`
+2. **Validar scaffold** - `php spark module:check Product --domain Catalog`
+3. **Crear migración(es)** - `php spark make:migration CreateProductsTable`
+4. **Alinear entity/model** - campos, casts, validación, traits de query
+5. **Cerrar contratos DTO** - Request/Response DTOs + atributos OpenAPI
+6. **Cerrar servicio** - lógica pura + estrategia de repositorio
+7. **Registrar dependencias** - actualizar `app/Config/Services.php` cuando aplique
+8. **Crear/verificar rutas** - actualizar `app/Config/Routes.php`
+9. **Añadir archivos de idioma** - `app/Language/{lang}/Products.php`
+10. **Escribir tests** - pruebas Unit, Integration, Feature
+11. **Ejecutar quality/docs gates** - `composer quality` + `php spark swagger:generate`
+
+## Inicio Rápido
+
+Ver [`../GETTING_STARTED.md`](../GETTING_STARTED.md) para un recorrido completo con ejemplos de código.
+
+El repo incluye un módulo de ejemplo (`DemoProduct` en el dominio `Catalog`). Revisa su estructura (DTOs, controladores, servicios y tests) para entender cómo lucen los artefactos generados y usa `php spark module:check <Resource> --domain <Domain>` para validar tus propios módulos.
+
+El comando `make:crud` genera entity/model/interface/service/controller/DTOs/docs/i18n/tests, pero **no** genera archivos de migración.
+
+## Añadir Filtros Personalizados
+
+```php
+// 1. Crear filtro
+// app/Filters/MyFilter.php
+class MyFilter implements FilterInterface { ... }
+
+// 2. Registrar alias
+// app/Config/Filters.php
+public array $aliases = [
+    'myfilter' => \App\Filters\MyFilter::class,
+];
+
+// 3. Usar en rutas
+$routes->group('', ['filter' => 'myfilter'], function ($routes) {
+    // ...
+});
+```
+
+## Añadir Excepciones Personalizadas
+
+```php
+// app/Exceptions/PaymentRequiredException.php
+class PaymentRequiredException extends ApiException
+{
+    protected int $statusCode = 402;
+}
+```

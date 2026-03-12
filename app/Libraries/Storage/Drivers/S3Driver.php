@@ -21,9 +21,10 @@ class S3Driver implements StorageDriverInterface
 
     public function __construct()
     {
-        $this->bucket = env('AWS_BUCKET', '');
-        $this->region = env('AWS_DEFAULT_REGION', 'us-east-1');
-        $this->baseUrl = env('AWS_URL');
+        $this->bucket = (string) (getenv('AWS_BUCKET') ?: env('AWS_BUCKET', ''));
+        $this->region = (string) (getenv('AWS_DEFAULT_REGION') ?: env('AWS_DEFAULT_REGION', 'us-east-1'));
+        $baseUrl = (string) (getenv('AWS_URL') ?: env('AWS_URL', ''));
+        $this->baseUrl = $baseUrl === '' ? null : $baseUrl;
 
         if (empty($this->bucket)) {
             throw new \RuntimeException('AWS_BUCKET environment variable is required for S3 driver');
@@ -31,8 +32,8 @@ class S3Driver implements StorageDriverInterface
 
         $client = new S3Client([
             'credentials' => [
-                'key' => env('AWS_ACCESS_KEY_ID', ''),
-                'secret' => env('AWS_SECRET_ACCESS_KEY', ''),
+                'key' => (string) (getenv('AWS_ACCESS_KEY_ID') ?: env('AWS_ACCESS_KEY_ID', '')),
+                'secret' => (string) (getenv('AWS_SECRET_ACCESS_KEY') ?: env('AWS_SECRET_ACCESS_KEY', '')),
             ],
             'region' => $this->region,
             'version' => 'latest',

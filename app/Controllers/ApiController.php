@@ -4,35 +4,34 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
+use App\DTO\Request\BaseRequestDTO;
+use App\DTO\SecurityContext;
+use App\Exceptions\ValidationException;
+use App\HTTP\ApiRequest;
+use App\Libraries\ApiResponse;
+use App\Libraries\ContextHolder;
 use CodeIgniter\API\ResponseTrait;
 use CodeIgniter\Controller;
+use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
+use Config\Services;
 use Exception;
+use Psr\Log\LoggerInterface;
 
 /**
  * Base API Controller
  *
- * Provides standardized CRUD operations and request handling.
- * Child controllers only need to define $serviceName.
+ * Provides standardized request handling and automated DTO validation.
+ *
+ * @property \App\HTTP\ApiRequest $request
  */
 abstract class ApiController extends Controller
 {
     use ResponseTrait;
 
     /**
-     * Service name to load from Config\Services
-     * Override in child controllers
-     */
-    protected string $serviceName = '';
-
-    /**
-     * Cached service instance
-     */
-    protected ?object $service = null;
-
-    /**
-     * Custom status codes per method
-     * Override in child controllers if needed
+     * Map controller actions to success HTTP status codes.
+     * @var array<string, int>
      */
     protected array $statusCodes = [
         'store'   => 201,
@@ -42,212 +41,183 @@ abstract class ApiController extends Controller
     ];
 
     /**
-     * Get the service instance
+     * Controllers must resolve their primary service explicitly.
      */
-    protected function getService(): object
+    abstract protected function resolveDefaultService(): object;
+
+    protected object $defaultService;
+
+    public function initController(RequestInterface $request, ResponseInterface $response, LoggerInterface $logger)
     {
-        if ($this->service === null) {
-            $method = $this->serviceName;
-            $this->service = \Config\Services::$method();
-        }
-        return $this->service;
+        parent::initController($request, $response, $logger);
+        $this->defaultService = $this->resolveDefaultService();
     }
 
     /**
-     * Get HTTP status code for successful operations
+     * Core request handler with automated DTO support
+     *
+     * @param string|callable $target Service method name or custom callable
+     * @param string|null $dtoClass Optional DTO class to validate and map request data
+     * @param array|null $additionalParams Extra params to merge into the request
      */
-    protected function getSuccessStatus(string $method): int
-    {
-        return $this->statusCodes[$method] ?? 200;
-    }
-
-    // =========================================================================
-    // CRUD Methods - Override only when needed
-    // =========================================================================
-
-    public function index(): ResponseInterface
-    {
-        return $this->handleRequest('index');
-    }
-
-    public function show($id = null): ResponseInterface
-    {
-        return $this->handleRequest('show', ['id' => $id]);
-    }
-
-    public function create(): ResponseInterface
-    {
-        return $this->handleRequest('store');
-    }
-
-    public function update($id = null): ResponseInterface
-    {
-        return $this->handleRequest('update', ['id' => $id]);
-    }
-
-    public function delete($id = null): ResponseInterface
-    {
-        return $this->handleRequest('destroy', ['id' => $id]);
-    }
-
-    // =========================================================================
-    // Request Handling
-    // =========================================================================
-
-    /**
-     * Handle an API request by delegating to the service layer
-     */
-    protected function handleRequest(string $method, ?array $params = null): ResponseInterface
+    protected function handleRequest(string|callable $target, ?string $dtoClass = null, ?array $additionalParams = null): ResponseInterface
     {
         try {
-            $data = $this->collectRequestData($params);
-            $result = $this->getService()->$method($data);
-            $status = $this->determineStatus($result, $method);
+            $data = (array) $this->collectRequestData($additionalParams);
+            $securityContext = $this->establishSecurityContext();
 
-            return $this->respond($result, $status);
+            $result = $this->executeTarget($target, $dtoClass, $data, $securityContext);
+            // If result is already a response, return it directly
+            if ($result instanceof ResponseInterface) {
+                return $result;
+            }
+
+            $methodName = is_string($target) ? $target : '';
+            $resultObject = ApiResponse::fromResult($result, $methodName, $this->statusCodes);
+
+            return $this->respond($resultObject->body, $resultObject->status);
+        } catch (ValidationException $e) {
+            return $this->respond($e->toArray(), 422);
         } catch (Exception $e) {
             return $this->handleException($e);
         }
     }
 
     /**
-     * Collect all request data from various sources
+     * Establish the security context
+     */
+    private function establishSecurityContext(): SecurityContext
+    {
+        // If a context is already established (e.g., by a Filter or a Test), respect it
+        $existingContext = ContextHolder::get();
+        if ($existingContext !== null && $existingContext->user_id !== null) {
+            return $existingContext;
+        }
+
+        $securityContext = new SecurityContext(
+            $this->getUserId(),
+            $this->getUserRole(),
+            $this->buildRequestMetadata()
+        );
+
+        // Set context globally for this request
+        ContextHolder::set($securityContext);
+
+        return $securityContext;
+    }
+
+    /**
+     * Gather request metadata once at the HTTP boundary.
+     *
+     * @return array<string, mixed>
+     */
+    private function buildRequestMetadata(): array
+    {
+        return Services::requestAuditContextFactory()->buildMetadata($this->request);
+    }
+
+    /**
+     * Execute the target service method or callable
+     */
+    private function executeTarget(string|callable $target, ?string $dtoClass, array $data, SecurityContext $context): mixed
+    {
+        // 1. Resolve Payload (DTO or Array)
+        $payload = $data;
+        if ($dtoClass !== null) {
+            if (!class_exists($dtoClass)) {
+                throw new \InvalidArgumentException("DTO class '{$dtoClass}' not found.");
+            }
+
+            if (!is_subclass_of($dtoClass, BaseRequestDTO::class)) {
+                throw new \InvalidArgumentException("DTO class '{$dtoClass}' must extend " . BaseRequestDTO::class . '.');
+            }
+
+            /** @var class-string<BaseRequestDTO> $dtoClass */
+            $payload = Services::requestDtoFactory()->make(
+                $dtoClass,
+                $this->withSecurityContext($data, $context)
+            );
+        }
+
+        // 2. Resolve and execute target
+        // If string, assume it's a method of the associated service
+        if (is_string($target)) {
+            return $this->defaultService->{$target}($payload, $context);
+        }
+
+        // Otherwise, execute as a standard callable (Closure, [$this, 'method'], etc.)
+        return $target($payload, $context);
+    }
+
+    /**
+     * Keep context enrichment at the HTTP boundary so DTOs remain pure data objects.
+     */
+    private function withSecurityContext(array $data, SecurityContext $context): array
+    {
+        if (!isset($data['user_id']) && $context->user_id !== null) {
+            $data['user_id'] = $context->user_id;
+        }
+
+        if (!isset($data['user_role']) && $context->user_role !== null) {
+            $data['user_role'] = $context->user_role;
+        }
+
+        return $data;
+    }
+
+    /**
+     * Standardize response output
+     */
+    public function respond(mixed $data = null, ?int $status = null, string $message = ''): ResponseInterface
+    {
+        if ($data instanceof ResponseInterface) {
+            return $data;
+        }
+
+        if ($data !== null) {
+            $data = ApiResponse::convertDataToArrays($data);
+        }
+
+        // Determine status if not provided (fallback)
+        if ($status === null) {
+            $status = (isset($data['status']) && $data['status'] === 'error') ? 400 : 200;
+            if (isset($data['code']) && is_int($data['code'])) {
+                $status = $data['code'];
+            }
+        }
+
+        return $this->response->setJSON($data)->setStatusCode($status);
+    }
+
+
+    /**
+     * Collect all incoming request data and inject auth context
      */
     protected function collectRequestData(?array $params = null): array
     {
-        $data = array_merge(
-            $this->request->getGet() ?? [],
-            $this->request->getPost() ?? [],
-            $this->request->getRawInput(),
-            $this->getJsonData(),
-            $params ?? []
-        );
-
-        // Add authenticated user ID if available
-        if ($userId = $this->getUserId()) {
-            $data['user_id'] = $userId;
-        }
-
-        return $this->sanitizeInput($data);
+        /** @var \App\HTTP\ApiRequest $request */
+        $request = $this->request;
+        return Services::requestDataCollector()->collect($request, $params);
     }
 
-    /**
-     * Parse JSON data from request body
-     */
-    protected function getJsonData(): array
-    {
-        $body = $this->request->getBody();
-        if (empty($body)) {
-            return [];
-        }
-
-        $json = json_decode($body, true);
-        return (json_last_error() === JSON_ERROR_NONE && is_array($json)) ? $json : [];
-    }
-
-    /**
-     * Sanitize input to prevent XSS
-     */
-    protected function sanitizeInput(array $data): array
-    {
-        return array_map(function ($value) {
-            if (is_string($value)) {
-                return strip_tags(trim($value));
-            }
-            if (is_array($value)) {
-                return $this->sanitizeInput($value);
-            }
-            return $value;
-        }, $data);
-    }
-
-    /**
-     * Determine HTTP status code based on result
-     */
-    protected function determineStatus(array $result, string $method): int
-    {
-        return isset($result['errors'])
-            ? ResponseInterface::HTTP_BAD_REQUEST
-            : $this->getSuccessStatus($method);
-    }
-
-    /**
-     * Handle exceptions and return appropriate error response
-     */
     protected function handleException(Exception $e): ResponseInterface
     {
-        log_message('error', 'API Exception: ' . $e->getMessage());
-        log_message('error', 'Trace: ' . $e->getTraceAsString());
+        // Log the full error for server-side monitoring
+        log_message('error', '[' . get_class($e) . '] ' . $e->getMessage() . "\n" . $e->getTraceAsString());
 
-        // Custom API exceptions
-        if ($e instanceof \App\Exceptions\ApiException) {
-            return $this->respond($e->toArray(), $e->getStatusCode());
-        }
+        $resultObject = \App\Support\ExceptionFormatter::format($e);
 
-        // Database exceptions
-        if ($e instanceof \CodeIgniter\Database\Exceptions\DatabaseException) {
-            log_message('critical', 'Database error: ' . $e->getMessage());
-            return $this->respond([
-                'status' => 'error',
-                'message' => lang('Api.databaseError'),
-                'errors' => [],
-            ], 500);
-        }
-
-        // Generic exceptions
-        return $this->respond([
-            'status' => 'error',
-            'message' => $e->getMessage(),
-            'errors' => [],
-        ], 500);
+        return $this->respond($resultObject->body, $resultObject->status);
     }
 
-    // =========================================================================
-    // Auth Helpers
-    // =========================================================================
 
-    /**
-     * Get authenticated user ID from request (set by JwtAuthFilter)
-     */
     protected function getUserId(): ?int
     {
-        return $this->request->userId ?? null;
+        return $this->request instanceof ApiRequest ? $this->request->getAuthUserId() : null;
     }
 
-    /**
-     * Get authenticated user role from request (set by JwtAuthFilter)
-     */
     protected function getUserRole(): ?string
     {
-        return $this->request->userRole ?? null;
-    }
-
-    // =========================================================================
-    // Response Helpers
-    // =========================================================================
-
-    protected function respondCreated(array $data = []): ResponseInterface
-    {
-        return $this->respond($data, 201);
-    }
-
-    protected function respondNoContent(): ResponseInterface
-    {
-        return $this->respond(null, 204);
-    }
-
-    protected function respondNotFound(?string $message = null): ResponseInterface
-    {
-        return $this->respond(['error' => $message ?? 'Not found'], 404);
-    }
-
-    protected function respondUnauthorized(?string $message = null): ResponseInterface
-    {
-        return $this->respond(['error' => $message ?? 'Unauthorized'], 401);
-    }
-
-    protected function respondValidationError(array $errors): ResponseInterface
-    {
-        return $this->respond(['errors' => $errors], 422);
+        return $this->request instanceof ApiRequest ? $this->request->getAuthUserRole() : null;
     }
 }

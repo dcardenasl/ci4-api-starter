@@ -1,61 +1,71 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use App\Entities\UserEntity;
 use App\Traits\Filterable;
 use App\Traits\Searchable;
-use CodeIgniter\Model;
 
-class UserModel extends Model
+class UserModel extends BaseAuditableModel
 {
     use Filterable;
     use Searchable;
-    // Configuración de tabla
+
+    /**
+     * @var string
+     */
     protected $table            = 'users';
+
     protected $primaryKey       = 'id';
     protected $useAutoIncrement = true;
     protected $returnType       = UserEntity::class;
-
-    // Soft deletes (borrado lógico)
     protected $useSoftDeletes   = true;
-
-    // Protección contra mass assignment
     protected $protectFields    = true;
+
+    /**
+     * @var array<int, string>
+     */
     protected $allowedFields    = [
-        'username',
         'email',
+        'first_name',
+        'last_name',
         'password',
         'role',
+        'status',
+        'approved_at',
+        'approved_by',
+        'invited_at',
+        'invited_by',
+        'oauth_provider',
+        'oauth_provider_id',
+        'avatar_url',
         'email_verification_token',
         'verification_token_expires',
         'email_verified_at',
+        'deleted_at',
     ];
 
-    // Gestión automática de timestamps
     protected $useTimestamps      = true;
     protected $dateFormat         = 'datetime';
     protected $createdField       = 'created_at';
     protected $updatedField       = 'updated_at';
     protected $deletedField       = 'deleted_at';
 
-    // Reglas de validación (integridad de datos)
+    /**
+     * Validation rules (data integrity)
+     *
+     * @var array<string, array<string, array<string, string>|string>|string>
+     */
     protected $validationRules = [
+        'id'    => 'permit_empty|is_natural_no_zero',
         'email' => [
-            'rules'  => 'required|valid_email_idn|max_length[255]|is_unique[users.email,id,{id}]',
+            'rules'  => 'permit_empty|valid_email_idn|max_length[255]|is_unique[users.email,id,{id}]',
             'errors' => [
-                'required'    => '{field} is required',
-                'valid_email_idn' => 'Please provide a valid email',
-                'is_unique'   => 'This email is already registered',
-            ],
-        ],
-        'username' => [
-            'rules'  => 'required|alpha_numeric|min_length[3]|max_length[100]|is_unique[users.username,id,{id}]',
-            'errors' => [
-                'required'      => '{field} is required',
-                'alpha_numeric' => 'Username can only contain letters and numbers',
-                'min_length'    => 'Username must be at least {param} characters',
-                'is_unique'     => 'This username is already taken',
+                'valid_email_idn' => 'InputValidation.common.emailInvalid',
+                'max_length' => 'InputValidation.common.emailMaxLength',
+                'is_unique' => 'InputValidation.common.emailAlreadyRegistered',
             ],
         ],
     ];
@@ -63,12 +73,13 @@ class UserModel extends Model
     protected $skipValidation       = false;
     protected $cleanValidationRules = true;
 
-    // Search and filter configuration
-    protected array $searchableFields = ['username', 'email'];
-    protected array $filterableFields = ['role', 'email', 'created_at', 'id', 'username'];
-    protected array $sortableFields = ['id', 'username', 'email', 'created_at', 'role'];
+    /** @var array<int, string> */
+    protected array $searchableFields = ['email', 'first_name', 'last_name'];
+    /** @var array<int, string> */
+    protected array $filterableFields = ['role', 'status', 'email', 'created_at', 'id', 'first_name', 'last_name'];
+    /** @var array<int, string> */
+    protected array $sortableFields = ['id', 'email', 'created_at', 'role', 'status', 'first_name', 'last_name'];
 
-    // Callbacks para procesamiento adicional
     protected $allowCallbacks = true;
     protected $beforeInsert   = [];
     protected $afterInsert    = [];
@@ -78,4 +89,5 @@ class UserModel extends Model
     protected $afterFind      = [];
     protected $beforeDelete   = [];
     protected $afterDelete    = [];
+
 }

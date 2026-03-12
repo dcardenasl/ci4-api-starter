@@ -1,0 +1,259 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Feature\Controllers;
+
+use App\Models\UserModel;
+use Tests\Support\ApiTestCase;
+use Tests\Support\Traits\AuthTestTrait;
+
+class UserControllerTest extends ApiTestCase
+{
+    use AuthTestTrait;
+
+    protected UserModel $userModel;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->userModel = new UserModel();
+        $this->actAs('admin');
+
+        // Ensure static context is set for background model operations (Auditable trait)
+        \App\Libraries\ContextHolder::set(new \App\DTO\SecurityContext($this->currentUserId, $this->currentUserRole));
+    }
+
+    public function testListUsersRequiresAuth(): void
+    {
+        \App\Libraries\ContextHolder::flush();
+        $this->clearTestRequestHeaders();
+        $result = $this->get('/api/v1/users');
+
+        $result->assertStatus(401);
+    }
+
+    public function testListUsersReturnsSuccess(): void
+    {
+        $result = $this->get('/api/v1/users');
+
+        $result->assertStatus(200);
+
+        $json = $this->getResponseJson($result);
+        $this->assertEquals('success', $json['status']);
+    }
+
+    public function testAdminCanCreateUpdateAndDeleteUser(): void
+    {
+        $createResult = $this->withBodyFormat('json')->post('/api/v1/users', [
+            'email' => 'created@example.com',
+            'role' => 'user',
+        ]);
+
+        $createResult->assertStatus(201);
+        $createJson = $this->getResponseJson($createResult);
+        $createdId = $createJson['data']['id'] ?? null;
+        $this->assertNotNull($createdId);
+        $this->assertEquals('active', $createJson['data']['status'] ?? null);
+
+        $this->resetRequest();
+
+        $updateResult = $this->withBodyFormat('json')->put("/api/v1/users/{$createdId}", [
+            'first_name' => 'Updated',
+        ]);
+
+        $updateResult->assertStatus(200);
+
+        $deleteResult = $this->delete("/api/v1/users/{$createdId}");
+
+        $deleteResult->assertStatus(200);
+    }
+
+    public function testAdminCreateUserIsLoggedInAudit(): void
+    {
+        $this->enableAudit();
+
+        $createResult = $this->withBodyFormat('json')->post('/api/v1/users', [
+            'email' => 'audit-created@example.com',
+            'role' => 'user',
+        ]);
+
+        $createResult->assertStatus(201);
+        $createJson = $this->getResponseJson($createResult);
+        $createdId = (int) ($createJson['data']['id'] ?? 0);
+        $this->assertGreaterThan(0, $createdId);
+
+        $auditCount = $this->db->table('audit_logs')
+            ->where('entity_type', 'users')
+            ->where('entity_id', $createdId)
+            ->where('action', 'create')
+            ->countAllResults();
+
+        $this->assertGreaterThan(0, $auditCount);
+    }
+
+    public function testAdminCannotCreateAdminUser(): void
+    {
+        $result = $this->withBodyFormat('json')->post('/api/v1/users', [
+            'email' => 'new-admin@example.com',
+            'role' => 'admin',
+        ]);
+
+        $result->assertStatus(403);
+    }
+
+    public function testAdminCannotCreateSuperadminUser(): void
+    {
+        $result = $this->withBodyFormat('json')->post('/api/v1/users', [
+            'email' => 'new-superadmin@example.com',
+            'role' => 'superadmin',
+        ]);
+
+        $result->assertStatus(403);
+    }
+
+    public function testAdminCannotUpdateAnotherAdmin(): void
+    {
+        $targetAdminId = $this->createUser('target-admin@example.com', 'ValidPass123!', 'admin');
+
+        $result = $this->withBodyFormat('json')->put("/api/v1/users/{$targetAdminId}", [
+            'first_name' => 'Blocked',
+        ]);
+
+        $result->assertStatus(403);
+    }
+
+    public function testAdminCannotDeleteAnotherAdmin(): void
+    {
+        $targetAdminId = $this->createUser('target-delete-admin@example.com', 'ValidPass123!', 'admin');
+
+        $result = $this->delete("/api/v1/users/{$targetAdminId}");
+
+        $result->assertStatus(403);
+    }
+
+    public function testAdminCannotDeleteSuperadmin(): void
+    {
+        $superadminId = $this->createUser('target-superadmin@example.com', 'ValidPass123!', 'superadmin');
+
+        $result = $this->delete("/api/v1/users/{$superadminId}");
+
+        $result->assertStatus(403);
+    }
+
+    public function testListUsersDoesNotIncludeSuperadmin(): void
+    {
+        $this->createUser('hidden-superadmin@example.com', 'ValidPass123!', 'superadmin');
+
+        $result = $this->get('/api/v1/users');
+
+        $result->assertStatus(200);
+        $json = $this->getResponseJson($result);
+        $roles = array_map(
+            static fn ($item) => $item['role'] ?? null,
+            $json['data'] ?? []
+        );
+
+        $this->assertNotContains('superadmin', $roles);
+    }
+
+    public function testSuperadminCanManageAdminUsers(): void
+    {
+        $this->actAs('superadmin');
+        \App\Libraries\ContextHolder::set(new \App\DTO\SecurityContext($this->currentUserId, $this->currentUserRole));
+
+        $createResult = $this->withBodyFormat('json')->post('/api/v1/users', [
+            'email' => 'managed-admin@example.com',
+            'role' => 'admin',
+        ]);
+
+        $createResult->assertStatus(201);
+        $createJson = $this->getResponseJson($createResult);
+        $createdId = (int) ($createJson['data']['id'] ?? 0);
+        $this->assertGreaterThan(0, $createdId);
+
+        $this->resetRequest();
+
+        $updateResult = $this->withBodyFormat('json')->put("/api/v1/users/{$createdId}", [
+            'first_name' => 'Managed',
+        ]);
+        $updateResult->assertStatus(200);
+
+        $deleteResult = $this->delete("/api/v1/users/{$createdId}");
+        $deleteResult->assertStatus(200);
+    }
+
+    public function testNonAdminCannotCreateUser(): void
+    {
+        $this->actAs('user');
+
+        $result = $this->withBodyFormat('json')->post('/api/v1/users', [
+            'email' => 'blocked@example.com',
+            'role' => 'user',
+        ]);
+
+        $result->assertStatus(403);
+    }
+
+    public function testAdminCreateUserRejectsPasswordField(): void
+    {
+        $result = $this->withBodyFormat('json')->post('/api/v1/users', [
+            'email' => 'blocked-password@example.com',
+            'password' => 'ValidPass123!',
+            'role' => 'user',
+        ]);
+
+        $result->assertStatus(422);
+
+        $json = $this->getResponseJson($result);
+        $this->assertArrayHasKey('errors', $json);
+        $this->assertArrayHasKey('password', $json['errors']);
+    }
+
+    public function testAdminCannotApproveInvitedUser(): void
+    {
+        $createResult = $this->withBodyFormat('json')->post('/api/v1/users', [
+            'email' => 'already-invited@example.com',
+            'role' => 'user',
+        ]);
+
+        $createResult->assertStatus(201);
+        $createJson = $this->getResponseJson($createResult);
+        $createdId = $createJson['data']['id'] ?? null;
+        $this->assertNotNull($createdId);
+
+        $approveResult = $this->post("/api/v1/users/{$createdId}/approve");
+
+        $approveResult->assertStatus(409);
+    }
+
+    public function testAdminCanApprovePendingApprovalUser(): void
+    {
+        $pendingUserId = $this->createUser(
+            'pending-approval@example.com',
+            'ValidPass123!',
+            'user',
+            'pending_approval'
+        );
+
+        $approveResult = $this->post("/api/v1/users/{$pendingUserId}/approve");
+        $approveResult->assertStatus(200);
+
+        $approveJson = $this->getResponseJson($approveResult);
+        $this->assertEquals('success', $approveJson['status'] ?? null);
+        $this->assertEquals('active', $approveJson['data']['status'] ?? null);
+    }
+
+    public function testAdminCannotApproveAlreadyActiveUser(): void
+    {
+        $activeUserId = $this->createUser(
+            'already-active-feature@example.com',
+            'ValidPass123!',
+            'user',
+            'active'
+        );
+
+        $approveResult = $this->post("/api/v1/users/{$activeUserId}/approve");
+        $approveResult->assertStatus(409);
+    }
+}

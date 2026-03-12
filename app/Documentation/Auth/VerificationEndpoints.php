@@ -26,12 +26,11 @@ use OpenApi\Attributes as OA;
             content: new OA\JsonContent(
                 properties: [
                     new OA\Property(property: 'status', type: 'string', example: 'success'),
-                    new OA\Property(property: 'message', type: 'string'),
                     new OA\Property(
                         property: 'data',
                         type: 'object',
                         properties: [
-                            new OA\Property(property: 'message', type: 'string'),
+                            new OA\Property(property: 'success', type: 'boolean', example: true),
                         ]
                     ),
                 ],
@@ -53,12 +52,11 @@ use OpenApi\Attributes as OA;
             content: new OA\JsonContent(
                 properties: [
                     new OA\Property(property: 'status', type: 'string', example: 'success'),
-                    new OA\Property(property: 'message', type: 'string'),
                     new OA\Property(
                         property: 'data',
                         type: 'object',
                         properties: [
-                            new OA\Property(property: 'message', type: 'string'),
+                            new OA\Property(property: 'success', type: 'boolean', example: true),
                         ]
                     ),
                 ],

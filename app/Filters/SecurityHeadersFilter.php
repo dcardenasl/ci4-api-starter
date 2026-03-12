@@ -18,7 +18,7 @@ class SecurityHeadersFilter implements FilterInterface
 {
     public function before(RequestInterface $request, $arguments = null)
     {
-        // No action needed before the request
+        return $request;
     }
 
     public function after(RequestInterface $request, ResponseInterface $response, $arguments = null)

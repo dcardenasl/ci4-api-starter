@@ -1,7 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Filters;
 
+use App\Entities\ApiKeyEntity;
+use App\Filters\Concerns\ApiKeyThrottleHelpers;
+use App\Filters\Concerns\RateLimitResponseHelpers;
+use App\HTTP\ApiRequest;
 use CodeIgniter\Filters\FilterInterface;
 use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
@@ -9,8 +15,22 @@ use Config\Services;
 
 class ThrottleFilter implements FilterInterface
 {
+    use ApiKeyThrottleHelpers;
+    use RateLimitResponseHelpers;
+
     /**
-     * Rate limit requests by IP address and JWT token
+     * Rate limit requests by IP address, user ID (if authenticated), and API key
+     * (if the X-App-Key header is present).
+     *
+     * Strategy matrix:
+     *
+     * | Context                | Primary limit         | Secondary limit         |
+     * |------------------------|-----------------------|-------------------------|
+     * | No key + no JWT        | IP (60/min)           | —                       |
+     * | No key + with JWT      | IP (60/min)           | user_id (100/min)       |
+     * | Valid key + no JWT     | app_key (600/min)     | IP defensive (200/min)  |
+     * | Valid key + with JWT   | app_key (600/min)     | user_id (60/min)        |
+     * | Invalid/inactive key   | 401 Unauthorized      | —                       |
      *
      * @param RequestInterface $request
      * @param array|null $arguments
@@ -18,118 +38,134 @@ class ThrottleFilter implements FilterInterface
      */
     public function before(RequestInterface $request, $arguments = null)
     {
-        $cache = Services::cache();
-        $response = service('response');
+        $cache    = Services::cache();
+        $response = Services::response();
 
-        // Get rate limit configuration
-        $maxRequests = (int) env('RATE_LIMIT_REQUESTS', 60);
-        $window = (int) env('RATE_LIMIT_WINDOW', 60); // in seconds
+        $ip     = $request->getIPAddress();
+        $user_id = $request instanceof ApiRequest ? $request->getAuthUserId() : null;
 
-        // Get identifier (IP + user ID if authenticated)
-        $identifier = $this->getIdentifier($request);
+        // ------------------------------------------------------------------
+        // 1. Resolve API key from X-App-Key header
+        // ------------------------------------------------------------------
+        $rawKey = $request->getHeaderLine('X-App-Key');
+        $appKey = null;
 
-        // Cache key for this identifier
-        $cacheKey = 'rate_limit_' . $identifier;
+        if ($rawKey !== '') {
+            $appKey = $this->resolveApiKey($cache, $rawKey);
 
-        // Get current request count
-        $requests = $cache->get($cacheKey);
-
-        if ($requests === null) {
-            // First request in this window
-            $cache->save($cacheKey, 1, $window);
-            $remaining = $maxRequests - 1;
-        } else {
-            $requests = (int) $requests;
-
-            if ($requests >= $maxRequests) {
-                // Rate limit exceeded
-                return $this->rateLimitExceeded($response, $maxRequests, $window);
+            if ($appKey === false) {
+                // Key present but invalid or inactive → 401
+                $this->logApiKeyAuthFailure($rawKey, $request);
+                return $this->unauthorizedApiKeyResponse($response);
             }
-
-            // Increment request count
-            $cache->save($cacheKey, $requests + 1, $window);
-            $remaining = $maxRequests - ($requests + 1);
         }
 
-        // Store rate limit info in request for after() method
-        $request->rateLimitInfo = [
-            'limit' => $maxRequests,
-            'remaining' => max(0, $remaining),
-            'reset' => time() + $window,
-        ];
+        // ------------------------------------------------------------------
+        // 2. Extract user_id from JWT when it has not yet been set by JwtAuthFilter
+        //    (ThrottleFilter runs before JwtAuthFilter on public routes).
+        //    We do a best-effort, non-security-critical parse of the bearer token
+        //    solely to apply per-user rate limiting.
+        // ------------------------------------------------------------------
+        if ($user_id === null) {
+            $user_id = $this->extractUserIdFromBearer($request);
+        }
+
+        // ------------------------------------------------------------------
+        // 3. Apply rate limits according to strategy matrix
+        // ------------------------------------------------------------------
+        $apiConfig = config('Api');
+        $window = $apiConfig->rateLimitWindow;
+
+        if ($appKey instanceof ApiKeyEntity) {
+            $apiKeyResult = $this->enforceApiKeyRateLimit(
+                $cache,
+                $appKey,
+                $ip,
+                $user_id,
+                $window,
+                fn (int $maxRequests, int $window): ResponseInterface =>
+                    $this->rateLimitExceeded($response, $maxRequests, $window)
+            );
+
+            if ($apiKeyResult instanceof ResponseInterface) {
+                return $apiKeyResult;
+            }
+
+            // Report the primary (key-level) limit in headers
+            if ($request instanceof ApiRequest) {
+                $request->setRateLimitInfo($apiKeyResult);
+                $request->setAppKeyId($appKey->id);
+            }
+        } else {
+            // ---- Fallback path (no API key) ----
+            $ipLimit   = $apiConfig->rateLimitRequests;
+            $userLimit = $apiConfig->rateLimitUserRequests;
+
+            // IP-based rate limit (always applied)
+            $ipKey       = 'rate_limit_ip_' . md5($ip);
+            $ipRemaining = $this->checkRateLimit($cache, $ipKey, $ipLimit, $window);
+
+            if ($ipRemaining === false) {
+                return $this->rateLimitExceeded($response, $ipLimit, $window);
+            }
+
+            // User-based rate limit (only when authenticated)
+            if ($user_id !== null) {
+                $userKey       = 'rate_limit_user_' . $user_id;
+                $userRemaining = $this->checkRateLimit($cache, $userKey, $userLimit, $window);
+
+                if ($userRemaining === false) {
+                    return $this->rateLimitExceeded($response, $userLimit, $window);
+                }
+            }
+
+            // Store rate limit info in request for after() method (reports IP limit)
+            if ($request instanceof ApiRequest) {
+                $request->setRateLimitInfo([
+                    'limit'     => $ipLimit,
+                    'remaining' => max(0, $ipRemaining),
+                    'reset'     => time() + $window,
+                ]);
+            }
+        }
 
         return $request;
     }
 
     /**
-     * Process after the request
+     * Process after the request — attach rate limit response headers.
      *
-     * @param RequestInterface $request
+     * @param RequestInterface  $request
      * @param ResponseInterface $response
-     * @param array|null $arguments
+     * @param array|null        $arguments
      * @return ResponseInterface
      */
     public function after(RequestInterface $request, ResponseInterface $response, $arguments = null)
     {
-        // Set rate limit headers if they were stored in the before() method
-        if (isset($request->rateLimitInfo)) {
-            $info = $request->rateLimitInfo;
-            $response->setHeader('X-RateLimit-Limit', (string) $info['limit']);
-            $response->setHeader('X-RateLimit-Remaining', (string) $info['remaining']);
-            $response->setHeader('X-RateLimit-Reset', (string) $info['reset']);
+        if ($request instanceof ApiRequest && $request->getRateLimitInfo() !== null) {
+            $info = $request->getRateLimitInfo();
+            $this->attachRateLimitHeaders($response, $info);
         }
 
         return $response;
-    }
-
-    /**
-     * Get unique identifier for rate limiting
-     * Uses IP address + user ID (if authenticated)
-     *
-     * @param RequestInterface $request
-     * @return string
-     */
-    private function getIdentifier(RequestInterface $request): string
-    {
-        $ip = $request->getIPAddress();
-
-        // If user is authenticated, include user ID in identifier
-        $userId = $request->userId ?? null;
-
-        if ($userId) {
-            return 'rl_' . md5($ip . '_user_' . $userId);
-        }
-
-        return 'rl_' . md5($ip . '_guest');
     }
 
     /**
      * Return 429 Too Many Requests response
      *
      * @param ResponseInterface $response
-     * @param int $maxRequests
-     * @param int $window
+     * @param int               $maxRequests
+     * @param int               $window
      * @return ResponseInterface
      */
     private function rateLimitExceeded(ResponseInterface $response, int $maxRequests, int $window): ResponseInterface
     {
-        $retryAfter = $window;
-
-        $response->setStatusCode(429);
-        $response->setHeader('Retry-After', (string) $retryAfter);
-        $response->setHeader('X-RateLimit-Limit', (string) $maxRequests);
-        $response->setHeader('X-RateLimit-Remaining', '0');
-        $response->setHeader('X-RateLimit-Reset', (string) (time() + $retryAfter));
-        $response->setContentType('application/json');
-        $response->setBody(json_encode([
-            'success' => false,
-            'message' => lang('Auth.rateLimitExceeded'),
-            'errors' => [
-                'rate_limit' => lang('Auth.tooManyRequests', [$maxRequests, $window]),
-            ],
-            'retry_after' => $retryAfter,
-        ]));
-
-        return $response;
+        return $this->buildRateLimitExceededResponse(
+            $response,
+            $maxRequests,
+            $window,
+            'Auth.tooManyRequests',
+            [$maxRequests, $window]
+        );
     }
 }

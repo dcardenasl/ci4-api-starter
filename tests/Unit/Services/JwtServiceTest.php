@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Services;
 
-use App\Services\JwtService;
+use App\Services\Tokens\JwtService;
 use CodeIgniter\Test\CIUnitTestCase;
 
 /**
@@ -20,19 +20,15 @@ class JwtServiceTest extends CIUnitTestCase
     {
         parent::setUp();
 
-        // Set test environment variables
-        putenv('JWT_SECRET_KEY=test-secret-key-for-unit-tests-minimum-32-chars');
-        putenv('JWT_ACCESS_TOKEN_TTL=3600');
-
-        $this->service = new JwtService();
+        $this->service = new JwtService(
+            'test-secret-key-for-unit-tests-minimum-32-chars',
+            3600,
+            'http://localhost:8080'
+        );
     }
 
     protected function tearDown(): void
     {
-        // Clean up environment variables
-        putenv('JWT_SECRET_KEY');
-        putenv('JWT_ACCESS_TOKEN_TTL');
-
         parent::tearDown();
     }
 

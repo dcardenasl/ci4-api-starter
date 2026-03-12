@@ -77,8 +77,8 @@ class ApiResponseTest extends CIUnitTestCase
         $this->assertArrayHasKey('meta', $result);
         $this->assertEquals(50, $result['meta']['total']);
         $this->assertEquals(1, $result['meta']['page']);
-        $this->assertEquals(10, $result['meta']['perPage']);
-        $this->assertEquals(5, $result['meta']['lastPage']);
+        $this->assertEquals(10, $result['meta']['per_page']);
+        $this->assertEquals(5, $result['meta']['last_page']);
         $this->assertEquals(1, $result['meta']['from']);
         $this->assertEquals(10, $result['meta']['to']);
     }
@@ -87,11 +87,11 @@ class ApiResponseTest extends CIUnitTestCase
     {
         // 25 items, 10 per page = 3 pages
         $result = ApiResponse::paginated([], 25, 1, 10);
-        $this->assertEquals(3, $result['meta']['lastPage']);
+        $this->assertEquals(3, $result['meta']['last_page']);
 
         // 100 items, 20 per page = 5 pages
         $result = ApiResponse::paginated([], 100, 1, 20);
-        $this->assertEquals(5, $result['meta']['lastPage']);
+        $this->assertEquals(5, $result['meta']['last_page']);
     }
 
     public function testCreatedIncludesMessage(): void

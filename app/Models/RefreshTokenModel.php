@@ -49,6 +49,7 @@ class RefreshTokenModel extends Model
      */
     public function getActiveToken(string $token): ?object
     {
+        /** @var object|null */
         return $this->where('token', $token)
             ->where('expires_at >', date('Y-m-d H:i:s'))
             ->where('revoked_at', null)
@@ -96,16 +97,33 @@ class RefreshTokenModel extends Model
     }
 
     /**
+     * Get active refresh token with row-level lock (FOR UPDATE)
+     */
+    public function findActiveForUpdate(string $token): ?object
+    {
+        $sql = $this->where('token', $token)
+            ->where('expires_at >', date('Y-m-d H:i:s'))
+            ->where('revoked_at', null)
+            ->builder()
+            ->getCompiledSelect() . ' FOR UPDATE';
+
+        $result = $this->db->query($sql);
+
+        if (!$result instanceof \CodeIgniter\Database\ResultInterface) {
+            return null;
+        }
+
+        /** @var object|null $row */
+        $row = $result->getFirstRow('object');
+
+        return $row;
+    }
+    /**
      * Delete expired tokens
-     *
-     * @return int Number of deleted tokens
      */
     public function deleteExpired(): int
     {
-        $builder = $this->builder();
-        $builder->where('expires_at <', date('Y-m-d H:i:s'));
-        $builder->delete();
-
+        $this->where('expires_at <', date('Y-m-d H:i:s'))->delete();
         return $this->db->affectedRows();
     }
 }

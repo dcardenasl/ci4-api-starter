@@ -12,6 +12,406 @@
         }
     ],
     "paths": {
+        "/api/v1/api-keys": {
+            "get": {
+                "tags": [
+                    "API Keys"
+                ],
+                "summary": "List API keys (admin)",
+                "operationId": "455b0ffb66460e6a8f1dcd3b92365600",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "is_active",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "enum": [
+                                0,
+                                1
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Paginated list of API keys",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/ApiKeyResponse"
+                                            }
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "total": {
+                                                    "type": "integer",
+                                                    "example": 5
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "example": 20
+                                                },
+                                                "page": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "last_page": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "from": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "to": {
+                                                    "type": "integer",
+                                                    "example": 5
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "403": {
+                        "description": "Forbidden — admin role required"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "API Keys"
+                ],
+                "summary": "Create API key (admin)",
+                "description": "Creates a new API key. The full raw key is returned only once in this response and cannot be retrieved again.",
+                "operationId": "03d47d14e8044409cfed178a2604b375",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "description": "Human-readable label",
+                                        "type": "string",
+                                        "example": "My Mobile App"
+                                    },
+                                    "rate_limit_requests": {
+                                        "description": "Global key budget per window",
+                                        "type": "integer",
+                                        "example": 600
+                                    },
+                                    "rate_limit_window": {
+                                        "description": "Window in seconds",
+                                        "type": "integer",
+                                        "example": 60
+                                    },
+                                    "user_rate_limit": {
+                                        "description": "Per-user budget per window",
+                                        "type": "integer",
+                                        "example": 60
+                                    },
+                                    "ip_rate_limit": {
+                                        "description": "Per-IP defensive limit per window",
+                                        "type": "integer",
+                                        "example": 200
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "API key created — raw key included once",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/ApiKeyResponse"
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "403": {
+                        "description": "Forbidden — admin role required"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationErrorResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/api-keys/{id}": {
+            "get": {
+                "tags": [
+                    "API Keys"
+                ],
+                "summary": "Get API key by ID (admin)",
+                "operationId": "ef9fd95e183280332c07200765406878",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "API key details",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/ApiKeyResponse"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "403": {
+                        "description": "Forbidden — admin role required"
+                    },
+                    "404": {
+                        "description": "API key not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "API Keys"
+                ],
+                "summary": "Update API key (admin)",
+                "operationId": "1dae4741401fcee38a5fb882914e88f8",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Renamed App"
+                                    },
+                                    "is_active": {
+                                        "type": "integer",
+                                        "enum": [
+                                            0,
+                                            1
+                                        ],
+                                        "example": 0
+                                    },
+                                    "rate_limit_requests": {
+                                        "type": "integer",
+                                        "example": 1200
+                                    },
+                                    "rate_limit_window": {
+                                        "type": "integer",
+                                        "example": 60
+                                    },
+                                    "user_rate_limit": {
+                                        "type": "integer",
+                                        "example": 120
+                                    },
+                                    "ip_rate_limit": {
+                                        "type": "integer",
+                                        "example": 400
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "API key updated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/ApiKeyResponse"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "403": {
+                        "description": "Forbidden — admin role required"
+                    },
+                    "404": {
+                        "description": "API key not found"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationErrorResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "API Keys"
+                ],
+                "summary": "Delete API key (admin)",
+                "operationId": "8e72f1059a9540d5e0c225164d5db0d2",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "API key deleted",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "403": {
+                        "description": "Forbidden — admin role required"
+                    },
+                    "404": {
+                        "description": "API key not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/v1/audit": {
             "get": {
                 "tags": [
@@ -30,12 +430,80 @@
                         }
                     },
                     {
-                        "name": "limit",
+                        "name": "per_page",
                         "in": "query",
                         "required": false,
                         "schema": {
                             "type": "integer",
                             "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "entity_type",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "entity_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "user_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "result",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "success",
+                                "failure",
+                                "denied"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "severity",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "info",
+                                "warning",
+                                "critical"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "request_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
                         }
                     }
                 ],
@@ -53,10 +521,36 @@
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/components/schemas/AuditLog"
+                                                "$ref": "#/components/schemas/AuditResponse"
                                             }
                                         },
                                         "meta": {
+                                            "properties": {
+                                                "total": {
+                                                    "type": "integer",
+                                                    "example": 120
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "example": 20
+                                                },
+                                                "page": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "last_page": {
+                                                    "type": "integer",
+                                                    "example": 6
+                                                },
+                                                "from": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "to": {
+                                                    "type": "integer",
+                                                    "example": 20
+                                                }
+                                            },
                                             "type": "object"
                                         }
                                     },
@@ -105,7 +599,7 @@
                                             "example": "success"
                                         },
                                         "data": {
-                                            "$ref": "#/components/schemas/AuditLog"
+                                            "$ref": "#/components/schemas/AuditResponse"
                                         }
                                     },
                                     "type": "object"
@@ -166,7 +660,7 @@
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/components/schemas/AuditLog"
+                                                "$ref": "#/components/schemas/AuditResponse"
                                             }
                                         }
                                     },
@@ -194,7 +688,7 @@
                 "tags": [
                     "Authentication"
                 ],
-                "summary": "Login with username or email",
+                "summary": "Login with email",
                 "operationId": "2dae767e12186fc9aa78c2a60d00802c",
                 "requestBody": {
                     "$ref": "#/components/requestBodies/LoginRequest"
@@ -211,19 +705,85 @@
                                             "example": "success"
                                         },
                                         "data": {
+                                            "$ref": "#/components/schemas/LoginResponse"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationErrorResponse"
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/google-login": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Login with Google ID token",
+                "description": "If the user already exists, Google login succeeds immediately. If the user is new, the account is created in pending_approval and requires admin approval.",
+                "operationId": "a990b3030ee0819b83c75dc1af51684e",
+                "requestBody": {
+                    "$ref": "#/components/requestBodies/GoogleLoginRequest"
+                },
+                "responses": {
+                    "200": {
+                        "description": "Google login successful",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/LoginResponse"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "202": {
+                        "description": "Google login received, account pending admin approval",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "data": {
                                             "properties": {
-                                                "access_token": {
-                                                    "type": "string"
-                                                },
-                                                "refresh_token": {
-                                                    "type": "string"
-                                                },
-                                                "expires_in": {
-                                                    "type": "integer",
-                                                    "example": 3600
-                                                },
                                                 "user": {
-                                                    "$ref": "#/components/schemas/User"
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 123
+                                                        },
+                                                        "email": {
+                                                            "type": "string",
+                                                            "example": "user@example.com"
+                                                        },
+                                                        "status": {
+                                                            "type": "string",
+                                                            "example": "pending_approval"
+                                                        }
+                                                    },
+                                                    "type": "object"
                                                 }
                                             },
                                             "type": "object"
@@ -236,6 +796,12 @@
                     },
                     "401": {
                         "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "403": {
+                        "description": "Account pending approval"
+                    },
+                    "409": {
+                        "description": "Account/provider conflict"
                     },
                     "422": {
                         "$ref": "#/components/responses/ValidationErrorResponse"
@@ -265,25 +831,7 @@
                                             "example": "success"
                                         },
                                         "data": {
-                                            "properties": {
-                                                "access_token": {
-                                                    "type": "string"
-                                                },
-                                                "refresh_token": {
-                                                    "type": "string"
-                                                },
-                                                "expires_in": {
-                                                    "type": "integer",
-                                                    "example": 3600
-                                                },
-                                                "user": {
-                                                    "$ref": "#/components/schemas/User"
-                                                },
-                                                "message": {
-                                                    "type": "string"
-                                                }
-                                            },
-                                            "type": "object"
+                                            "$ref": "#/components/schemas/RegisterResponse"
                                         }
                                     },
                                     "type": "object"
@@ -316,7 +864,7 @@
                                             "example": "success"
                                         },
                                         "data": {
-                                            "$ref": "#/components/schemas/User"
+                                            "$ref": "#/components/schemas/UserResponse"
                                         }
                                     },
                                     "type": "object"
@@ -341,6 +889,7 @@
                     "Authentication"
                 ],
                 "summary": "Send password reset link",
+                "description": "Always returns a generic success response for valid emails. For soft-deleted accounts, this may trigger a reactivation request that requires admin approval.",
                 "operationId": "19c04fe755ee9d6901b8d3b85b293141",
                 "requestBody": {
                     "required": true,
@@ -363,7 +912,7 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Reset link queued",
+                        "description": "Generic success response (reset queued or reactivation requested)",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -372,13 +921,11 @@
                                             "type": "string",
                                             "example": "success"
                                         },
-                                        "message": {
-                                            "type": "string"
-                                        },
                                         "data": {
                                             "properties": {
-                                                "message": {
-                                                    "type": "string"
+                                                "success": {
+                                                    "type": "boolean",
+                                                    "example": true
                                                 }
                                             },
                                             "type": "object"
@@ -434,21 +981,21 @@
                                         },
                                         "data": {
                                             "properties": {
-                                                "valid": {
+                                                "success": {
                                                     "type": "boolean",
                                                     "example": true
                                                 }
                                             },
                                             "type": "object"
-                                        },
-                                        "message": {
-                                            "type": "string"
                                         }
                                     },
                                     "type": "object"
                                 }
                             }
                         }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationErrorResponse"
                     },
                     "404": {
                         "description": "Invalid token"
@@ -502,13 +1049,11 @@
                                             "type": "string",
                                             "example": "success"
                                         },
-                                        "message": {
-                                            "type": "string"
-                                        },
                                         "data": {
                                             "properties": {
-                                                "message": {
-                                                    "type": "string"
+                                                "success": {
+                                                    "type": "boolean",
+                                                    "example": true
                                                 }
                                             },
                                             "type": "object"
@@ -566,19 +1111,7 @@
                                             "example": "success"
                                         },
                                         "data": {
-                                            "properties": {
-                                                "access_token": {
-                                                    "type": "string"
-                                                },
-                                                "refresh_token": {
-                                                    "type": "string"
-                                                },
-                                                "expires_in": {
-                                                    "type": "integer",
-                                                    "example": 3600
-                                                }
-                                            },
-                                            "type": "object"
+                                            "$ref": "#/components/schemas/TokenResponse"
                                         }
                                     },
                                     "type": "object"
@@ -712,13 +1245,11 @@
                                             "type": "string",
                                             "example": "success"
                                         },
-                                        "message": {
-                                            "type": "string"
-                                        },
                                         "data": {
                                             "properties": {
-                                                "message": {
-                                                    "type": "string"
+                                                "success": {
+                                                    "type": "boolean",
+                                                    "example": true
                                                 }
                                             },
                                             "type": "object"
@@ -753,13 +1284,11 @@
                                             "type": "string",
                                             "example": "success"
                                         },
-                                        "message": {
-                                            "type": "string"
-                                        },
                                         "data": {
                                             "properties": {
-                                                "message": {
-                                                    "type": "string"
+                                                "success": {
+                                                    "type": "boolean",
+                                                    "example": true
                                                 }
                                             },
                                             "type": "object"
@@ -781,6 +1310,39 @@
                 ]
             }
         },
+        "/api/v1/demo-products": {
+            "get": {
+                "tags": [
+                    "Demoproducts"
+                ],
+                "summary": "List Demoproducts",
+                "operationId": "2c110892f7e902e0879f1e7e707dc4aa",
+                "responses": {
+                    "200": {
+                        "description": "List retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/DemoproductResponse"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/files": {
             "get": {
                 "tags": [
@@ -788,6 +1350,26 @@
                 ],
                 "summary": "List files for current user",
                 "operationId": "32d01599dc632a4988116bc96b542436",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "File list",
@@ -802,8 +1384,37 @@
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/components/schemas/File"
+                                                "$ref": "#/components/schemas/FileResponse"
                                             }
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "total": {
+                                                    "type": "integer",
+                                                    "example": 45
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "example": 20
+                                                },
+                                                "page": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "last_page": {
+                                                    "type": "integer",
+                                                    "example": 3
+                                                },
+                                                "from": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "to": {
+                                                    "type": "integer",
+                                                    "example": 20
+                                                }
+                                            },
+                                            "type": "object"
                                         }
                                     },
                                     "type": "object"
@@ -860,7 +1471,7 @@
                                             "example": "success"
                                         },
                                         "data": {
-                                            "$ref": "#/components/schemas/File"
+                                            "$ref": "#/components/schemas/FileResponse"
                                         }
                                     },
                                     "type": "object"
@@ -911,10 +1522,16 @@
                                             "example": "success"
                                         },
                                         "data": {
-                                            "$ref": "#/components/schemas/FileDownload"
+                                            "$ref": "#/components/schemas/FileDownloadResponse"
                                         }
                                     },
                                     "type": "object"
+                                }
+                            },
+                            "application/octet-stream": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
                                 }
                             }
                         }
@@ -1132,7 +1749,13 @@
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "example": "day"
+                            "enum": [
+                                "1h",
+                                "24h",
+                                "7d",
+                                "30d"
+                            ],
+                            "example": "24h"
                         }
                     }
                 ],
@@ -1184,7 +1807,13 @@
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "example": "day"
+                            "enum": [
+                                "1h",
+                                "24h",
+                                "7d",
+                                "30d"
+                            ],
+                            "example": "24h"
                         }
                     }
                 ],
@@ -1200,7 +1829,7 @@
                                             "example": "success"
                                         },
                                         "data": {
-                                            "type": "object"
+                                            "$ref": "#/components/schemas/MetricsRequestStats"
                                         }
                                     },
                                     "type": "object"
@@ -1258,7 +1887,10 @@
                                             "example": "success"
                                         },
                                         "data": {
-                                            "type": "object"
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/MetricsSlowRequest"
+                                            }
                                         }
                                     },
                                     "type": "object"
@@ -1299,7 +1931,13 @@
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "example": "day"
+                            "enum": [
+                                "1h",
+                                "24h",
+                                "7d",
+                                "30d"
+                            ],
+                            "example": "24h"
                         }
                     },
                     {
@@ -1323,7 +1961,7 @@
                                             "example": "success"
                                         },
                                         "data": {
-                                            "type": "object"
+                                            "$ref": "#/components/schemas/MetricsPayload"
                                         }
                                     },
                                     "type": "object"
@@ -1385,6 +2023,9 @@
                                             "type": "string",
                                             "example": "success"
                                         },
+                                        "message": {
+                                            "type": "string"
+                                        },
                                         "data": {
                                             "$ref": "#/components/schemas/MetricRecord"
                                         }
@@ -1413,7 +2054,8 @@
                 "tags": [
                     "Users"
                 ],
-                "summary": "List users",
+                "summary": "List users (admin)",
+                "description": "Lists users except accounts with role superadmin. Requires admin role.",
                 "operationId": "bb16d86dd4253aeb9142d6f70fd5dcaa",
                 "parameters": [
                     {
@@ -1426,7 +2068,7 @@
                         }
                     },
                     {
-                        "name": "limit",
+                        "name": "per_page",
                         "in": "query",
                         "required": false,
                         "schema": {
@@ -1440,6 +2082,64 @@
                         "required": false,
                         "schema": {
                             "type": "string"
+                        }
+                    },
+                    {
+                        "name": "role",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "user",
+                                "admin",
+                                "superadmin"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "active",
+                                "inactive",
+                                "pending_approval",
+                                "invited"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "order_by",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "id",
+                                "email",
+                                "created_at",
+                                "role",
+                                "status",
+                                "first_name",
+                                "last_name"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "order_dir",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "ASC",
+                                "DESC",
+                                "asc",
+                                "desc"
+                            ]
                         }
                     }
                 ],
@@ -1457,7 +2157,7 @@
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/components/schemas/User"
+                                                "$ref": "#/components/schemas/UserResponse"
                                             }
                                         },
                                         "meta": {
@@ -1466,7 +2166,7 @@
                                                     "type": "integer",
                                                     "example": 100
                                                 },
-                                                "perPage": {
+                                                "per_page": {
                                                     "type": "integer",
                                                     "example": 20
                                                 },
@@ -1474,7 +2174,7 @@
                                                     "type": "integer",
                                                     "example": 1
                                                 },
-                                                "lastPage": {
+                                                "last_page": {
                                                     "type": "integer",
                                                     "example": 5
                                                 },
@@ -1497,6 +2197,9 @@
                     },
                     "401": {
                         "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "403": {
+                        "description": "Forbidden — requires admin role"
                     }
                 },
                 "security": [
@@ -1509,7 +2212,8 @@
                 "tags": [
                     "Users"
                 ],
-                "summary": "Create user (admin)",
+                "summary": "Create user (admin/superadmin)",
+                "description": "Admins can create only role=user. Creating admin/superadmin requires superadmin. The account is created as active and an invitation email is sent to set the password.",
                 "operationId": "462c00c3a4c6ef2fc9646c721e9f22d7",
                 "requestBody": {
                     "$ref": "#/components/requestBodies/CreateUserRequest"
@@ -1526,7 +2230,7 @@
                                             "example": "success"
                                         },
                                         "data": {
-                                            "$ref": "#/components/schemas/User"
+                                            "$ref": "#/components/schemas/UserResponse"
                                         }
                                     },
                                     "type": "object"
@@ -1536,6 +2240,9 @@
                     },
                     "401": {
                         "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "403": {
+                        "description": "Forbidden — insufficient role permissions"
                     },
                     "422": {
                         "$ref": "#/components/responses/ValidationErrorResponse"
@@ -1554,6 +2261,7 @@
                     "Users"
                 ],
                 "summary": "Get user by ID",
+                "description": "Get details of a specific user. Regular users can only access their own profile.",
                 "operationId": "f75dc71b97800024d1f43c723b617d77",
                 "parameters": [
                     {
@@ -1577,7 +2285,7 @@
                                             "example": "success"
                                         },
                                         "data": {
-                                            "$ref": "#/components/schemas/User"
+                                            "$ref": "#/components/schemas/UserResponse"
                                         }
                                     },
                                     "type": "object"
@@ -1587,6 +2295,9 @@
                     },
                     "401": {
                         "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "403": {
+                        "description": "Forbidden — cannot access another users profile"
                     },
                     "404": {
                         "description": "User not found"
@@ -1602,7 +2313,8 @@
                 "tags": [
                     "Users"
                 ],
-                "summary": "Update user (admin)",
+                "summary": "Update user (admin/superadmin)",
+                "description": "Admins can only update users with role=user and cannot promote to admin/superadmin.",
                 "operationId": "8f5d3d5fba6849d4bc22555d2fae4786",
                 "parameters": [
                     {
@@ -1629,7 +2341,7 @@
                                             "example": "success"
                                         },
                                         "data": {
-                                            "$ref": "#/components/schemas/User"
+                                            "$ref": "#/components/schemas/UserResponse"
                                         }
                                     },
                                     "type": "object"
@@ -1639,6 +2351,9 @@
                     },
                     "401": {
                         "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "403": {
+                        "description": "Forbidden — insufficient role permissions"
                     },
                     "404": {
                         "description": "User not found"
@@ -1657,7 +2372,8 @@
                 "tags": [
                     "Users"
                 ],
-                "summary": "Delete user (admin)",
+                "summary": "Delete user (admin/superadmin)",
+                "description": "Admins can delete only users with role=user.",
                 "operationId": "5a802bd6daed8d9b1b4890ffd96f8c60",
                 "parameters": [
                     {
@@ -1692,6 +2408,63 @@
                     "401": {
                         "$ref": "#/components/responses/UnauthorizedResponse"
                     },
+                    "403": {
+                        "description": "Forbidden — insufficient role permissions"
+                    },
+                    "404": {
+                        "description": "User not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/users/{id}/approve": {
+            "post": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Approve user (admin)",
+                "operationId": "712d9d2b97b18c14ff695a6642917efd",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User approved",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/UserResponse"
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
                     "404": {
                         "description": "User not found"
                     }
@@ -1706,57 +2479,6 @@
     },
     "components": {
         "schemas": {
-            "AuditLog": {
-                "title": "Audit Log",
-                "description": "Audit log entry",
-                "properties": {
-                    "id": {
-                        "description": "Audit Log Schema",
-                        "type": "integer",
-                        "example": 10
-                    },
-                    "user_id": {
-                        "type": "integer",
-                        "example": 1,
-                        "nullable": true
-                    },
-                    "action": {
-                        "type": "string",
-                        "example": "update"
-                    },
-                    "entity_type": {
-                        "type": "string",
-                        "example": "user"
-                    },
-                    "entity_id": {
-                        "type": "integer",
-                        "example": 5,
-                        "nullable": true
-                    },
-                    "old_values": {
-                        "type": "object",
-                        "nullable": true
-                    },
-                    "new_values": {
-                        "type": "object",
-                        "nullable": true
-                    },
-                    "ip_address": {
-                        "type": "string",
-                        "example": "127.0.0.1"
-                    },
-                    "user_agent": {
-                        "type": "string",
-                        "example": "Mozilla/5.0"
-                    },
-                    "created_at": {
-                        "type": "string",
-                        "format": "date-time",
-                        "example": "2026-02-06T19:00:00Z"
-                    }
-                },
-                "type": "object"
-            },
             "AuthToken": {
                 "title": "Authentication Token",
                 "description": "JWT token with associated user data",
@@ -1771,117 +2493,591 @@
                         "example": "eyJ0eXAiOiJKV1QiLCJhbGc..."
                     },
                     "user": {
-                        "$ref": "#/components/schemas/User"
+                        "$ref": "#/components/schemas/UserResponse"
                     }
                 },
                 "type": "object"
             },
-            "File": {
-                "title": "File",
-                "description": "File metadata",
+            "MetricsRequestStats": {
+                "title": "Metrics Request Stats",
+                "description": "Aggregated request statistics for a time period",
                 "properties": {
-                    "id": {
-                        "description": "File Schema\n\nReusable File object schema.",
-                        "type": "integer",
-                        "example": 1
-                    },
-                    "original_name": {
-                        "type": "string",
-                        "example": "document.pdf"
-                    },
-                    "size": {
-                        "type": "integer",
-                        "example": 102400
-                    },
-                    "human_size": {
-                        "type": "string",
-                        "example": "100 KB"
-                    },
-                    "mime_type": {
-                        "type": "string",
-                        "example": "application/pdf"
-                    },
-                    "url": {
-                        "type": "string",
-                        "example": "https://example.com/files/1"
-                    },
-                    "uploaded_at": {
-                        "type": "string",
-                        "format": "date-time",
-                        "example": "2026-02-06T19:00:00Z"
-                    },
-                    "is_image": {
-                        "type": "boolean",
-                        "example": false
-                    }
-                },
-                "type": "object"
-            },
-            "FileDownload": {
-                "title": "File Download",
-                "description": "File download or storage metadata",
-                "properties": {
-                    "id": {
-                        "type": "integer",
-                        "example": 1
-                    },
-                    "original_name": {
-                        "type": "string",
-                        "example": "document.pdf"
-                    },
-                    "url": {
-                        "type": "string",
-                        "example": "https://example.com/files/1"
-                    },
-                    "path": {
-                        "type": "string",
-                        "example": "2026/02/06/document_abc.pdf"
-                    },
-                    "storage_driver": {
-                        "type": "string",
-                        "example": "local"
-                    }
-                },
-                "type": "object"
-            },
-            "MetricsOverview": {
-                "title": "Metrics Overview",
-                "description": "Overview of request stats and slow requests",
-                "properties": {
-                    "request_stats": {
+                    "period": {
                         "description": "Metrics Schemas",
+                        "type": "string",
+                        "example": "24h"
+                    },
+                    "since": {
+                        "type": "string",
+                        "example": "2026-02-26 12:00:00"
+                    },
+                    "total_requests": {
+                        "type": "integer",
+                        "example": 1240
+                    },
+                    "successful_requests": {
+                        "type": "integer",
+                        "example": 1180
+                    },
+                    "failed_requests": {
+                        "type": "integer",
+                        "example": 60
+                    },
+                    "avg_response_time_ms": {
+                        "type": "number",
+                        "example": 145.2
+                    },
+                    "p95_response_time_ms": {
+                        "type": "number",
+                        "example": 420
+                    },
+                    "p99_response_time_ms": {
+                        "type": "number",
+                        "example": 980
+                    },
+                    "error_rate_percent": {
+                        "type": "number",
+                        "example": 4.84
+                    },
+                    "availability_percent": {
+                        "type": "number",
+                        "example": 95.16
+                    },
+                    "status_code_breakdown": {
+                        "properties": {
+                            "2xx": {
+                                "type": "integer",
+                                "example": 1100
+                            },
+                            "3xx": {
+                                "type": "integer",
+                                "example": 80
+                            },
+                            "4xx": {
+                                "type": "integer",
+                                "example": 40
+                            },
+                            "5xx": {
+                                "type": "integer",
+                                "example": 20
+                            }
+                        },
                         "type": "object"
                     },
-                    "slow_requests": {
+                    "slo": {
+                        "properties": {
+                            "p95_target_ms": {
+                                "type": "integer",
+                                "example": 500
+                            },
+                            "p95_target_met": {
+                                "type": "boolean",
+                                "example": true
+                            }
+                        },
+                        "type": "object"
+                    }
+                },
+                "type": "object"
+            },
+            "MetricsSlowRequest": {
+                "title": "Slow Request",
+                "description": "Individual slow request entry",
+                "properties": {
+                    "method": {
+                        "type": "string",
+                        "example": "GET"
+                    },
+                    "uri": {
+                        "type": "string",
+                        "example": "/api/v1/users"
+                    },
+                    "response_time": {
+                        "type": "integer",
+                        "example": 1200
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "example": "2026-02-26 12:00:00"
+                    }
+                },
+                "type": "object"
+            },
+            "MetricsPayload": {
+                "title": "Metrics Payload",
+                "description": "Arbitrary metrics payload (object or array)",
+                "oneOf": [
+                    {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    {
                         "type": "array",
                         "items": {
                             "type": "object"
                         }
                     }
-                },
-                "type": "object"
+                ]
             },
             "MetricRecord": {
                 "title": "Metric Record",
                 "description": "Recorded metric acknowledgement",
                 "properties": {
-                    "message": {
+                    "name": {
                         "type": "string",
-                        "example": "Metric recorded successfully"
+                        "example": "api.latency"
                     }
                 },
                 "type": "object"
             },
-            "User": {
-                "title": "User",
-                "description": "User object with all properties",
+            "LoginRequest": {
+                "title": "Login Request",
+                "description": "User credentials for authentication",
+                "required": [
+                    "email",
+                    "password"
+                ],
+                "properties": {
+                    "email": {
+                        "description": "User registered email",
+                        "type": "string",
+                        "example": "user@example.com"
+                    },
+                    "password": {
+                        "description": "User password",
+                        "type": "string",
+                        "format": "password",
+                        "example": "P@ssw0rd123!"
+                    }
+                },
+                "type": "object"
+            },
+            "RegisterRequest": {
+                "title": "Register Request",
+                "description": "User data for self-registration",
+                "required": [
+                    "email",
+                    "first_name",
+                    "last_name",
+                    "password"
+                ],
+                "properties": {
+                    "email": {
+                        "description": "User email address",
+                        "type": "string",
+                        "example": "newuser@example.com"
+                    },
+                    "first_name": {
+                        "description": "User first name",
+                        "type": "string",
+                        "example": "John"
+                    },
+                    "last_name": {
+                        "description": "User last name",
+                        "type": "string",
+                        "example": "Doe"
+                    },
+                    "password": {
+                        "description": "User password (must be strong)",
+                        "type": "string",
+                        "format": "password",
+                        "example": "P@ssw0rd123!"
+                    }
+                },
+                "type": "object"
+            },
+            "UserCreateRequest": {
+                "title": "User Create Request",
+                "description": "Data needed to create a new user",
+                "required": [
+                    "email"
+                ],
+                "properties": {
+                    "email": {
+                        "description": "Unique email address",
+                        "type": "string",
+                        "example": "user@example.com"
+                    },
+                    "first_name": {
+                        "description": "User first name",
+                        "type": "string",
+                        "example": "John",
+                        "nullable": true
+                    },
+                    "last_name": {
+                        "description": "User last name",
+                        "type": "string",
+                        "example": "Doe",
+                        "nullable": true
+                    },
+                    "role": {
+                        "description": "Account role",
+                        "type": "string",
+                        "enum": [
+                            "user",
+                            "admin",
+                            "superadmin"
+                        ],
+                        "example": "user",
+                        "nullable": true
+                    },
+                    "oauth_provider": {
+                        "description": "OAuth provider name",
+                        "type": "string",
+                        "enum": [
+                            "google",
+                            "github"
+                        ],
+                        "nullable": true
+                    },
+                    "oauth_provider_id": {
+                        "description": "OAuth unique identifier from provider",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "avatar_url": {
+                        "description": "URL to user avatar image",
+                        "type": "string",
+                        "example": "https://example.com/avatar.jpg",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "UserIndexRequest": {
+                "title": "User Index Request",
+                "description": "Parameters for filtering and paginating the user list",
+                "properties": {
+                    "page": {
+                        "description": "Current page number",
+                        "type": "integer",
+                        "default": 1,
+                        "example": 1
+                    },
+                    "per_page": {
+                        "description": "Items per page",
+                        "type": "integer",
+                        "default": 20,
+                        "maximum": 100,
+                        "example": 20
+                    },
+                    "search": {
+                        "description": "Search term for email, first name or last name",
+                        "type": "string",
+                        "example": "john",
+                        "nullable": true
+                    },
+                    "role": {
+                        "description": "Filter by account role",
+                        "type": "string",
+                        "enum": [
+                            "user",
+                            "admin",
+                            "superadmin"
+                        ],
+                        "nullable": true
+                    },
+                    "status": {
+                        "description": "Filter by account status",
+                        "type": "string",
+                        "enum": [
+                            "active",
+                            "inactive",
+                            "pending_approval",
+                            "invited"
+                        ],
+                        "nullable": true
+                    },
+                    "order_by": {
+                        "description": "Field to sort by",
+                        "type": "string",
+                        "default": "id",
+                        "enum": [
+                            "id",
+                            "email",
+                            "created_at",
+                            "role",
+                            "status",
+                            "first_name",
+                            "last_name"
+                        ]
+                    },
+                    "order_dir": {
+                        "description": "Sort direction",
+                        "type": "string",
+                        "default": "DESC",
+                        "enum": [
+                            "ASC",
+                            "DESC"
+                        ]
+                    }
+                },
+                "type": "object"
+            },
+            "UserUpdateRequest": {
+                "title": "User Update Request",
+                "description": "Data needed to update an existing user",
+                "properties": {
+                    "email": {
+                        "description": "Updated email address",
+                        "type": "string",
+                        "example": "user@example.com",
+                        "nullable": true
+                    },
+                    "first_name": {
+                        "description": "Updated first name",
+                        "type": "string",
+                        "example": "John",
+                        "nullable": true
+                    },
+                    "last_name": {
+                        "description": "Updated last name",
+                        "type": "string",
+                        "example": "Doe",
+                        "nullable": true
+                    },
+                    "password": {
+                        "description": "New password (must be strong)",
+                        "type": "string",
+                        "example": "P@ssw0rd123!",
+                        "nullable": true
+                    },
+                    "role": {
+                        "description": "Updated account role",
+                        "type": "string",
+                        "enum": [
+                            "user",
+                            "admin",
+                            "superadmin"
+                        ],
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "ApiKeyResponse": {
+                "title": "API Key Response",
+                "description": "API key object metadata",
                 "required": [
                     "id",
-                    "username",
+                    "name",
+                    "key_prefix",
+                    "is_active"
+                ],
+                "properties": {
+                    "id": {
+                        "description": "Unique API key identifier",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "name": {
+                        "description": "Human-readable label for the API key",
+                        "type": "string",
+                        "example": "My Mobile App"
+                    },
+                    "key_prefix": {
+                        "description": "First characters of the key (safe to display)",
+                        "type": "string",
+                        "example": "apk_a3f9c2b1"
+                    },
+                    "is_active": {
+                        "description": "Whether the key is currently active",
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "rate_limit_requests": {
+                        "description": "Max requests per window",
+                        "type": "integer",
+                        "example": 600
+                    },
+                    "rate_limit_window": {
+                        "description": "Window in seconds",
+                        "type": "integer",
+                        "example": 60
+                    },
+                    "user_rate_limit": {
+                        "description": "Per-user limit",
+                        "type": "integer",
+                        "example": 60
+                    },
+                    "ip_rate_limit": {
+                        "description": "Per-IP limit",
+                        "type": "integer",
+                        "example": 200
+                    },
+                    "key": {
+                        "description": "Full raw API key (only returned once)",
+                        "type": "string",
+                        "example": "apk_a3f9...",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "description": "Creation timestamp",
+                        "type": "string",
+                        "example": "2026-02-26 12:00:00",
+                        "nullable": true
+                    },
+                    "updated_at": {
+                        "description": "Last update timestamp",
+                        "type": "string",
+                        "example": "2026-02-26 12:00:00",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "AuditResponse": {
+                "title": "Audit Response",
+                "description": "Audit log entry metadata",
+                "required": [
+                    "id",
+                    "action",
+                    "entity_type",
+                    "created_at"
+                ],
+                "properties": {
+                    "id": {
+                        "description": "Unique log identifier",
+                        "type": "integer",
+                        "example": 10
+                    },
+                    "action": {
+                        "description": "Action performed",
+                        "type": "string",
+                        "enum": [
+                            "create",
+                            "update",
+                            "delete",
+                            "login_success",
+                            "login_failure"
+                        ],
+                        "example": "update"
+                    },
+                    "entity_type": {
+                        "description": "Affected entity type",
+                        "type": "string",
+                        "example": "users"
+                    },
+                    "entity_id": {
+                        "description": "Affected entity ID",
+                        "type": "integer",
+                        "example": 5,
+                        "nullable": true
+                    },
+                    "old_values": {
+                        "description": "Values before the change",
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "new_values": {
+                        "description": "Values after the change",
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "user_id": {
+                        "description": "ID of user who performed the action",
+                        "type": "integer",
+                        "example": 1,
+                        "nullable": true
+                    },
+                    "user_email": {
+                        "description": "Email of user who performed the action",
+                        "type": "string",
+                        "example": "admin@example.com",
+                        "nullable": true
+                    },
+                    "ip_address": {
+                        "description": "IP address of the requester",
+                        "type": "string",
+                        "example": "127.0.0.1",
+                        "nullable": true
+                    },
+                    "user_agent": {
+                        "description": "User-Agent of the requester",
+                        "type": "string",
+                        "example": "Mozilla/5.0...",
+                        "nullable": true
+                    },
+                    "result": {
+                        "description": "Execution result",
+                        "type": "string",
+                        "enum": [
+                            "success",
+                            "failure",
+                            "denied"
+                        ],
+                        "example": "success"
+                    },
+                    "severity": {
+                        "description": "Event severity",
+                        "type": "string",
+                        "enum": [
+                            "info",
+                            "warning",
+                            "critical"
+                        ],
+                        "example": "info"
+                    },
+                    "request_id": {
+                        "description": "Request correlation ID",
+                        "type": "string",
+                        "example": "req_01HZY...",
+                        "nullable": true
+                    },
+                    "metadata": {
+                        "description": "Additional sanitized metadata",
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "description": "Log timestamp",
+                        "type": "string",
+                        "example": "2026-02-26 12:00:00"
+                    }
+                },
+                "type": "object"
+            },
+            "LoginResponse": {
+                "title": "Login Response",
+                "description": "Successful authentication response containing JWT tokens and user data",
+                "required": [
+                    "access_token",
+                    "refresh_token",
+                    "expires_in",
+                    "user"
+                ],
+                "properties": {
+                    "access_token": {
+                        "description": "JWT access token",
+                        "type": "string",
+                        "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                    },
+                    "refresh_token": {
+                        "description": "Opaque refresh token",
+                        "type": "string",
+                        "example": "apk_a1b2c3d4e5f6g7h8i9j0..."
+                    },
+                    "expires_in": {
+                        "description": "Token expiration time in seconds",
+                        "type": "integer",
+                        "example": 3600
+                    },
+                    "user": {
+                        "$ref": "#/components/schemas/UserResponse"
+                    }
+                },
+                "type": "object"
+            },
+            "RegisterResponse": {
+                "title": "Register Response",
+                "description": "User data returned after registration",
+                "required": [
+                    "id",
                     "email",
+                    "first_name",
+                    "last_name",
                     "role",
-                    "created_at",
-                    "updated_at"
+                    "status"
                 ],
                 "properties": {
                     "id": {
@@ -1889,39 +3085,495 @@
                         "type": "integer",
                         "example": 1
                     },
-                    "username": {
-                        "description": "Username for login",
+                    "email": {
+                        "description": "User email address",
                         "type": "string",
-                        "example": "testuser"
+                        "example": "newuser@example.com"
+                    },
+                    "first_name": {
+                        "description": "User first name",
+                        "type": "string",
+                        "example": "Alex"
+                    },
+                    "last_name": {
+                        "description": "User last name",
+                        "type": "string",
+                        "example": "Doe"
+                    },
+                    "role": {
+                        "description": "User role",
+                        "type": "string",
+                        "enum": [
+                            "user",
+                            "admin",
+                            "superadmin"
+                        ],
+                        "example": "user"
+                    },
+                    "status": {
+                        "description": "Account status",
+                        "type": "string",
+                        "enum": [
+                            "pending_approval",
+                            "active",
+                            "invited"
+                        ],
+                        "example": "pending_approval"
+                    },
+                    "created_at": {
+                        "description": "Creation timestamp",
+                        "type": "string",
+                        "example": "2026-02-26 12:00:00",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "DemoproductResponse": {
+                "title": "Demoproduct Response",
+                "required": [
+                    "id",
+                    "name"
+                ],
+                "properties": {
+                    "id": {
+                        "description": "Unique identifier",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "name": {
+                        "description": "Resource name",
+                        "type": "string",
+                        "example": "Example Name"
+                    },
+                    "created_at": {
+                        "description": "Creation timestamp",
+                        "type": "string",
+                        "example": "2026-02-26 12:00:00",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "PaginatedResponse": {
+                "title": "Paginated Response",
+                "description": "Generic pagination payload",
+                "required": [
+                    "data",
+                    "total",
+                    "page",
+                    "per_page"
+                ],
+                "properties": {
+                    "data": {
+                        "description": "Result set",
+                        "type": "array",
+                        "items": {
+                            "type": "object"
+                        }
+                    },
+                    "total": {
+                        "description": "Total number of records",
+                        "type": "integer",
+                        "example": 120
+                    },
+                    "page": {
+                        "description": "Current page",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "per_page": {
+                        "description": "Items per page",
+                        "type": "integer",
+                        "example": 20
+                    }
+                },
+                "type": "object"
+            },
+            "PayloadResponse": {
+                "title": "Payload Response",
+                "description": "Generic payload wrapper",
+                "properties": {
+                    "payload": {
+                        "description": "Payload data",
+                        "type": "object",
+                        "additionalProperties": true
+                    }
+                },
+                "type": "object"
+            },
+            "FileDownloadResponse": {
+                "title": "File Download Response",
+                "description": "File metadata for downloads and external storage",
+                "required": [
+                    "id",
+                    "original_name",
+                    "url",
+                    "path",
+                    "storage_driver"
+                ],
+                "properties": {
+                    "id": {
+                        "description": "Unique file identifier",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "original_name": {
+                        "description": "Original filename",
+                        "type": "string",
+                        "example": "document.pdf"
+                    },
+                    "url": {
+                        "description": "Public or temporary access URL",
+                        "type": "string",
+                        "example": "https://example.com/storage/document.pdf"
+                    },
+                    "path": {
+                        "description": "Storage path",
+                        "type": "string",
+                        "example": "uploads/abc123_document.pdf"
+                    },
+                    "storage_driver": {
+                        "description": "Storage driver name",
+                        "type": "string",
+                        "example": "s3"
+                    }
+                },
+                "type": "object"
+            },
+            "FileResponse": {
+                "title": "File Response",
+                "description": "File metadata and access URL",
+                "required": [
+                    "id",
+                    "original_name",
+                    "mime_type",
+                    "size",
+                    "url"
+                ],
+                "properties": {
+                    "id": {
+                        "description": "Unique file identifier",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "original_name": {
+                        "description": "Original filename",
+                        "type": "string",
+                        "example": "document.pdf"
+                    },
+                    "filename": {
+                        "description": "Stored filename",
+                        "type": "string",
+                        "example": "abc123_document.pdf"
+                    },
+                    "mime_type": {
+                        "description": "MIME type",
+                        "type": "string",
+                        "example": "application/pdf"
+                    },
+                    "size": {
+                        "description": "File size in bytes",
+                        "type": "integer",
+                        "example": 102400
+                    },
+                    "human_size": {
+                        "description": "Human readable file size",
+                        "type": "string",
+                        "example": "100 KB"
+                    },
+                    "is_image": {
+                        "description": "Whether the file is an image",
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "url": {
+                        "description": "Public or temporary access URL",
+                        "type": "string",
+                        "example": "https://example.com/storage/file.pdf"
+                    },
+                    "uploaded_at": {
+                        "description": "Upload timestamp",
+                        "type": "string",
+                        "example": "2026-02-26 12:00:00",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "GoogleIdentityResponse": {
+                "title": "Google Identity Response",
+                "description": "Verified identity data returned by Google",
+                "required": [
+                    "provider",
+                    "provider_id",
+                    "email"
+                ],
+                "properties": {
+                    "provider": {
+                        "description": "Identity provider",
+                        "type": "string",
+                        "example": "google"
+                    },
+                    "provider_id": {
+                        "description": "Provider user identifier",
+                        "type": "string",
+                        "example": "113337022221111122223"
                     },
                     "email": {
                         "description": "User email address",
                         "type": "string",
-                        "format": "email",
-                        "example": "test@example.com"
+                        "example": "user@example.com"
+                    },
+                    "first_name": {
+                        "description": "User first name",
+                        "type": "string",
+                        "example": "Alex",
+                        "nullable": true
+                    },
+                    "last_name": {
+                        "description": "User last name",
+                        "type": "string",
+                        "example": "Doe",
+                        "nullable": true
+                    },
+                    "avatar_url": {
+                        "description": "Avatar URL",
+                        "type": "string",
+                        "example": "https://example.com/avatar.png",
+                        "nullable": true
+                    },
+                    "claims": {
+                        "description": "Raw identity claims",
+                        "type": "object",
+                        "additionalProperties": true
+                    }
+                },
+                "type": "object"
+            },
+            "PasswordResetResponse": {
+                "title": "Password Reset Response",
+                "description": "Password reset acknowledgement",
+                "required": [
+                    "message",
+                    "success"
+                ],
+                "properties": {
+                    "message": {
+                        "description": "Result message",
+                        "type": "string",
+                        "example": "Password reset successful"
+                    },
+                    "success": {
+                        "description": "Whether the reset was successful",
+                        "type": "boolean",
+                        "example": true
+                    }
+                },
+                "type": "object"
+            },
+            "TokenResponse": {
+                "title": "Token Response",
+                "description": "Token Response DTO",
+                "required": [
+                    "access_token",
+                    "refresh_token",
+                    "expires_in"
+                ],
+                "properties": {
+                    "access_token": {
+                        "description": "New JWT access token",
+                        "type": "string"
+                    },
+                    "refresh_token": {
+                        "description": "New opaque refresh token",
+                        "type": "string"
+                    },
+                    "expires_in": {
+                        "description": "Token expiration in seconds",
+                        "type": "integer",
+                        "example": 3600
+                    },
+                    "user": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/UserResponse"
+                            }
+                        ],
+                        "nullable": true,
+                        "description": "Associated user data"
+                    }
+                },
+                "type": "object"
+            },
+            "VerificationResponse": {
+                "title": "Verification Response",
+                "description": "Verification Response DTO",
+                "required": [
+                    "message",
+                    "user_id",
+                    "email",
+                    "verified_at"
+                ],
+                "properties": {
+                    "message": {
+                        "description": "Success message",
+                        "type": "string"
+                    },
+                    "user_id": {
+                        "description": "Verified user id",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "email": {
+                        "description": "User email",
+                        "type": "string"
+                    },
+                    "verified_at": {
+                        "description": "Verification timestamp",
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "MetricsOverview": {
+                "title": "Metrics Overview",
+                "description": "Overview of request stats, slow requests, and SLO indicators",
+                "required": [
+                    "request_stats",
+                    "slow_requests",
+                    "slo",
+                    "timestamp"
+                ],
+                "properties": {
+                    "request_stats": {
+                        "$ref": "#/components/schemas/MetricsRequestStats"
+                    },
+                    "slow_requests": {
+                        "description": "Slow requests list",
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/MetricsSlowRequest"
+                        }
+                    },
+                    "slo": {
+                        "description": "Service level objectives summary",
+                        "properties": {
+                            "availability_percent": {
+                                "type": "number",
+                                "example": 99.95
+                            },
+                            "error_rate_percent": {
+                                "type": "number",
+                                "example": 0.05
+                            },
+                            "p95_response_time_ms": {
+                                "type": "number",
+                                "example": 350
+                            },
+                            "p99_response_time_ms": {
+                                "type": "number",
+                                "example": 900
+                            },
+                            "p95_target_ms": {
+                                "type": "integer",
+                                "example": 500
+                            },
+                            "p95_target_met": {
+                                "type": "boolean",
+                                "example": true
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "timestamp": {
+                        "description": "Snapshot timestamp",
+                        "type": "string",
+                        "example": "2026-02-26 12:00:00"
+                    }
+                },
+                "type": "object"
+            },
+            "MetricsPayloadResponse": {
+                "title": "Metrics Payload Response",
+                "description": "Wrapper for raw metrics payloads",
+                "properties": {
+                    "payload": {
+                        "description": "Raw metrics payload (shape varies by endpoint)",
+                        "type": "object",
+                        "additionalProperties": true
+                    }
+                },
+                "type": "object"
+            },
+            "UserResponse": {
+                "title": "User Response",
+                "description": "User data returned by the API",
+                "required": [
+                    "id",
+                    "email",
+                    "role",
+                    "status"
+                ],
+                "properties": {
+                    "id": {
+                        "description": "Unique user identifier",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "email": {
+                        "description": "User email address",
+                        "type": "string",
+                        "example": "user@example.com"
+                    },
+                    "first_name": {
+                        "description": "User first name",
+                        "type": "string",
+                        "example": "John",
+                        "nullable": true
+                    },
+                    "last_name": {
+                        "description": "User last name",
+                        "type": "string",
+                        "example": "Doe",
+                        "nullable": true
                     },
                     "role": {
-                        "description": "User role (user, admin, etc.)",
+                        "description": "User role",
                         "type": "string",
+                        "enum": [
+                            "user",
+                            "admin",
+                            "superadmin"
+                        ],
                         "example": "user"
                     },
-                    "created_at": {
-                        "description": "User creation timestamp",
+                    "status": {
+                        "description": "Account status",
                         "type": "string",
-                        "format": "date-time",
-                        "example": "2026-01-28T12:00:00Z"
+                        "enum": [
+                            "pending_approval",
+                            "active",
+                            "invited"
+                        ],
+                        "example": "active"
+                    },
+                    "avatar_url": {
+                        "description": "URL to user avatar",
+                        "type": "string",
+                        "example": "https://example.com/avatar.png",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "description": "Creation timestamp",
+                        "type": "string",
+                        "example": "2026-02-26 12:00:00",
+                        "nullable": true
                     },
                     "updated_at": {
                         "description": "Last update timestamp",
                         "type": "string",
-                        "format": "date-time",
-                        "example": "2026-01-28T12:00:00Z"
-                    },
-                    "deleted_at": {
-                        "description": "Soft delete timestamp",
-                        "type": "string",
-                        "format": "date-time",
-                        "example": null,
+                        "example": "2026-02-26 12:00:00",
                         "nullable": true
                     }
                 },
@@ -1941,9 +3593,9 @@
                                     "example": "error"
                                 },
                                 "message": {
-                                    "description": "Error message",
+                                    "description": "Error message (localized by Accept-Language)",
                                     "type": "string",
-                                    "example": "Unauthorized"
+                                    "example": "Unauthorized / No autorizado"
                                 },
                                 "errors": {
                                     "description": "Error details",
@@ -1968,15 +3620,15 @@
                                     "example": "error"
                                 },
                                 "message": {
-                                    "description": "Main error message",
+                                    "description": "Main error message (localized by Accept-Language)",
                                     "type": "string",
-                                    "example": "Validation failed"
+                                    "example": "Validation failed / Validacion fallida"
                                 },
                                 "errors": {
-                                    "description": "Field-specific error messages",
+                                    "description": "Field-specific error messages (localized by Accept-Language)",
                                     "type": "object",
                                     "example": {
-                                        "email": "This email is already registered"
+                                        "email": "Localized validation message"
                                     }
                                 },
                                 "code": {
@@ -1993,6 +3645,26 @@
             }
         },
         "requestBodies": {
+            "GoogleLoginRequest": {
+                "description": "Google login request with ID token",
+                "required": true,
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "required": [
+                                "id_token"
+                            ],
+                            "properties": {
+                                "id_token": {
+                                    "description": "Google ID token from frontend OAuth flow",
+                                    "type": "string"
+                                }
+                            },
+                            "type": "object"
+                        }
+                    }
+                }
+            },
             "LoginRequest": {
                 "description": "User login credentials",
                 "required": true,
@@ -2000,14 +3672,14 @@
                     "application/json": {
                         "schema": {
                             "required": [
-                                "username",
+                                "email",
                                 "password"
                             ],
                             "properties": {
-                                "username": {
-                                    "description": "Username or email",
+                                "email": {
+                                    "description": "Email address",
                                     "type": "string",
-                                    "example": "testuser"
+                                    "example": "user@example.com"
                                 },
                                 "password": {
                                     "description": "User password",
@@ -2028,15 +3700,21 @@
                     "application/json": {
                         "schema": {
                             "required": [
-                                "username",
                                 "email",
-                                "password"
+                                "password",
+                                "first_name",
+                                "last_name"
                             ],
                             "properties": {
-                                "username": {
-                                    "description": "Unique username for the account",
+                                "first_name": {
+                                    "description": "User first name",
                                     "type": "string",
-                                    "example": "newuser"
+                                    "example": "Jane"
+                                },
+                                "last_name": {
+                                    "description": "User last name",
+                                    "type": "string",
+                                    "example": "Doe"
                                 },
                                 "email": {
                                     "description": "User email address",
@@ -2063,20 +3741,45 @@
                     "application/json": {
                         "schema": {
                             "required": [
-                                "username",
                                 "email"
                             ],
                             "properties": {
-                                "username": {
-                                    "description": "Unique username",
+                                "first_name": {
+                                    "description": "First name",
                                     "type": "string",
-                                    "example": "newuser"
+                                    "example": "Alex"
+                                },
+                                "last_name": {
+                                    "description": "Last name",
+                                    "type": "string",
+                                    "example": "Doe"
                                 },
                                 "email": {
                                     "description": "User email address",
                                     "type": "string",
                                     "format": "email",
                                     "example": "newuser@example.com"
+                                },
+                                "role": {
+                                    "description": "User role (user, admin, superadmin)",
+                                    "type": "string",
+                                    "example": "user"
+                                },
+                                "oauth_provider": {
+                                    "description": "Optional OAuth provider for externally managed accounts",
+                                    "type": "string",
+                                    "example": "google"
+                                },
+                                "oauth_provider_id": {
+                                    "description": "Provider-specific identifier",
+                                    "type": "string",
+                                    "example": "113337022221111122223"
+                                },
+                                "avatar_url": {
+                                    "description": "Optional avatar URL",
+                                    "type": "string",
+                                    "format": "uri",
+                                    "example": "https://example.com/avatar.png"
                                 }
                             },
                             "type": "object"
@@ -2091,16 +3794,32 @@
                     "application/json": {
                         "schema": {
                             "properties": {
-                                "username": {
-                                    "description": "Updated username",
+                                "first_name": {
+                                    "description": "User first name",
                                     "type": "string",
-                                    "example": "updateduser"
+                                    "example": "John"
+                                },
+                                "last_name": {
+                                    "description": "User last name",
+                                    "type": "string",
+                                    "example": "Doe"
                                 },
                                 "email": {
                                     "description": "Updated email address",
                                     "type": "string",
                                     "format": "email",
                                     "example": "updated@example.com"
+                                },
+                                "password": {
+                                    "description": "Updated password",
+                                    "type": "string",
+                                    "format": "password",
+                                    "example": "NewPassword123"
+                                },
+                                "role": {
+                                    "description": "Updated role (user, admin, superadmin)",
+                                    "type": "string",
+                                    "example": "user"
                                 }
                             },
                             "type": "object"
@@ -2142,6 +3861,14 @@
         {
             "name": "Health",
             "description": "Health and readiness endpoints"
+        },
+        {
+            "name": "API Keys",
+            "description": "API Keys"
+        },
+        {
+            "name": "Demoproducts",
+            "description": "Demoproducts"
         }
     ]
 }

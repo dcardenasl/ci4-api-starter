@@ -10,6 +10,36 @@ declare(strict_types=1);
 
 use CodeIgniter\I18n\Time;
 
+if (!function_exists('datetime_to_timestamp')) {
+    /**
+     * Normalize a datetime value into a unix timestamp
+     *
+     * @param mixed $datetime Time|string|int|null
+     * @return int|null Unix timestamp or null if invalid
+     */
+    function datetime_to_timestamp($datetime): ?int
+    {
+        if ($datetime === null || $datetime === '') {
+            return null;
+        }
+
+        if ($datetime instanceof Time) {
+            return $datetime->getTimestamp();
+        }
+
+        if (is_int($datetime)) {
+            return $datetime;
+        }
+
+        if (is_string($datetime)) {
+            $timestamp = strtotime($datetime);
+            return $timestamp !== false ? $timestamp : null;
+        }
+
+        return null;
+    }
+}
+
 if (!function_exists('datetime_now')) {
     /**
      * Get current datetime string in MySQL format
@@ -42,9 +72,9 @@ if (!function_exists('add_minutes')) {
      * @param int         $minutes  Minutes to add
      * @return string Resulting datetime string
      */
-    function add_minutes(?string $datetime = null, int $minutes = 0): string
+    function add_minutes($datetime = null, int $minutes = 0): string
     {
-        $time = $datetime ? strtotime($datetime) : time();
+        $time = datetime_to_timestamp($datetime) ?? time();
         return date('Y-m-d H:i:s', $time + ($minutes * 60));
     }
 }
@@ -57,7 +87,7 @@ if (!function_exists('add_hours')) {
      * @param int         $hours    Hours to add
      * @return string Resulting datetime string
      */
-    function add_hours(?string $datetime = null, int $hours = 0): string
+    function add_hours($datetime = null, int $hours = 0): string
     {
         return add_minutes($datetime, $hours * 60);
     }
@@ -71,7 +101,7 @@ if (!function_exists('add_days')) {
      * @param int         $days     Days to add
      * @return string Resulting datetime string
      */
-    function add_days(?string $datetime = null, int $days = 0): string
+    function add_days($datetime = null, int $days = 0): string
     {
         return add_minutes($datetime, $days * 24 * 60);
     }
@@ -84,13 +114,18 @@ if (!function_exists('is_expired')) {
      * @param string|null $datetime Datetime to check
      * @return bool True if expired (datetime is in the past)
      */
-    function is_expired(?string $datetime): bool
+    function is_expired($datetime): bool
     {
         if ($datetime === null || $datetime === '') {
             return true;
         }
 
-        return strtotime($datetime) < time();
+        $timestamp = datetime_to_timestamp($datetime);
+        if ($timestamp === null) {
+            return true;
+        }
+
+        return $timestamp < time();
     }
 }
 
@@ -102,10 +137,14 @@ if (!function_exists('datetime_diff_minutes')) {
      * @param string|null $to   End datetime (default: now)
      * @return int Minutes difference
      */
-    function datetime_diff_minutes(string $from, ?string $to = null): int
+    function datetime_diff_minutes($from, $to = null): int
     {
-        $fromTime = strtotime($from);
-        $toTime = $to ? strtotime($to) : time();
+        $fromTime = datetime_to_timestamp($from);
+        $toTime = datetime_to_timestamp($to) ?? time();
+
+        if ($fromTime === null) {
+            return 0;
+        }
 
         return (int) round(($toTime - $fromTime) / 60);
     }
@@ -119,14 +158,14 @@ if (!function_exists('format_datetime')) {
      * @param string      $format   PHP date format
      * @return string|null Formatted datetime or null if input is null
      */
-    function format_datetime(?string $datetime, string $format = 'Y-m-d H:i:s'): ?string
+    function format_datetime($datetime, string $format = 'Y-m-d H:i:s'): ?string
     {
         if ($datetime === null || $datetime === '') {
             return null;
         }
 
-        $timestamp = strtotime($datetime);
-        return $timestamp ? date($format, $timestamp) : null;
+        $timestamp = datetime_to_timestamp($datetime);
+        return $timestamp !== null ? date($format, $timestamp) : null;
     }
 }
 
@@ -137,14 +176,14 @@ if (!function_exists('to_iso8601')) {
      * @param string|null $datetime Datetime to convert
      * @return string|null ISO 8601 formatted datetime
      */
-    function to_iso8601(?string $datetime): ?string
+    function to_iso8601($datetime): ?string
     {
         if ($datetime === null || $datetime === '') {
             return null;
         }
 
-        $timestamp = strtotime($datetime);
-        return $timestamp ? date('c', $timestamp) : null;
+        $timestamp = datetime_to_timestamp($datetime);
+        return $timestamp !== null ? date('c', $timestamp) : null;
     }
 }
 

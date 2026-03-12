@@ -1,11 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Filters;
 
-use App\Libraries\Queue\QueueManager;
+use App\HTTP\ApiRequest;
 use CodeIgniter\Filters\FilterInterface;
 use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
+use Config\Services;
 
 class RequestLoggingFilter implements FilterInterface
 {
@@ -18,8 +21,9 @@ class RequestLoggingFilter implements FilterInterface
      */
     public function before(RequestInterface $request, $arguments = null)
     {
-        // Store request start time
-        $request->startTime = microtime(true);
+        if ($request instanceof ApiRequest) {
+            $request->setRequestStartTime(microtime(true));
+        }
 
         return $request;
     }
@@ -35,25 +39,28 @@ class RequestLoggingFilter implements FilterInterface
     public function after(RequestInterface $request, ResponseInterface $response, $arguments = null)
     {
         // Check if request logging is enabled
-        if (! env('REQUEST_LOGGING_ENABLED', true)) {
+        if (! config('Api')->requestLoggingEnabled) {
             return $response;
         }
 
         // Calculate response time
-        $startTime = $request->startTime ?? microtime(true);
+        $startTime = $request instanceof ApiRequest
+            ? ($request->getRequestStartTime() ?? microtime(true))
+            : microtime(true);
         $responseTime = (int) round((microtime(true) - $startTime) * 1000); // milliseconds
 
         // Get request data
         $method = $request->getMethod();
         $uri = $request->getUri()->getPath();
-        $userId = $request->userId ?? null;
+        $userId = $request instanceof ApiRequest ? $request->getAuthUserId() : null;
         $ipAddress = $request->getIPAddress();
         $userAgent = $request->getHeaderLine('User-Agent');
         $responseCode = $response->getStatusCode();
 
         // Queue the log entry (async to not slow down response)
         try {
-            $queueManager = new QueueManager();
+            /** @var \App\Libraries\Queue\QueueManager $queueManager */
+            $queueManager = Services::queueManager();
             $queueManager->push(
                 \App\Libraries\Queue\Jobs\LogRequestJob::class,
                 [
@@ -69,8 +76,11 @@ class RequestLoggingFilter implements FilterInterface
             );
 
             // Log slow queries
-            $slowQueryThreshold = (int) env('SLOW_QUERY_THRESHOLD', 1000);
-            if ($responseTime > $slowQueryThreshold) {
+            $apiConfig = config('Api');
+            $slowQueryThreshold = $apiConfig->slowQueryThreshold;
+            $isSlow = $responseTime > $slowQueryThreshold;
+
+            if ($isSlow) {
                 log_message('warning', "Slow request detected: {$method} {$uri} ({$responseTime}ms)");
             }
         } catch (\Throwable $e) {

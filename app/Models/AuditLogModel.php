@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use App\Traits\Filterable;
@@ -19,7 +21,7 @@ class AuditLogModel extends Model
     protected $table = 'audit_logs';
     protected $primaryKey = 'id';
     protected $useAutoIncrement = true;
-    protected $returnType = 'object';
+    protected $returnType = \App\Entities\AuditLogEntity::class;
     protected $useSoftDeletes = false;
     protected $protectFields = true;
 
@@ -32,6 +34,10 @@ class AuditLogModel extends Model
         'new_values',
         'ip_address',
         'user_agent',
+        'result',
+        'severity',
+        'request_id',
+        'metadata',
         'created_at',
     ];
 
@@ -39,11 +45,18 @@ class AuditLogModel extends Model
     protected $useTimestamps = false;
     protected $dateFormat = 'datetime';
 
-    // Validation rules
+    /**
+     * Validation rules
+     *
+     * @var array<string, string>
+     */
     protected $validationRules = [
         'action' => 'required|max_length[50]',
         'entity_type' => 'required|max_length[50]',
         'ip_address' => 'required|max_length[45]',
+        'result' => 'permit_empty|in_list[success,failure,denied]',
+        'severity' => 'permit_empty|in_list[info,warning,critical]',
+        'request_id' => 'permit_empty|max_length[64]',
     ];
 
     protected $validationMessages = [];
@@ -51,9 +64,14 @@ class AuditLogModel extends Model
     protected $cleanValidationRules = true;
 
     // Filtering and searching
-    protected array $filterableFields = ['user_id', 'action', 'entity_type', 'entity_id', 'created_at'];
-    protected array $searchableFields = ['action', 'entity_type'];
-    protected array $sortableFields = ['id', 'user_id', 'action', 'entity_type', 'entity_id', 'created_at'];
+    /** @var array<int, string> */
+    protected array $filterableFields = ['user_id', 'action', 'entity_type', 'entity_id', 'result', 'severity', 'request_id', 'created_at'];
+
+    /** @var array<int, string> */
+    protected array $searchableFields = ['action', 'entity_type', 'request_id'];
+
+    /** @var array<int, string> */
+    protected array $sortableFields = ['id', 'user_id', 'action', 'entity_type', 'entity_id', 'result', 'severity', 'created_at'];
 
     /**
      * Get audit logs for an entity
@@ -94,5 +112,55 @@ class AuditLogModel extends Model
     {
         return $this->orderBy('created_at', 'DESC')
             ->findAll($limit);
+    }
+
+    /**
+     * @return array<int, array{value:string,count:int}>
+     */
+    public function getActionFacets(int $windowDays = 90, int $limit = 100): array
+    {
+        $since = date('Y-m-d H:i:s', strtotime('-' . max(1, $windowDays) . ' days'));
+        $query = $this->builder()
+            ->select('action AS value, COUNT(*) AS count')
+            ->where('created_at >=', $since)
+            ->where('action IS NOT NULL', null, false)
+            ->where("TRIM(action) != ''", null, false)
+            ->groupBy('action')
+            ->orderBy('count', 'DESC')
+            ->orderBy('action', 'ASC')
+            ->limit(max(1, min($limit, 500)))
+            ->get();
+
+        $rows = $query ? $query->getResultArray() : [];
+
+        return array_map(static fn (array $row): array => [
+            'value' => (string) ($row['value'] ?? ''),
+            'count' => (int) ($row['count'] ?? 0),
+        ], $rows);
+    }
+
+    /**
+     * @return array<int, array{value:string,count:int}>
+     */
+    public function getEntityTypeFacets(int $windowDays = 90, int $limit = 100): array
+    {
+        $since = date('Y-m-d H:i:s', strtotime('-' . max(1, $windowDays) . ' days'));
+        $query = $this->builder()
+            ->select('entity_type AS value, COUNT(*) AS count')
+            ->where('created_at >=', $since)
+            ->where('entity_type IS NOT NULL', null, false)
+            ->where("TRIM(entity_type) != ''", null, false)
+            ->groupBy('entity_type')
+            ->orderBy('count', 'DESC')
+            ->orderBy('entity_type', 'ASC')
+            ->limit(max(1, min($limit, 500)))
+            ->get();
+
+        $rows = $query ? $query->getResultArray() : [];
+
+        return array_map(static fn (array $row): array => [
+            'value' => (string) ($row['value'] ?? ''),
+            'count' => (int) ($row['count'] ?? 0),
+        ], $rows);
     }
 }

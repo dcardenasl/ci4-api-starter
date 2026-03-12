@@ -1,0 +1,63 @@
+# Extension Guide
+
+
+## Adding a New CRUD Resource
+
+Complete step-by-step process:
+
+1. **Scaffold first** - `php spark make:crud Product --domain Catalog --route products`
+2. **Validate scaffold** - `php spark module:check Product --domain Catalog`
+3. **Create migration(s)** - `php spark make:migration CreateProductsTable`
+4. **Align entity/model** - fields, casts, validation, query traits
+5. **Finalize DTO contracts** - Request/Response DTOs + OpenAPI attributes
+6. **Finalize service** - pure logic + repository strategy
+7. **Register dependencies** - update `app/Config/Services.php` when needed
+8. **Create/verify routes** - update `app/Config/Routes.php`
+9. **Add language files** - `app/Language/{lang}/Products.php`
+10. **Write tests** - Unit, Integration, Feature tests
+11. **Run quality/docs gates** - `composer quality` + `php spark swagger:generate`
+
+## Scaffold Command (Recommended)
+
+Use the internal generator to create a domain-aligned CRUD skeleton:
+
+```bash
+php spark make:crud Product --domain Catalog --route products
+```
+
+The repository now ships with a completed example module, `DemoProduct`, under the `Catalog` domain. Review its DTOs, controller, service, and tests as a reference for the architecture contract, and verify any new module with `php spark module:check <Resource> --domain <Domain>`.
+
+The command generates entity, model, interface, service, controller, validation, i18n files, OpenAPI placeholders, and tests. It does **not** generate migration files.
+
+## Quick Start
+
+See [`../GETTING_STARTED.md`](../GETTING_STARTED.md) for a complete walkthrough with code examples.
+
+## Adding Custom Filters
+
+```php
+// 1. Create filter
+// app/Filters/MyFilter.php
+class MyFilter implements FilterInterface { ... }
+
+// 2. Register alias
+// app/Config/Filters.php
+public array $aliases = [
+    'myfilter' => \App\Filters\MyFilter::class,
+];
+
+// 3. Use in routes
+$routes->group('', ['filter' => 'myfilter'], function ($routes) {
+    // ...
+});
+```
+
+## Adding Custom Exceptions
+
+```php
+// app/Exceptions/PaymentRequiredException.php
+class PaymentRequiredException extends ApiException
+{
+    protected int $statusCode = 402;
+}
+```

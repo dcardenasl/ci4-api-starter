@@ -1,27 +1,25 @@
 <?php
 
-/**
- * Cadenas de respuesta de API (Español)
- */
 return [
-    // Mensajes de éxito
-    'resourceCreated' => 'Recurso creado exitosamente',
-    'resourceUpdated' => 'Recurso actualizado exitosamente',
-    'resourceDeleted' => 'Recurso eliminado exitosamente',
-
-    // Mensajes de error
-    'resourceNotFound' => 'Recurso no encontrado',
-    'notFound'         => 'Recurso no encontrado',
-    'validationFailed' => 'Error de validación',
-    'requestFailed'    => 'Solicitud fallida',
-    'unauthorized'     => 'No autorizado',
-    'forbidden'        => 'Prohibido',
-    'serverError'      => 'Error interno del servidor',
-    'invalidRequest'   => 'Solicitud inválida',
-    'databaseError'    => 'Ocurrió un error en la base de datos',
-
-    // Mensajes de log
-    'exception'         => 'Excepción de API',
-    'exceptionTrace'    => 'Traza de excepción',
-    'databaseException' => 'Excepción de base de datos',
+    'requestFailed' => 'La solicitud ha fallado.',
+    'validationFailed' => 'La validación ha fallado.',
+    'resourceNotFound' => 'Recurso no encontrado.',
+    'resourceCreated' => 'Recurso creado correctamente.',
+    'resourceUpdated' => 'Recurso actualizado correctamente.',
+    'resourceDeleted' => 'Recurso eliminado correctamente.',
+    'noFieldsToUpdate' => 'No se proporcionaron campos válidos para actualizar.',
+    'jwtSecretTooShort' => 'JWT_SECRET_KEY debe tener al menos 32 caracteres.',
+    'unauthorized' => 'Acceso no autorizado.',
+    'forbidden' => 'Permisos insuficientes.',
+    'serverError' => 'Ha ocurrido un error interno en el servidor.',
+    'tooManyRequests' => 'Demasiadas solicitudes.',
+    'invalidRequest' => 'Datos de solicitud inválidos.',
+    'invalidJsonPayload' => 'Carga JSON malformada.',
+    'transactionFailed' => 'La transacción de base de datos ha fallado.',
+    'updateError' => 'No se pudo actualizar el recurso.',
+    'deleteError' => 'No se pudo eliminar el recurso.',
+    'saveFailed' => 'No se pudo guardar el recurso.',
+    'responseDtoNotDefined' => 'Clase Response DTO no definida para {0}.',
+    'responseDtoMustImplement' => 'La clase {0} debe implementar DataTransferObjectInterface.',
+    'fieldRequired' => 'El campo {0} es obligatorio.',
 ];

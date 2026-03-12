@@ -36,6 +36,18 @@ if (!function_exists('verify_password')) {
     }
 }
 
+if (!function_exists('is_email_verification_required')) {
+    /**
+     * Check if email verification is required
+     *
+     * @return bool True if verification is required
+     */
+    function is_email_verification_required(): bool
+    {
+        return config('Api')->requireEmailVerification;
+    }
+}
+
 if (!function_exists('generate_token')) {
     /**
      * Generate a cryptographically secure random token
@@ -46,6 +58,26 @@ if (!function_exists('generate_token')) {
     function generate_token(int $bytes = 32): string
     {
         return bin2hex(random_bytes($bytes));
+    }
+}
+
+if (!function_exists('generate_api_key')) {
+    /**
+     * Generate an API key with app prefix.
+     */
+    function generate_api_key(): string
+    {
+        return 'apk_' . generate_token(24);
+    }
+}
+
+if (!function_exists('hash_api_key')) {
+    /**
+     * Hash API key for secure storage.
+     */
+    function hash_api_key(string $rawKey): string
+    {
+        return hash('sha256', $rawKey);
     }
 }
 
@@ -86,28 +118,59 @@ if (!function_exists('constant_time_compare')) {
 
 if (!function_exists('sanitize_filename')) {
     /**
-     * Sanitize a filename for safe storage
+     * Sanitize a filename for safe storage with path traversal prevention
      *
      * @param string $filename Original filename
-     * @param bool   $relativePath Allow relative paths
+     * @param bool   $relativePath Allow relative paths (use with caution)
      * @return string Sanitized filename
+     * @throws \App\Exceptions\BadRequestException If path traversal detected or dangerous file type
      */
     function sanitize_filename(string $filename, bool $relativePath = false): string
     {
-        // Remove any characters that aren't alphanumeric, underscores, dashes, or dots
-        $filename = preg_replace('/[^\w\-\.]/', '_', $filename);
+        // Normalize directory separators to forward slash
+        $filename = str_replace('\\', '/', $filename);
 
         if (!$relativePath) {
-            // Remove directory traversal
-            $filename = str_replace(['../', '..\\'], '', $filename);
+            // Strict mode: block any path traversal attempts
+            if (str_contains($filename, '..')) {
+                throw new \App\Exceptions\BadRequestException(
+                    'Invalid filename',
+                    ['filename' => 'Path traversal detected']
+                );
+            }
+
+            // Block directory separators in strict mode
+            if (str_contains($filename, '/')) {
+                throw new \App\Exceptions\BadRequestException(
+                    'Invalid filename',
+                    ['filename' => 'Directory separator not allowed']
+                );
+            }
+
+            // Extract basename to prevent any path manipulation
             $filename = basename($filename);
         }
+
+        // Block dangerous file extensions
+        $dangerousExtensions = ['php', 'phtml', 'phar', 'sh', 'exe', 'bat', 'cmd', 'com'];
+        $extension = pathinfo($filename, PATHINFO_EXTENSION);
+
+        if (in_array(strtolower($extension), $dangerousExtensions, true)) {
+            throw new \App\Exceptions\BadRequestException(
+                'Invalid file type',
+                ['filename' => 'File type not allowed']
+            );
+        }
+
+        // Remove any characters that aren't alphanumeric, underscores, dashes, dots, or forward slashes (if relative paths allowed)
+        $allowedPattern = $relativePath ? '/[^\w\-\.\/]/' : '/[^\w\-\.]/';
+        $filename = preg_replace($allowedPattern, '_', $filename);
 
         // Remove multiple consecutive underscores/dots
         $filename = preg_replace('/[_.]{2,}/', '_', $filename);
 
         // Trim leading/trailing special chars
-        return trim($filename, '._');
+        return trim($filename, '._/');
     }
 }
 

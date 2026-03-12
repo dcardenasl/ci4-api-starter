@@ -28,6 +28,28 @@ abstract class Job
     protected ?int $jobId = null;
 
     /**
+     * Maximum number of attempts for this specific job
+     * If null, the global queue config is used
+     *
+     * @var int|null
+     */
+    public ?int $maxAttempts = null;
+
+    /**
+     * Determine the delay in seconds before a retry
+     * Implements exponential backoff by default: 60s, 120s, 240s...
+     *
+     * @return int Delay in seconds
+     */
+    public function getRetryDelay(): int
+    {
+        // $this->attempts will reflect the number of times it has already run
+        // Attempt 1 -> 60s, Attempt 2 -> 120s, Attempt 3 -> 240s
+        $baseDelay = 60;
+        return (int) (pow(2, max(0, $this->attempts - 1)) * $baseDelay);
+    }
+
+    /**
      * Create a new job instance
      *
      * @param array<string, mixed> $data

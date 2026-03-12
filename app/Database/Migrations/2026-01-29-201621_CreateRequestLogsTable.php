@@ -45,8 +45,9 @@ class CreateRequestLogsTable extends Migration
                 'unsigned' => true,
             ],
             'created_at' => [
-                'type' => 'TIMESTAMP',
-                'null' => false,
+                'type'    => 'DATETIME',
+                'null'    => false,
+                'default' => new \CodeIgniter\Database\RawSql('CURRENT_TIMESTAMP'),
             ],
         ]);
 

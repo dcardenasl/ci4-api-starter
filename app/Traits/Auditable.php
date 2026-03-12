@@ -2,7 +2,8 @@
 
 namespace App\Traits;
 
-use App\Services\AuditService;
+use App\Interfaces\System\AuditServiceInterface;
+use App\Libraries\ContextHolder;
 
 /**
  * Auditable Trait
@@ -25,41 +26,67 @@ use App\Services\AuditService;
 trait Auditable
 {
     /**
+     * Resolved once by model constructor to keep trait framework-agnostic.
+     */
+    protected ?AuditServiceInterface $auditService = null;
+
+    public function setAuditService(AuditServiceInterface $auditService): void
+    {
+        $this->auditService = $auditService;
+    }
+
+    protected function initAuditable(): void
+    {
+        if (property_exists($this, 'beforeUpdate')) {
+            $this->beforeUpdate = array_values(array_unique(array_merge($this->beforeUpdate, ['auditBeforeUpdate'])));
+        }
+
+        if (property_exists($this, 'beforeDelete')) {
+            $this->beforeDelete = array_values(array_unique(array_merge($this->beforeDelete, ['auditBeforeDelete'])));
+        }
+
+        if (property_exists($this, 'afterInsert')) {
+            $this->afterInsert = array_values(array_unique(array_merge($this->afterInsert, ['auditInsert'])));
+        }
+
+        if (property_exists($this, 'afterUpdate')) {
+            $this->afterUpdate = array_values(array_unique(array_merge($this->afterUpdate, ['auditUpdate'])));
+        }
+
+        if (property_exists($this, 'afterDelete')) {
+            $this->afterDelete = array_values(array_unique(array_merge($this->afterDelete, ['auditDelete'])));
+        }
+    }
+
+    /**
      * Temporary storage for old values before update/delete
      */
     protected array $auditOldValues = [];
 
     /**
-     * Initialize auditable callbacks
-     *
-     * Call this in model constructor:
-     * public function __construct() {
-     *     parent::__construct();
-     *     $this->initAuditable();
-     * }
+     * Inject old values from service layer to avoid redundant DB queries.
      */
-    protected function initAuditable(): void
+    public function setAuditOldValues(int $id, array|object $values): void
     {
-        $this->beforeUpdate[] = 'auditBeforeUpdate';
-        $this->beforeDelete[] = 'auditBeforeDelete';
-        $this->afterInsert[] = 'auditInsert';
-        $this->afterUpdate[] = 'auditUpdate';
-        $this->afterDelete[] = 'auditDelete';
+        $this->auditOldValues[$id] = is_object($values)
+            ? (method_exists($values, 'toArray') ? $values->toArray() : (array) $values)
+            : $values;
     }
 
     /**
-     * Capture old values before update
+     * Capture old values before update (fallback if not injected)
      */
     protected function auditBeforeUpdate(array $data): array
     {
         if (isset($data['id'])) {
             $id = is_array($data['id']) ? (int) $data['id'][0] : (int) $data['id'];
-            $old = $this->find($id);
 
-            if ($old) {
-                $this->auditOldValues[$id] = is_object($old)
-                    ? (method_exists($old, 'toArray') ? $old->toArray() : (array) $old)
-                    : $old;
+            // Only query if not already injected by service layer
+            if (!isset($this->auditOldValues[$id])) {
+                $old = $this->find($id);
+                if ($old) {
+                    $this->setAuditOldValues($id, $old);
+                }
             }
         }
 
@@ -67,18 +94,19 @@ trait Auditable
     }
 
     /**
-     * Capture entity data before delete
+     * Capture entity data before delete (fallback if not injected)
      */
     protected function auditBeforeDelete(array $data): array
     {
         if (isset($data['id'])) {
             $id = is_array($data['id']) ? (int) $data['id'][0] : (int) $data['id'];
-            $entity = $this->find($id);
 
-            if ($entity) {
-                $this->auditOldValues[$id] = is_object($entity)
-                    ? (method_exists($entity, 'toArray') ? $entity->toArray() : (array) $entity)
-                    : $entity;
+            // Only query if not already injected by service layer
+            if (!isset($this->auditOldValues[$id])) {
+                $entity = $this->find($id);
+                if ($entity) {
+                    $this->setAuditOldValues($id, $entity);
+                }
             }
         }
 
@@ -98,13 +126,13 @@ trait Auditable
         }
 
         $auditService = $this->getAuditService();
-        $userId = $this->getCurrentUserId();
+        $context = ContextHolder::get();
 
         $auditService->logCreate(
             $this->getEntityType(),
             is_array($data['id']) ? (int) $data['id'][0] : (int) $data['id'],
             $data['data'] ?? [],
-            $userId
+            $context
         );
     }
 
@@ -134,14 +162,14 @@ trait Auditable
         unset($this->auditOldValues[$id]);
 
         $auditService = $this->getAuditService();
-        $userId = $this->getCurrentUserId();
+        $context = ContextHolder::get();
 
         $auditService->logUpdate(
             $this->getEntityType(),
             $id,
             $oldValues,
             $newValues,
-            $userId
+            $context
         );
     }
 
@@ -170,47 +198,23 @@ trait Auditable
         unset($this->auditOldValues[$id]);
 
         $auditService = $this->getAuditService();
-        $userId = $this->getCurrentUserId();
+        $context = ContextHolder::get();
 
         $auditService->logDelete(
             $this->getEntityType(),
             $id,
             $deletedData,
-            $userId
+            $context
         );
     }
 
-    /**
-     * Get audit service instance
-     *
-     * @return AuditService
-     */
-    protected function getAuditService(): AuditService
+    protected function getAuditService(): AuditServiceInterface
     {
-        static $auditService = null;
-
-        if ($auditService === null) {
-            $auditService = new AuditService(new \App\Models\AuditLogModel());
+        if ($this->auditService === null) {
+            throw new \RuntimeException(lang('Audit.serviceNotConfigured'));
         }
 
-        return $auditService;
-    }
-
-    /**
-     * Get current user ID from request
-     *
-     * @return int|null
-     */
-    protected function getCurrentUserId(): ?int
-    {
-        $request = \Config\Services::request();
-
-        // Check if userId is set by JwtAuthFilter
-        if (property_exists($request, 'userId')) {
-            return (int) $request->userId;
-        }
-
-        return null;
+        return $this->auditService;
     }
 
     /**

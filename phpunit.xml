@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
-         bootstrap="vendor/codeigniter4/framework/system/Test/bootstrap.php"
+         bootstrap="tests/bootstrap.php"
          colors="true"
          cacheDirectory=".phpunit.cache"
          executionOrder="depends,defects"
@@ -46,22 +46,7 @@
         <const name="PUBLICPATH" value="./public/"/>
         <const name="WRITEPATH" value="./writable/"/>
 
-        <!-- Default database connection (used by FeatureTestTrait) -->
-        <env name="database.default.hostname" value="127.0.0.1"/>
-        <env name="database.default.database" value="ci4_test"/>
-        <env name="database.default.username" value="root"/>
-        <env name="database.default.password" value="root"/>
-        <env name="database.default.DBDriver" value="MySQLi"/>
-        <env name="database.default.DBPrefix" value=""/>
-        <env name="database.default.port" value="3306"/>
-
-        <!-- Tests database connection (used by DatabaseTestTrait) -->
-        <env name="database.tests.hostname" value="127.0.0.1"/>
-        <env name="database.tests.database" value="ci4_test"/>
-        <env name="database.tests.username" value="root"/>
-        <env name="database.tests.password" value="root"/>
-        <env name="database.tests.DBDriver" value="MySQLi"/>
-        <env name="database.tests.DBPrefix" value=""/>
-        <env name="database.tests.port" value="3306"/>
+        <env name="JWT_SECRET_KEY" value="testing-secret-key-at-least-32-characters-long"/>
+        <env name="JWT_ALGORITHM" value="HS256"/>
     </php>
 </phpunit>

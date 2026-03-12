@@ -1,7 +1,7 @@
 parameters:
-    level: 6
+    level: 7
     bootstrapFiles:
-        - app/Helpers/validation_helper.php
+        - app/Helpers/security_helper.php
     paths:
         - app/Controllers
         - app/Services
@@ -9,6 +9,13 @@ parameters:
         - app/Libraries
         - app/Entities
         - app/Filters
+        - app/Interfaces
+    parallel:
+        jobSize: 20
+        processTimeout: 600.0
+        maximumNumberOfProcesses: 0
+        minimumNumberOfJobsPerProcess: 2
+        buffer: 134217728
     excludePaths:
         - vendor
         - writable
@@ -21,21 +28,15 @@ parameters:
         - '#Call to an undefined method CodeIgniter\\Database\\BaseBuilder::#'
         - '#Function (esc|lang|service|helper|model|config|cache|view|is_cli|env|base_url|site_url|redirect|clean_path|log_message) not found#'
         - '#Constant (APPPATH|FCPATH|ROOTPATH|WRITEPATH|ENVIRONMENT) not found#'
-        - '#Cannot call method .* on CodeIgniter\\.*\|null#'
-        - '#has parameter .* with no type specified#'
         - '#has parameter .* with no value type specified in iterable type array#'
         - '#return type has no value type specified in iterable type array#'
-        - '#Cannot access property .* on array\|object#'
-        - '#Cannot access property .* on array<.*>\|object#'
-        - '#Access to an undefined property CodeIgniter\\HTTP\\RequestInterface::#'
-        - '#return statement is missing#'
-        - '#Return type .* should be compatible with return type#'
-        - '#Cannot call method toArray\(\) on array<.*>\|object#'
-        - '#Property .* with generic class CodeIgniter\\Database\\BaseConnection does not specify its types#'
-        - '#Call to an undefined method App\\Models\\.*::get\(\)#'
-        - '#Parameter .* of method Monolog\\Logger::log\(\) expects#'
-        - '#Property .* type has no value type specified in iterable type array#'
-        - '#Access to an undefined property CodeIgniter\\HTTP\\.*Request::\$userId#'
-        - '#Call to an undefined method object::(getErrorString|getSize|getExtension|getName|getTempName|getMimeType)\(\)#'
-        - '#Cannot call method getHumanSize\(\) on array.*\|object#'
-        - '#Access to an undefined property App\\Entities\\.*Entity::#'
+        - '#Call to an undefined method object::#'
+        - '#Access to an undefined property object::#'
+        - '#Access to an undefined property App\\Entities\\.*::\$#'
+        - '#Cannot access property .* on array.*\|object#'
+        - '#Cannot call method toArray\(\) on array.*\|object#'
+        - '#Call to an undefined method App\\Controllers\\.*::(request|getVarString|getGetString|getVarInt)\(\)#'
+        - '#Call to an undefined method App\\Controllers\\.*::respondForbidden\(\)#'
+        - '#Else branch is unreachable because ternary operator condition is always true.#'
+        - '#Parameter \#2 \$timestamp of function date expects int\|null, int\|false given.#'
+        - '#Parameter \#1 \$datetime of function strtotime expects string, string\|false given.#'

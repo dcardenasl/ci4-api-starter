@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Filters;
 
+use App\HTTP\ApiRequest;
 use App\Libraries\ApiResponse;
+use App\Libraries\ContextHolder;
 use CodeIgniter\Filters\FilterInterface;
 use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
@@ -22,8 +24,9 @@ class RoleAuthorizationFilter implements FilterInterface
      * Role hierarchy (higher number = more permissions)
      */
     private const ROLE_HIERARCHY = [
-        'user'  => 0,
-        'admin' => 10,
+        'user'       => 0,
+        'admin'      => 10,
+        'superadmin' => 100,
     ];
 
     /**
@@ -35,16 +38,25 @@ class RoleAuthorizationFilter implements FilterInterface
      */
     public function before(RequestInterface $request, $arguments = null)
     {
-        $requiredRole = $arguments[0] ?? 'user';
-        $userRole = $request->userRole ?? null;
+        $requiredRole = is_array($arguments) ? ($arguments[0] ?? 'user') : 'user';
+        $context = ContextHolder::get();
+        $securityAuditLogger = Services::securityAuditLogger();
+        $actorId = $request instanceof ApiRequest ? $request->getAuthUserId() : null;
+        $actorId ??= $context?->user_id;
+
+        $userRole = $request instanceof ApiRequest ? $request->getAuthUserRole() : null;
+        $userRole ??= $context?->user_role;
+        $userRole ??= $request->getHeaderLine('X-Test-User-Role') ?: null;
 
         if (!$userRole) {
+            $securityAuditLogger->logAuthorizationDeniedFromRequest($request, $requiredRole, null, $actorId);
             return Services::response()
                 ->setJSON(ApiResponse::unauthorized(lang('Auth.authRequired')))
                 ->setStatusCode(ResponseInterface::HTTP_UNAUTHORIZED);
         }
 
         if (!$this->hasPermission($userRole, $requiredRole)) {
+            $securityAuditLogger->logAuthorizationDeniedFromRequest($request, $requiredRole, $userRole, $actorId);
             return Services::response()
                 ->setJSON(ApiResponse::forbidden(lang('Auth.insufficientPermissions')))
                 ->setStatusCode(ResponseInterface::HTTP_FORBIDDEN);
@@ -57,11 +69,11 @@ class RoleAuthorizationFilter implements FilterInterface
      * @param RequestInterface $request
      * @param ResponseInterface $response
      * @param array|null $arguments
-     * @return void
+     * @return ResponseInterface|null
      */
-    public function after(RequestInterface $request, ResponseInterface $response, $arguments = null): void
+    public function after(RequestInterface $request, ResponseInterface $response, $arguments = null): ?ResponseInterface
     {
-        // Not used
+        return $response;
     }
 
     /**

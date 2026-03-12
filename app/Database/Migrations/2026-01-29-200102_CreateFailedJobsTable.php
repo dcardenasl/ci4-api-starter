@@ -29,17 +29,18 @@ class CreateFailedJobsTable extends Migration
                 'type' => 'TEXT',
             ],
             'failed_at' => [
-                'type' => 'TIMESTAMP',
-                'null' => false,
+                'type'    => 'DATETIME',
+                'null'    => false,
+                'default' => new \CodeIgniter\Database\RawSql('CURRENT_TIMESTAMP'),
             ],
         ]);
 
         $this->forge->addKey('id', true);
-        $this->forge->createTable('failed_jobs');
+        $this->forge->createTable('failed_jobs', true);
     }
 
     public function down()
     {
-        $this->forge->dropTable('failed_jobs');
+        $this->forge->dropTable('failed_jobs', true);
     }
 }

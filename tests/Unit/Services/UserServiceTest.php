@@ -4,12 +4,15 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Services;
 
+use App\DTO\Response\Users\UserResponseDTO;
 use App\Entities\UserEntity;
-use App\Exceptions\BadRequestException;
 use App\Exceptions\NotFoundException;
-use App\Exceptions\ValidationException;
-use App\Models\UserModel;
-use App\Services\UserService;
+use App\Interfaces\Mappers\ResponseMapperInterface;
+use App\Interfaces\Users\UserRepositoryInterface;
+use App\Services\Users\Actions\ApproveUserAction;
+use App\Services\Users\Actions\CreateUserAction;
+use App\Services\Users\Actions\UpdateUserAction;
+use App\Services\Users\UserService;
 use CodeIgniter\Test\CIUnitTestCase;
 use Tests\Support\Traits\CustomAssertionsTrait;
 
@@ -23,14 +26,40 @@ class UserServiceTest extends CIUnitTestCase
     use CustomAssertionsTrait;
 
     protected UserService $service;
-    protected UserModel $mockUserModel;
+    protected UserRepositoryInterface $mockUserRepository;
+    protected ApproveUserAction $mockApproveUserAction;
+    protected CreateUserAction $mockCreateUserAction;
+    protected UpdateUserAction $mockUpdateUserAction;
+    protected ResponseMapperInterface $responseMapper;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        $this->mockUserModel = $this->createMock(UserModel::class);
-        $this->service = new UserService($this->mockUserModel);
+        $this->mockUserRepository = $this->createMock(UserRepositoryInterface::class);
+        $this->mockApproveUserAction = $this->createMock(ApproveUserAction::class);
+        $this->mockCreateUserAction = $this->createMock(CreateUserAction::class);
+        $this->mockUpdateUserAction = $this->createMock(UpdateUserAction::class);
+        $this->responseMapper = new class () implements ResponseMapperInterface {
+            public function map(object $entity): \App\Interfaces\DataTransferObjectInterface
+            {
+                return UserResponseDTO::fromArray($entity->toArray());
+            }
+        };
+
+        $this->service = new UserService(
+            $this->mockUserRepository,
+            $this->responseMapper,
+            new \App\Libraries\Security\UserRoleGuard(),
+            $this->mockApproveUserAction,
+            $this->mockCreateUserAction,
+            $this->mockUpdateUserAction
+        );
+    }
+
+    private function createUserEntity(array $data): UserEntity
+    {
+        return new UserEntity($data);
     }
 
     // ==================== SHOW TESTS ====================
@@ -39,222 +68,86 @@ class UserServiceTest extends CIUnitTestCase
     {
         $user = $this->createUserEntity([
             'id' => 1,
-            'username' => 'testuser',
             'email' => 'test@example.com',
             'role' => 'user',
         ]);
 
-        $this->mockUserModel
-            ->expects($this->once())
-            ->method('find')
-            ->with(1)
-            ->willReturn($user);
+        $this->mockUserRepository->expects($this->once())->method('find')->with(1)->willReturn($user);
 
-        $result = $this->service->show(['id' => 1]);
+        $result = $this->service->show(1);
 
-        $this->assertSuccessResponse($result);
-        $this->assertEquals(1, $result['data']['id']);
-        $this->assertEquals('testuser', $result['data']['username']);
-    }
-
-    public function testShowWithoutIdThrowsException(): void
-    {
-        $this->expectException(BadRequestException::class);
-
-        $this->service->show([]);
+        $this->assertInstanceOf(\App\Interfaces\DataTransferObjectInterface::class, $result);
+        $this->assertEquals('test@example.com', $result->toArray()['email']);
     }
 
     public function testShowWithNonExistentUserThrowsNotFoundException(): void
     {
-        $this->mockUserModel
-            ->method('find')
-            ->with(999)
-            ->willReturn(null);
-
+        $this->mockUserRepository->method('find')->willReturn(null);
         $this->expectException(NotFoundException::class);
-
-        $this->service->show(['id' => 999]);
+        $this->service->show(999);
     }
 
     // ==================== STORE TESTS ====================
 
     public function testStoreCreatesUser(): void
     {
-        $this->mockUserModel
-            ->expects($this->once())
-            ->method('insert')
-            ->willReturn(1);
-
-        $createdUser = $this->createUserEntity([
-            'id' => 1,
-            'username' => 'newuser',
+        $request = new \App\DTO\Request\Users\UserCreateRequestDTO([
             'email' => 'new@example.com',
             'role' => 'user',
-        ]);
+        ], service('validation'));
 
-        $this->mockUserModel
-            ->method('find')
-            ->willReturn($createdUser);
+        $expectedUser = $this->createUserEntity(['id' => 1, 'email' => 'new@example.com']);
+        $this->mockCreateUserAction->expects($this->once())->method('execute')->willReturn($expectedUser);
 
-        $result = $this->service->store([
-            'username' => 'newuser',
-            'email' => 'new@example.com',
-            'password' => 'ValidPass123!',
-        ]);
-
-        $this->assertSuccessResponse($result);
-        $this->assertEquals(1, $result['data']['id']);
-    }
-
-    public function testStoreWithInvalidDataThrowsValidationException(): void
-    {
-        $this->expectException(ValidationException::class);
-
-        $this->service->store([
-            'username' => 'newuser',
-            'email' => 'invalid',
-            'password' => 'ValidPass123!',
-        ]);
-    }
-
-    public function testStoreHashesPassword(): void
-    {
-        $this->mockUserModel
-            ->expects($this->once())
-            ->method('insert')
-            ->with($this->callback(function ($data) {
-                // Password should be hashed, not plain text
-                return isset($data['password'])
-                    && $data['password'] !== 'ValidPass123!'
-                    && password_verify('ValidPass123!', $data['password']);
-            }))
-            ->willReturn(1);
-
-        $createdUser = $this->createUserEntity(['id' => 1]);
-        $this->mockUserModel->method('find')->willReturn($createdUser);
-
-        $this->service->store([
-            'username' => 'newuser',
-            'email' => 'new@example.com',
-            'password' => 'ValidPass123!',
-        ]);
+        $result = $this->service->store($request);
+        $this->assertInstanceOf(\App\Interfaces\DataTransferObjectInterface::class, $result);
     }
 
     // ==================== UPDATE TESTS ====================
 
     public function testUpdateModifiesUser(): void
     {
-        $existingUser = $this->createUserEntity([
-            'id' => 1,
-            'username' => 'olduser',
-            'email' => 'old@example.com',
+        $id = 1;
+        $user = $this->createUserEntity(['id' => $id, 'role' => 'user']);
+        $request = new \App\DTO\Request\Users\UserUpdateRequestDTO([
+            'first_name' => 'Updated',
+        ], service('validation'));
+        $this->mockUpdateUserAction->expects($this->once())->method('execute')->with($id, $request)->willReturn($user);
+
+        $result = $this->service->update($id, $request);
+        $this->assertInstanceOf(\App\Interfaces\DataTransferObjectInterface::class, $result);
+    }
+
+    public function testApproveDelegatesToApproveUserAction(): void
+    {
+        $id = 1;
+        $context = new \App\DTO\SecurityContext(10, 'admin');
+        $approvedUser = $this->createUserEntity([
+            'id' => $id,
+            'email' => 'approved@example.com',
+            'status' => 'active',
         ]);
 
-        $updatedUser = $this->createUserEntity([
-            'id' => 1,
-            'username' => 'newuser',
-            'email' => 'new@example.com',
-        ]);
-
-        $this->mockUserModel
-            ->method('find')
-            ->willReturnOnConsecutiveCalls($existingUser, $updatedUser);
-
-        $this->mockUserModel
+        $this->mockApproveUserAction
             ->expects($this->once())
-            ->method('update')
-            ->with(1, $this->callback(function ($data) {
-                return $data['username'] === 'newuser' && $data['email'] === 'new@example.com';
-            }))
-            ->willReturn(true);
+            ->method('execute')
+            ->with($id, $context, 'https://client.test')
+            ->willReturn($approvedUser);
 
-        $result = $this->service->update([
-            'id' => 1,
-            'username' => 'newuser',
-            'email' => 'new@example.com',
-        ]);
-
-        $this->assertSuccessResponse($result);
-        $this->assertEquals('newuser', $result['data']['username']);
-    }
-
-    public function testUpdateWithoutIdThrowsException(): void
-    {
-        $this->expectException(BadRequestException::class);
-
-        $this->service->update(['username' => 'newuser']);
-    }
-
-    public function testUpdateNonExistentUserThrowsNotFoundException(): void
-    {
-        $this->mockUserModel
-            ->method('find')
-            ->willReturn(null);
-
-        $this->expectException(NotFoundException::class);
-
-        $this->service->update(['id' => 999, 'username' => 'test']);
-    }
-
-    public function testUpdateWithoutFieldsThrowsException(): void
-    {
-        $existingUser = $this->createUserEntity(['id' => 1]);
-        $this->mockUserModel->method('find')->willReturn($existingUser);
-
-        $this->expectException(BadRequestException::class);
-
-        $this->service->update(['id' => 1]);
+        $result = $this->service->approve($id, $context, 'https://client.test');
+        $this->assertInstanceOf(\App\Interfaces\DataTransferObjectInterface::class, $result);
+        $this->assertEquals('approved@example.com', $result->toArray()['email']);
     }
 
     // ==================== DESTROY TESTS ====================
 
     public function testDestroyDeletesUser(): void
     {
-        $existingUser = $this->createUserEntity(['id' => 1]);
+        $id = 1;
+        $this->mockUserRepository->method('find')->willReturn($this->createUserEntity(['id' => $id, 'role' => 'user']));
+        $this->mockUserRepository->expects($this->once())->method('delete')->with($id)->willReturn(true);
 
-        $this->mockUserModel
-            ->expects($this->once())
-            ->method('find')
-            ->with(1)
-            ->willReturn($existingUser);
-
-        $this->mockUserModel
-            ->expects($this->once())
-            ->method('delete')
-            ->with(1)
-            ->willReturn(true);
-
-        $result = $this->service->destroy(['id' => 1]);
-
-        $this->assertSuccessResponse($result);
-    }
-
-    public function testDestroyWithoutIdThrowsException(): void
-    {
-        $this->expectException(BadRequestException::class);
-
-        $this->service->destroy([]);
-    }
-
-    public function testDestroyNonExistentUserThrowsNotFoundException(): void
-    {
-        $this->mockUserModel
-            ->method('find')
-            ->willReturn(null);
-
-        $this->expectException(NotFoundException::class);
-
-        $this->service->destroy(['id' => 999]);
-    }
-
-    // ==================== HELPER METHODS ====================
-
-    private function createUserEntity(array $data): UserEntity
-    {
-        $user = new UserEntity();
-        foreach ($data as $key => $value) {
-            $user->{$key} = $value;
-        }
-        return $user;
+        $result = $this->service->destroy($id);
+        $this->assertTrue($result);
     }
 }

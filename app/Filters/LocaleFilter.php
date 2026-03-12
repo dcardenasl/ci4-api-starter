@@ -33,15 +33,21 @@ class LocaleFilter implements FilterInterface
 
         if (empty($acceptLanguage)) {
             // Use default locale
-            service('request')->setLocale($config->defaultLocale);
-            return;
+            if (method_exists($request, 'setLocale')) {
+                $request->setLocale($config->defaultLocale);
+            }
+            return $request;
         }
 
         // Parse Accept-Language header and find best match
         $locale = $this->parseAcceptLanguage($acceptLanguage, $config->supportedLocales);
 
         // Set the locale
-        service('request')->setLocale($locale ?? $config->defaultLocale);
+        if (method_exists($request, 'setLocale')) {
+            $request->setLocale($locale ?? $config->defaultLocale);
+        }
+
+        return $request;
     }
 
     /**
@@ -50,11 +56,11 @@ class LocaleFilter implements FilterInterface
      * @param RequestInterface $request
      * @param ResponseInterface $response
      * @param array|null $arguments
-     * @return void
+     * @return ResponseInterface|null
      */
-    public function after(RequestInterface $request, ResponseInterface $response, $arguments = null): void
+    public function after(RequestInterface $request, ResponseInterface $response, $arguments = null): ?ResponseInterface
     {
-        // Not used
+        return $response;
     }
 
     /**

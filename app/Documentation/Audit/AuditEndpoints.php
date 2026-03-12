@@ -19,10 +19,52 @@ use OpenApi\Attributes as OA;
             schema: new OA\Schema(type: 'integer', minimum: 1)
         ),
         new OA\Parameter(
-            name: 'limit',
+            name: 'per_page',
             in: 'query',
             required: false,
             schema: new OA\Schema(type: 'integer', minimum: 1)
+        ),
+        new OA\Parameter(
+            name: 'search',
+            in: 'query',
+            required: false,
+            schema: new OA\Schema(type: 'string')
+        ),
+        new OA\Parameter(
+            name: 'entity_type',
+            in: 'query',
+            required: false,
+            schema: new OA\Schema(type: 'string')
+        ),
+        new OA\Parameter(
+            name: 'entity_id',
+            in: 'query',
+            required: false,
+            schema: new OA\Schema(type: 'integer', minimum: 1)
+        ),
+        new OA\Parameter(
+            name: 'user_id',
+            in: 'query',
+            required: false,
+            schema: new OA\Schema(type: 'integer', minimum: 1)
+        ),
+        new OA\Parameter(
+            name: 'result',
+            in: 'query',
+            required: false,
+            schema: new OA\Schema(type: 'string', enum: ['success', 'failure', 'denied'])
+        ),
+        new OA\Parameter(
+            name: 'severity',
+            in: 'query',
+            required: false,
+            schema: new OA\Schema(type: 'string', enum: ['info', 'warning', 'critical'])
+        ),
+        new OA\Parameter(
+            name: 'request_id',
+            in: 'query',
+            required: false,
+            schema: new OA\Schema(type: 'string')
         ),
     ],
     responses: [
@@ -32,8 +74,19 @@ use OpenApi\Attributes as OA;
             content: new OA\JsonContent(
                 properties: [
                     new OA\Property(property: 'status', type: 'string', example: 'success'),
-                    new OA\Property(property: 'data', type: 'array', items: new OA\Items(ref: '#/components/schemas/AuditLog')),
-                    new OA\Property(property: 'meta', type: 'object'),
+                    new OA\Property(property: 'data', type: 'array', items: new OA\Items(ref: '#/components/schemas/AuditResponse')),
+                    new OA\Property(
+                        property: 'meta',
+                        type: 'object',
+                        properties: [
+                            new OA\Property(property: 'total', type: 'integer', example: 120),
+                            new OA\Property(property: 'per_page', type: 'integer', example: 20),
+                            new OA\Property(property: 'page', type: 'integer', example: 1),
+                            new OA\Property(property: 'last_page', type: 'integer', example: 6),
+                            new OA\Property(property: 'from', type: 'integer', example: 1),
+                            new OA\Property(property: 'to', type: 'integer', example: 20),
+                        ]
+                    ),
                 ],
                 type: 'object'
             )
@@ -61,7 +114,7 @@ use OpenApi\Attributes as OA;
             content: new OA\JsonContent(
                 properties: [
                     new OA\Property(property: 'status', type: 'string', example: 'success'),
-                    new OA\Property(property: 'data', ref: '#/components/schemas/AuditLog'),
+                    new OA\Property(property: 'data', ref: '#/components/schemas/AuditResponse'),
                 ],
                 type: 'object'
             )
@@ -96,7 +149,7 @@ use OpenApi\Attributes as OA;
             content: new OA\JsonContent(
                 properties: [
                     new OA\Property(property: 'status', type: 'string', example: 'success'),
-                    new OA\Property(property: 'data', type: 'array', items: new OA\Items(ref: '#/components/schemas/AuditLog')),
+                    new OA\Property(property: 'data', type: 'array', items: new OA\Items(ref: '#/components/schemas/AuditResponse')),
                 ],
                 type: 'object'
             )

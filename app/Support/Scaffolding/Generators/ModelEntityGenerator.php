@@ -49,10 +49,10 @@ use CodeIgniter\Entity\Entity;
 
 class {$schema->resource}Entity extends Entity
 {
-    protected array \$casts = [
+    protected \$casts = [
 {$casts}    ];
 
-    protected array \$dates = ['created_at', 'updated_at', 'deleted_at'];
+    protected \$dates = ['created_at', 'updated_at', 'deleted_at'];
 }
 PHP;
     }
@@ -64,7 +64,7 @@ PHP;
 
         $allowedFields = [];
         $searchableFields = [];
-        $filterableFields = ['id'];
+        $filterableFields = ["'id'"];
         $validationRules = "";
 
         foreach ($schema->fields as $field) {

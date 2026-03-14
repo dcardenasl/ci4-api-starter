@@ -36,7 +36,9 @@ declare(strict_types=1);
 namespace App\DTO\Request\\{$schema->domain};
 
 use App\DTO\Request\BaseRequestDTO;
+use OpenApi\Attributes as OA;
 
+#[OA\Schema(schema: '{$schema->resource}IndexRequest')]
 readonly class {$schema->resource}IndexRequestDTO extends BaseRequestDTO
 {
     public int \$page;
@@ -98,7 +100,9 @@ declare(strict_types=1);
 namespace App\DTO\Request\\{$schema->domain};
 
 use App\DTO\Request\BaseRequestDTO;
+use OpenApi\Attributes as OA;
 
+#[OA\Schema(schema: '{$schema->resource}CreateRequest')]
 readonly class {$schema->resource}CreateRequestDTO extends BaseRequestDTO
 {
 {$properties}
@@ -147,7 +151,9 @@ declare(strict_types=1);
 namespace App\DTO\Request\\{$schema->domain};
 
 use App\DTO\Request\BaseRequestDTO;
+use OpenApi\Attributes as OA;
 
+#[OA\Schema(schema: '{$schema->resource}UpdateRequest')]
 readonly class {$schema->resource}UpdateRequestDTO extends BaseRequestDTO
 {
 {$properties}

@@ -7,7 +7,7 @@ Proceso completo paso a paso:
 
 1. **Scaffold primero** - `php spark make:crud Product --domain Catalog --route products`
 2. **Validar scaffold** - `php spark module:check Product --domain Catalog`
-3. **Crear migración(es)** - `php spark make:migration CreateProductsTable`
+3. **Ejecutar migración(es)** - `php spark migrate` (generada por scaffold)
 4. **Alinear entity/model** - campos, casts, validación, traits de query
 5. **Cerrar contratos DTO** - Request/Response DTOs + atributos OpenAPI
 6. **Cerrar servicio** - lógica pura + estrategia de repositorio
@@ -23,7 +23,7 @@ Ver [`../GETTING_STARTED.md`](../GETTING_STARTED.md) para un recorrido completo 
 
 El repo incluye un módulo de ejemplo (`DemoProduct` en el dominio `Catalog`). Revisa su estructura (DTOs, controladores, servicios y tests) para entender cómo lucen los artefactos generados y usa `php spark module:check <Resource> --domain <Domain>` para validar tus propios módulos.
 
-El comando `make:crud` genera entity/model/interface/service/controller/DTOs/docs/i18n/tests, pero **no** genera archivos de migración.
+El comando `make:crud` genera archivos de migración, entity/model/interface/service/controller/DTOs/docs/i18n/tests, utilizando un esquema único para asegurar la sincronización en todas las capas.
 
 ## Añadir Filtros Personalizados
 

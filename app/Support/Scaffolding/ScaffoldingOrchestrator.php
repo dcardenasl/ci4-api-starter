@@ -74,6 +74,9 @@ class ScaffoldingOrchestrator
         $existing = [];
         foreach (array_keys($files) as $path) {
             if (file_exists($path)) {
+                if ($this->isUpsertableRouteFile($path)) {
+                    continue;
+                }
                 $existing[] = $path;
             }
         }
@@ -81,6 +84,13 @@ class ScaffoldingOrchestrator
         if (!empty($existing)) {
             throw new ScaffoldConflictException($existing);
         }
+    }
+
+    private function isUpsertableRouteFile(string $path): bool
+    {
+        $routesDir = APPPATH . 'Config/Routes/v1/';
+
+        return str_starts_with($path, $routesDir) && str_ends_with($path, '.php');
     }
 
     private function ensureDirectoryExists(string $dir): void

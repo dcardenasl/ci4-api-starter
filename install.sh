@@ -107,6 +107,7 @@ print_ok "Dependencies found (git, php, composer, mysql)"
 print_header "Collecting project data"
 PROJECT_NAME_RAW="$(ask_required "Project name")"
 PROJECT_NAME="$(slugify "$PROJECT_NAME_RAW")"
+PROJECT_DESCRIPTION="$(ask_required "Project description")"
 
 if [ -z "$PROJECT_NAME" ]; then
   print_error "Project name produced an empty folder slug."
@@ -140,6 +141,10 @@ git clone --depth=1 --branch "$TEMPLATE_BRANCH" "$TEMPLATE_REPO_URL" "$PROJECT_N
 cd "$PROJECT_NAME"
 print_ok "Project cloned into $PROJECT_NAME"
 
+print_header "Setting project metadata"
+php scripts/set_project_meta.php --name "$PROJECT_NAME_RAW" --description "$PROJECT_DESCRIPTION"
+print_ok "Project metadata updated"
+
 print_header "Installing dependencies"
 composer install --no-interaction --prefer-dist
 print_ok "Composer dependencies installed"
@@ -149,7 +154,6 @@ cp .env.example .env
 
 php scripts/bootstrap_env.php \
   --file .env \
-  --set "app.appName='${PROJECT_NAME_RAW//\'/}'" \
   --set "database.default.hostname=${DB_HOST}" \
   --set "database.default.database=${DB_NAME}" \
   --set "database.default.username=${DB_USER}" \
@@ -161,10 +165,6 @@ php scripts/bootstrap_env.php \
   --set "database.tests.password=${DB_PASS}" \
   --set "database.tests.port=${DB_PORT}" \
   --generate-jwt
-
-if ! grep -q '^app\.appName[[:space:]]*=' .env; then
-  printf "\napp.appName = '%s'\n" "${PROJECT_NAME_RAW//\'/}" >> .env
-fi
 
 php spark key:generate --force >/dev/null
 print_ok ".env configured and keys generated"
@@ -195,6 +195,10 @@ php spark users:bootstrap-superadmin \
   --first-name "$SUPERADMIN_FIRST_NAME" \
   --last-name "$SUPERADMIN_LAST_NAME"
 print_ok "Superadmin created/updated"
+
+print_header "Generating OpenAPI schema"
+php spark swagger:generate
+print_ok "OpenAPI schema generated"
 
 print_header "Git reset"
 read -r -p "Reset git history for this new project? (y/N): " RESET_GIT

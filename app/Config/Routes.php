@@ -14,9 +14,9 @@ use CodeIgniter\Router\RouteCollection;
 
 $routes->get('/', static function () {
     return response()->setJSON([
-        'name'        => 'CodeIgniter 4 API Starter',
-        'version'     => '1.0.0',
-        'description' => 'Production-ready REST API with JWT authentication',
+        'name'        => \Config\Project::NAME,
+        'version'     => \Config\Project::VERSION,
+        'description' => \Config\Project::DESCRIPTION,
         'documentation' => [
             'openapi' => base_url('swagger.json'),
             'github'  => 'https://github.com/david-cardenas/ci4-api-starter',

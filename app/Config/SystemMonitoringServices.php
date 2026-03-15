@@ -24,7 +24,7 @@ trait SystemMonitoringServices
 
         $emailConfig = config('Email');
         $fromAddress = (string) ($emailConfig->fromEmail ?: 'no-reply@example.com');
-        $fromName = (string) ($emailConfig->fromName ?: 'CI4 API');
+        $fromName = (string) ($emailConfig->fromName ?: Project::NAME);
         $defaultLocale = (string) config('App')->defaultLocale;
         $mailer = self::buildMailerFromConfig($emailConfig);
 

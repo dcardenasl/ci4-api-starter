@@ -32,12 +32,12 @@ class TestGenerator
 namespace Tests\Unit\Services\\{$schema->domain};
 
 use App\Services\\{$schema->domain}\\{$schema->resource}Service;
-use Tests\Support\TestCase;
+use CodeIgniter\Test\CIUnitTestCase;
 
 /**
  * @internal
  */
-final class {$schema->resource}ServiceTest extends TestCase
+final class {$schema->resource}ServiceTest extends CIUnitTestCase
 {
     public function testServiceIsInitializable(): void
     {
@@ -55,13 +55,16 @@ PHP;
 namespace Tests\Integration\Models;
 
 use App\Models\\{$schema->resource}Model;
-use Tests\Support\DatabaseTestCase;
+use CodeIgniter\Test\CIUnitTestCase;
+use CodeIgniter\Test\DatabaseTestTrait;
 
 /**
  * @internal
  */
-final class {$schema->resource}ModelTest extends DatabaseTestCase
+final class {$schema->resource}ModelTest extends CIUnitTestCase
 {
+    use DatabaseTestTrait;
+
     public function testModelCanFindRecord(): void
     {
         \$this->markTestIncomplete('Implement integration tests for {$schema->resource}Model');

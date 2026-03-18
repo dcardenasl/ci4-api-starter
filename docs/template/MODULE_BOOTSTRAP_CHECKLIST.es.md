@@ -5,15 +5,15 @@ Checklist para crear módulos nuevos de forma consistente.
 ## 1. Scaffold
 
 1. Ejecutar `php spark make:crud {Resource} --domain {Domain} --route {slug}`.
-2. Confirmar archivos generados en capas y tests.
+2. Confirmar archivos generados en capas, tests y migraciones (`Database/Migrations`).
 3. Ejecutar `php spark module:check {Resource} --domain {Domain}` y corregir los faltantes reportados.
-4. Considerar que `module:check` no valida existencia ni contenido de migraciones.
+4. Considerar que `module:check` no valida contenido de migraciones, solo su existencia.
 
 ## 2. Persistencia
 
-1. Crear migraciones inmediatamente después de validar el scaffold.
+1. Ejecutar `php spark migrate` para aplicar la migración generada por el scaffold.
 2. Ajustar modelo (`allowedFields`, validación, filtros/búsqueda/orden).
-3. Ajustar entidad (`casts`, fechas).
+3. Ajustar entidad (`casts`, fechas) para que coincidan con el esquema de base de datos.
 
 ## 3. DTOs
 

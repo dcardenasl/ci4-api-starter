@@ -23,7 +23,7 @@ readonly class EmailService implements EmailServiceInterface
         protected ?MailerInterface $mailer = null,
         protected ?QueueManager $queueManager = null,
         protected string $fromAddress = 'no-reply@example.com',
-        protected string $fromName = 'CI4 API',
+        protected string $fromName = \Config\Project::NAME,
         protected string $defaultLocale = 'en'
     ) {
     }

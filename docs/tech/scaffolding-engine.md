@@ -32,16 +32,60 @@ We use a unified **TypeMapper** to ensure consistency. For example, a `decimal` 
 - **Conflict Detection:** The orchestrator checks if any of the ~10 files already exist. If it finds a conflict, **nothing is written**, and a detailed error is reported.
 - **Syntax Verification:** Every generation is automatically verified using PHP Lint (`php -l`) via a specialized Smoke Test.
 
-## 🛠️ Usage Examples
+## 🛠️ How to Use (Usage Guide)
 
-### 1. Interactive Mode (Best for humans)
+The `make:crud` command is the primary entry point for building new features. It can be used in two modes:
+
+### 1. Interactive Mode (Guided)
+Recommended for most developers as it ensures no steps or field options are missed.
+
 ```bash
 php spark make:crud Client --domain Sales
 ```
-*The command will ask you for each field name, type, and options.*
 
-### 2. CLI Mode (Best for automation)
+The CLI will guide you through:
+1.  **Field Name**: (e.g., `title`, `price`, `status`)
+2.  **Field Type**: Choose from a list (string, int, fk, etc.)
+3.  **Requirements**: Is it required? Searchable? Filterable?
+4.  **Foreign Keys**: If it's a `fk` type, it will ask for the target table name.
+
+### 2. CLI Mode (Direct)
+Best for automation or when you have your schema already defined.
+
 ```bash
-php spark make:crud Product --fields="name:string:required|searchable,price:decimal:required,category_id:fk:categories"
+php spark make:crud Product --domain Catalog --fields="name:string:required|searchable,price:decimal:required|filterable,category_id:fk:categories:required"
 ```
-*Options like `searchable`, `filterable`, `required`, or `nullable` can be combined.*
+
+## 🧬 Detailed Field Syntax (`--fields`)
+
+When using CLI mode, the fields string follows this format:
+`name:type:options,name2:type2:options2`
+
+### Supported Types
+- `string`: Standard VARCHAR(255).
+- `text`: Long TEXT field.
+- `int`: INTEGER.
+- `bool`: BOOLEAN (TINYINT 1).
+- `decimal`: DECIMAL(10,2) mapped to float.
+- `email`: VARCHAR(255) with email validation.
+- `date`: DATE.
+- `datetime`: DATETIME.
+- `fk`: Foreign Key (BigInt Unsigned). Requires table name in options.
+- `json`: JSON field for structured data.
+
+### Field Options (Separated by `|`)
+- `required`: Field must be present and not empty.
+- `nullable`: Explicitly allow NULL values.
+- `searchable`: Enables partial string matching (`LIKE %query%`) in the Index endpoint.
+- `filterable`: Enables exact match filtering in the Index endpoint.
+- `fk:table_name`: **(Required for `fk` type)** Specifies the related database table.
+
+## 🚀 Post-Scaffolding Workflow
+
+After running `make:crud`, always follow these three steps to finalize your module:
+
+1.  **Verify Registration**: Run `php spark module:check {Resource} --domain {Domain}`. This ensures the service and domain traits are correctly wired into `Config/Services.php`.
+2.  **Apply Database Changes**: Run `php spark migrate`. The scaffold generates a migration file in `app/Database/Migrations/`.
+3.  **Synchronize Documentation**: Run `php spark swagger:generate`. This reads the new DTOs and Documentation files to update `public/swagger.json`.
+
+Your new API endpoints will be immediately available at `/api/v1/{route}`.

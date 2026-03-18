@@ -32,16 +32,60 @@ Utilizamos un **TypeMapper** unificado para asegurar la consistencia. Por ejempl
 - **Detección de Conflictos:** El orquestador verifica si alguno de los ~10 archivos ya existe. Si encuentra un conflicto, **no se escribe nada** y se informa del error detalladamente.
 - **Verificación de Sintaxis:** Cada generación es verificada automáticamente usando PHP Lint (`php -l`) a través de un Test de Humo especializado.
 
-## 🛠️ Ejemplos de Uso
+## 🛠️ Cómo Usar (Guía de Uso)
 
-### 1. Modo Interactivo (Ideal para humanos)
+El comando `make:crud` es el punto de entrada principal para construir nuevas funcionalidades. Puede usarse en dos modos:
+
+### 1. Modo Interactivo (Guiado)
+Recomendado para la mayoría de los desarrolladores, ya que asegura que no se omitan pasos ni opciones de campos.
+
 ```bash
 php spark make:crud Cliente --domain Ventas
 ```
-*El comando te preguntará por cada nombre de campo, tipo y opciones.*
 
-### 2. Modo CLI (Ideal para automatización)
+El CLI te guiará a través de:
+1.  **Nombre del Campo**: (ej: `nombre`, `precio`, `estado`)
+2.  **Tipo de Campo**: Elegir de una lista (string, int, fk, etc.)
+3.  **Requerimientos**: ¿Es obligatorio? ¿Buscable? ¿Filtrable?
+4.  **Claves Foráneas**: Si es tipo `fk`, te preguntará el nombre de la tabla destino.
+
+### 2. Modo CLI (Directo)
+Ideal para automatización o cuando ya tienes tu esquema definido.
+
 ```bash
-php spark make:crud Producto --fields="nombre:string:required|searchable,precio:decimal:required,categoria_id:fk:categorias"
+php spark make:crud Producto --domain Catalogo --fields="nombre:string:required|searchable,precio:decimal:required|filterable,categoria_id:fk:categorias:required"
 ```
-*Las opciones como `searchable`, `filterable`, `required` o `nullable` pueden combinarse.*
+
+## 🧬 Sintaxis Detallada de Campos (`--fields`)
+
+Al usar el modo CLI, la cadena de campos sigue este formato:
+`nombre:tipo:opciones,nombre2:tipo2:opciones2`
+
+### Tipos Soportados
+- `string`: VARCHAR(255) estándar.
+- `text`: Campo TEXT largo.
+- `int`: INTEGER.
+- `bool`: BOOLEAN (TINYINT 1).
+- `decimal`: DECIMAL(10,2) mapeado a float.
+- `email`: VARCHAR(255) con validación de email.
+- `date`: DATE.
+- `datetime`: DATETIME.
+- `fk`: Clave foránea (BigInt Unsigned). Requiere nombre de tabla en opciones.
+- `json`: Campo JSON para datos estructurados.
+
+### Opciones de Campos (Separadas por `|`)
+- `required`: El campo debe estar presente y no estar vacío.
+- `nullable`: Permite explícitamente valores NULL.
+- `searchable`: Habilita búsqueda parcial (`LIKE %query%`) en el endpoint Index.
+- `filterable`: Habilita filtrado por coincidencia exacta en el endpoint Index.
+- `fk:nombre_tabla`: **(Requerido para tipo `fk`)** Especifica la tabla de base de datos relacionada.
+
+## 🚀 Flujo de Trabajo Post-Scaffolding
+
+Después de ejecutar `make:crud`, sigue siempre estos tres pasos para finalizar tu módulo:
+
+1.  **Verificar Registro**: Ejecuta `php spark module:check {Recurso} --domain {Dominio}`. Esto asegura que el servicio y los traits de dominio estén correctamente conectados en `Config/Services.php`.
+2.  **Aplicar Cambios en la BD**: Ejecuta `php spark migrate`. El scaffold genera un archivo de migración en `app/Database/Migrations/`.
+3.  **Sincronizar Documentación**: Ejecuta `php spark swagger:generate`. Esto lee los nuevos DTOs y archivos de documentación para actualizar `public/swagger.json`.
+
+Tus nuevos endpoints de API estarán disponibles inmediatamente en `/api/v1/{ruta}`.

@@ -20,23 +20,40 @@ Manual CRUD creation is still valid when custom structure is required.
 
 ## 2. Scaffold First
 
+The `make:crud` command handles the creation of all layers (Migration, Entity, Model, DTOs, Service, Controller).
+
+### Option A: Interactive Mode (Recommended)
+Run the command with just the resource and domain. The system will prompt you for each field's details.
+
 ```bash
-php spark make:crud Product --domain Catalog --route products
+php spark make:crud Product --domain Catalog
 ```
 
+### Option B: CLI Mode (Fast)
+Define your schema in a single string using the `--fields` option.
+
+```bash
+php spark make:crud Product --domain Catalog --fields="name:string:required|searchable,price:decimal:required|filterable,category_id:fk:categories:required"
+```
+
+**Field Syntax Guide:**
+- Format: `name:type:options`
+- Types: `string`, `text`, `int`, `bool`, `decimal`, `email`, `date`, `datetime`, `fk`, `json`.
+- Options (pipe separated): `required`, `nullable`, `searchable`, `filterable`, `fk:table_name`.
+
 What the scaffold generates:
-1. Controller, Service, Interface
-2. Request/Response DTOs
-3. Model/Entity
-4. OpenAPI endpoint placeholder file (`app/Documentation/...`)
-5. i18n files (`en` and `es`)
-6. Unit/Integration/Feature test skeletons
-7. Service registration snippet in `app/Config/Services.php` (if missing)
+1. Database migration files
+2. Controller, Service, Interface
+3. Request/Response DTOs
+4. Model/Entity
+5. OpenAPI endpoint placeholder file (`app/Documentation/...`)
+6. i18n files (`en` and `es`)
+7. Unit/Integration/Feature test skeletons
+8. Service registration snippet in `app/Config/Services.php` (if missing)
 
 What it does **not** generate:
-1. Database migration files
-2. Domain-specific repository interface/implementation
-3. Final business rules and validation specifics
+1. Domain-specific repository interface/implementation
+2. Final business rules and validation specifics
 
 ## 3. Validate Bootstrap Output
 
@@ -46,24 +63,18 @@ php spark module:check Product --domain Catalog
 
 `module:check` validates generated module artifacts and basic wiring (`Services.php`, routes reference), but it does **not** validate migration existence/content.
 
-## 4. Create Migration(s)
+## 4. Run Migration(s)
 
-Create migration right after scaffold validation, before closing business logic:
-
-```bash
-php spark make:migration CreateProductsTable
-```
-
-Then implement:
-1. Final columns and constraints
-2. Required indexes
-3. `created_at`, `updated_at`, `deleted_at` (when soft delete applies)
-
-Apply:
+Since the scaffold generates the migration automatically, you only need to review it and apply it:
 
 ```bash
 php spark migrate
 ```
+
+Then implement:
+1. Review final columns and constraints
+2. Add required indexes if necessary
+3. Ensure soft deletes are configured as desired
 
 ## 5. Align Persistence Layer
 
@@ -125,11 +136,11 @@ php spark swagger:generate
 
 ## FAQ
 
-### When should I create migrations?
-After running `make:crud` and validating the generated module skeleton with `module:check`, and before closing final domain behavior.
+### When should I run migrations?
+After running `make:crud` and validating the generated module skeleton with `module:check`.
 
 ### Does `make:crud` create migrations?
-No.
+Yes. It uses a single schema to synchronize database, DTOs, and services.
 
 ### When do I need a dedicated repository?
 Only when generic CRUD criteria are insufficient and domain persistence queries become explicit/complex.

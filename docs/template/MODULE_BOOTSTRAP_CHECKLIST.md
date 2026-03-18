@@ -5,15 +5,15 @@ Use this checklist when creating a new module from this template.
 ## 1. Scaffold
 
 1. Run `php spark make:crud {Resource} --domain {Domain} --route {slug}`.
-2. Verify generated files exist in `Controllers`, `DTO`, `Interfaces`, `Services`, `Documentation`, `Language`, and `tests`.
+2. Verify generated files exist in `Controllers`, `DTO`, `Interfaces`, `Services`, `Documentation`, `Language`, `Database/Migrations`, and `tests`.
 3. Run `php spark module:check {Resource} --domain {Domain}` and fix all reported gaps.
-4. Remember: `module:check` does not validate migration existence/content.
+4. Remember: `module:check` does not validate migration content, only its existence.
 
 ## 2. Persistence
 
-1. Create migration(s) for the resource table(s) immediately after scaffold validation.
+1. Run `php spark migrate` to apply the scaffolded migration.
 2. Validate `Model` fields: `allowedFields`, validation rules, searchable/filterable/sortable fields.
-3. Confirm `Entity` casts/dates are correct.
+3. Confirm `Entity` casts/dates are correct and match the database schema.
 
 ## 3. DTOs
 

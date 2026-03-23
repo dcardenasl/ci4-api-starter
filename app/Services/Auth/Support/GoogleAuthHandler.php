@@ -104,20 +104,14 @@ class GoogleAuthHandler
             return;
         }
 
-        $updateData = [];
-
-        if (empty($currentUser->first_name)) {
-            $updateData['first_name'] = $identity['first_name'] ?? null;
-        }
-        if (empty($currentUser->last_name)) {
-            $updateData['last_name'] = $identity['last_name'] ?? null;
-        }
-        if (empty($currentUser->avatar_url)) {
-            $updateData['avatar_url'] = $identity['avatar_url'] ?? null;
-        }
+        $updateData = array_filter([
+            'first_name' => empty($currentUser->first_name) ? ($identity['first_name'] ?? null) : null,
+            'last_name' => empty($currentUser->last_name) ? ($identity['last_name'] ?? null) : null,
+            'avatar_url' => empty($currentUser->avatar_url) ? ($identity['avatar_url'] ?? null) : null,
+        ]);
 
         if ($updateData !== []) {
-            $this->userRepository->update($userId, array_filter($updateData));
+            $this->userRepository->update($userId, $updateData);
         }
     }
 }

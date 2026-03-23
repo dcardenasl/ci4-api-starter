@@ -46,6 +46,7 @@ class VerificationService implements \App\Interfaces\Auth\VerificationServiceInt
         }
 
         $token = bin2hex(random_bytes(32));
+        $tokenHash = \hash_token($token);
         $timestamp = strtotime('+24 hours');
 
         // Ensure $timestamp is int for date()
@@ -53,7 +54,7 @@ class VerificationService implements \App\Interfaces\Auth\VerificationServiceInt
         $expiresAt = date('Y-m-d H:i:s', $finalTimestamp);
 
         $this->userRepository->update($userId, [
-            'email_verification_token' => $token,
+            'email_verification_token' => $tokenHash,
             'verification_token_expires' => $expiresAt,
         ]);
 

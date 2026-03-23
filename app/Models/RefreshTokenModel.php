@@ -49,8 +49,9 @@ class RefreshTokenModel extends Model
      */
     public function getActiveToken(string $token): ?object
     {
+        $tokenHash = \hash_token($token);
         /** @var object|null */
-        return $this->where('token', $token)
+        return $this->where('token', $tokenHash)
             ->where('expires_at >', date('Y-m-d H:i:s'))
             ->where('revoked_at', null)
             ->first();
@@ -64,15 +65,16 @@ class RefreshTokenModel extends Model
      */
     public function revokeToken(string $token): bool
     {
+        $tokenHash = \hash_token($token);
         // Check if token exists first
-        $tokenExists = $this->where('token', $token)->countAllResults(false) > 0;
+        $tokenExists = $this->where('token', $tokenHash)->countAllResults(false) > 0;
 
         if (!$tokenExists) {
             return false;
         }
 
         // Update only non-revoked tokens, but return true since token exists
-        $this->where('token', $token)
+        $this->where('token', $tokenHash)
             ->where('revoked_at', null)
             ->set(['revoked_at' => date('Y-m-d H:i:s')])
             ->update();
@@ -101,7 +103,8 @@ class RefreshTokenModel extends Model
      */
     public function findActiveForUpdate(string $token): ?object
     {
-        $sql = $this->where('token', $token)
+        $tokenHash = \hash_token($token);
+        $sql = $this->where('token', $tokenHash)
             ->where('expires_at >', date('Y-m-d H:i:s'))
             ->where('revoked_at', null)
             ->builder()

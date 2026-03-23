@@ -81,7 +81,7 @@ class PasswordResetControllerTest extends ApiTestCase
         $db = \Config\Database::connect();
         $db->table('password_resets')->insert([
             'email' => $email,
-            'token' => $token,
+            'token' => hash_token($token),
             'created_at' => date('Y-m-d H:i:s'),
         ]);
 
@@ -118,7 +118,7 @@ class PasswordResetControllerTest extends ApiTestCase
         $db = \Config\Database::connect();
         $db->table('password_resets')->insert([
             'email' => $email,
-            'token' => $token,
+            'token' => hash_token($token),
             'created_at' => date('Y-m-d H:i:s'),
         ]);
 

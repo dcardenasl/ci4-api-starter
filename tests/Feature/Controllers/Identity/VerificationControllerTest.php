@@ -36,7 +36,7 @@ class VerificationControllerTest extends ApiTestCase
             'role' => 'user',
             'status' => 'active',
             'email_verified_at' => null,
-            'email_verification_token' => $token,
+            'email_verification_token' => hash_token($token),
             'verification_token_expires' => date('Y-m-d H:i:s', strtotime('+24 hours')),
         ]);
 

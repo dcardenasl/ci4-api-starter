@@ -42,6 +42,10 @@ class SecurityHeadersFilter implements FilterInterface
         if (str_contains($request->getUri()->getPath(), 'api/')) {
             $response->setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
             $response->setHeader('Pragma', 'no-cache');
+            $response->setHeader(
+                'Content-Security-Policy',
+                "default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'"
+            );
         }
 
         // Enable HSTS in production

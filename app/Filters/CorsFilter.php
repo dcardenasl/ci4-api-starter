@@ -72,6 +72,7 @@ class CorsFilter implements FilterInterface
 
         if ($this->isOriginAllowed($origin, $config['allowedOrigins'], $config['allowedOriginsPatterns'])) {
             $response->setHeader('Access-Control-Allow-Origin', $origin);
+            $this->addVaryHeader($response, 'Origin');
             if ($config['supportsCredentials']) {
                 $response->setHeader('Access-Control-Allow-Credentials', 'true');
             }
@@ -83,6 +84,20 @@ class CorsFilter implements FilterInterface
 
         if ($config['exposedHeaders'] !== []) {
             $response->setHeader('Access-Control-Expose-Headers', implode(', ', $config['exposedHeaders']));
+        }
+    }
+
+    private function addVaryHeader(ResponseInterface $response, string $value): void
+    {
+        $existing = $response->getHeaderLine('Vary');
+        if ($existing === '') {
+            $response->setHeader('Vary', $value);
+            return;
+        }
+
+        $parts = array_map('trim', explode(',', $existing));
+        if (!in_array($value, $parts, true)) {
+            $response->setHeader('Vary', $existing . ', ' . $value);
         }
     }
 

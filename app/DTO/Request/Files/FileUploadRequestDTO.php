@@ -127,13 +127,17 @@ readonly class FileUploadRequestDTO extends BaseRequestDTO
     {
         $result = [];
         foreach ($data as $key => $value) {
-            $result[$key] = $this->sanitizeValueForLog($value);
+            $result[$key] = $this->sanitizeValueForLog($key, $value);
         }
         return $result;
     }
 
-    private function sanitizeValueForLog(mixed $value): mixed
+    private function sanitizeValueForLog(int|string $key, mixed $value): mixed
     {
+        if (is_string($key) && $this->isSensitiveKey($key)) {
+            return '[REDACTED]';
+        }
+
         if ($value instanceof UploadedFile) {
             return [
                 'name' => $value->getName(),
@@ -146,7 +150,27 @@ readonly class FileUploadRequestDTO extends BaseRequestDTO
             return $this->preparePayloadForLog($value);
         }
 
+        if (is_string($value)) {
+            $length = strlen($value);
+            if (str_starts_with($value, 'data:') || $length > 256) {
+                return "[REDACTED length={$length}]";
+            }
+        }
+
         return $value;
+    }
+
+    private function isSensitiveKey(string $key): bool
+    {
+        $normalized = strtolower(trim($key));
+        if ($normalized === '') {
+            return false;
+        }
+
+        return preg_match(
+            '/(^|_)(password|token|secret|api_?key|key_?hash|private_?key|access_?token|refresh_?token|verification_?token)($|_)/i',
+            $normalized
+        ) === 1;
     }
 
     public function isBase64(): bool

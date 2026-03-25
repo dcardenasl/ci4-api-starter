@@ -64,19 +64,23 @@ credentials/
 #-------------------------
 # Temporary Files
 #-------------------------
+# Ignore all content in writable directories
 writable/cache/*
-!writable/cache/index.html
-
 writable/logs/*
-!writable/logs/index.html
-
 writable/session/*
-!writable/session/index.html
-
 writable/uploads/*
-!writable/uploads/index.html
-
 writable/debugbar/*
+
+# Allow tracking only the structural files (.gitkeep or index.html)
+!writable/cache/.gitkeep
+!writable/cache/index.html
+!writable/logs/.gitkeep
+!writable/logs/index.html
+!writable/session/.gitkeep
+!writable/session/index.html
+!writable/uploads/.gitkeep
+!writable/uploads/index.html
+!writable/debugbar/.gitkeep
 !writable/debugbar/index.html
 
 writable/database.db

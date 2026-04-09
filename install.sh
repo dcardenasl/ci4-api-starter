@@ -1,9 +1,17 @@
 #!/usr/bin/env bash
+# CI4 API Starter — project bootstrapper.
+# Intended to be run via: bash <(curl -fsSL https://…/install.sh)
+# Creates a new project directory, clones the template, and configures it.
 
 set -euo pipefail
 
 TEMPLATE_REPO_URL="${TEMPLATE_REPO_URL:-https://github.com/dcardenasl/ci4-api-starter.git}"
 TEMPLATE_BRANCH="${TEMPLATE_BRANCH:-main}"
+
+# ---------------------------------------------------------------------------
+# Minimal helpers — needed BEFORE the clone (setup.sh does not exist yet).
+# After the clone, scripts/setup.sh is sourced and redefines these cleanly.
+# ---------------------------------------------------------------------------
 
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
@@ -11,21 +19,10 @@ RED='\033[0;31m'
 BLUE='\033[0;34m'
 NC='\033[0m'
 
-print_header() {
-  printf "\n${BLUE}==> %s${NC}\n" "$1"
-}
-
-print_ok() {
-  printf "${GREEN}OK${NC} %s\n" "$1"
-}
-
-print_warn() {
-  printf "${YELLOW}WARN${NC} %s\n" "$1"
-}
-
-print_error() {
-  printf "${RED}ERROR${NC} %s\n" "$1"
-}
+print_header() { printf "\n${BLUE}==> %s${NC}\n" "$1"; }
+print_ok()     { printf "${GREEN}OK${NC} %s\n" "$1"; }
+print_warn()   { printf "${YELLOW}WARN${NC} %s\n" "$1"; }
+print_error()  { printf "${RED}ERROR${NC} %s\n" "$1"; }
 
 require_cmd() {
   if ! command -v "$1" >/dev/null 2>&1; then
@@ -49,20 +46,14 @@ slugify() {
 }
 
 ask_with_default() {
-  local prompt="$1"
-  local default="$2"
-  local answer
+  local prompt="$1" default="$2" answer
   read -r -p "$prompt [$default]: " answer
   answer="$(trim "$answer")"
-  if [ -z "$answer" ]; then
-    answer="$default"
-  fi
-  printf "%s" "$answer"
+  printf "%s" "${answer:-$default}"
 }
 
 ask_required() {
-  local prompt="$1"
-  local answer=""
+  local prompt="$1" answer=""
   while [ -z "$answer" ]; do
     read -r -p "$prompt: " answer
     answer="$(trim "$answer")"
@@ -71,8 +62,7 @@ ask_required() {
 }
 
 ask_hidden() {
-  local prompt="$1"
-  local answer=""
+  local prompt="$1" answer=""
   while [ -z "$answer" ]; do
     read -r -s -p "$prompt: " answer
     printf "\n"
@@ -89,8 +79,9 @@ validate_db_name() {
   fi
 }
 
-# MySQL execution mode detection
-MYSQL_MODE="local"     # "local" | "docker" | "skip"
+# MySQL detection — also needed pre-clone so the user is asked about Docker
+# before the long clone + install phase. setup.sh preserves MYSQL_MODE via :-
+MYSQL_MODE="local"
 DOCKER_CONTAINER=""
 
 detect_mysql_mode() {
@@ -109,33 +100,19 @@ detect_mysql_mode() {
     return
   fi
 
-  # Show running containers that look like MySQL
   printf "Running containers:\n"
-  docker ps --format "  {{.Names}}\t{{.Image}}" 2>/dev/null | grep -i mysql || printf "  (none found with 'mysql' in image name)\n"
+  docker ps --format "  {{.Names}}\t{{.Image}}" 2>/dev/null | grep -i mysql \
+    || printf "  (none found with 'mysql' in image name)\n"
 
   DOCKER_CONTAINER="$(ask_required "Docker container name with MySQL")"
   MYSQL_MODE="docker"
   print_ok "Will use docker exec on container: $DOCKER_CONTAINER"
 }
 
-run_mysql_sql() {
-  local sql="$1"
-  case "$MYSQL_MODE" in
-    local)
-      local cmd=(mysql -h"$DB_HOST" -P"$DB_PORT" -u"$DB_USER")
-      [ -n "$DB_PASS" ] && cmd+=("-p$DB_PASS")
-      "${cmd[@]}" -e "$sql"
-      ;;
-    docker)
-      local cmd=(docker exec -i "$DOCKER_CONTAINER" mysql -u"$DB_USER")
-      [ -n "$DB_PASS" ] && cmd+=("-p$DB_PASS")
-      "${cmd[@]}" -e "$sql"
-      ;;
-    skip)
-      return 1
-      ;;
-  esac
-}
+# ---------------------------------------------------------------------------
+# PRE-CLONE: requirements + collect all user input upfront
+# (so installation can run unattended after this phase)
+# ---------------------------------------------------------------------------
 
 print_header "CI4 Project Bootstrapper"
 printf "Template repo: %s (%s)\n" "$TEMPLATE_REPO_URL" "$TEMPLATE_BRANCH"
@@ -152,7 +129,7 @@ if ! php -r 'exit(version_compare(PHP_VERSION, "8.2.0", ">=") ? 0 : 1);'; then
 fi
 print_ok "Dependencies found (git, php, composer)"
 
-print_header "Collecting project data"
+print_header "Project"
 PROJECT_NAME_RAW="$(ask_required "Project name")"
 PROJECT_NAME="$(slugify "$PROJECT_NAME_RAW")"
 PROJECT_DESCRIPTION="$(ask_required "Project description")"
@@ -161,81 +138,54 @@ if [ -z "$PROJECT_NAME" ]; then
   print_error "Project name produced an empty folder slug."
   exit 1
 fi
-
 if [ -e "$PROJECT_NAME" ]; then
   print_error "Target folder '$PROJECT_NAME' already exists."
   exit 1
 fi
 
+print_header "Database"
 DB_HOST="$(ask_with_default "MySQL host" "localhost")"
 DB_PORT="$(ask_with_default "MySQL port" "3306")"
 DB_USER="$(ask_with_default "MySQL user" "root")"
 read -r -s -p "MySQL password (can be empty): " DB_PASS
 printf "\n"
-
 SUGGESTED_DB_NAME="$(printf "%s" "$PROJECT_NAME" | tr '-' '_')"
-DB_NAME="$(ask_with_default "MySQL database name" "$SUGGESTED_DB_NAME")"
-TEST_DB_NAME="$(ask_with_default "MySQL test database name" "${DB_NAME}_test")"
+DB_NAME="$(ask_with_default "Database name" "$SUGGESTED_DB_NAME")"
+TEST_DB_NAME="$(ask_with_default "Test database name" "${DB_NAME}_test")"
 validate_db_name "$DB_NAME"
 validate_db_name "$TEST_DB_NAME"
 
-SUPERADMIN_EMAIL="$(ask_with_default "Superadmin email" "superadmin@example.com")"
-SUPERADMIN_PASSWORD="$(ask_hidden "Superadmin password")"
-SUPERADMIN_FIRST_NAME="$(ask_with_default "Superadmin first name" "Super")"
-SUPERADMIN_LAST_NAME="$(ask_with_default "Superadmin last name" "Admin")"
+print_header "Superadmin"
+SUPERADMIN_EMAIL="$(ask_with_default "Email" "superadmin@example.com")"
+SUPERADMIN_PASSWORD="$(ask_hidden "Password")"
+SUPERADMIN_FIRST_NAME="$(ask_with_default "First name" "Super")"
+SUPERADMIN_LAST_NAME="$(ask_with_default "Last name" "Admin")"
+
+# ---------------------------------------------------------------------------
+# Clone
+# ---------------------------------------------------------------------------
 
 print_header "Cloning template"
 git clone --depth=1 --branch "$TEMPLATE_BRANCH" "$TEMPLATE_REPO_URL" "$PROJECT_NAME"
 cd "$PROJECT_NAME"
 print_ok "Project cloned into $PROJECT_NAME"
 
+# ---------------------------------------------------------------------------
+# POST-CLONE: source shared library — step functions live here
+# MYSQL_MODE and DOCKER_CONTAINER are already set; setup.sh preserves them.
+# ---------------------------------------------------------------------------
+
+# shellcheck source=scripts/setup.sh
+source scripts/setup.sh
+
 print_header "Setting project metadata"
 php scripts/set_project_meta.php --name "$PROJECT_NAME_RAW" --description "$PROJECT_DESCRIPTION"
 print_ok "Project metadata updated"
 
-print_header "Installing dependencies"
-composer install --no-interaction --prefer-dist
-print_ok "Composer dependencies installed"
-
-print_header "Configuring .env"
-cp .env.example .env
-
-php scripts/bootstrap_env.php \
-  --file .env \
-  --set "database.default.hostname=${DB_HOST}" \
-  --set "database.default.database=${DB_NAME}" \
-  --set "database.default.username=${DB_USER}" \
-  --set "database.default.password=${DB_PASS}" \
-  --set "database.default.port=${DB_PORT}" \
-  --set "database.tests.hostname=${DB_HOST}" \
-  --set "database.tests.database=${TEST_DB_NAME}" \
-  --set "database.tests.username=${DB_USER}" \
-  --set "database.tests.password=${DB_PASS}" \
-  --set "database.tests.port=${DB_PORT}" \
-  --generate-jwt
-
-php spark key:generate --force >/dev/null
-print_ok ".env configured and keys generated"
-
-print_header "Preparing databases"
-CREATE_SQL="CREATE DATABASE IF NOT EXISTS \`$DB_NAME\`; CREATE DATABASE IF NOT EXISTS \`$TEST_DB_NAME\`;"
-
-if [ "$MYSQL_MODE" = "skip" ]; then
-  print_warn "Database creation skipped — create them manually:"
-  printf "  CREATE DATABASE IF NOT EXISTS \`%s\`;\n" "$DB_NAME"
-  printf "  CREATE DATABASE IF NOT EXISTS \`%s\`;\n" "$TEST_DB_NAME"
-elif run_mysql_sql "$CREATE_SQL"; then
-  print_ok "Databases ensured: $DB_NAME, $TEST_DB_NAME"
-else
-  print_warn "Could not create databases automatically."
-  printf "Run manually:\n"
-  printf "  CREATE DATABASE IF NOT EXISTS \`%s\`;\n" "$DB_NAME"
-  printf "  CREATE DATABASE IF NOT EXISTS \`%s\`;\n" "$TEST_DB_NAME"
-fi
-
-print_header "Running migrations"
-php spark migrate
-print_ok "Migrations completed"
+ci4_install_deps
+ci4_configure_env
+ci4_prepare_databases
+ci4_run_migrations
 
 print_header "Bootstrapping superadmin"
 php spark users:bootstrap-superadmin \
@@ -245,11 +195,13 @@ php spark users:bootstrap-superadmin \
   --last-name "$SUPERADMIN_LAST_NAME"
 print_ok "Superadmin created/updated"
 
-print_header "Generating OpenAPI schema"
-php spark swagger:generate
-print_ok "OpenAPI schema generated"
+ci4_generate_swagger
 
-print_header "Git reset"
+# ---------------------------------------------------------------------------
+# Git reset
+# ---------------------------------------------------------------------------
+
+print_header "Git history"
 read -r -p "Reset git history for this new project? (y/N): " RESET_GIT
 RESET_GIT="$(trim "$RESET_GIT")"
 if [[ "$RESET_GIT" =~ ^[Yy]$ ]]; then
@@ -259,14 +211,17 @@ if [[ "$RESET_GIT" =~ ^[Yy]$ ]]; then
   if git commit -m "Initial commit from ci4-api-starter template" >/dev/null 2>&1; then
     print_ok "Git repository reset with initial commit"
   else
-    print_warn "Git initialized, but commit failed (configure git user.name/user.email and commit manually)."
+    print_warn "Git initialized but commit failed — configure git user.name/email and commit manually."
   fi
 else
-  print_warn "Keeping template git history as requested."
+  print_warn "Keeping template git history."
 fi
 
+# ---------------------------------------------------------------------------
+# Done
+# ---------------------------------------------------------------------------
+
 print_header "Done"
-printf "%s\n" "Project ready at: $(pwd)"
-printf "Start server:\n"
+printf "Project ready at: %s\n\n" "$(pwd)"
 printf "  cd %s\n" "$PROJECT_NAME"
 printf "  php spark serve\n"

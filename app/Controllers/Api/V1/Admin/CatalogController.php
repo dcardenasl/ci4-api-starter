@@ -12,7 +12,7 @@ use Config\Services;
 
 class CatalogController extends ApiController
 {
-    private CatalogServiceInterface $catalogService;
+    protected CatalogServiceInterface $catalogService;
 
     protected function resolveDefaultService(): object
     {

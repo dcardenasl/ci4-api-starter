@@ -116,6 +116,18 @@ detect_mysql_mode() {
     || printf "  (none found with 'mysql' in image name)\n"
 
   DOCKER_CONTAINER="$(ask_required "Docker container name with MySQL")"
+
+  # Detect mapped port so the DB_PORT default is accurate
+  local mapped_port
+  mapped_port=$(docker port "$DOCKER_CONTAINER" 3306 2>/dev/null | cut -d: -f2)
+  if [ -n "$mapped_port" ]; then
+    DETECTED_DOCKER_PORT="$mapped_port"
+    print_ok "Detected Docker host port: $DETECTED_DOCKER_PORT"
+  else
+    print_warn "Could not detect Docker host port for MySQL. Using default 3306."
+    DETECTED_DOCKER_PORT=""
+  fi
+
   MYSQL_MODE="docker"
   print_ok "Will use docker exec on container: $DOCKER_CONTAINER"
 }

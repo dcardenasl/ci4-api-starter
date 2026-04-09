@@ -148,13 +148,12 @@ run_mysql_sql() {
   case "$MYSQL_MODE" in
     local)
       local cmd=(mysql -h"$DB_HOST" -P"$DB_PORT" -u"$DB_USER")
-      [ -n "$DB_PASS" ] && cmd+=("-p$DB_PASS")
-      output=$("${cmd[@]}" -e "$sql" 2>&1) || { printf "%s\n" "$output"; return 1; }
+      # Pass password via env var to avoid exposure in process list
+      output=$(MYSQL_PWD="$DB_PASS" "${cmd[@]}" -e "$sql" 2>&1) || { printf "%s\n" "$output"; return 1; }
       printf "%s\n" "$output"
       ;;
     docker)
-      local cmd=(docker exec -i "$DOCKER_CONTAINER" mysql -u"$DB_USER")
-      [ -n "$DB_PASS" ] && cmd+=("-p$DB_PASS")
+      local cmd=(docker exec -i -e "MYSQL_PWD=$DB_PASS" "$DOCKER_CONTAINER" mysql -u"$DB_USER")
       output=$("${cmd[@]}" -e "$sql" 2>&1) || { printf "%s\n" "$output"; return 1; }
       printf "%s\n" "$output"
       ;;
@@ -173,9 +172,11 @@ ci4_install_deps() {
   print_header "Installing dependencies"
   if [ -d "vendor" ]; then
     print_warn "vendor/ already exists. Running composer update..."
-    composer update --no-interaction
+    timeout 600 composer update --no-interaction \
+      || { print_error "composer update timed out or failed."; exit 1; }
   else
-    composer install --no-interaction --prefer-dist
+    timeout 600 composer install --no-interaction --prefer-dist \
+      || { print_error "composer install timed out or failed."; exit 1; }
   fi
   print_ok "Composer dependencies installed"
 }
@@ -246,14 +247,15 @@ ci4_run_migrations() {
   if php spark migrate; then
     print_ok "Migrations completed"
   else
-    print_warn "Migrations failed. Run 'php spark migrate' manually."
+    print_error "Migrations failed. Fix the error above and run 'php spark migrate' manually."
+    exit 1
   fi
 }
 
 # Generate the OpenAPI / Swagger schema.
 ci4_generate_swagger() {
   print_header "Generating OpenAPI schema"
-  if php spark swagger:generate 2>/dev/null; then
+  if php spark swagger:generate; then
     print_ok "OpenAPI schema generated"
   else
     print_warn "Swagger generation failed. Run 'php spark swagger:generate' manually."

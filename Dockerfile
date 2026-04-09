@@ -24,35 +24,30 @@ FROM php:8.2-apache
 LABEL maintainer="CodeIgniter 4 API Starter"
 LABEL description="Production-ready CI4 API with JWT authentication"
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    git \
-    curl \
-    zip \
-    unzip \
-    libicu-dev \
-    libzip-dev \
-    libpng-dev \
-    libjpeg-dev \
-    libfreetype6-dev \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install PHP extensions
-RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
+# Install system deps, PHP extensions, and enable Apache modules in one layer
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        git \
+        curl \
+        zip \
+        unzip \
+        libicu-dev \
+        libzip-dev \
+        libpng-dev \
+        libjpeg-dev \
+        libfreetype6-dev \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j$(nproc) \
-    intl \
-    mysqli \
-    pdo \
-    pdo_mysql \
-    zip \
-    gd \
-    opcache
-
-# Enable Apache modules
-RUN a2enmod rewrite headers expires deflate
-
-# Configure PHP for production
-RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
+        intl \
+        mysqli \
+        pdo \
+        pdo_mysql \
+        zip \
+        gd \
+        opcache \
+    && a2enmod rewrite headers expires deflate \
+    && mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini" \
+    && rm -rf /var/lib/apt/lists/*
 
 # Copy custom PHP configuration
 COPY docker/php/custom.ini /usr/local/etc/php/conf.d/custom.ini
@@ -75,9 +70,9 @@ RUN chown -R www-data:www-data /var/www/html \
 RUN mkdir -p writable/cache writable/logs writable/session writable/uploads writable/debugbar \
     && chown -R www-data:www-data writable
 
-# Health check
+# Health check — uses /ping (lightweight, no DB dependency)
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
-    CMD curl -f http://localhost/ || exit 1
+    CMD curl -f http://localhost/ping || exit 1
 
 # Expose port 80
 EXPOSE 80

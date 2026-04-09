@@ -58,6 +58,11 @@ abstract class BaseRepository implements RepositoryInterface
 
     public function update(int|string|array $id = null, array|object|null $data = null): bool
     {
+        // Guard against empty datasets to avoid CodeIgniter DataException
+        if (empty($data)) {
+            return true;
+        }
+
         return $this->model->update($id, $data);
     }
 

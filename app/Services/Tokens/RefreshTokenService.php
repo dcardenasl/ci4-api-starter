@@ -37,12 +37,13 @@ readonly class RefreshTokenService implements \App\Interfaces\Tokens\RefreshToke
     public function issueRefreshToken(int $userId): string
     {
         $token = \generate_token();
+        $tokenHash = \hash_token($token);
 
         $expiresAt = date('Y-m-d H:i:s', time() + $this->refreshTokenTtl);
 
         $this->refreshTokenModel->insert([
             'user_id'    => $userId,
-            'token'      => $token,
+            'token'      => $tokenHash,
             'expires_at' => $expiresAt,
             'created_at' => date('Y-m-d H:i:s'),
         ]);

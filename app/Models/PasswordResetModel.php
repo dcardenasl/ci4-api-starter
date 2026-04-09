@@ -46,20 +46,11 @@ class PasswordResetModel extends Model
     {
         $timestamp = strtotime("-{$expiryMinutes} minutes");
         $expiredTime = date('Y-m-d H:i:s', $timestamp !== false ? $timestamp : time());
+        $tokenHash = \hash_token($token);
 
-        // Retrieve all non-expired tokens for this email and compare using hash_equals
-        // to prevent timing-based token enumeration
-        $resets = $this->where('email', $email)
+        return $this->where('email', $email)
             ->where('created_at >', $expiredTime)
-            ->findAll();
-
-        foreach ($resets as $reset) {
-            $storedToken = is_object($reset) ? $reset->token : ($reset['token'] ?? '');
-            if (hash_equals($storedToken, $token)) {
-                return true;
-            }
-        }
-
-        return false;
+            ->where('token', $tokenHash)
+            ->countAllResults() > 0;
     }
 }

@@ -43,8 +43,9 @@ class PasswordResetService implements \App\Interfaces\Auth\PasswordResetServiceI
             $this->auditService->log('password_reset_request', 'users', (int) $user->id, [], ['email' => $email], $context);
 
             $token = bin2hex(random_bytes(32));
+            $tokenHash = \hash_token($token);
             $this->passwordResetModel->where('email', $email)->delete();
-            $this->passwordResetModel->insert(['email' => $email, 'token' => $token, 'created_at' => date('Y-m-d H:i:s')]);
+            $this->passwordResetModel->insert(['email' => $email, 'token' => $tokenHash, 'created_at' => date('Y-m-d H:i:s')]);
 
             $resetLink = $this->buildResetPasswordUrl($token, $email);
             try {
@@ -135,7 +136,8 @@ class PasswordResetService implements \App\Interfaces\Auth\PasswordResetServiceI
             $userContext = new SecurityContext((int) $user->id, (string) $user->role, $context?->metadata ?? []);
             $this->auditService->log('password_reset_success', 'users', (int) $user->id, [], ['email' => $user->email], $userContext);
 
-            $this->passwordResetModel->where('email', $request->email)->where('token', $request->token)->delete();
+            $tokenHash = \hash_token($request->token);
+            $this->passwordResetModel->where('email', $request->email)->where('token', $tokenHash)->delete();
         });
 
         return true;

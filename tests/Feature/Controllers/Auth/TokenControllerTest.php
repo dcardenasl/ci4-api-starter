@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Feature\Controllers;
+namespace Tests\Feature\Controllers\Auth;
 
 use Tests\Support\ApiTestCase;
 use Tests\Support\Traits\AuthTestTrait;

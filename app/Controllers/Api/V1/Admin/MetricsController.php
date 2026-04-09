@@ -30,7 +30,7 @@ class MetricsController extends ApiController
     }
 
     /**
-     * Map upload to 201 Created status
+     * Map record to 201 Created status
      */
     protected array $statusCodes = [
         'record' => 201,

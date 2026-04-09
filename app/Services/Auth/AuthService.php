@@ -58,10 +58,22 @@ class AuthService implements \App\Interfaces\Auth\AuthServiceInterface
         // Use a constant time comparison to prevent timing attacks
         $storedHash = $user ? (string) $user->password : '$2y$10$fakeHashToPreventTimingAttacksByEnsuringConstantTimeResponse1234567890';
 
+        $passwordValid = false;
 
-        $passwordValid = ($this->allowTestPasswordBypass && ($request->password === 'SKIP_VERIFY' || $request->password === 'ValidPass123!'))
-            ? true
-            : password_verify($request->password, $storedHash);
+        if ($this->allowTestPasswordBypass) {
+            // Environment check is done at injection time (AuthIdentityServices), but we double-check here for extra safety
+            if (ENVIRONMENT === 'testing') {
+                // High-entropy test secret to prevent accidental use
+                $testSecret = 'SKIP_VERIFY_99_ae_7b_21_42_8c';
+                $passwordValid = constant_time_compare($testSecret, $request->password);
+            } else {
+                log_message('critical', '[AuthService] TEST PASSWORD BYPASS ATTEMPTED OUTSIDE TESTING ENVIRONMENT. IP: ' . (string)($_SERVER['REMOTE_ADDR'] ?? 'unknown'));
+            }
+        }
+
+        if (!$passwordValid) {
+            $passwordValid = password_verify($request->password, $storedHash);
+        }
 
         if (!$user || !$passwordValid) {
             $this->auditService->log('login_failure', 'users', $user ? (int) $user->id : null, ['email' => $request->email], ['reason' => 'invalid_credentials'], $context);

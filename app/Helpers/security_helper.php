@@ -61,6 +61,16 @@ if (!function_exists('generate_token')) {
     }
 }
 
+if (!function_exists('hash_token')) {
+    /**
+     * Hash a token for safe storage at rest.
+     */
+    function hash_token(string $token): string
+    {
+        return hash('sha256', $token);
+    }
+}
+
 if (!function_exists('generate_api_key')) {
     /**
      * Generate an API key with app prefix.

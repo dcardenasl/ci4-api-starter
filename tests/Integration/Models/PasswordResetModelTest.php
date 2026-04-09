@@ -30,9 +30,10 @@ class PasswordResetModelTest extends CIUnitTestCase
 
     public function testInsertCreatesPasswordReset(): void
     {
+        helper('security');
         $data = [
             'email' => 'test@example.com',
-            'token' => bin2hex(random_bytes(32)),
+            'token' => hash_token(bin2hex(random_bytes(32))),
             'created_at' => date('Y-m-d H:i:s'),
         ];
 
@@ -44,17 +45,18 @@ class PasswordResetModelTest extends CIUnitTestCase
 
     public function testCleanExpiredRemovesOldTokens(): void
     {
+        helper('security');
         // Insert old token
         $this->model->insert([
             'email' => 'old@example.com',
-            'token' => 'old-token',
+            'token' => hash_token('old-token'),
             'created_at' => date('Y-m-d H:i:s', strtotime('-2 hours')),
         ]);
 
         // Insert fresh token
         $this->model->insert([
             'email' => 'fresh@example.com',
-            'token' => 'fresh-token',
+            'token' => hash_token('fresh-token'),
             'created_at' => date('Y-m-d H:i:s'),
         ]);
 
@@ -71,10 +73,11 @@ class PasswordResetModelTest extends CIUnitTestCase
 
     public function testIsValidTokenReturnsTrueForValidToken(): void
     {
+        helper('security');
         $token = bin2hex(random_bytes(32));
         $this->model->insert([
             'email' => 'test@example.com',
-            'token' => $token,
+            'token' => hash_token($token),
             'created_at' => date('Y-m-d H:i:s'),
         ]);
 
@@ -85,10 +88,11 @@ class PasswordResetModelTest extends CIUnitTestCase
 
     public function testIsValidTokenReturnsFalseForExpiredToken(): void
     {
+        helper('security');
         $token = bin2hex(random_bytes(32));
         $this->model->insert([
             'email' => 'test@example.com',
-            'token' => $token,
+            'token' => hash_token($token),
             'created_at' => date('Y-m-d H:i:s', strtotime('-2 hours')),
         ]);
 

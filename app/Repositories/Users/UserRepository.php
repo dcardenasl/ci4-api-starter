@@ -24,6 +24,7 @@ class UserRepository extends BaseRepository implements UserRepositoryInterface
 
     public function findByVerificationToken(string $token): ?object
     {
-        return $this->model->where('email_verification_token', $token)->first();
+        $tokenHash = \hash_token($token);
+        return $this->model->where('email_verification_token', $tokenHash)->first();
     }
 }

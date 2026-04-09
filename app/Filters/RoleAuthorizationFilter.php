@@ -46,7 +46,6 @@ class RoleAuthorizationFilter implements FilterInterface
 
         $userRole = $request instanceof ApiRequest ? $request->getAuthUserRole() : null;
         $userRole ??= $context?->user_role;
-        $userRole ??= $request->getHeaderLine('X-Test-User-Role') ?: null;
 
         if (!$userRole) {
             $securityAuditLogger->logAuthorizationDeniedFromRequest($request, $requiredRole, null, $actorId);

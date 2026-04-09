@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Feature\Controllers;
+namespace Tests\Feature\Controllers\Auth;
 
 use App\Interfaces\Auth\GoogleIdentityServiceInterface;
 use App\Interfaces\System\EmailServiceInterface;

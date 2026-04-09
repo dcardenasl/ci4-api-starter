@@ -76,7 +76,7 @@ ask_hidden() {
   local prompt="$1" answer=""
   while [ -z "$answer" ]; do
     read -r -s -p "$prompt: " answer
-    printf "\n"
+    printf "\n" >&2
     answer="$(trim "$answer")"
   done
   printf "%s" "$answer"
@@ -94,6 +94,7 @@ validate_db_name() {
 # before the long clone + install phase. setup.sh preserves MYSQL_MODE via :-
 MYSQL_MODE="local"
 DOCKER_CONTAINER=""
+DETECTED_DOCKER_PORT=""
 
 detect_mysql_mode() {
   if command -v mysql >/dev/null 2>&1; then
@@ -117,6 +118,11 @@ detect_mysql_mode() {
 
   DOCKER_CONTAINER="$(ask_required "Docker container name with MySQL")"
 
+  if ! docker inspect "$DOCKER_CONTAINER" >/dev/null 2>&1; then
+    print_error "Container '$DOCKER_CONTAINER' not found or not running."
+    exit 1
+  fi
+
   # Detect mapped port so the DB_PORT default is accurate
   local mapped_port
   mapped_port=$(docker port "$DOCKER_CONTAINER" 3306 2>/dev/null | cut -d: -f2)
@@ -138,8 +144,6 @@ detect_mysql_mode() {
 # ---------------------------------------------------------------------------
 
 LOG_FILE="$(pwd)/install.log"
-exec > >(tee -a "$LOG_FILE") 2>&1
-printf "Install log: %s\n" "$LOG_FILE"
 
 print_header "CI4 Project Bootstrapper"
 printf "Template repo: %s (%s)\n" "$TEMPLATE_REPO_URL" "$TEMPLATE_BRANCH"
@@ -176,7 +180,7 @@ fi
 print_header "Database"
 DB_HOST="$(ask_with_default "MySQL host" "localhost")"
 # Use detected Docker port as default if available (set after detect_mysql_mode)
-local default_db_port="3306"
+default_db_port="3306"
 [ -n "$DETECTED_DOCKER_PORT" ] && default_db_port="$DETECTED_DOCKER_PORT"
 DB_PORT="$(ask_with_default "MySQL port" "$default_db_port")"
 DB_USER="$(ask_with_default "MySQL user" "root")"
@@ -193,6 +197,13 @@ SUPERADMIN_EMAIL="$(ask_with_default "Email" "superadmin@example.com")"
 SUPERADMIN_PASSWORD="$(ask_hidden "Password")"
 SUPERADMIN_FIRST_NAME="$(ask_with_default "First name" "Super")"
 SUPERADMIN_LAST_NAME="$(ask_with_default "Last name" "Admin")"
+
+# ---------------------------------------------------------------------------
+# Start logging now — all interactive prompts are done
+# ---------------------------------------------------------------------------
+
+printf "Install log: %s\n" "$LOG_FILE"
+exec > >(tee -a "$LOG_FILE") 2>&1
 
 # ---------------------------------------------------------------------------
 # Clone

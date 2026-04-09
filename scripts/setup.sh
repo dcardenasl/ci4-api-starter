@@ -65,7 +65,7 @@ ask_hidden() {
   local prompt="$1" answer=""
   while [ -z "$answer" ]; do
     read -r -s -p "$prompt: " answer
-    printf "\n"
+    printf "\n" >&2
     answer="$(trim "$answer")"
   done
   printf "%s" "$answer"
@@ -125,6 +125,11 @@ detect_mysql_mode() {
     DOCKER_CONTAINER="$(ask_with_default "Docker container name with MySQL" "$default_container")"
   else
     DOCKER_CONTAINER="$(ask_required "Docker container name with MySQL")"
+  fi
+
+  if ! docker inspect "$DOCKER_CONTAINER" >/dev/null 2>&1; then
+    print_error "Container '$DOCKER_CONTAINER' not found or not running."
+    exit 1
   fi
 
   # Detect mapped port

@@ -13,32 +13,37 @@ A production-ready REST API starter template with an advanced **Automated Scaffo
 
 ## Getting Started
 
-1. **One-command Bootstrap (recommended):**
-   ```bash
-   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/dcardenasl/ci4-api-starter/main/install.sh)"
-   ```
-   *This interactive installer clones the template, configures `.env`, creates DBs, runs migrations, and bootstraps the first superadmin.*
-   *Existing local scripts (`init.sh`, `setup-env.sh`) remain available for internal/advanced workflows.*
+The fastest path is the **interactive bootstrapper** — a single command that clones the template, generates all secrets, creates both databases, runs migrations, and provisions the first superadmin:
 
-2. **Manual Clone and Install (advanced/local):**
-   ```bash
-   git clone https://github.com/dcardenasl/ci4-api-starter.git
-   cd ci4-api-starter
-   composer install
-   ```
-   *Note: This automatically installs the Git pre-commit hooks.*
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/dcardenasl/ci4-api-starter/main/install.sh)"
+```
 
-3. **Environment Setup:**
-   ```bash
-   cp .env.example .env
-   # Update your DB and JWT_SECRET_KEY
-   ```
+`install.sh` handles everything interactively:
+- Checks prerequisites (PHP 8.2+, Composer, MySQL)
+- Collects project name, DB credentials, and admin email
+- Clones the repo into a new directory
+- Runs `composer install` (auto-installs Git pre-commit hooks)
+- Generates `.env`, JWT secret, and encryption key
+- Creates main and test databases, runs all migrations
+- Bootstraps the first superadmin account
+- Optionally resets the git history for a clean start
+- Generates the initial Swagger documentation
 
-4. **Migrate and Bootstrap Superadmin:**
-   ```bash
-   php spark migrate
-   php spark users:bootstrap-superadmin --email superadmin@example.com --password 'StrongPass123!' --first-name Super --last-name Admin
-   ```
+### Manual Setup (already cloned / advanced)
+
+```bash
+git clone https://github.com/dcardenasl/ci4-api-starter.git
+cd ci4-api-starter
+composer install
+cp .env.example .env
+# Fill in DB credentials and JWT_SECRET_KEY in .env
+php spark migrate
+php spark users:bootstrap-superadmin --email superadmin@example.com --password 'StrongPass123!' --first-name Super --last-name Admin
+```
+
+> For Docker workflows: run `./setup-env.sh` first (creates `.env` and `.env.docker` with generated secrets), then `docker compose up -d`.
+> `init.sh` is for re-running setup on an already-cloned repo without re-cloning (CI/automation use).
 
 ## Development Workflow
 
@@ -64,6 +69,41 @@ To run the full quality suite manually:
 ```bash
 composer quality
 ```
+
+## Secret Rotation
+
+Rotate secrets immediately if compromised, every 90 days for compliance, or when team members with access leave.
+
+**JWT Secret** (`JWT_SECRET_KEY` in `.env`):
+```bash
+# 1. Generate a new secret (64+ characters recommended)
+openssl rand -base64 64
+
+# 2. Update .env
+JWT_SECRET_KEY='<paste-new-secret-here>'
+
+# 3. Restart the server
+# All existing tokens are immediately invalidated — users must log in again
+```
+
+**Encryption Key** (`encryption.key` in `.env`):
+```bash
+# 1. Generate new key
+openssl rand -hex 32
+
+# 2. Update .env
+encryption.key=hex2bin:<paste-new-key-here>
+
+# 3. Restart the server
+# Note: Existing encrypted data may become unreadable
+```
+
+**⚠️ Important Notes:**
+- Rotating the JWT secret invalidates all active tokens immediately
+- Rotating the encryption key may invalidate encrypted session data
+- Always test secret rotation in staging first
+- Keep old secrets for 24-48 hours in case you need to revert
+- Document the date and reason for rotation for audit trails
 
 ## Documentation
 - [Architecture Overview](ARCHITECTURE.md)

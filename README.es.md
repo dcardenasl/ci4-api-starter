@@ -41,41 +41,37 @@ Este proyecto sigue una arquitectura de capas avanzada diseñada para la escalab
 
 ## Inicio Rapido
 
-### Opcion 1: Usar Plantilla de GitHub (Recomendado)
-
-1. Haz clic en **"Use this template"** en la parte superior de esta pagina
-2. Clona tu nuevo repositorio
-3. Ejecuta el instalador interactivo:
+El camino más rápido es el **instalador interactivo** — un único comando que clona la plantilla, genera todos los secretos, crea ambas bases de datos, ejecuta migraciones y aprovisiona el primer superadmin:
 
 ```bash
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/dcardenasl/ci4-api-starter/main/install.sh)"
 ```
 
-Tu API estara corriendo en `http://localhost:8080`
-Los scripts locales existentes (`init.sh`, `setup-env.sh`) se mantienen para flujos internos/avanzados.
+`install.sh` maneja todo de forma interactiva:
+- Verifica requisitos previos (PHP 8.2+, Composer, MySQL)
+- Recopila nombre del proyecto, credenciales de BD y email del administrador
+- Clona el repositorio en un nuevo directorio
+- Ejecuta `composer install` (instala automáticamente hooks pre-commit de Git)
+- Genera `.env`, secret JWT y clave de encriptación
+- Crea base de datos principal y de pruebas, ejecuta todas las migraciones
+- Aprovisiona la primera cuenta de superadmin
+- Opcionalmente reinicia el historial de git para un comienzo limpio
+- Genera la documentación inicial de Swagger
 
-### Opcion 2: Configuracion Manual (avanzada/local)
+### Configuración Manual (repositorio ya clonado / avanzada)
 
 ```bash
-# Instalar dependencias
+git clone https://github.com/dcardenasl/ci4-api-starter.git
+cd ci4-api-starter
 composer install
-
-# Configurar entorno
 cp .env.example .env
-
-# Generar claves de seguridad
-openssl rand -base64 64  # Agregar a JWT_SECRET_KEY en .env
-php spark key:generate   # Muestra la clave de encriptacion
-
-# Configurar base de datos (configura .env primero)
+# Completa credenciales de BD y JWT_SECRET_KEY en .env
 php spark migrate
-
-# Crear el primer superadmin (ejecutar una sola vez)
 php spark users:bootstrap-superadmin --email superadmin@ejemplo.com --password 'ContrasenaFuerte123!' --first-name Super --last-name Admin
-
-# Iniciar servidor
-php spark serve
 ```
+
+> Para flujos Docker: ejecuta `./setup-env.sh` primero (crea `.env` y `.env.docker` con secretos generados), luego `docker compose up -d`.
+> `init.sh` es para re-ejecutar la configuración en un repositorio ya clonado sin volver a clonar (uso en CI/automatización).
 
 ## Adopcion del Template
 
@@ -416,7 +412,7 @@ encryption.key=hex2bin:<pegar-nueva-clave-aqui>
 
 ## Requisitos
 
-- PHP 8.1+
+- PHP 8.2+
 - MySQL 8.0+
 - Composer 2.x
 - Extensiones: mysqli, mbstring, intl, json
@@ -435,7 +431,7 @@ encryption.key=hex2bin:<pegar-nueva-clave-aqui>
 Esta plantilla incluye un agente especializado de [Claude Code](https://claude.ai/code) que actúa como arquitecto experto para este proyecto. Cuando usas Claude Code, el agente automáticamente te ayuda a:
 - Crear recursos CRUD completos siguiendo todos los patrones arquitectónicos
 - Generar y alinear las capas CRUD (entidades, modelos, DTOs, servicios, controladores, rutas y tests)
-- Guiar explícitamente el paso de migraciones (los archivos de migración no se generan automáticamente con `make:crud`)
+- Revisar e integrar las migraciones generadas automáticamente con `make:crud`
 - Mantener consistencia con las convenciones de código existentes
 - Seguir las mejores prácticas de seguridad y testing
 

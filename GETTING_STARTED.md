@@ -59,7 +59,7 @@ HTTP Response (JSON)
 ## Quick Setup (5 Minutes)
 
 ### Prerequisites
-- PHP 8.1+ with extensions: mysqli, mbstring, intl, json
+- PHP 8.2+ with extensions: mysqli, mbstring, intl, json
 - MySQL 8.0+
 - Composer 2.x
 
@@ -322,11 +322,36 @@ php spark swagger:generate
 View at: `http://localhost:8080/docs/`
 Raw spec: `http://localhost:8080/swagger.json`
 
-### 🚀 Deploy
+### Docker Setup
 
-See deployment guides:
-- Docker: `docker-compose up -d`
-- Production: Configure `.env` for production, set up SSL, configure reverse proxy
+```bash
+# 1. Create .env and .env.docker with generated secrets
+./setup-env.sh
+
+# 2. Start services (API :8080, MySQL :3306, phpMyAdmin :8081)
+docker compose up -d
+
+# 3. Run migrations inside the app container
+docker compose exec app php spark migrate
+
+# 4. Bootstrap the superadmin (run once)
+docker compose exec app php spark users:bootstrap-superadmin \
+  --email admin@example.com \
+  --password 'StrongPass123!' \
+  --first-name Admin \
+  --last-name User
+```
+
+Your API is now running at `http://localhost:8080`
+
+### 🚀 Production Deployment
+
+For production:
+- Configure `.env` for production environment
+- Set up SSL/TLS with a reverse proxy (Nginx, Apache)
+- Use environment-specific database backups
+- Enable rate limiting and CORS appropriately
+- Review the [Deployment Checklist](DEPLOYMENT.md)
 
 ---
 

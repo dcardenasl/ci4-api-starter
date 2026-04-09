@@ -89,6 +89,54 @@ validate_db_name() {
   fi
 }
 
+# MySQL execution mode detection
+MYSQL_MODE="local"     # "local" | "docker" | "skip"
+DOCKER_CONTAINER=""
+
+detect_mysql_mode() {
+  if command -v mysql >/dev/null 2>&1; then
+    MYSQL_MODE="local"
+    print_ok "MySQL client found (local)"
+    return
+  fi
+
+  print_warn "mysql CLI not found. Checking for Docker..."
+
+  if ! command -v docker >/dev/null 2>&1; then
+    print_warn "Neither mysql CLI nor docker found."
+    print_warn "Database creation will be skipped — create DBs manually."
+    MYSQL_MODE="skip"
+    return
+  fi
+
+  # Show running containers that look like MySQL
+  printf "Running containers:\n"
+  docker ps --format "  {{.Names}}\t{{.Image}}" 2>/dev/null | grep -i mysql || printf "  (none found with 'mysql' in image name)\n"
+
+  DOCKER_CONTAINER="$(ask_required "Docker container name with MySQL")"
+  MYSQL_MODE="docker"
+  print_ok "Will use docker exec on container: $DOCKER_CONTAINER"
+}
+
+run_mysql_sql() {
+  local sql="$1"
+  case "$MYSQL_MODE" in
+    local)
+      local cmd=(mysql -h"$DB_HOST" -P"$DB_PORT" -u"$DB_USER")
+      [ -n "$DB_PASS" ] && cmd+=("-p$DB_PASS")
+      "${cmd[@]}" -e "$sql"
+      ;;
+    docker)
+      local cmd=(docker exec -i "$DOCKER_CONTAINER" mysql -u"$DB_USER")
+      [ -n "$DB_PASS" ] && cmd+=("-p$DB_PASS")
+      "${cmd[@]}" -e "$sql"
+      ;;
+    skip)
+      return 1
+      ;;
+  esac
+}
+
 print_header "CI4 Project Bootstrapper"
 printf "Template repo: %s (%s)\n" "$TEMPLATE_REPO_URL" "$TEMPLATE_BRANCH"
 
@@ -96,13 +144,13 @@ print_header "Checking requirements"
 require_cmd git
 require_cmd php
 require_cmd composer
-require_cmd mysql
+detect_mysql_mode
 
 if ! php -r 'exit(version_compare(PHP_VERSION, "8.2.0", ">=") ? 0 : 1);'; then
   print_error "PHP 8.2+ is required."
   exit 1
 fi
-print_ok "Dependencies found (git, php, composer, mysql)"
+print_ok "Dependencies found (git, php, composer)"
 
 print_header "Collecting project data"
 PROJECT_NAME_RAW="$(ask_required "Project name")"
@@ -170,18 +218,19 @@ php spark key:generate --force >/dev/null
 print_ok ".env configured and keys generated"
 
 print_header "Preparing databases"
-MYSQL_CMD=(mysql -h"$DB_HOST" -P"$DB_PORT" -u"$DB_USER")
-if [ -n "$DB_PASS" ]; then
-  MYSQL_CMD+=("-p$DB_PASS")
-fi
+CREATE_SQL="CREATE DATABASE IF NOT EXISTS \`$DB_NAME\`; CREATE DATABASE IF NOT EXISTS \`$TEST_DB_NAME\`;"
 
-if "${MYSQL_CMD[@]}" -e "CREATE DATABASE IF NOT EXISTS \`$DB_NAME\`; CREATE DATABASE IF NOT EXISTS \`$TEST_DB_NAME\`;"; then
+if [ "$MYSQL_MODE" = "skip" ]; then
+  print_warn "Database creation skipped — create them manually:"
+  printf "  CREATE DATABASE IF NOT EXISTS \`%s\`;\n" "$DB_NAME"
+  printf "  CREATE DATABASE IF NOT EXISTS \`%s\`;\n" "$TEST_DB_NAME"
+elif run_mysql_sql "$CREATE_SQL"; then
   print_ok "Databases ensured: $DB_NAME, $TEST_DB_NAME"
 else
   print_warn "Could not create databases automatically."
   printf "Run manually:\n"
-  printf "  CREATE DATABASE IF NOT EXISTS `%s`;\n" "$DB_NAME"
-  printf "  CREATE DATABASE IF NOT EXISTS `%s`;\n" "$TEST_DB_NAME"
+  printf "  CREATE DATABASE IF NOT EXISTS \`%s\`;\n" "$DB_NAME"
+  printf "  CREATE DATABASE IF NOT EXISTS \`%s\`;\n" "$TEST_DB_NAME"
 fi
 
 print_header "Running migrations"

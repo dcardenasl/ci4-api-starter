@@ -101,5 +101,5 @@ For architecture rules and onboarding, prefer:
 
 ## CRUD Notes
 
-1. `make:crud` does not generate migration files. Create migrations after scaffold + `module:check`.
+1. `make:crud` generates a migration file automatically. Review it after scaffolding, then run `php spark migrate` to apply it.
 2. Default persistence for CRUD is `GenericRepository`; create dedicated repositories only for non-trivial domain queries.

@@ -87,14 +87,14 @@ print_header "Checking Requirements"
 # Check PHP
 if command_exists php; then
     PHP_VERSION=$(php -r "echo PHP_VERSION;")
-    if php -r "exit(version_compare(PHP_VERSION, '8.1.0', '>=') ? 0 : 1);"; then
+    if php -r "exit(version_compare(PHP_VERSION, '8.2.0', '>=') ? 0 : 1);"; then
         print_success "PHP $PHP_VERSION detected"
     else
-        print_error "PHP 8.1 or higher required. Found: $PHP_VERSION"
+        print_error "PHP 8.2 or higher required. Found: $PHP_VERSION"
         exit 1
     fi
 else
-    print_error "PHP not found. Please install PHP 8.1 or higher"
+    print_error "PHP not found. Please install PHP 8.2 or higher"
     exit 1
 fi
 

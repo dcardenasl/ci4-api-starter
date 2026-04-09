@@ -7,6 +7,17 @@ set -euo pipefail
 
 TEMPLATE_REPO_URL="${TEMPLATE_REPO_URL:-https://github.com/dcardenasl/ci4-api-starter.git}"
 TEMPLATE_BRANCH="${TEMPLATE_BRANCH:-main}"
+INSTALL_DIR=""
+
+# Cleanup partial install on unexpected exit
+_cleanup_on_error() {
+  local exit_code=$?
+  if [[ $exit_code -ne 0 && -n "$INSTALL_DIR" && -d "$INSTALL_DIR" ]]; then
+    print_warn "Installation failed (exit $exit_code). Removing partial directory: $INSTALL_DIR"
+    rm -rf "$INSTALL_DIR"
+  fi
+}
+trap '_cleanup_on_error' EXIT
 
 # ---------------------------------------------------------------------------
 # Minimal helpers — needed BEFORE the clone (setup.sh does not exist yet).
@@ -114,6 +125,10 @@ detect_mysql_mode() {
 # (so installation can run unattended after this phase)
 # ---------------------------------------------------------------------------
 
+LOG_FILE="$(pwd)/install.log"
+exec > >(tee -a "$LOG_FILE") 2>&1
+printf "Install log: %s\n" "$LOG_FILE"
+
 print_header "CI4 Project Bootstrapper"
 printf "Template repo: %s (%s)\n" "$TEMPLATE_REPO_URL" "$TEMPLATE_BRANCH"
 
@@ -124,7 +139,10 @@ require_cmd composer
 detect_mysql_mode
 
 if ! php -r 'exit(version_compare(PHP_VERSION, "8.2.0", ">=") ? 0 : 1);'; then
-  print_error "PHP 8.2+ is required."
+  print_error "PHP 8.2+ is required (found: $(php -r 'echo PHP_VERSION;'))."
+  printf "  macOS:  brew install php@8.2\n"
+  printf "  Ubuntu: sudo apt install php8.2\n"
+  printf "  See: https://www.php.net/downloads\n"
   exit 1
 fi
 print_ok "Dependencies found (git, php, composer)"
@@ -169,7 +187,9 @@ SUPERADMIN_LAST_NAME="$(ask_with_default "Last name" "Admin")"
 # ---------------------------------------------------------------------------
 
 print_header "Cloning template"
-git clone --depth=1 --branch "$TEMPLATE_BRANCH" "$TEMPLATE_REPO_URL" "$PROJECT_NAME"
+INSTALL_DIR="$PROJECT_NAME"
+timeout 300 git clone --depth=1 --branch "$TEMPLATE_BRANCH" "$TEMPLATE_REPO_URL" "$PROJECT_NAME" \
+  || { print_error "git clone timed out or failed. Check your connection and try again."; exit 1; }
 cd "$PROJECT_NAME"
 print_ok "Project cloned into $PROJECT_NAME"
 

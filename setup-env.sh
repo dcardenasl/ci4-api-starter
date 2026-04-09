@@ -3,12 +3,20 @@
 # Environment Setup Script for CI4 API Starter
 # This script helps you set up secure environment files
 
-set -e
+set -euo pipefail
 
 echo "================================================"
 echo "  CI4 API Starter - Environment Setup"
 echo "================================================"
 echo ""
+
+# Validate required template files exist
+for f in .env.example .env.docker.example; do
+  if [ ! -f "$f" ]; then
+    echo -e "${RED}Error: $f not found. Run this script from the project root.${NC}"
+    exit 1
+  fi
+done
 
 # Colors for output
 RED='\033[0;31m'
@@ -75,38 +83,59 @@ if command -v openssl &> /dev/null; then
     echo "================================================"
     echo ""
 
-    # Update .env
-    if [ -f ".env" ]; then
-        # For macOS (BSD sed)
-        if [[ "$OSTYPE" == "darwin"* ]]; then
-            sed -i '' "s|JWT_SECRET_KEY = ''|JWT_SECRET_KEY = '$JWT_SECRET'|g" .env
-            sed -i '' "s|encryption.key = ''|encryption.key = 'hex:$ENCRYPTION_KEY'|g" .env
-        else
-            # For Linux (GNU sed)
-            sed -i "s|JWT_SECRET_KEY = ''|JWT_SECRET_KEY = '$JWT_SECRET'|g" .env
-            sed -i "s|encryption.key = ''|encryption.key = 'hex:$ENCRYPTION_KEY'|g" .env
+    # Prefer bootstrap_env.php (robust, no sed delimiter issues) if PHP is available.
+    # Falls back to sed if PHP is not installed.
+    if command -v php &> /dev/null && [ -f "scripts/bootstrap_env.php" ]; then
+        if [ -f ".env" ]; then
+            php scripts/bootstrap_env.php \
+                --file .env \
+                --set "JWT_SECRET_KEY=${JWT_SECRET}" \
+                --set "encryption.key=hex:${ENCRYPTION_KEY}"
+            echo -e "${GREEN}✓${NC} Updated .env with secure keys"
         fi
-        echo -e "${GREEN}✓${NC} Updated .env with secure keys"
-    fi
 
-    # Update .env.docker
-    if [ -f ".env.docker" ]; then
-        if [[ "$OSTYPE" == "darwin"* ]]; then
-            sed -i '' "s|JWT_SECRET_KEY = ''|JWT_SECRET_KEY = '$JWT_SECRET'|g" .env.docker
-            sed -i '' "s|encryption.key = ''|encryption.key = 'hex:$ENCRYPTION_KEY'|g" .env.docker
-            sed -i '' "s|MYSQL_ROOT_PASSWORD = CHANGE_THIS_ROOT_PASSWORD|MYSQL_ROOT_PASSWORD = $MYSQL_ROOT_PASSWORD|g" .env.docker
-            sed -i '' "s|MYSQL_PASSWORD = CHANGE_THIS_PASSWORD|MYSQL_PASSWORD = $MYSQL_PASSWORD|g" .env.docker
-            sed -i '' "s|database.default.password = CHANGE_THIS_PASSWORD|database.default.password = $MYSQL_PASSWORD|g" .env.docker
-            sed -i '' "s|database.tests.password = CHANGE_THIS_PASSWORD|database.tests.password = $MYSQL_PASSWORD|g" .env.docker
-        else
-            sed -i "s|JWT_SECRET_KEY = ''|JWT_SECRET_KEY = '$JWT_SECRET'|g" .env.docker
-            sed -i "s|encryption.key = ''|encryption.key = 'hex:$ENCRYPTION_KEY'|g" .env.docker
-            sed -i "s|MYSQL_ROOT_PASSWORD = CHANGE_THIS_ROOT_PASSWORD|MYSQL_ROOT_PASSWORD = $MYSQL_ROOT_PASSWORD|g" .env.docker
-            sed -i "s|MYSQL_PASSWORD = CHANGE_THIS_PASSWORD|MYSQL_PASSWORD = $MYSQL_PASSWORD|g" .env.docker
-            sed -i "s|database.default.password = CHANGE_THIS_PASSWORD|database.default.password = $MYSQL_PASSWORD|g" .env.docker
-            sed -i "s|database.tests.password = CHANGE_THIS_PASSWORD|database.tests.password = $MYSQL_PASSWORD|g" .env.docker
+        if [ -f ".env.docker" ]; then
+            php scripts/bootstrap_env.php \
+                --file .env.docker \
+                --set "JWT_SECRET_KEY=${JWT_SECRET}" \
+                --set "encryption.key=hex:${ENCRYPTION_KEY}" \
+                --set "MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}" \
+                --set "MYSQL_PASSWORD=${MYSQL_PASSWORD}" \
+                --set "database.default.password=${MYSQL_PASSWORD}" \
+                --set "database.tests.password=${MYSQL_PASSWORD}"
+            echo -e "${GREEN}✓${NC} Updated .env.docker with secure keys and passwords"
         fi
-        echo -e "${GREEN}✓${NC} Updated .env.docker with secure keys and passwords"
+    else
+        # Fallback: sed-based replacement (macOS/Linux compatible, safe for base64 values)
+        if [ -f ".env" ]; then
+            if [[ "$OSTYPE" == "darwin"* ]]; then
+                sed -i '' "s|JWT_SECRET_KEY = ''|JWT_SECRET_KEY = '${JWT_SECRET}'|g" .env
+                sed -i '' "s|encryption.key = ''|encryption.key = 'hex:${ENCRYPTION_KEY}'|g" .env
+            else
+                sed -i "s|JWT_SECRET_KEY = ''|JWT_SECRET_KEY = '${JWT_SECRET}'|g" .env
+                sed -i "s|encryption.key = ''|encryption.key = 'hex:${ENCRYPTION_KEY}'|g" .env
+            fi
+            echo -e "${GREEN}✓${NC} Updated .env with secure keys (sed fallback)"
+        fi
+
+        if [ -f ".env.docker" ]; then
+            if [[ "$OSTYPE" == "darwin"* ]]; then
+                sed -i '' "s|JWT_SECRET_KEY = ''|JWT_SECRET_KEY = '${JWT_SECRET}'|g" .env.docker
+                sed -i '' "s|encryption.key = ''|encryption.key = 'hex:${ENCRYPTION_KEY}'|g" .env.docker
+                sed -i '' "s|MYSQL_ROOT_PASSWORD = CHANGE_THIS_ROOT_PASSWORD|MYSQL_ROOT_PASSWORD = ${MYSQL_ROOT_PASSWORD}|g" .env.docker
+                sed -i '' "s|MYSQL_PASSWORD = CHANGE_THIS_PASSWORD|MYSQL_PASSWORD = ${MYSQL_PASSWORD}|g" .env.docker
+                sed -i '' "s|database.default.password = CHANGE_THIS_PASSWORD|database.default.password = ${MYSQL_PASSWORD}|g" .env.docker
+                sed -i '' "s|database.tests.password = CHANGE_THIS_PASSWORD|database.tests.password = ${MYSQL_PASSWORD}|g" .env.docker
+            else
+                sed -i "s|JWT_SECRET_KEY = ''|JWT_SECRET_KEY = '${JWT_SECRET}'|g" .env.docker
+                sed -i "s|encryption.key = ''|encryption.key = 'hex:${ENCRYPTION_KEY}'|g" .env.docker
+                sed -i "s|MYSQL_ROOT_PASSWORD = CHANGE_THIS_ROOT_PASSWORD|MYSQL_ROOT_PASSWORD = ${MYSQL_ROOT_PASSWORD}|g" .env.docker
+                sed -i "s|MYSQL_PASSWORD = CHANGE_THIS_PASSWORD|MYSQL_PASSWORD = ${MYSQL_PASSWORD}|g" .env.docker
+                sed -i "s|database.default.password = CHANGE_THIS_PASSWORD|database.default.password = ${MYSQL_PASSWORD}|g" .env.docker
+                sed -i "s|database.tests.password = CHANGE_THIS_PASSWORD|database.tests.password = ${MYSQL_PASSWORD}|g" .env.docker
+            fi
+            echo -e "${GREEN}✓${NC} Updated .env.docker with secure keys and passwords (sed fallback)"
+        fi
     fi
 
     echo ""

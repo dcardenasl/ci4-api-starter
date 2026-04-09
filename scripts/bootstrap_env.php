@@ -43,7 +43,7 @@ function parseArgs(array $argv): array
                 fail("Invalid --set value '$pair'. Expected key=value.");
             }
             $key = trim(substr($pair, 0, $pos));
-            $value = substr($pair, $pos + 1);
+            $value = trim(substr($pair, $pos + 1));
             if ($key === '') {
                 fail("Invalid --set value '$pair'. Empty key.");
             }

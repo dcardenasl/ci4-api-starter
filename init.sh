@@ -38,6 +38,10 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+LOG_FILE="$(pwd)/init.log"
+exec > >(tee -a "$LOG_FILE") 2>&1
+printf "Init log: %s\n" "$LOG_FILE"
+
 print_header "CI4 Project — Environment Setup"
 
 # ---------------------------------------------------------------------------
@@ -50,7 +54,10 @@ require_cmd composer
 detect_mysql_mode
 
 if ! php -r 'exit(version_compare(PHP_VERSION, "8.2.0", ">=") ? 0 : 1);'; then
-  print_error "PHP 8.2+ is required."
+  print_error "PHP 8.2+ is required (found: $(php -r 'echo PHP_VERSION;'))."
+  printf "  macOS:  brew install php@8.2\n"
+  printf "  Ubuntu: sudo apt install php8.2\n"
+  printf "  See: https://www.php.net/downloads\n"
   exit 1
 fi
 print_ok "Dependencies found (php, composer)"
@@ -65,6 +72,9 @@ DB_USER="root"
 DB_PASS=""
 DB_NAME="ci4_api"
 TEST_DB_NAME="ci4_api_test"
+
+# Use detected Docker port as default if available
+[ -n "$DETECTED_DOCKER_PORT" ] && DB_PORT="$DETECTED_DOCKER_PORT"
 
 if [ "$SKIP_DB" = false ]; then
   print_header "Database configuration"
@@ -103,6 +113,7 @@ fi
 
 if [ "$SKIP_DB" = false ]; then
   ci4_prepare_databases
+  ci4_verify_database
   ci4_run_migrations
 fi
 

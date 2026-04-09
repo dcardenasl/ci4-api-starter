@@ -7,6 +7,17 @@ set -euo pipefail
 
 TEMPLATE_REPO_URL="${TEMPLATE_REPO_URL:-https://github.com/dcardenasl/ci4-api-starter.git}"
 TEMPLATE_BRANCH="${TEMPLATE_BRANCH:-main}"
+INSTALL_DIR=""
+
+# Cleanup partial install on unexpected exit
+_cleanup_on_error() {
+  local exit_code=$?
+  if [[ $exit_code -ne 0 && -n "$INSTALL_DIR" && -d "$INSTALL_DIR" ]]; then
+    print_warn "Installation failed (exit $exit_code). Removing partial directory: $INSTALL_DIR"
+    rm -rf "$INSTALL_DIR"
+  fi
+}
+trap '_cleanup_on_error' EXIT
 
 # ---------------------------------------------------------------------------
 # Minimal helpers — needed BEFORE the clone (setup.sh does not exist yet).
@@ -105,6 +116,18 @@ detect_mysql_mode() {
     || printf "  (none found with 'mysql' in image name)\n"
 
   DOCKER_CONTAINER="$(ask_required "Docker container name with MySQL")"
+
+  # Detect mapped port so the DB_PORT default is accurate
+  local mapped_port
+  mapped_port=$(docker port "$DOCKER_CONTAINER" 3306 2>/dev/null | cut -d: -f2)
+  if [ -n "$mapped_port" ]; then
+    DETECTED_DOCKER_PORT="$mapped_port"
+    print_ok "Detected Docker host port: $DETECTED_DOCKER_PORT"
+  else
+    print_warn "Could not detect Docker host port for MySQL. Using default 3306."
+    DETECTED_DOCKER_PORT=""
+  fi
+
   MYSQL_MODE="docker"
   print_ok "Will use docker exec on container: $DOCKER_CONTAINER"
 }
@@ -113,6 +136,10 @@ detect_mysql_mode() {
 # PRE-CLONE: requirements + collect all user input upfront
 # (so installation can run unattended after this phase)
 # ---------------------------------------------------------------------------
+
+LOG_FILE="$(pwd)/install.log"
+exec > >(tee -a "$LOG_FILE") 2>&1
+printf "Install log: %s\n" "$LOG_FILE"
 
 print_header "CI4 Project Bootstrapper"
 printf "Template repo: %s (%s)\n" "$TEMPLATE_REPO_URL" "$TEMPLATE_BRANCH"
@@ -124,7 +151,10 @@ require_cmd composer
 detect_mysql_mode
 
 if ! php -r 'exit(version_compare(PHP_VERSION, "8.2.0", ">=") ? 0 : 1);'; then
-  print_error "PHP 8.2+ is required."
+  print_error "PHP 8.2+ is required (found: $(php -r 'echo PHP_VERSION;'))."
+  printf "  macOS:  brew install php@8.2\n"
+  printf "  Ubuntu: sudo apt install php8.2\n"
+  printf "  See: https://www.php.net/downloads\n"
   exit 1
 fi
 print_ok "Dependencies found (git, php, composer)"
@@ -145,7 +175,10 @@ fi
 
 print_header "Database"
 DB_HOST="$(ask_with_default "MySQL host" "localhost")"
-DB_PORT="$(ask_with_default "MySQL port" "3306")"
+# Use detected Docker port as default if available (set after detect_mysql_mode)
+local default_db_port="3306"
+[ -n "$DETECTED_DOCKER_PORT" ] && default_db_port="$DETECTED_DOCKER_PORT"
+DB_PORT="$(ask_with_default "MySQL port" "$default_db_port")"
 DB_USER="$(ask_with_default "MySQL user" "root")"
 read -r -s -p "MySQL password (can be empty): " DB_PASS
 printf "\n"
@@ -166,7 +199,9 @@ SUPERADMIN_LAST_NAME="$(ask_with_default "Last name" "Admin")"
 # ---------------------------------------------------------------------------
 
 print_header "Cloning template"
-git clone --depth=1 --branch "$TEMPLATE_BRANCH" "$TEMPLATE_REPO_URL" "$PROJECT_NAME"
+INSTALL_DIR="$PROJECT_NAME"
+timeout 300 git clone --depth=1 --branch "$TEMPLATE_BRANCH" "$TEMPLATE_REPO_URL" "$PROJECT_NAME" \
+  || { print_error "git clone timed out or failed. Check your connection and try again."; exit 1; }
 cd "$PROJECT_NAME"
 print_ok "Project cloned into $PROJECT_NAME"
 
@@ -185,6 +220,7 @@ print_ok "Project metadata updated"
 ci4_install_deps
 ci4_configure_env
 ci4_prepare_databases
+ci4_verify_database
 ci4_run_migrations
 
 print_header "Bootstrapping superadmin"

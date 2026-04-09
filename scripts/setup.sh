@@ -87,6 +87,7 @@ validate_db_name() {
 
 MYSQL_MODE="${MYSQL_MODE:-local}"
 DOCKER_CONTAINER="${DOCKER_CONTAINER:-}"
+DETECTED_DOCKER_PORT="${DETECTED_DOCKER_PORT:-}"
 
 detect_mysql_mode() {
   if command -v mysql >/dev/null 2>&1; then
@@ -105,26 +106,56 @@ detect_mysql_mode() {
   fi
 
   printf "Running containers:\n"
-  docker ps --format "  {{.Names}}\t{{.Image}}" 2>/dev/null | grep -i mysql \
-    || printf "  (none found with 'mysql' in image name)\n"
+  local mysql_containers
+  mysql_containers=$(docker ps --format "{{.Names}}" 2>/dev/null | while read -r name; do
+    if docker inspect "$name" --format='{{.Config.Image}}' 2>/dev/null | grep -qi mysql; then
+      printf "  %s\n" "$name"
+    fi
+  done)
 
-  DOCKER_CONTAINER="$(ask_required "Docker container name with MySQL")"
+  if [ -n "$mysql_containers" ]; then
+    printf "%s\n" "$mysql_containers"
+  else
+    printf "  (none found with 'mysql' in image name)\n"
+  fi
+
+  local default_container
+  default_container=$(echo "$mysql_containers" | head -1 | xargs)
+  if [ -n "$default_container" ]; then
+    DOCKER_CONTAINER="$(ask_with_default "Docker container name with MySQL" "$default_container")"
+  else
+    DOCKER_CONTAINER="$(ask_required "Docker container name with MySQL")"
+  fi
+
+  # Detect mapped port
+  local mapped_port
+  mapped_port=$(docker port "$DOCKER_CONTAINER" 3306 2>/dev/null | cut -d: -f2)
+  if [ -n "$mapped_port" ]; then
+    DETECTED_DOCKER_PORT="$mapped_port"
+    print_ok "Detected Docker host port: $DETECTED_DOCKER_PORT"
+  else
+    print_warn "Could not detect Docker host port for MySQL. Using default 3306."
+    DETECTED_DOCKER_PORT=""
+  fi
+
   MYSQL_MODE="docker"
   print_ok "Will use docker exec on container: $DOCKER_CONTAINER"
 }
 
 run_mysql_sql() {
   local sql="$1"
+  local output
   case "$MYSQL_MODE" in
     local)
       local cmd=(mysql -h"$DB_HOST" -P"$DB_PORT" -u"$DB_USER")
-      [ -n "$DB_PASS" ] && cmd+=("-p$DB_PASS")
-      "${cmd[@]}" -e "$sql"
+      # Pass password via env var to avoid exposure in process list
+      output=$(MYSQL_PWD="$DB_PASS" "${cmd[@]}" -e "$sql" 2>&1) || { printf "%s\n" "$output"; return 1; }
+      printf "%s\n" "$output"
       ;;
     docker)
-      local cmd=(docker exec -i "$DOCKER_CONTAINER" mysql -u"$DB_USER")
-      [ -n "$DB_PASS" ] && cmd+=("-p$DB_PASS")
-      "${cmd[@]}" -e "$sql"
+      local cmd=(docker exec -i -e "MYSQL_PWD=$DB_PASS" "$DOCKER_CONTAINER" mysql -u"$DB_USER")
+      output=$("${cmd[@]}" -e "$sql" 2>&1) || { printf "%s\n" "$output"; return 1; }
+      printf "%s\n" "$output"
       ;;
     skip)
       return 1
@@ -141,9 +172,11 @@ ci4_install_deps() {
   print_header "Installing dependencies"
   if [ -d "vendor" ]; then
     print_warn "vendor/ already exists. Running composer update..."
-    composer update --no-interaction
+    timeout 600 composer update --no-interaction \
+      || { print_error "composer update timed out or failed."; exit 1; }
   else
-    composer install --no-interaction --prefer-dist
+    timeout 600 composer install --no-interaction --prefer-dist \
+      || { print_error "composer install timed out or failed."; exit 1; }
   fi
   print_ok "Composer dependencies installed"
 }
@@ -182,9 +215,29 @@ ci4_prepare_databases() {
   elif run_mysql_sql "$sql"; then
     print_ok "Databases ensured: $DB_NAME, $TEST_DB_NAME"
   else
-    print_warn "Could not create databases automatically. Run manually:"
-    printf "  CREATE DATABASE IF NOT EXISTS \`%s\`;\n" "$DB_NAME"
-    printf "  CREATE DATABASE IF NOT EXISTS \`%s\`;\n" "$TEST_DB_NAME"
+    print_error "Database creation failed. Check your MySQL connection settings and try again."
+    exit 1
+  fi
+}
+
+# Verify that the main database exists before running migrations.
+# Globals required: DB_NAME MYSQL_MODE (+ DB_* for local/docker modes)
+ci4_verify_database() {
+  if [ "$MYSQL_MODE" = "skip" ]; then
+    print_warn "Skipping database verification (MySQL mode is 'skip')"
+    return 0
+  fi
+
+  print_header "Verifying database"
+  local check_sql="SELECT SCHEMA_NAME FROM information_schema.SCHEMATA WHERE SCHEMA_NAME='${DB_NAME}';"
+  local result
+  result=$(run_mysql_sql "$check_sql" 2>&1)
+
+  if echo "$result" | grep -q "$DB_NAME"; then
+    print_ok "Database '$DB_NAME' verified"
+  else
+    print_error "Database '$DB_NAME' does not exist. Check if ci4_prepare_databases succeeded."
+    exit 1
   fi
 }
 
@@ -194,14 +247,15 @@ ci4_run_migrations() {
   if php spark migrate; then
     print_ok "Migrations completed"
   else
-    print_warn "Migrations failed. Run 'php spark migrate' manually."
+    print_error "Migrations failed. Fix the error above and run 'php spark migrate' manually."
+    exit 1
   fi
 }
 
 # Generate the OpenAPI / Swagger schema.
 ci4_generate_swagger() {
   print_header "Generating OpenAPI schema"
-  if php spark swagger:generate 2>/dev/null; then
+  if php spark swagger:generate; then
     print_ok "OpenAPI schema generated"
   else
     print_warn "Swagger generation failed. Run 'php spark swagger:generate' manually."

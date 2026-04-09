@@ -66,6 +66,9 @@ DB_PASS=""
 DB_NAME="ci4_api"
 TEST_DB_NAME="ci4_api_test"
 
+# Use detected Docker port as default if available
+[ -n "$DETECTED_DOCKER_PORT" ] && DB_PORT="$DETECTED_DOCKER_PORT"
+
 if [ "$SKIP_DB" = false ]; then
   print_header "Database configuration"
   DB_HOST="$(ask_with_default "MySQL host" "$DB_HOST")"
@@ -103,6 +106,7 @@ fi
 
 if [ "$SKIP_DB" = false ]; then
   ci4_prepare_databases
+  ci4_verify_database
   ci4_run_migrations
 fi
 

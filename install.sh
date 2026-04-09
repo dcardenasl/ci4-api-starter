@@ -145,7 +145,10 @@ fi
 
 print_header "Database"
 DB_HOST="$(ask_with_default "MySQL host" "localhost")"
-DB_PORT="$(ask_with_default "MySQL port" "3306")"
+# Use detected Docker port as default if available (set after detect_mysql_mode)
+local default_db_port="3306"
+[ -n "$DETECTED_DOCKER_PORT" ] && default_db_port="$DETECTED_DOCKER_PORT"
+DB_PORT="$(ask_with_default "MySQL port" "$default_db_port")"
 DB_USER="$(ask_with_default "MySQL user" "root")"
 read -r -s -p "MySQL password (can be empty): " DB_PASS
 printf "\n"
@@ -185,6 +188,7 @@ print_ok "Project metadata updated"
 ci4_install_deps
 ci4_configure_env
 ci4_prepare_databases
+ci4_verify_database
 ci4_run_migrations
 
 print_header "Bootstrapping superadmin"

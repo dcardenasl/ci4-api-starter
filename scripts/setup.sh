@@ -190,6 +190,7 @@ run_mysql_sql() {
 # Install or update Composer dependencies.
 ci4_install_deps() {
   print_header "Installing dependencies"
+  printf "This may take a few minutes depending on your connection speed...\n"
   if [ -d "vendor" ]; then
     print_warn "vendor/ already exists. Running composer update..."
     timeout 600 composer update --no-interaction \
@@ -205,6 +206,10 @@ ci4_install_deps() {
 # Globals required: DB_HOST DB_PORT DB_USER DB_PASS DB_NAME TEST_DB_NAME
 ci4_configure_env() {
   print_header "Configuring .env"
+  if [ ! -f ".env.example" ]; then
+    print_error ".env.example not found. The template may be corrupted or on the wrong branch."
+    exit 1
+  fi
   cp .env.example .env
   php scripts/bootstrap_env.php \
     --file .env \

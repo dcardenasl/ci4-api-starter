@@ -214,7 +214,11 @@ fi
 
 print_header "Superadmin"
 SUPERADMIN_EMAIL="$(ask_with_default "Email" "superadmin@example.com")"
-SUPERADMIN_PASSWORD="$(ask_hidden "Password")"
+SUPERADMIN_PASSWORD="$(ask_hidden "Password (min 8 chars)")"
+while [ "${#SUPERADMIN_PASSWORD}" -lt 8 ]; do
+  print_warn "Password must be at least 8 characters. Try again." >&2
+  SUPERADMIN_PASSWORD="$(ask_hidden "Password (min 8 chars)")"
+done
 SUPERADMIN_FIRST_NAME="$(ask_with_default "First name" "Super")"
 SUPERADMIN_LAST_NAME="$(ask_with_default "Last name" "Admin")"
 
@@ -229,8 +233,17 @@ exec > >(tee -a "$LOG_FILE") 2>&1
 # Clone
 # ---------------------------------------------------------------------------
 
+print_header "Checking connectivity"
+_template_host=$(printf "%s" "$TEMPLATE_REPO_URL" | sed -E 's|https?://([^/:]+).*|\1|')
+if ! curl -fsSL --max-time 8 --head "https://$_template_host" >/dev/null 2>&1; then
+  print_warn "Cannot reach '$_template_host' — clone may fail if you are offline."
+else
+  print_ok "Network reachable ($_template_host)"
+fi
+unset _template_host
+
 print_header "Cloning template"
-INSTALL_DIR="$PROJECT_NAME"
+INSTALL_DIR="$(pwd)/$PROJECT_NAME"
 timeout 300 git clone --depth=1 --branch "$TEMPLATE_BRANCH" "$TEMPLATE_REPO_URL" "$PROJECT_NAME" \
   || { print_error "git clone timed out or failed. Check your connection and try again."; exit 1; }
 cd "$PROJECT_NAME"
@@ -274,6 +287,11 @@ RESET_GIT="$(trim "$RESET_GIT")"
 if [[ "$RESET_GIT" =~ ^[Yy]$ ]]; then
   rm -rf .git
   git init >/dev/null
+  if ! git check-ignore -q .env 2>/dev/null; then
+    print_error ".env is not listed in .gitignore — refusing to commit to avoid leaking credentials."
+    print_warn "Add '.env' to .gitignore, then run: git add . && git commit"
+    exit 1
+  fi
   git add .
   if git commit -m "Initial commit from ci4-api-starter template" >/dev/null 2>&1; then
     print_ok "Git repository reset with initial commit"
@@ -291,4 +309,5 @@ fi
 print_header "Done"
 printf "Project ready at: %s\n\n" "$(pwd)"
 printf "  cd %s\n" "$PROJECT_NAME"
-printf "  php spark serve\n"
+printf "  php spark serve\n\n"
+printf "Install log: %s\n" "$LOG_FILE"

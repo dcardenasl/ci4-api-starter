@@ -113,10 +113,26 @@ detect_mysql_mode() {
   fi
 
   printf "Running containers:\n"
-  docker ps --format "  {{.Names}}\t{{.Image}}" 2>/dev/null | grep -i mysql \
-    || printf "  (none found with 'mysql' in image name)\n"
+  local mysql_containers
+  mysql_containers=$(docker ps --format "{{.Names}}" 2>/dev/null | while read -r name; do
+    if docker inspect "$name" --format='{{.Config.Image}}' 2>/dev/null | grep -qi mysql; then
+      printf "  %s\n" "$name"
+    fi
+  done) || true
 
-  DOCKER_CONTAINER="$(ask_required "Docker container name with MySQL")"
+  if [ -n "$mysql_containers" ]; then
+    printf "%s\n" "$mysql_containers"
+  else
+    printf "  (none found with 'mysql' in image name)\n"
+  fi
+
+  local default_container
+  default_container=$(printf "%s" "$mysql_containers" | head -1 | tr -d ' ') || true
+  if [ -n "$default_container" ]; then
+    DOCKER_CONTAINER="$(ask_with_default "Docker container name with MySQL" "$default_container")"
+  else
+    DOCKER_CONTAINER="$(ask_required "Docker container name with MySQL")"
+  fi
 
   if ! docker inspect "$DOCKER_CONTAINER" >/dev/null 2>&1; then
     print_error "Container '$DOCKER_CONTAINER' not found or not running."
@@ -125,7 +141,7 @@ detect_mysql_mode() {
 
   # Detect mapped port so the DB_PORT default is accurate
   local mapped_port
-  mapped_port=$(docker port "$DOCKER_CONTAINER" 3306 2>/dev/null | cut -d: -f2)
+  mapped_port=$(docker port "$DOCKER_CONTAINER" 3306 2>/dev/null | cut -d: -f2) || true
   if [ -n "$mapped_port" ]; then
     DETECTED_DOCKER_PORT="$mapped_port"
     print_ok "Detected Docker host port: $DETECTED_DOCKER_PORT"

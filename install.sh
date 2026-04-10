@@ -207,6 +207,10 @@ DB_NAME="$(ask_with_default "Database name" "$SUGGESTED_DB_NAME")"
 TEST_DB_NAME="$(ask_with_default "Test database name" "${DB_NAME}_test")"
 validate_db_name "$DB_NAME"
 validate_db_name "$TEST_DB_NAME"
+if [ "$DB_NAME" = "$TEST_DB_NAME" ]; then
+  print_error "Database name and test database name must be different."
+  exit 1
+fi
 
 print_header "Superadmin"
 SUPERADMIN_EMAIL="$(ask_with_default "Email" "superadmin@example.com")"

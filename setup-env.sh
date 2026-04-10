@@ -1,9 +1,24 @@
 #!/bin/bash
+# DEPRECATED: This script is superseded by init.sh, which handles environment
+# setup with better validation and cross-platform compatibility.
+#
+#   Use: ./init.sh
+#   Or for Docker environments: ./init.sh --skip-db
+#
+# This file is kept for backwards compatibility and will be removed in a future
+# version. It only manages Docker-specific .env.docker secrets; for local
+# development, run init.sh instead.
 
 # Environment Setup Script for CI4 API Starter
 # This script helps you set up secure environment files
 
 set -euo pipefail
+
+# Colors for output — defined first so all messages can use them
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
 
 echo "================================================"
 echo "  CI4 API Starter - Environment Setup"
@@ -17,12 +32,6 @@ for f in .env.example .env.docker.example; do
     exit 1
   fi
 done
-
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-NC='\033[0m' # No Color
 
 # Check if .env exists
 if [ -f ".env" ]; then

@@ -113,10 +113,26 @@ detect_mysql_mode() {
   fi
 
   printf "Running containers:\n"
-  docker ps --format "  {{.Names}}\t{{.Image}}" 2>/dev/null | grep -i mysql \
-    || printf "  (none found with 'mysql' in image name)\n"
+  local mysql_containers
+  mysql_containers=$(docker ps --format "{{.Names}}" 2>/dev/null | while read -r name; do
+    if docker inspect "$name" --format='{{.Config.Image}}' 2>/dev/null | grep -qi mysql; then
+      printf "  %s\n" "$name"
+    fi
+  done) || true
 
-  DOCKER_CONTAINER="$(ask_required "Docker container name with MySQL")"
+  if [ -n "$mysql_containers" ]; then
+    printf "%s\n" "$mysql_containers"
+  else
+    printf "  (none found with 'mysql' in image name)\n"
+  fi
+
+  local default_container
+  default_container=$(printf "%s" "$mysql_containers" | head -1 | tr -d ' ') || true
+  if [ -n "$default_container" ]; then
+    DOCKER_CONTAINER="$(ask_with_default "Docker container name with MySQL" "$default_container")"
+  else
+    DOCKER_CONTAINER="$(ask_required "Docker container name with MySQL")"
+  fi
 
   if ! docker inspect "$DOCKER_CONTAINER" >/dev/null 2>&1; then
     print_error "Container '$DOCKER_CONTAINER' not found or not running."
@@ -125,7 +141,7 @@ detect_mysql_mode() {
 
   # Detect mapped port so the DB_PORT default is accurate
   local mapped_port
-  mapped_port=$(docker port "$DOCKER_CONTAINER" 3306 2>/dev/null | cut -d: -f2)
+  mapped_port=$(docker port "$DOCKER_CONTAINER" 3306 2>/dev/null | cut -d: -f2) || true
   if [ -n "$mapped_port" ]; then
     DETECTED_DOCKER_PORT="$mapped_port"
     print_ok "Detected Docker host port: $DETECTED_DOCKER_PORT"
@@ -191,10 +207,18 @@ DB_NAME="$(ask_with_default "Database name" "$SUGGESTED_DB_NAME")"
 TEST_DB_NAME="$(ask_with_default "Test database name" "${DB_NAME}_test")"
 validate_db_name "$DB_NAME"
 validate_db_name "$TEST_DB_NAME"
+if [ "$DB_NAME" = "$TEST_DB_NAME" ]; then
+  print_error "Database name and test database name must be different."
+  exit 1
+fi
 
 print_header "Superadmin"
 SUPERADMIN_EMAIL="$(ask_with_default "Email" "superadmin@example.com")"
-SUPERADMIN_PASSWORD="$(ask_hidden "Password")"
+SUPERADMIN_PASSWORD="$(ask_hidden "Password (min 8 chars)")"
+while [ "${#SUPERADMIN_PASSWORD}" -lt 8 ]; do
+  print_warn "Password must be at least 8 characters. Try again." >&2
+  SUPERADMIN_PASSWORD="$(ask_hidden "Password (min 8 chars)")"
+done
 SUPERADMIN_FIRST_NAME="$(ask_with_default "First name" "Super")"
 SUPERADMIN_LAST_NAME="$(ask_with_default "Last name" "Admin")"
 
@@ -209,8 +233,17 @@ exec > >(tee -a "$LOG_FILE") 2>&1
 # Clone
 # ---------------------------------------------------------------------------
 
+print_header "Checking connectivity"
+_template_host=$(printf "%s" "$TEMPLATE_REPO_URL" | sed -E 's|https?://([^/:]+).*|\1|')
+if ! curl -fsSL --max-time 8 --head "https://$_template_host" >/dev/null 2>&1; then
+  print_warn "Cannot reach '$_template_host' — clone may fail if you are offline."
+else
+  print_ok "Network reachable ($_template_host)"
+fi
+unset _template_host
+
 print_header "Cloning template"
-INSTALL_DIR="$PROJECT_NAME"
+INSTALL_DIR="$(pwd)/$PROJECT_NAME"
 timeout 300 git clone --depth=1 --branch "$TEMPLATE_BRANCH" "$TEMPLATE_REPO_URL" "$PROJECT_NAME" \
   || { print_error "git clone timed out or failed. Check your connection and try again."; exit 1; }
 cd "$PROJECT_NAME"
@@ -254,6 +287,11 @@ RESET_GIT="$(trim "$RESET_GIT")"
 if [[ "$RESET_GIT" =~ ^[Yy]$ ]]; then
   rm -rf .git
   git init >/dev/null
+  if ! git check-ignore -q .env 2>/dev/null; then
+    print_error ".env is not listed in .gitignore — refusing to commit to avoid leaking credentials."
+    print_warn "Add '.env' to .gitignore, then run: git add . && git commit"
+    exit 1
+  fi
   git add .
   if git commit -m "Initial commit from ci4-api-starter template" >/dev/null 2>&1; then
     print_ok "Git repository reset with initial commit"
@@ -271,4 +309,5 @@ fi
 print_header "Done"
 printf "Project ready at: %s\n\n" "$(pwd)"
 printf "  cd %s\n" "$PROJECT_NAME"
-printf "  php spark serve\n"
+printf "  php spark serve\n\n"
+printf "Install log: %s\n" "$LOG_FILE"

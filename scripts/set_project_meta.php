@@ -146,7 +146,6 @@ $files = [
     'GEMINI.md',
     'Dockerfile',
     'init.sh',
-    'setup-env.sh',
     'docker/mysql/my.cnf',
     'composer.json',
 ];

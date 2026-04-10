@@ -111,7 +111,7 @@ detect_mysql_mode() {
     if docker inspect "$name" --format='{{.Config.Image}}' 2>/dev/null | grep -qi mysql; then
       printf "  %s\n" "$name"
     fi
-  done)
+  done) || true
 
   if [ -n "$mysql_containers" ]; then
     printf "%s\n" "$mysql_containers"
@@ -120,7 +120,7 @@ detect_mysql_mode() {
   fi
 
   local default_container
-  default_container=$(echo "$mysql_containers" | head -1 | xargs)
+  default_container=$(printf "%s" "$mysql_containers" | head -1 | tr -d ' ') || true
   if [ -n "$default_container" ]; then
     DOCKER_CONTAINER="$(ask_with_default "Docker container name with MySQL" "$default_container")"
   else
@@ -134,7 +134,7 @@ detect_mysql_mode() {
 
   # Detect mapped port
   local mapped_port
-  mapped_port=$(docker port "$DOCKER_CONTAINER" 3306 2>/dev/null | cut -d: -f2)
+  mapped_port=$(docker port "$DOCKER_CONTAINER" 3306 2>/dev/null | cut -d: -f2) || true
   if [ -n "$mapped_port" ]; then
     DETECTED_DOCKER_PORT="$mapped_port"
     print_ok "Detected Docker host port: $DETECTED_DOCKER_PORT"
@@ -158,8 +158,23 @@ run_mysql_sql() {
       printf "%s\n" "$output"
       ;;
     docker)
-      local cmd=(docker exec -i -e "MYSQL_PWD=$DB_PASS" "$DOCKER_CONTAINER" mysql -u"$DB_USER")
-      output=$("${cmd[@]}" -e "$sql" 2>&1) || { printf "%s\n" "$output"; return 1; }
+      # Write credentials to a temp file inside the container to avoid
+      # exposing the password as a docker exec CLI argument (visible in ps).
+      local tmp_cnf container_cnf exit_status
+      tmp_cnf=$(mktemp)
+      chmod 600 "$tmp_cnf"
+      printf '[client]\npassword=%s\n' "$DB_PASS" > "$tmp_cnf"
+      container_cnf="/tmp/.mysql_$$.cnf"
+      docker cp "$tmp_cnf" "$DOCKER_CONTAINER:$container_cnf" >/dev/null 2>&1 || true
+      rm -f "$tmp_cnf"
+      output=$(docker exec -i "$DOCKER_CONTAINER" \
+        mysql "--defaults-extra-file=$container_cnf" -u"$DB_USER" -e "$sql" 2>&1)
+      exit_status=$?
+      docker exec "$DOCKER_CONTAINER" rm -f "$container_cnf" >/dev/null 2>&1 || true
+      if [ $exit_status -ne 0 ]; then
+        printf "%s\n" "$output"
+        return 1
+      fi
       printf "%s\n" "$output"
       ;;
     skip)
@@ -175,6 +190,7 @@ run_mysql_sql() {
 # Install or update Composer dependencies.
 ci4_install_deps() {
   print_header "Installing dependencies"
+  printf "This may take a few minutes depending on your connection speed...\n"
   if [ -d "vendor" ]; then
     print_warn "vendor/ already exists. Running composer update..."
     timeout 600 composer update --no-interaction \
@@ -190,6 +206,10 @@ ci4_install_deps() {
 # Globals required: DB_HOST DB_PORT DB_USER DB_PASS DB_NAME TEST_DB_NAME
 ci4_configure_env() {
   print_header "Configuring .env"
+  if [ ! -f ".env.example" ]; then
+    print_error ".env.example not found. The template may be corrupted or on the wrong branch."
+    exit 1
+  fi
   cp .env.example .env
   php scripts/bootstrap_env.php \
     --file .env \

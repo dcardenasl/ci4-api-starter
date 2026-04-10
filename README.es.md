@@ -70,8 +70,8 @@ php spark migrate
 php spark users:bootstrap-superadmin --email superadmin@ejemplo.com --password 'ContrasenaFuerte123!' --first-name Super --last-name Admin
 ```
 
-> Para flujos Docker: ejecuta `./setup-env.sh` primero (crea `.env` y `.env.docker` con secretos generados), luego `docker compose up -d`.
-> `init.sh` es para re-ejecutar la configuración en un repositorio ya clonado sin volver a clonar (uso en CI/automatización).
+> Para flujos Docker: ejecuta `./init.sh --skip-server`, luego copia `.env.docker.example` a `.env.docker`, define los secretos específicos de Docker y levanta `docker compose up -d`.
+> `init.sh` es el entrypoint soportado para configurar un repositorio ya clonado.
 
 ## Adopcion del Template
 

@@ -325,16 +325,25 @@ Raw spec: `http://localhost:8080/swagger.json`
 ### Docker Setup
 
 ```bash
-# 1. Create .env and .env.docker with generated secrets
-./setup-env.sh
+# 1. Generate the local app environment
+./init.sh --skip-server
 
-# 2. Start services (API :8080, MySQL :3306, phpMyAdmin :8081)
+# 2. Create the Docker environment file
+cp .env.docker.example .env.docker
+
+# 3. Set Docker secrets in .env.docker before continuing
+# MYSQL_ROOT_PASSWORD=...
+# MYSQL_PASSWORD=...
+# JWT_SECRET_KEY=...
+# encryption.key='hex:...'
+
+# 4. Start services (API :8080, MySQL :3306, phpMyAdmin :8081)
 docker compose up -d
 
-# 3. Run migrations inside the app container
+# 5. Run migrations inside the app container
 docker compose exec app php spark migrate
 
-# 4. Bootstrap the superadmin (run once)
+# 6. Bootstrap the superadmin (run once)
 docker compose exec app php spark users:bootstrap-superadmin \
   --email admin@example.com \
   --password 'StrongPass123!' \

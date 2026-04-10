@@ -42,8 +42,8 @@ php spark migrate
 php spark users:bootstrap-superadmin --email superadmin@example.com --password 'StrongPass123!' --first-name Super --last-name Admin
 ```
 
-> For Docker workflows: run `./setup-env.sh` first (creates `.env` and `.env.docker` with generated secrets), then `docker compose up -d`.
-> `init.sh` is for re-running setup on an already-cloned repo without re-cloning (CI/automation use).
+> For Docker workflows: run `./init.sh --skip-server`, then copy `.env.docker.example` to `.env.docker`, set the Docker-specific secrets, and start `docker compose up -d`.
+> `init.sh` is the supported setup entrypoint for an already-cloned repository.
 
 ## Development Workflow
 

@@ -73,10 +73,12 @@ ask_hidden() {
 
 validate_db_name() {
   local name="$1"
-  if [[ ! "$name" =~ ^[A-Za-z0-9_]+$ ]]; then
-    print_error "Invalid database name '$name'. Use only letters, numbers, and underscores."
-    exit 1
-  fi
+  case "$name" in
+    ''|*[!A-Za-z0-9_]*)
+      print_error "Invalid database name '$name'. Use only letters, numbers, and underscores."
+      exit 1
+      ;;
+  esac
 }
 
 # ---------------------------------------------------------------------------
@@ -132,9 +134,12 @@ detect_mysql_mode() {
     exit 1
   fi
 
-  # Detect mapped port
+  # Detect mapped port.
+  # 'docker port' may return IPv4 (0.0.0.0:PORT) and/or IPv6 (:::PORT) lines;
+  # take the last colon-separated field to handle both formats.
   local mapped_port
-  mapped_port=$(docker port "$DOCKER_CONTAINER" 3306 2>/dev/null | cut -d: -f2) || true
+  mapped_port=$(docker port "$DOCKER_CONTAINER" 3306 2>/dev/null \
+    | awk -F: '{print $NF}' | tr -d ' ' | head -1) || true
   if [ -n "$mapped_port" ]; then
     DETECTED_DOCKER_PORT="$mapped_port"
     print_ok "Detected Docker host port: $DETECTED_DOCKER_PORT"
@@ -191,14 +196,24 @@ run_mysql_sql() {
 ci4_install_deps() {
   print_header "Installing dependencies"
   printf "This may take a few minutes depending on your connection speed...\n"
+  # 'timeout' is a Linux coreutils command; macOS ships without it.
+  # Use gtimeout (brew install coreutils) when available, otherwise run without a timeout.
+  if command -v timeout >/dev/null 2>&1; then
+    _COMPOSER_TIMEOUT="timeout 600"
+  elif command -v gtimeout >/dev/null 2>&1; then
+    _COMPOSER_TIMEOUT="gtimeout 600"
+  else
+    _COMPOSER_TIMEOUT=""
+  fi
   if [ -d "vendor" ]; then
     print_warn "vendor/ already exists. Running composer update..."
-    timeout 600 composer update --no-interaction \
+    $_COMPOSER_TIMEOUT composer update --no-interaction \
       || { print_error "composer update timed out or failed."; exit 1; }
   else
-    timeout 600 composer install --no-interaction --prefer-dist \
+    $_COMPOSER_TIMEOUT composer install --no-interaction --prefer-dist \
       || { print_error "composer install timed out or failed."; exit 1; }
   fi
+  unset _COMPOSER_TIMEOUT
   print_ok "Composer dependencies installed"
 }
 

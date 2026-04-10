@@ -244,8 +244,18 @@ unset _template_host
 
 print_header "Cloning template"
 INSTALL_DIR="$(pwd)/$PROJECT_NAME"
-timeout 300 git clone --depth=1 --branch "$TEMPLATE_BRANCH" "$TEMPLATE_REPO_URL" "$PROJECT_NAME" \
-  || { print_error "git clone timed out or failed. Check your connection and try again."; exit 1; }
+# 'timeout' is a Linux coreutils command; macOS ships without it.
+# Use gtimeout (brew install coreutils) when available, otherwise run without a timeout.
+if command -v timeout &>/dev/null; then
+  _GIT_TIMEOUT="timeout 300"
+elif command -v gtimeout &>/dev/null; then
+  _GIT_TIMEOUT="gtimeout 300"
+else
+  _GIT_TIMEOUT=""
+fi
+$_GIT_TIMEOUT git clone --depth=1 --branch "$TEMPLATE_BRANCH" "$TEMPLATE_REPO_URL" "$PROJECT_NAME" \
+  || { print_error "git clone failed. Check your connection and try again."; exit 1; }
+unset _GIT_TIMEOUT
 cd "$PROJECT_NAME"
 print_ok "Project cloned into $PROJECT_NAME"
 

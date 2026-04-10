@@ -12,7 +12,7 @@ INSTALL_DIR=""
 # Cleanup partial install on unexpected exit
 _cleanup_on_error() {
   local exit_code=$?
-  if [[ $exit_code -ne 0 && -n "$INSTALL_DIR" && -d "$INSTALL_DIR" ]]; then
+  if [ $exit_code -ne 0 ] && [ -n "$INSTALL_DIR" ] && [ -d "$INSTALL_DIR" ]; then
     print_warn "Installation failed (exit $exit_code). Removing partial directory: $INSTALL_DIR"
     rm -rf "$INSTALL_DIR"
   fi
@@ -84,10 +84,12 @@ ask_hidden() {
 
 validate_db_name() {
   local name="$1"
-  if [[ ! "$name" =~ ^[A-Za-z0-9_]+$ ]]; then
-    print_error "Invalid database name '$name'. Use only letters, numbers, and underscores."
-    exit 1
-  fi
+  case "$name" in
+    ''|*[!A-Za-z0-9_]*)
+      print_error "Invalid database name '$name'. Use only letters, numbers, and underscores."
+      exit 1
+      ;;
+  esac
 }
 
 # MySQL detection — also needed pre-clone so the user is asked about Docker
@@ -139,9 +141,12 @@ detect_mysql_mode() {
     exit 1
   fi
 
-  # Detect mapped port so the DB_PORT default is accurate
+  # Detect mapped port so the DB_PORT default is accurate.
+  # 'docker port' may return IPv4 (0.0.0.0:PORT) and/or IPv6 (:::PORT) lines;
+  # take the last colon-separated field to handle both formats.
   local mapped_port
-  mapped_port=$(docker port "$DOCKER_CONTAINER" 3306 2>/dev/null | cut -d: -f2) || true
+  mapped_port=$(docker port "$DOCKER_CONTAINER" 3306 2>/dev/null \
+    | awk -F: '{print $NF}' | tr -d ' ' | head -1) || true
   if [ -n "$mapped_port" ]; then
     DETECTED_DOCKER_PORT="$mapped_port"
     print_ok "Detected Docker host port: $DETECTED_DOCKER_PORT"
@@ -246,9 +251,9 @@ print_header "Cloning template"
 INSTALL_DIR="$(pwd)/$PROJECT_NAME"
 # 'timeout' is a Linux coreutils command; macOS ships without it.
 # Use gtimeout (brew install coreutils) when available, otherwise run without a timeout.
-if command -v timeout &>/dev/null; then
+if command -v timeout >/dev/null 2>&1; then
   _GIT_TIMEOUT="timeout 300"
-elif command -v gtimeout &>/dev/null; then
+elif command -v gtimeout >/dev/null 2>&1; then
   _GIT_TIMEOUT="gtimeout 300"
 else
   _GIT_TIMEOUT=""
@@ -294,23 +299,26 @@ ci4_generate_swagger
 print_header "Git history"
 read -r -p "Reset git history for this new project? (y/N): " RESET_GIT
 RESET_GIT="$(trim "$RESET_GIT")"
-if [[ "$RESET_GIT" =~ ^[Yy]$ ]]; then
-  rm -rf .git
-  git init >/dev/null
-  if ! git check-ignore -q .env 2>/dev/null; then
-    print_error ".env is not listed in .gitignore — refusing to commit to avoid leaking credentials."
-    print_warn "Add '.env' to .gitignore, then run: git add . && git commit"
-    exit 1
-  fi
-  git add .
-  if git commit -m "Initial commit from ci4-api-starter template" >/dev/null 2>&1; then
-    print_ok "Git repository reset with initial commit"
-  else
-    print_warn "Git initialized but commit failed — configure git user.name/email and commit manually."
-  fi
-else
-  print_warn "Keeping template git history."
-fi
+case "$RESET_GIT" in
+  [Yy])
+    rm -rf .git
+    git init >/dev/null
+    if ! git check-ignore -q .env 2>/dev/null; then
+      print_error ".env is not listed in .gitignore — refusing to commit to avoid leaking credentials."
+      print_warn "Add '.env' to .gitignore, then run: git add . && git commit"
+      exit 1
+    fi
+    git add .
+    if git commit -m "Initial commit from ci4-api-starter template" >/dev/null 2>&1; then
+      print_ok "Git repository reset with initial commit"
+    else
+      print_warn "Git initialized but commit failed — configure git user.name/email and commit manually."
+    fi
+    ;;
+  *)
+    print_warn "Keeping template git history."
+    ;;
+esac
 
 # ---------------------------------------------------------------------------
 # Done

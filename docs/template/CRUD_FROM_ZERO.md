@@ -88,9 +88,20 @@ Multiple fields separated by commas. Always wrap the whole string in **single qu
 |----------|--------|
 | `required` | `NOT NULL` in DB + `required` validation rule |
 | `nullable` | `NULL` allowed in DB + `permit_empty` validation rule |
-| `searchable` | Field is included in the `?search=` query (LIKE) |
-| `filterable` | Field is included in the `?filter[...]=` query (exact match) |
-| `fk:table` | Foreign key to `table.id` + `is_not_unique[table.id]` validation |
+| `searchable` | Included in `?search=` (LIKE). Implicit B-tree index added. |
+| `filterable` | Included in `?filter[col]=` (exact match). Implicit B-tree index added. |
+| `unique` | `UNIQUE` index + `is_unique[table.col]` on the Create DTO and Model |
+| `index` | Non-unique B-tree index (use when you need an index but none of searchable/filterable apply) |
+| `fk:table` | Foreign key to `table.id` + `is_not_unique[table.id]` validation (enforces the referenced row exists) |
+
+Multiple modifiers combine with `|`. Example:
+
+```text
+email:email:required|unique
+status:string:required|filterable|index
+```
+
+Invalid or reserved field names are rejected upfront (PHP keywords, MySQL reserved words, duplicates, and collisions with `id`/`created_at`/`updated_at`/`deleted_at`).
 
 What the scaffold generates:
 1. Database migration files
@@ -106,26 +117,47 @@ What it does **not** generate:
 1. Domain-specific repository interface/implementation
 2. Final business rules and validation specifics
 
-## 3. Validate Bootstrap Output
+## 3. After Scaffolding (What Each Follow-Up Command Does)
+
+After `make:crud` finishes, run these commands in order. `bin/make-crud.sh` prints them at the end; this section explains what each one actually does so you know what to look for if something goes wrong.
+
+### 3.1 `php spark module:check Product --domain Catalog`
+
+Static check that verifies every expected artifact was generated and wired:
+
+- All ~13 files exist (Controller, Service, Interface, 4 DTOs, OpenAPI doc class, Model, Entity, 2 language files, 3 test files).
+- Namespaces match the domain folder.
+- The service and its response mapper were registered in `app/Config/{Domain}DomainServices.php`.
+- The route file `app/Config/Routes/v1/{domain-kebab}.php` references the new controller.
+- No `markTestIncomplete` / `TODO` / `FIXME` placeholders remain in generated code.
+
+Does **not** validate: migration SQL correctness, FK target tables exist, business logic.
+
+### 3.2 `php spark migrate`
+
+Applies the migration generated in Step 2. Review it first:
 
 ```bash
-php spark module:check Product --domain Catalog
+cat app/Database/Migrations/*_Create{Plural}Table.php
 ```
 
-`module:check` validates generated module artifacts and basic wiring (`Services.php`, routes reference), but it does **not** validate migration existence/content.
+Check the table name (snake_case plural), soft-delete column presence, indexes, and FK constraints match your intent. Then run `php spark migrate`.
 
-## 4. Run Migration(s)
-
-Since the scaffold generates the migration automatically, you only need to review it and apply it:
+### 3.3 Restart the dev server
 
 ```bash
-php spark migrate
+pkill -f 'spark serve'; php spark serve --port 8080 &
 ```
 
-Then implement:
-1. Review final columns and constraints
-2. Add required indexes if necessary
-3. Ensure soft deletes are configured as desired
+**Required.** CodeIgniter 4 loads all route files at boot from `app/Config/Routes/v1/*.php`. New files generated since the last start are invisible until the server restarts.
+
+### 3.4 `php spark swagger:generate`
+
+Re-reads DTOs (for schemas) and `app/Documentation/{Domain}/*Endpoints.php` (for path definitions) and writes the unified spec to `public/swagger.json`. Admin UIs and API clients pull from there — without this step, new endpoints don't appear in Swagger UI even though they respond correctly.
+
+### 3.5 `composer cs-fix` (only if you edited generated files)
+
+The scaffolding engine emits PSR-12-compliant code, but if you manually tweak a generated file you may introduce style violations that the pre-commit hook will reject. `bin/make-crud.sh` runs `cs-fix` automatically after generation; run it manually after edits.
 
 ## 5. Align Persistence Layer
 
@@ -197,4 +229,50 @@ Yes. It uses a single schema to synchronize database, DTOs, and services.
 Only when generic CRUD criteria are insufficient and domain persistence queries become explicit/complex.
 
 ### Is `make:crud` mandatory?
-It is the recommended default. Manual CRUD creation is allowed for custom requirements.
+It is the recommended default. Manual CRUD creation is allowed for custom requirements — but be aware the generated structure is what the architecture tests and the admin starter expect.
+
+### When should soft-delete be `no`?
+Default `yes` fits business entities (Users, Orders, Products) where you want an audit trail and restore capability. Use `no` for:
+- Lookup tables with finite, rarely-changing rows (Permissions, Roles, Statuses, Countries)
+- Append-only tables where rows are never removed (AuditLog, IdempotencyKey)
+- Join tables for many-to-many relationships (Role×Permission)
+
+## Troubleshooting
+
+### `php spark make:crud` prompted me for fields even though I passed `--fields='…'`
+
+You're running in a non-TTY environment and your shell consumed the pipe characters. Use `bin/make-crud.sh` instead — the wrapper quotes correctly. Or, if you must use `php spark` directly, wrap `--fields` in **single** quotes: `--fields='name:string:required|searchable'`.
+
+### Routes still return 404 after scaffolding
+
+You didn't restart the dev server. CI4 loads route files at boot only:
+
+```bash
+pkill -f 'spark serve'; php spark serve --port 8080 &
+```
+
+### Migration fails: "table X doesn't exist" when using `fk:X`
+
+The foreign key target table hasn't been migrated yet. Either the target module isn't scaffolded, or its migration is ordered after yours. Check `app/Database/Migrations/` — migration filenames are `YYYY-MM-DD-HHMMSS_…`; earlier ones run first. For two resources scaffolded in the same second, the order depends on filesystem scan; run the target scaffold first and migrate, then scaffold the FK owner.
+
+### Swagger UI doesn't show the new endpoint
+
+Run `php spark swagger:generate`. The spec is not generated at request time — it's a static artifact in `public/swagger.json` that must be regenerated after any change to DTOs or `app/Documentation/`.
+
+### Pre-commit hook rejects the generated files (PHP CS Fixer)
+
+If you used `bin/make-crud.sh`, this shouldn't happen — it runs `cs-fix` automatically. If you used `php spark make:crud` directly and got style errors:
+
+```bash
+composer cs-fix && git add -u && git commit
+```
+
+**Do not use `--no-verify`.** The hook exists to catch these cases.
+
+### `ScaffoldConflictException: files already exist`
+
+Some of the ~13 artifacts from a previous scaffold are still on disk. Either finish the previous module (run migrate, commit the files) or delete the stale ones manually and try again. The orchestrator now rolls back partial writes on failure, so you shouldn't see this from an aborted run in normal conditions.
+
+### Field `class` / `order` / `function` rejected with an error
+
+That's working as intended — `FieldNameValidator` refuses PHP reserved words, MySQL reserved words, duplicates, and `id`/`created_at`/`updated_at`/`deleted_at` (those are engine-managed). Rename the field to something domain-specific (`order_number`, `class_name`, etc.).

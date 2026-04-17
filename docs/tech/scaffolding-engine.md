@@ -66,36 +66,19 @@ php spark make:crud Product --domain Catalog --fields='name:string:required|sear
 
 > ⚠️ In non-TTY environments `--fields` can silently lose pipe-separated modifiers, and the engine falls back to interactive mode — which then hangs forever waiting for input. That is the exact reason `bin/make-crud.sh` exists.
 
-## 🧬 Detailed Field Syntax (`--fields`)
+## 🧬 Field Syntax
 
-When using CLI mode, the fields string follows this format:
-`name:type:options,name2:type2:options2`
+The canonical reference for supported types, modifiers, and the `SoftDelete` flag lives in the playbook to keep a single source of truth:
 
-### Supported Types
-- `string`: Standard VARCHAR(255).
-- `text`: Long TEXT field.
-- `int`: INTEGER.
-- `bool`: BOOLEAN (TINYINT 1).
-- `decimal`: DECIMAL(10,2) mapped to float.
-- `email`: VARCHAR(255) with email validation.
-- `date`: DATE.
-- `datetime`: DATETIME.
-- `fk`: Foreign Key (BigInt Unsigned). Requires table name in options.
-- `json`: JSON field for structured data.
-
-### Field Options (Separated by `|`)
-- `required`: Field must be present and not empty.
-- `nullable`: Explicitly allow NULL values.
-- `searchable`: Enables partial string matching (`LIKE %query%`) in the Index endpoint.
-- `filterable`: Enables exact match filtering in the Index endpoint.
-- `fk:table_name`: **(Required for `fk` type)** Specifies the related database table.
+- [`docs/template/CRUD_FROM_ZERO.md`](../template/CRUD_FROM_ZERO.md#24-field-syntax)
 
 ## 🚀 Post-Scaffolding Workflow
 
-After running `make:crud`, always follow these three steps to finalize your module:
+After running `make:crud`, run these in order. Full rationale per command is in the playbook's [§3 After Scaffolding](../template/CRUD_FROM_ZERO.md#3-after-scaffolding-what-each-follow-up-command-does).
 
-1.  **Verify Registration**: Run `php spark module:check {Resource} --domain {Domain}`. This ensures the service and domain traits are correctly wired into `Config/Services.php`.
-2.  **Apply Database Changes**: Run `php spark migrate`. The scaffold generates a migration file in `app/Database/Migrations/`.
-3.  **Synchronize Documentation**: Run `php spark swagger:generate`. This reads the new DTOs and Documentation files to update `public/swagger.json`.
+1. **Verify wiring** — `php spark module:check {Resource} --domain {Domain}`
+2. **Apply schema** — `php spark migrate`
+3. **Restart server** — `pkill -f 'spark serve'; php spark serve --port 8080 &` (CI4 doesn't hot-reload new route files)
+4. **Regenerate spec** — `php spark swagger:generate`
 
-Your new API endpoints will be immediately available at `/api/v1/{route}`.
+Your new API endpoints will then be available at `/api/v1/{route}`.

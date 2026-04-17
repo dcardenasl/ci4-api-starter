@@ -15,6 +15,10 @@ class MigrationGenerator
 {
     public function generate(ResourceSchema $schema): array
     {
+        // CI4's MigrationRunner regex requires exactly YYYYMMDDHHMMSS_ClassName.
+        // We can't encode sub-second precision in the filename, so collisions in
+        // the same second are guarded by ScaffoldingOrchestrator::validateFilesDoNotExist()
+        // which throws ScaffoldConflictException (never silent overwrite).
         $timestamp = date('Y-m-d-His');
         $resourcePlural = $schema->getResourcePlural();
         $fileName = "{$timestamp}_Create{$resourcePlural}Table.php";

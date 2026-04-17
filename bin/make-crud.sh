@@ -86,14 +86,23 @@ if [[ -n "$ROUTE" ]]; then
     ROUTE_FLAG="--route $ROUTE"
 fi
 
+# Capture the full spark output to a tmpfile so that, on failure, we can show the user
+# the exact error (previously the `grep -E` filter consumed errors silently).
+SCAFFOLD_LOG=$(mktemp -t make-crud.XXXXXX)
+trap 'rm -f "$SCAFFOLD_LOG"' EXIT
+
 if php spark make:crud "$RESOURCE" \
     --domain "$DOMAIN" \
     --fields "$FIELDS" \
     --soft-delete "$SOFT_DELETE" \
-    $ROUTE_FLAG 2>&1 | grep -E "CREATED|WIRING|✅"; then
+    $ROUTE_FLAG > "$SCAFFOLD_LOG" 2>&1; then
+    grep -E "CREATED|WIRING|✅" "$SCAFFOLD_LOG" || true
     echo -e "${GREEN}✓ Scaffolding complete${NC}"
 else
     echo -e "${RED}✗ Scaffolding failed${NC}"
+    echo -e "${YELLOW}--- spark output ---${NC}"
+    cat "$SCAFFOLD_LOG"
+    echo -e "${YELLOW}--- end spark output ---${NC}"
     exit 1
 fi
 

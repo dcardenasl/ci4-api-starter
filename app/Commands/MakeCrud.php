@@ -10,6 +10,7 @@ use App\Support\Scaffolding\FieldNameValidator;
 use App\Support\Scaffolding\ResourceSchema;
 use App\Support\Scaffolding\ScaffoldConflictException;
 use App\Support\Scaffolding\ScaffoldingOrchestrator;
+use App\Support\Scaffolding\StringHelper;
 use CodeIgniter\CLI\BaseCommand;
 use CodeIgniter\CLI\CLI;
 use InvalidArgumentException;
@@ -43,9 +44,9 @@ class MakeCrud extends BaseCommand
             return EXIT_ERROR;
         }
 
-        $resource = $this->studly($resourceInput);
-        $domain = $this->studly((string) (CLI::getOption('domain') ?: 'Catalog'));
-        $route = (string) (CLI::getOption('route') ?: $this->toKebab($this->pluralize($resource)));
+        $resource = StringHelper::studly($resourceInput);
+        $domain = StringHelper::studly((string) (CLI::getOption('domain') ?: 'Catalog'));
+        $route = (string) (CLI::getOption('route') ?: StringHelper::toKebab(StringHelper::pluralize($resource)));
         $fieldsArg = (string) (CLI::getOption('fields') ?: '');
         $softDelete = $this->yesNoOption('soft-delete', true);
 
@@ -197,30 +198,6 @@ class MakeCrud extends BaseCommand
             }
         }
         return null;
-    }
-
-    private function studly(string $value): string
-    {
-        $normalized = preg_replace('/[^a-zA-Z0-9]+/', ' ', trim($value)) ?? '';
-        $parts = preg_split('/\s+/', $normalized) ?: [];
-        $parts = array_map(static fn (string $part): string => ucfirst(strtolower($part)), $parts);
-        return implode('', $parts);
-    }
-
-    private function pluralize(string $value): string
-    {
-        if (preg_match('/y$/i', $value)) {
-            return preg_replace('/y$/i', 'ies', $value) ?? ($value . 's');
-        }
-        if (preg_match('/(s|x|z|ch|sh)$/i', $value)) {
-            return $value . 'es';
-        }
-        return $value . 's';
-    }
-
-    private function toKebab(string $value): string
-    {
-        return strtolower((string) preg_replace('/(?<!^)[A-Z]/', '-$0', $value));
     }
 
     private function yesNoOption(string $name, bool $default): bool

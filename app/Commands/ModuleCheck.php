@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Commands;
 
+use App\Support\Scaffolding\StringHelper;
 use CodeIgniter\CLI\BaseCommand;
 use CodeIgniter\CLI\CLI;
 
@@ -28,11 +29,11 @@ class ModuleCheck extends BaseCommand
             return EXIT_ERROR;
         }
 
-        $resource = $this->studly($resourceInput);
+        $resource = StringHelper::studly($resourceInput);
         $resourceLower = lcfirst($resource);
-        $resourcePlural = $this->pluralize($resource);
-        $domain = $this->studly((string) (CLI::getOption('domain') ?: 'Catalog'));
-        $domainKebab = $this->toKebab($domain);
+        $resourcePlural = StringHelper::pluralize($resource);
+        $domain = StringHelper::studly((string) (CLI::getOption('domain') ?: 'Catalog'));
+        $domainKebab = StringHelper::toKebab($domain);
 
         $checks = [
             APPPATH . "Controllers/Api/V1/{$domain}/{$resource}Controller.php",
@@ -107,29 +108,4 @@ class ModuleCheck extends BaseCommand
         return EXIT_SUCCESS;
     }
 
-    private function studly(string $value): string
-    {
-        $normalized = preg_replace('/[^a-zA-Z0-9]+/', ' ', trim($value)) ?? '';
-        $parts = preg_split('/\s+/', $normalized) ?: [];
-        $parts = array_map(static fn (string $part): string => ucfirst(strtolower($part)), $parts);
-
-        return implode('', $parts);
-    }
-
-    private function pluralize(string $value): string
-    {
-        if (preg_match('/y$/i', $value)) {
-            return preg_replace('/y$/i', 'ies', $value) ?? ($value . 's');
-        }
-        if (preg_match('/(s|x|z|ch|sh)$/i', $value)) {
-            return $value . 'es';
-        }
-
-        return $value . 's';
-    }
-
-    private function toKebab(string $value): string
-    {
-        return strtolower((string) preg_replace('/(?<!^)[A-Z]/', '-$0', $value));
-    }
 }

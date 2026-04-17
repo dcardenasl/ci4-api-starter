@@ -60,13 +60,35 @@ class ScaffoldingOrchestrator
         $this->validateFilesDoNotExist($filesToCreate);
 
         $createdFiles = [];
-        foreach ($filesToCreate as $path => $content) {
-            $this->ensureDirectoryExists(dirname($path));
-            file_put_contents($path, $content);
-            $createdFiles[] = $path;
+        try {
+            foreach ($filesToCreate as $path => $content) {
+                $this->ensureDirectoryExists(dirname($path));
+                if (file_put_contents($path, $content) === false) {
+                    throw new \RuntimeException("Failed to write scaffolded file: {$path}");
+                }
+                $createdFiles[] = $path;
+            }
+        } catch (\Throwable $e) {
+            // Avoid leaving the project in a half-scaffolded state: delete any file
+            // we wrote in this run before re-throwing so the user can fix the cause
+            // and retry without a ScaffoldConflictException from orphaned files.
+            $this->rollback($createdFiles);
+            throw $e;
         }
 
         return $createdFiles;
+    }
+
+    /**
+     * @param string[] $createdFiles
+     */
+    private function rollback(array $createdFiles): void
+    {
+        foreach ($createdFiles as $path) {
+            if (file_exists($path)) {
+                @unlink($path);
+            }
+        }
     }
 
     private function validateFilesDoNotExist(array $files): void

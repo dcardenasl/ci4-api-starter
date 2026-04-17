@@ -29,6 +29,7 @@ class MigrationGenerator
         $resourcePlural = $schema->getResourcePlural();
         $table = $schema->getResourcePluralSnakeCase();
         $fieldsContent = $this->generateFields($schema);
+        $indexes = $this->generateIndexes($schema);
         $foreignKeys = $this->generateForeignKeys($schema);
         $deletedAtField = $schema->softDelete ? $this->getDeletedAtField() : '';
 
@@ -63,7 +64,7 @@ class Create{$resourcePlural}Table extends Migration
 {$deletedAtField}        ]);
 
         \$this->forge->addKey('id', true);
-{$foreignKeys}        \$this->forge->createTable('{$table}');
+{$indexes}{$foreignKeys}        \$this->forge->createTable('{$table}');
     }
 
     public function down()
@@ -72,6 +73,33 @@ class Create{$resourcePlural}Table extends Migration
     }
 }
 PHP;
+    }
+
+    /**
+     * Emit `addUniqueKey` / `addKey` lines for fields flagged unique/index,
+     * plus implicit indexes for searchable/filterable columns so common
+     * `WHERE filter=? AND name LIKE ?` lookups don't degrade on large tables.
+     */
+    private function generateIndexes(ResourceSchema $schema): string
+    {
+        $output = '';
+        $indexed = [];
+        foreach ($schema->fields as $field) {
+            if ($field->unique) {
+                $output .= "        \$this->forge->addUniqueKey('{$field->name}');\n";
+                $indexed[$field->name] = true;
+                continue;
+            }
+            if ($field->index || $field->searchable || $field->filterable) {
+                if (isset($indexed[$field->name])) {
+                    continue;
+                }
+                $output .= "        \$this->forge->addKey('{$field->name}');\n";
+                $indexed[$field->name] = true;
+            }
+        }
+
+        return $output;
     }
 
     private function generateFields(ResourceSchema $schema): string

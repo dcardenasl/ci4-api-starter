@@ -106,7 +106,7 @@ class TypeMapper
         return ($nullable ? '?' : '') . $phpType;
     }
 
-    public static function getValidationRules(Field $field): string
+    public static function getValidationRules(Field $field, ?string $tableForUnique = null): string
     {
         $mapping = self::get($field->type);
         $rules = $field->required ? 'required|' : 'permit_empty|';
@@ -118,6 +118,10 @@ class TypeMapper
 
         if ($field->fkTable) {
             $rules .= "|is_not_unique[{$field->fkTable}.id]";
+        }
+
+        if ($field->unique && $tableForUnique !== null) {
+            $rules .= "|is_unique[{$tableForUnique}.{$field->name}]";
         }
 
         return $rules;

@@ -18,12 +18,36 @@ class DtoGenerator
      * Build the right-hand expression that maps a raw array value to a strongly-typed property.
      * Handles int/float/bool/string consistently so the readonly property type matches the runtime value.
      */
+    /**
+     * Emit an OA\Property attribute line for a request-DTO property.
+     * Keeps the scaffolded DTO visually aligned with the hand-maintained gold standard
+     * (e.g. UserCreateRequestDTO) without requiring manual edits.
+     */
+    private function buildPropertyAttribute(Field $field, bool $nullableOverride): string
+    {
+        $mapping = TypeMapper::get($field->type);
+        $parts = ["description: '" . addslashes($field->name) . "'"];
+        $parts[] = "type: '{$mapping['oa']}'";
+        if (isset($mapping['oa_format'])) {
+            $parts[] = "format: '{$mapping['oa_format']}'";
+        }
+        if ($nullableOverride || $field->nullable) {
+            $parts[] = 'nullable: true';
+        }
+
+        return "    #[OA\\Property(" . implode(', ', $parts) . ")]\n";
+    }
+
     private function buildMapExpression(Field $field, bool $nullable = false): string
     {
         $access = "\$data['{$field->name}']";
         $phpType = TypeMapper::get($field->type)['php'];
 
-        if ($nullable) {
+        // The property is nullable when either:
+        //  - the caller forced it (update DTO treats every field as nullable), or
+        //  - the field itself was declared nullable in the schema.
+        // Without this, a nullable Create DTO field would coerce `null` to `0`/`''` silently.
+        if ($nullable || $field->nullable) {
             return match ($phpType) {
                 'int'    => "isset({$access}) ? (int) {$access} : null",
                 'float'  => "isset({$access}) ? (float) {$access} : null",
@@ -109,10 +133,15 @@ PHP;
         $mappings = '';
         $toArray = '';
 
+        $table = $schema->getResourcePluralSnakeCase();
+
         foreach ($schema->fields as $field) {
             $phpType = TypeMapper::getPhpType($field->type, $field->nullable);
-            $validation = TypeMapper::getValidationRules($field);
+            // Create DTO validates uniqueness against the full table; Update DTO intentionally skips
+            // it because it would reject the record's own value (needs id-in-context to do right).
+            $validation = TypeMapper::getValidationRules($field, $table);
 
+            $properties .= $this->buildPropertyAttribute($field, nullableOverride: $field->nullable);
             $properties .= "    public {$phpType} \${$field->name};\n";
             $rules .= "            '{$field->name}' => '{$validation}',\n";
 
@@ -169,6 +198,7 @@ PHP;
                 TypeMapper::getValidationRules($field)
             ) ?? TypeMapper::getValidationRules($field);
 
+            $properties .= $this->buildPropertyAttribute($field, nullableOverride: true);
             $properties .= "    public {$phpType} \${$field->name};\n";
             $rules .= "            '{$field->name}' => '{$validation}',\n";
 

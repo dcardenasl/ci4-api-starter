@@ -22,7 +22,9 @@ readonly class Field
         public ?string $fkTable = null,
         public ?string $defaultValue = null,
         public ?int $length = null,
-        public ?string $precision = null // For decimals e.g. "10,2"
+        public ?string $precision = null, // For decimals e.g. "10,2"
+        public bool $unique = false,
+        public bool $index = false
     ) {
     }
 }

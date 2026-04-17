@@ -80,7 +80,8 @@ PHP;
                 $filterableFields[] = "'{$field->name}'";
             }
 
-            $rules = TypeMapper::getValidationRules($field);
+            // Pass the table name so TypeMapper can emit is_unique[table.col] for unique fields.
+            $rules = TypeMapper::getValidationRules($field, $table);
             $validationRules .= "        '{$field->name}' => '{$rules}',\n";
         }
 

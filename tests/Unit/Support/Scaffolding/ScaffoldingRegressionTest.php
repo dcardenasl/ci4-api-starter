@@ -7,6 +7,7 @@ namespace Tests\Unit\Support\Scaffolding;
 use App\Support\Scaffolding\Field;
 use App\Support\Scaffolding\Generators\ControllerGenerator;
 use App\Support\Scaffolding\Generators\DtoGenerator;
+use App\Support\Scaffolding\Generators\MigrationGenerator;
 use App\Support\Scaffolding\Generators\ModelEntityGenerator;
 use App\Support\Scaffolding\ResourceSchema;
 use App\Support\Scaffolding\ScaffoldingOrchestrator;
@@ -245,6 +246,117 @@ class ScaffoldingRegressionTest extends CIUnitTestCase
         $this->assertStringContainsString('OA\Delete(', $docs);
         $this->assertStringContainsString('public function update()', $docs);
         $this->assertStringContainsString('public function delete()', $docs);
+    }
+
+    /**
+     * Regression: `unique` modifier should produce both an `addUniqueKey` in the
+     * migration and an `is_unique[table.col]` validation rule in the model and
+     * Create DTO, so uniqueness is enforced at every layer.
+     */
+    public function testUniqueModifierEmitsIndexAndValidationRule(): void
+    {
+        $schema = new ResourceSchema(
+            resource: 'UniqueProbe',
+            domain: 'Probe',
+            route: 'unique-probes',
+            fields: [
+                new Field(name: 'email', type: 'email', required: true, unique: true),
+            ]
+        );
+
+        $migration = current((new MigrationGenerator())->generate($schema));
+        $this->assertStringContainsString("addUniqueKey('email')", $migration);
+
+        $modelFiles = (new ModelEntityGenerator())->generate($schema);
+        $model = $modelFiles[APPPATH . 'Models/UniqueProbeModel.php'];
+        $this->assertStringContainsString('is_unique[unique_probes.email]', $model);
+
+        $dtoFiles = (new DtoGenerator())->generate($schema);
+        $create = $dtoFiles[APPPATH . 'DTO/Request/Probe/UniqueProbeCreateRequestDTO.php'];
+        $this->assertStringContainsString('is_unique[unique_probes.email]', $create);
+    }
+
+    /**
+     * Regression: searchable and filterable fields must receive a non-unique index
+     * so `?search=…` (LIKE) and `?filter[col]=…` (exact) don't degrade on large tables.
+     */
+    public function testSearchableAndFilterableFieldsGetImplicitIndexes(): void
+    {
+        $schema = new ResourceSchema(
+            resource: 'IndexProbe',
+            domain: 'Probe',
+            route: 'index-probes',
+            fields: [
+                new Field(name: 'title', type: 'string', required: true, searchable: true),
+                new Field(name: 'status', type: 'string', required: true, filterable: true),
+                new Field(name: 'plain', type: 'string', required: true),
+            ]
+        );
+
+        $migration = current((new MigrationGenerator())->generate($schema));
+
+        $this->assertStringContainsString("addKey('title')", $migration);
+        $this->assertStringContainsString("addKey('status')", $migration);
+        $this->assertStringNotContainsString("addKey('plain')", $migration);
+    }
+
+    /**
+     * Regression: Create and Update request DTOs must annotate every property with
+     * `#[OA\Property(...)]` so the generated OpenAPI schema carries descriptions,
+     * types, formats, and nullable flags — matching the gold-standard UserCreateRequestDTO.
+     */
+    public function testRequestDtosAnnotatePropertiesWithOpenApiAttributes(): void
+    {
+        $schema = new ResourceSchema(
+            resource: 'OaAttrProbe',
+            domain: 'Probe',
+            route: 'oa-attr-probes',
+            fields: [
+                new Field(name: 'title', type: 'string', required: true),
+                new Field(name: 'published_at', type: 'datetime', required: false, nullable: true),
+            ]
+        );
+
+        $dtoFiles = (new DtoGenerator())->generate($schema);
+        $create = $dtoFiles[APPPATH . 'DTO/Request/Probe/OaAttrProbeCreateRequestDTO.php'];
+        $update = $dtoFiles[APPPATH . 'DTO/Request/Probe/OaAttrProbeUpdateRequestDTO.php'];
+
+        // Create DTO: title is required (not nullable), published_at is nullable.
+        $this->assertStringContainsString("#[OA\\Property(description: 'title', type: 'string')]", $create);
+        $this->assertStringContainsString("format: 'date-time'", $create);
+        $this->assertStringContainsString('nullable: true', $create);
+
+        // Update DTO: every property becomes nullable.
+        $this->assertStringContainsString("#[OA\\Property(description: 'title', type: 'string', nullable: true)]", $update);
+    }
+
+    /**
+     * Regression: nullable Create-DTO fields must map to `null` when absent,
+     * not be coerced to `0` / `''` / `false` (which would hide the distinction
+     * between "value omitted" and "value explicitly zero").
+     */
+    public function testNullableCreateDtoFieldsMapToNull(): void
+    {
+        $schema = new ResourceSchema(
+            resource: 'NullableProbe',
+            domain: 'Probe',
+            route: 'nullable-probes',
+            fields: [
+                new Field(name: 'parent_id', type: 'fk', required: false, nullable: true, fkTable: 'nullable_probes'),
+            ]
+        );
+
+        $dtoFiles = (new DtoGenerator())->generate($schema);
+        $create = $dtoFiles[APPPATH . 'DTO/Request/Probe/NullableProbeCreateRequestDTO.php'];
+
+        $this->assertStringContainsString(
+            "isset(\$data['parent_id']) ? (int) \$data['parent_id'] : null",
+            $create
+        );
+        $this->assertStringNotContainsString(
+            "(int) (\$data['parent_id'] ?? 0)",
+            $create
+        );
     }
 
     private function cleanupGeneratedFiles(): void

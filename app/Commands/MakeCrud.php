@@ -6,11 +6,13 @@ namespace App\Commands;
 
 use App\Support\Scaffolding\ConfigWireman;
 use App\Support\Scaffolding\Field;
+use App\Support\Scaffolding\FieldNameValidator;
 use App\Support\Scaffolding\ResourceSchema;
 use App\Support\Scaffolding\ScaffoldConflictException;
 use App\Support\Scaffolding\ScaffoldingOrchestrator;
 use CodeIgniter\CLI\BaseCommand;
 use CodeIgniter\CLI\CLI;
+use InvalidArgumentException;
 
 /**
  * MakeCrud Command (Evolution)
@@ -58,6 +60,10 @@ class MakeCrud extends BaseCommand
                 return EXIT_ERROR;
             }
 
+            // 1b. Reject field names that would silently break generation
+            // (reserved words, duplicates, collisions with engine-managed columns).
+            (new FieldNameValidator())->validate($fields);
+
             // 2. Build Schema
             $schema = new ResourceSchema(
                 resource: $resource,
@@ -95,7 +101,7 @@ class MakeCrud extends BaseCommand
             CLI::write("3. Start exploring: " . base_url("api/v1/{$route}"), 'white');
             CLI::newLine();
 
-        } catch (ScaffoldConflictException $e) {
+        } catch (ScaffoldConflictException | InvalidArgumentException $e) {
             CLI::error($e->getMessage());
             return EXIT_ERROR;
         } catch (\Exception $e) {
@@ -137,7 +143,9 @@ class MakeCrud extends BaseCommand
                 nullable: in_array('nullable', $options, true),
                 searchable: in_array('searchable', $options, true),
                 filterable: in_array('filterable', $options, true),
-                fkTable: $this->getFkTable($options)
+                fkTable: $this->getFkTable($options),
+                unique: in_array('unique', $options, true),
+                index: in_array('index', $options, true)
             );
         }
 

@@ -38,6 +38,10 @@ class ModelEntityGenerator
             $casts .= "        '{$field->name}' => '{$castType}',\n";
         }
 
+        $dates = $schema->softDelete
+            ? "['created_at', 'updated_at', 'deleted_at']"
+            : "['created_at', 'updated_at']";
+
         return <<<PHP
 <?php
 
@@ -52,14 +56,14 @@ class {$schema->resource}Entity extends Entity
     protected \$casts = [
 {$casts}    ];
 
-    protected \$dates = ['created_at', 'updated_at', 'deleted_at'];
+    protected \$dates = {$dates};
 }
 PHP;
     }
 
     private function modelTemplate(ResourceSchema $schema): string
     {
-        $table = $schema->getResourcePluralLower();
+        $table = $schema->getResourcePluralSnakeCase();
         $softDelete = $schema->softDelete ? 'true' : 'false';
 
         $allowedFields = [];

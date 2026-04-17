@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Support\Scaffolding\Generators;
 
+use App\Support\Scaffolding\Field;
 use App\Support\Scaffolding\ResourceSchema;
 use App\Support\Scaffolding\TypeMapper;
 
@@ -13,6 +14,34 @@ use App\Support\Scaffolding\TypeMapper;
  */
 class DtoGenerator
 {
+    /**
+     * Build the right-hand expression that maps a raw array value to a strongly-typed property.
+     * Handles int/float/bool/string consistently so the readonly property type matches the runtime value.
+     */
+    private function buildMapExpression(Field $field, bool $nullable = false): string
+    {
+        $access = "\$data['{$field->name}']";
+        $phpType = TypeMapper::get($field->type)['php'];
+
+        if ($nullable) {
+            return match ($phpType) {
+                'int'    => "isset({$access}) ? (int) {$access} : null",
+                'float'  => "isset({$access}) ? (float) {$access} : null",
+                'bool'   => "isset({$access}) ? (bool) {$access} : null",
+                'array'  => "isset({$access}) ? (array) {$access} : null",
+                default  => "{$access} ?? null",
+            };
+        }
+
+        return match ($phpType) {
+            'int'    => "(int) ({$access} ?? 0)",
+            'float'  => "(float) ({$access} ?? 0)",
+            'bool'   => "(bool) ({$access} ?? false)",
+            'array'  => "(array) ({$access} ?? [])",
+            default  => "(string) ({$access} ?? '')",
+        };
+    }
+
     public function generate(ResourceSchema $schema): array
     {
         $domain = $schema->domain;
@@ -87,8 +116,7 @@ PHP;
             $properties .= "    public {$phpType} \${$field->name};\n";
             $rules .= "            '{$field->name}' => '{$validation}',\n";
 
-            $cast = ($field->type === 'int') ? "(int) " : "";
-            $mappings .= "        \$this->{$field->name} = {$cast}(\$data['{$field->name}'] ?? '');\n";
+            $mappings .= "        \$this->{$field->name} = " . $this->buildMapExpression($field) . ";\n";
             $toArray .= "            '{$field->name}' => \$this->{$field->name},\n";
         }
 
@@ -134,12 +162,17 @@ PHP;
 
         foreach ($schema->fields as $field) {
             $phpType = TypeMapper::getPhpType($field->type, true); // Update fields are usually optional
-            $validation = str_replace('required', 'permit_empty', TypeMapper::getValidationRules($field));
+            // Use word boundaries so compound rules like `required_if`, `required_with` are preserved.
+            $validation = preg_replace(
+                '/\brequired\b(?![_\-a-zA-Z])/',
+                'permit_empty',
+                TypeMapper::getValidationRules($field)
+            ) ?? TypeMapper::getValidationRules($field);
 
             $properties .= "    public {$phpType} \${$field->name};\n";
             $rules .= "            '{$field->name}' => '{$validation}',\n";
 
-            $mappings .= "        \$this->{$field->name} = isset(\$data['{$field->name}']) ? \$data['{$field->name}'] : null;\n";
+            $mappings .= "        \$this->{$field->name} = " . $this->buildMapExpression($field, nullable: true) . ";\n";
             $toArray .= "            '{$field->name}' => \$this->{$field->name},\n";
         }
 
@@ -226,7 +259,9 @@ readonly class {$schema->resource}ResponseDTO implements DataTransferObjectInter
         public int \$id,
 {$params}
         #[OA\Property(property: 'created_at', description: 'Creation timestamp', example: '2026-02-26 12:00:00', nullable: true)]
-        public ?string \$createdAt = null
+        public ?string \$createdAt = null,
+        #[OA\Property(property: 'updated_at', description: 'Last update timestamp', example: '2026-02-26 12:00:00', nullable: true)]
+        public ?string \$updatedAt = null
     ) {}
 
     public function toArray(): array
@@ -234,6 +269,7 @@ readonly class {$schema->resource}ResponseDTO implements DataTransferObjectInter
         return [
             'id' => \$this->id,
 {$toArray}            'created_at' => \$this->createdAt,
+            'updated_at' => \$this->updatedAt,
         ];
     }
 }

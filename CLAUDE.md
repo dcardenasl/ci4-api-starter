@@ -131,6 +131,53 @@ The scaffolding system has been fixed to resolve three architectural issues:
 
 No manual workarounds needed for future CRUDs.
 
+## Scaffolding Rules (Always Follow)
+
+### ALWAYS use `bin/make-crud.sh` — never `php spark make:crud` directly
+
+In non-TTY environments (Claude Code, CI/CD, parallel calls), `php spark make:crud` can enter interactive mode if `--fields` arrives empty due to shell pipe expansion. `bin/make-crud.sh` handles quoting correctly and adds validation steps.
+
+### Full signature
+
+```bash
+bash bin/make-crud.sh <Resource> <Domain> '<Fields>' [SoftDelete=yes] [Route]
+```
+
+Examples:
+
+```bash
+# Default route (auto-pluralized):
+bash bin/make-crud.sh User Users 'name:string:required|searchable,email:string:required|unique' yes
+
+# Custom route (when it differs from the resource name):
+bash bin/make-crud.sh UpaEvent Events 'title:string:required|searchable,year:int:required|filterable' yes upa-events
+
+# Lookup table (no soft delete):
+bash bin/make-crud.sh Permission Users 'name:string:required|searchable' no
+```
+
+### Restart server after scaffolding
+
+Adding a new route file (`app/Config/Routes/v1/{domain}.php`) requires restarting `php spark serve`. Routes are not detected hot.
+
+```bash
+pkill -f 'spark serve'; php spark serve --port 8080 &
+```
+
+## Troubleshooting
+
+### Pre-commit hook fails on generated files (PHP CS Fixer)
+**Cause:** Generated code may have PSR-12 style violations (blank lines in constructors, missing EOF newlines)  
+**Fix:** Use `bin/make-crud.sh` which runs `composer cs-fix` automatically (post-scaffolding improvement). If hook still fails:
+
+```bash
+composer cs-fix           # Auto-fix style violations
+git add -u                # Re-stage modified files
+git commit                # Now passes the hook
+```
+
+**Do NOT use `--no-verify`** except for documented emergencies. The hook exists to catch these issues.
+
 ### Notes
 
 1. `make:crud` generates a migration file automatically. Review it after scaffolding, then run `php spark migrate` to apply it.

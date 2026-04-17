@@ -201,6 +201,9 @@ PHP;
 
         $requiredJson = json_encode($requiredFields);
 
+        // Remove leading newline from $params to avoid blank line after public int $id,
+        $params = ltrim($params, "\n");
+
         return <<<PHP
 <?php
 

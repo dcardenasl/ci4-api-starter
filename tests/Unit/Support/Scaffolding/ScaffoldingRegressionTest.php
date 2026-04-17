@@ -9,6 +9,7 @@ use App\Support\Scaffolding\Generators\ControllerGenerator;
 use App\Support\Scaffolding\Generators\DtoGenerator;
 use App\Support\Scaffolding\Generators\MigrationGenerator;
 use App\Support\Scaffolding\Generators\ModelEntityGenerator;
+use App\Support\Scaffolding\Generators\TestGenerator;
 use App\Support\Scaffolding\ResourceSchema;
 use App\Support\Scaffolding\ScaffoldingOrchestrator;
 use CodeIgniter\Test\CIUnitTestCase;
@@ -328,6 +329,38 @@ class ScaffoldingRegressionTest extends CIUnitTestCase
 
         // Update DTO: every property becomes nullable.
         $this->assertStringContainsString("#[OA\\Property(description: 'title', type: 'string', nullable: true)]", $update);
+    }
+
+    /**
+     * Regression: generated test stubs must not use `markTestIncomplete()`.
+     * Previously every scaffolded module produced failing tests, so `composer
+     * quality` was red from the moment of generation.
+     */
+    public function testGeneratedTestsContainRealAssertions(): void
+    {
+        $schema = new ResourceSchema(
+            resource: 'AssertProbe',
+            domain: 'Probe',
+            route: 'assert-probes',
+            fields: [new Field(name: 'name', type: 'string', required: true)]
+        );
+
+        $files = (new TestGenerator())->generate($schema);
+
+        foreach ($files as $path => $content) {
+            $this->assertStringNotContainsString(
+                'markTestIncomplete',
+                $content,
+                "Generated test {$path} still uses markTestIncomplete()."
+            );
+            // Accept both PHPUnit-style ($this->assertFoo) and fluent
+            // test-result assertions ($result->assertStatus, etc.).
+            $this->assertMatchesRegularExpression(
+                '/\$(this|result)->assert\w+/',
+                $content,
+                "Generated test {$path} contains no assertion."
+            );
+        }
     }
 
     /**

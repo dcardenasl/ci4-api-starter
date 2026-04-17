@@ -28,8 +28,14 @@ class ScaffoldingSmokeTest extends CIUnitTestCase
     public function testOrchestratorGeneratesValidPhpFiles(): void
     {
         $fields = [
-            new Field(name: 'name', type: 'string', required: true, searchable: true, filterable: true),
+            new Field(name: 'name', type: 'string', required: true, searchable: true, filterable: true, unique: true),
+            new Field(name: 'description', type: 'text', required: false, nullable: true),
             new Field(name: 'price', type: 'decimal', required: true, filterable: true),
+            new Field(name: 'stock', type: 'int', required: true),
+            new Field(name: 'is_active', type: 'bool', required: false, filterable: true),
+            new Field(name: 'contact_email', type: 'email', required: false, nullable: true),
+            new Field(name: 'published_at', type: 'datetime', required: false, nullable: true, index: true),
+            new Field(name: 'metadata', type: 'json', required: false, nullable: true),
             new Field(name: 'category_id', type: 'fk', required: true, filterable: true, fkTable: 'categories'),
         ];
 

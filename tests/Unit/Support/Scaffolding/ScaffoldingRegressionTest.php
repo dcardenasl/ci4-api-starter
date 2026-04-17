@@ -12,6 +12,7 @@ use App\Support\Scaffolding\Generators\ModelEntityGenerator;
 use App\Support\Scaffolding\Generators\TestGenerator;
 use App\Support\Scaffolding\ResourceSchema;
 use App\Support\Scaffolding\ScaffoldingOrchestrator;
+use App\Support\Scaffolding\StringHelper;
 use CodeIgniter\Test\CIUnitTestCase;
 
 /**
@@ -329,6 +330,21 @@ class ScaffoldingRegressionTest extends CIUnitTestCase
 
         // Update DTO: every property becomes nullable.
         $this->assertStringContainsString("#[OA\\Property(description: 'title', type: 'string', nullable: true)]", $update);
+    }
+
+    /**
+     * Regression: StringHelper::studly must preserve internal capitals on already-CamelCase
+     * input. Previously `SchoolCategory` became `Schoolcategory`, which cascaded into wrong
+     * class names / filenames / namespaces across every generated file for compound resources.
+     */
+    public function testStudlyPreservesInternalCapitalization(): void
+    {
+        $this->assertSame('SchoolCategory', StringHelper::studly('SchoolCategory'));
+        $this->assertSame('Product', StringHelper::studly('product'));
+        $this->assertSame('SchoolCategory', StringHelper::studly('school_category'));
+        $this->assertSame('SchoolCategory', StringHelper::studly('school-category'));
+        $this->assertSame('SchoolCategory', StringHelper::studly('school category'));
+        $this->assertSame('APIKey', StringHelper::studly('APIKey'));
     }
 
     /**

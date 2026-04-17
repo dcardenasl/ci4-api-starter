@@ -15,8 +15,21 @@ final class StringHelper
 {
     public static function studly(string $value): string
     {
-        $normalized = preg_replace('/[^a-zA-Z0-9]+/', ' ', trim($value)) ?? '';
-        $parts = preg_split('/\s+/', $normalized) ?: [];
+        $value = trim($value);
+        if ($value === '') {
+            return $value;
+        }
+
+        // Already a single alphanumeric identifier (e.g. `SchoolCategory`, `product`, `APIKey`)?
+        // Preserve its internal casing — just ensure the first letter is uppercase.
+        // Previously this branch was missing, so `SchoolCategory` became `Schoolcategory`,
+        // breaking every compound-name resource at the class/filename level.
+        if (preg_match('/^[a-zA-Z0-9]+$/', $value) === 1) {
+            return ucfirst($value);
+        }
+
+        // Split on non-alphanumeric separators (_, -, space) and capitalize each part.
+        $parts = preg_split('/[^a-zA-Z0-9]+/', $value) ?: [];
         $parts = array_map(static fn (string $part): string => ucfirst(strtolower($part)), $parts);
 
         return implode('', $parts);

@@ -7,6 +7,7 @@ namespace App\Commands;
 use App\Support\Scaffolding\ConfigWireman;
 use App\Support\Scaffolding\Field;
 use App\Support\Scaffolding\FieldNameValidator;
+use App\Support\Scaffolding\FieldStringParser;
 use App\Support\Scaffolding\ResourceSchema;
 use App\Support\Scaffolding\ScaffoldConflictException;
 use App\Support\Scaffolding\ScaffoldingOrchestrator;
@@ -124,33 +125,7 @@ class MakeCrud extends BaseCommand
 
     private function parseFieldsString(string $fieldsArg): array
     {
-        $fields = [];
-        $parts = explode(',', $fieldsArg);
-
-        foreach ($parts as $part) {
-            $segments = explode(':', trim($part));
-            if (count($segments) < 2) {
-                continue;
-            }
-
-            $name = $segments[0];
-            $type = $segments[1];
-            $options = explode('|', $segments[2] ?? '');
-
-            $fields[] = new Field(
-                name: $name,
-                type: $type,
-                required: in_array('required', $options, true),
-                nullable: in_array('nullable', $options, true),
-                searchable: in_array('searchable', $options, true),
-                filterable: in_array('filterable', $options, true),
-                fkTable: $this->getFkTable($options),
-                unique: in_array('unique', $options, true),
-                index: in_array('index', $options, true)
-            );
-        }
-
-        return $fields;
+        return (new FieldStringParser())->parse($fieldsArg);
     }
 
     private function gatherFieldsInteractively(): array
@@ -188,16 +163,6 @@ class MakeCrud extends BaseCommand
         }
 
         return $fields;
-    }
-
-    private function getFkTable(array $options): ?string
-    {
-        foreach ($options as $option) {
-            if (str_starts_with($option, 'fk:')) {
-                return substr($option, 3);
-            }
-        }
-        return null;
     }
 
     private function yesNoOption(string $name, bool $default): bool

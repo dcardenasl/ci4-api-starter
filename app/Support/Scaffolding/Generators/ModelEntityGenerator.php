@@ -113,8 +113,13 @@ class {$schema->resource}Model extends BaseAuditableModel
     
     protected \$allowedFields = [{$allowedFieldsStr}];
 
+    /** @var array<int, string> */
     protected array \$searchableFields = [{$searchableFieldsStr}];
+
+    /** @var array<int, string> */
     protected array \$filterableFields = [{$filterableFieldsStr}];
+
+    /** @var array<int, string> */
     protected array \$sortableFields = ['id', 'created_at'];
 
     protected \$validationRules = [

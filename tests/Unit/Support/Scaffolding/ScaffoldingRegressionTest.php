@@ -333,6 +333,20 @@ class ScaffoldingRegressionTest extends CIUnitTestCase
     }
 
     /**
+     * Regression: a json field that is not required must not produce the rule string
+     * `permit_empty|permit_empty`. The TypeMapper's mapping already contributes
+     * `permit_empty` for the `json` type, so the leading required/permit-empty token
+     * must dedup rather than concatenate blindly.
+     */
+    public function testValidationRulesDoNotDuplicatePermitEmpty(): void
+    {
+        $field = new Field(name: 'metadata', type: 'json', required: false, nullable: true);
+        $rules = \App\Support\Scaffolding\TypeMapper::getValidationRules($field);
+
+        $this->assertSame('permit_empty', $rules);
+    }
+
+    /**
      * Regression: StringHelper::studly must preserve internal capitals on already-CamelCase
      * input. Previously `SchoolCategory` became `Schoolcategory`, which cascaded into wrong
      * class names / filenames / namespaces across every generated file for compound resources.

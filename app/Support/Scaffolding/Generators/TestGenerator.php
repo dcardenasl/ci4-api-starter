@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Support\Scaffolding\Generators;
 
 use App\Support\Scaffolding\ResourceSchema;
+use App\Support\Scaffolding\StringHelper;
 
 /**
  * TestGenerator
@@ -105,7 +106,9 @@ PHP;
     private function featureTestTemplate(ResourceSchema $schema): string
     {
         $resource = $schema->resource;
-        $route = $schema->route;
+        // Routes are nested under the kebab-cased domain: /api/v1/{domain-kebab}/{route}.
+        // See RouteGenerator::baseTemplate().
+        $fullPath = '/api/v1/' . StringHelper::toKebab($schema->domain) . '/' . $schema->route;
 
         return <<<PHP
 <?php
@@ -131,7 +134,7 @@ final class {$resource}ControllerTest extends ApiTestCase
     public function testIndexRequiresAuthentication(): void
     {
         \$this->clearTestRequestHeaders();
-        \$result = \$this->get('/api/v1/{$route}');
+        \$result = \$this->get('{$fullPath}');
 
         \$result->assertStatus(401);
     }

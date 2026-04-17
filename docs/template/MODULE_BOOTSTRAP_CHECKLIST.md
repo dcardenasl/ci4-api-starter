@@ -4,10 +4,11 @@ Use this checklist when creating a new module from this template.
 
 ## 1. Scaffold
 
-1. Run `php spark make:crud {Resource} --domain {Domain} --route {slug}`.
+1. Run `bash bin/make-crud.sh {Resource} {Domain} '{fields}' yes [{slug}]`. For interactive prompts use `php spark make:crud {Resource} --domain {Domain}`.
 2. Verify generated files exist in `Controllers`, `DTO`, `Interfaces`, `Services`, `Documentation`, `Language`, `Database/Migrations`, and `tests`.
 3. Run `php spark module:check {Resource} --domain {Domain}` and fix all reported gaps.
 4. Remember: `module:check` does not validate migration content, only its existence.
+5. Restart the dev server so new route files are discovered: `pkill -f 'spark serve'; php spark serve --port 8080 &`.
 
 ## 2. Persistence
 

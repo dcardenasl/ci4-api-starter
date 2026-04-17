@@ -11,7 +11,7 @@
 
 ## 2) Orden recomendado de implementación
 
-1. **Bootstrap:** `php spark make:crud ...` + `php spark module:check ...`.
+1. **Bootstrap:** `bash bin/make-crud.sh ...` (o `php spark make:crud ...` interactivo) + `php spark module:check ...`.
 2. **Base de Datos:** crear migration(s) (no las genera el scaffold), luego ajustar Entity y Model.
 3. **Contrato (DTOs):** Request DTO (entrada) y Response DTO (salida con OpenAPI attributes).
 4. **Lógica:** Service Interface, Service Implementation (Pure Service) + estrategia de repositorio.

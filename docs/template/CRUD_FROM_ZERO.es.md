@@ -3,10 +3,11 @@
 Guía canónica para crear un recurso CRUD nuevo en este template.
 
 Este flujo es **recomendado por defecto**:
-1. Generar scaffold primero con `php spark make:crud ...`
-2. Personalizar archivos generados
-3. Crear migración y cerrar persistencia real
-4. Cerrar tests/documentación/quality gates
+1. Generar scaffold primero con `bin/make-crud.sh` (o `php spark make:crud` en modo interactivo)
+2. Validar el wiring con `module:check`
+3. Aplicar migración, reiniciar servidor y regenerar OpenAPI
+4. Personalizar solo lo que reglas de negocio exijan
+5. Cerrar tests y quality gates
 
 La creación manual de CRUD sigue siendo válida cuando se requiere estructura custom.
 
@@ -19,21 +20,39 @@ La creación manual de CRUD sigue siendo válida cuando se requiere estructura c
 5. Definir esquema mínimo de tabla y requerimientos de auditoría
 ## 2. Scaffold Primero
 
-El comando `make:crud` maneja la creación de todas las capas (Migración, Entidad, Modelo, DTOs, Servicio, Controlador).
+El motor `make:crud` genera todas las capas en un solo paso (Migración, Entidad, Modelo, DTOs Request/Response, Servicio, Interface, Controller, clase OpenAPI de endpoints, archivos i18n, esqueletos de tests, wiring de servicios y archivo de rutas).
 
-### Opción A: Modo Interactivo (Recomendado)
-Ejecuta el comando solo con el recurso y el dominio. El sistema te preguntará por los detalles de cada campo.
+### 2.1 Recomendado: `bin/make-crud.sh` (shell-safe)
+
+```bash
+bash bin/make-crud.sh Product Catalog \
+  'name:string:required|searchable,price:decimal:required|filterable,category_id:fk:categories:required' \
+  yes
+```
+
+Firma: `bash bin/make-crud.sh <Resource> <Domain> '<Fields>' [SoftDelete=yes] [Route]`
+
+Por qué preferir el wrapper:
+- Las comillas simples evitan que el shell consuma los `|` dentro de `--fields`
+- Ejecuta `composer cs-fix` automáticamente después de generar (mantiene contentos los pre-commit hooks)
+- Imprime los comandos de seguimiento con los placeholders ya resueltos
+- Seguro en entornos no-TTY (pipelines de CI, Claude Code, scripts de automatización)
+
+### 2.2 Alternativa: `php spark make:crud` (interactivo)
+
+Cuando quieras que el motor te pregunte por cada campo:
 
 ```bash
 php spark make:crud Product --domain Catalog
 ```
 
-### Opción B: Modo CLI (Rápido)
-Define tu esquema en una sola cadena usando la opción `--fields`.
+La variante `--fields` también funciona, pero debe citarse con comillas simples:
 
 ```bash
-php spark make:crud Product --domain Catalog --fields="name:string:required|searchable,price:decimal:required|filterable,category_id:fk:categories:required"
+php spark make:crud Product --domain Catalog --fields='name:string:required|searchable,price:decimal:required|filterable'
 ```
+
+> En entornos no interactivos, si olvidas citar los pipes el comando pierde silenciosamente todos los modificadores y espera input interactivo que nunca llega. Esta es la razón #1 por la que `bin/make-crud.sh` es preferido.
 
 **Guía de Sintaxis de Campos:**
 - Formato: `nombre:tipo:opciones`

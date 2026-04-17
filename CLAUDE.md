@@ -25,11 +25,12 @@ composer quality                # Run all quality checks (PHPStan, PHPUnit, etc.
 composer cs-fix                 # Fix code style (PSR-12)
 ```
 
-### Database
+### Database & Scaffolding
 ```bash
-php spark migrate               # Run migrations
-php spark make:crud {Name} --domain {Domain} --route {endpoint}  # Scaffold new CRUD (Recommended default)
-php spark module:check {Name} --domain {Domain}                  # Validate scaffold output
+php spark migrate                                                        # Run migrations
+bash bin/make-crud.sh {Name} {Domain} '{fields}' yes [slug]              # Scaffold new CRUD (recommended)
+php spark make:crud {Name} --domain {Domain}                             # Alternative: interactive scaffold
+php spark module:check {Name} --domain {Domain}                          # Validate scaffold output
 ```
 
 ### OpenAPI Documentation
@@ -103,12 +104,12 @@ For architecture rules and onboarding, prefer:
 
 ### Quick Start
 ```bash
-php spark make:crud ResourceName --domain DomainName \
-    --fields 'field1:type:required|searchable,field2:type' \
-    --soft-delete yes
+bash bin/make-crud.sh ResourceName DomainName \
+    'field1:type:required|searchable,field2:type' \
+    yes
 ```
 
-**IMPORTANT:** Use SINGLE QUOTES around `--fields` if it contains pipes (`|`).
+**IMPORTANT:** Always wrap the fields argument in SINGLE QUOTES — pipes (`|`) are shell-special and will be consumed by the shell otherwise. `bin/make-crud.sh` requires it; direct `php spark make:crud --fields='…'` also requires it.
 
 ### Scaffolding System Fixes (Permanent Solutions)
 

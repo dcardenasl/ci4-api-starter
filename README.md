@@ -48,16 +48,25 @@ php spark users:bootstrap-superadmin --email superadmin@example.com --password '
 ## Development Workflow
 
 ### Generate a new Module
-To create a complete CRUD resource with validation and documentation:
+To create a complete CRUD resource with validation and documentation, use the `bin/make-crud.sh` wrapper — it handles shell-safe argument passing (pipes in `--fields`), runs `composer cs-fix` automatically, and prints the exact follow-up commands:
 
 ```bash
-php spark make:crud Product --domain Catalog --fields="name:string:required|searchable,price:decimal:required|filterable,category_id:fk:categories:required"
+bash bin/make-crud.sh Product Catalog \
+  'name:string:required|searchable,price:decimal:required|filterable,category_id:fk:categories:required' \
+  yes
 ```
 
+Signature: `bash bin/make-crud.sh <Resource> <Domain> '<Fields>' [SoftDelete=yes] [Route]`
+
+> For interactive scaffolding (prompts per field), run `php spark make:crud Product --domain Catalog` directly. The wrapper is preferred for non-TTY environments (CI, Claude Code, scripts) because shell expansion can eat pipe characters in `--fields`.
+
 **Next Steps:**
-1. Run `php spark migrate` to apply the new table.
-2. Run `php spark swagger:generate` to update the API documentation.
-3. Start the server: `php spark serve`.
+1. `php spark module:check Product --domain Catalog` to validate wiring.
+2. `php spark migrate` to apply the generated table.
+3. Restart the dev server so new route files get detected: `pkill -f 'spark serve'; php spark serve &`.
+4. `php spark swagger:generate` to update the OpenAPI spec.
+
+Full playbook: [`docs/template/CRUD_FROM_ZERO.md`](docs/template/CRUD_FROM_ZERO.md).
 
 ## Quality Enforcement
 This project enforces high standards. Every commit runs:

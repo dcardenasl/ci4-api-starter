@@ -6,22 +6,24 @@ This "Cheat Sheet" is designed for rapid onboarding and high-speed development.
 
 | Command | Purpose | When to use? |
 |---------|---------|--------------|
-| `php spark make:crud {Name}` | **Scaffold Module** | Starting a new CRUD resource. |
-| `php spark migrate` | **Apply DB changes** | After generating a new CRUD. |
+| `bash bin/make-crud.sh <Res> <Dom> '<fields>'` | **Scaffold Module (recommended)** | Starting a new CRUD resource — shell-safe, non-TTY friendly. |
+| `php spark make:crud {Name}` | **Scaffold Module (interactive)** | When you want to be prompted for each field. |
+| `php spark module:check {Name} --domain {Dom}` | **Validate wiring** | Immediately after scaffolding. |
+| `php spark migrate` | **Apply DB changes** | After scaffolding, review migration then apply. |
+| `pkill -f 'spark serve'; php spark serve &` | **Restart server** | Required after scaffolding — new route files aren't hot-loaded. |
 | `php spark swagger:generate` | **Update OpenAPI** | After adding endpoints or DTOs. |
 | `composer quality` | **Full Health Check** | Before pushing any code. |
 | `composer cs-fix` | **Fix Linting** | To auto-format your code. |
 
-## 🏗️ Scaffolding Syntax (CLI Mode)
+## 🏗️ Scaffolding Syntax
 
-Use the `--fields` option for rapid generation:
-`php spark make:crud Name --domain Domain --fields="col:type:options"`
+Signature: `bash bin/make-crud.sh <Resource> <Domain> '<Fields>' [SoftDelete=yes] [Route]`
 
 **Available Types:** `string`, `text`, `int`, `bool`, `decimal`, `email`, `date`, `datetime`, `fk`, `json`.
 **Common Options:** `required`, `nullable`, `searchable`, `filterable`, `fk:tableName`.
 
 *Example:*
-`php spark make:crud Product --fields="name:string:required|searchable,category_id:fk:categories"`
+`bash bin/make-crud.sh Product Catalog 'name:string:required|searchable,category_id:fk:categories:required' yes`
 
 ## ✅ Quality Standards Checklist
 

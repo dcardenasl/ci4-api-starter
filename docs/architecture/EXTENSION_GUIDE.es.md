@@ -5,17 +5,20 @@
 
 Proceso completo paso a paso:
 
-1. **Scaffold primero** - `php spark make:crud Product --domain Catalog --route products`
+1. **Scaffold primero** - `bash bin/make-crud.sh Product Catalog 'name:string:required|searchable,price:decimal:required' yes products`
 2. **Validar scaffold** - `php spark module:check Product --domain Catalog`
 3. **Ejecutar migración(es)** - `php spark migrate` (generada por scaffold)
-4. **Alinear entity/model** - campos, casts, validación, traits de query
-5. **Cerrar contratos DTO** - Request/Response DTOs + atributos OpenAPI
-6. **Cerrar servicio** - lógica pura + estrategia de repositorio
-7. **Registrar dependencias** - actualizar `app/Config/Services.php` cuando aplique
-8. **Crear/verificar rutas** - actualizar `app/Config/Routes.php`
-9. **Añadir archivos de idioma** - `app/Language/{lang}/Products.php`
-10. **Escribir tests** - pruebas Unit, Integration, Feature
-11. **Ejecutar quality/docs gates** - `composer quality` + `php spark swagger:generate`
+4. **Reiniciar servidor** - `pkill -f 'spark serve'; php spark serve --port 8080 &` (para que se carguen las rutas nuevas)
+5. **Alinear entity/model** - campos, casts, validación, traits de query
+6. **Cerrar contratos DTO** - Request/Response DTOs + atributos OpenAPI
+7. **Cerrar servicio** - lógica pura + estrategia de repositorio
+8. **Registrar dependencias** - actualizar `app/Config/Services.php` cuando aplique
+9. **Crear/verificar rutas** - actualizar `app/Config/Routes.php`
+10. **Añadir archivos de idioma** - `app/Language/{lang}/Products.php`
+11. **Escribir tests** - pruebas Unit, Integration, Feature
+12. **Ejecutar quality/docs gates** - `composer quality` + `php spark swagger:generate`
+
+> Para entornos interactivos puedes usar `php spark make:crud Product --domain Catalog` y el motor te consultará cada campo. En entornos no-TTY el wrapper es obligatorio — el shell puede consumir los pipes en `--fields` y el motor queda esperando entrada interactiva.
 
 ## Inicio Rápido
 

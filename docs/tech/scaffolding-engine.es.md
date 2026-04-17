@@ -34,27 +34,37 @@ Utilizamos un **TypeMapper** unificado para asegurar la consistencia. Por ejempl
 
 ## 🛠️ Cómo Usar (Guía de Uso)
 
-El comando `make:crud` es el punto de entrada principal para construir nuevas funcionalidades. Puede usarse en dos modos:
+Dos puntos de entrada — elige el que encaje con tu entorno:
 
-### 1. Modo Interactivo (Guiado)
-Recomendado para la mayoría de los desarrolladores, ya que asegura que no se omitan pasos ni opciones de campos.
+### 1. `bin/make-crud.sh` (recomendado, shell-safe)
+
+Default preferido. Envuelve `php spark make:crud`, cita los pipes correctamente, ejecuta `composer cs-fix` automáticamente e imprime los comandos de seguimiento exactos.
+
+```bash
+bash bin/make-crud.sh Producto Catalogo \
+  'nombre:string:required|searchable,precio:decimal:required|filterable,categoria_id:fk:categorias:required' \
+  yes
+```
+
+Firma: `bash bin/make-crud.sh <Resource> <Domain> '<Fields>' [SoftDelete=yes] [Route]`
+
+Úsalo en: pipelines de CI, Claude Code / asistentes IA, scripts de shell y cualquier contexto no-TTY.
+
+### 2. `php spark make:crud` (interactivo)
+
+Cuando quieras que el motor te consulte cada campo y sus modificadores:
 
 ```bash
 php spark make:crud Cliente --domain Ventas
 ```
 
-El CLI te guiará a través de:
-1.  **Nombre del Campo**: (ej: `nombre`, `precio`, `estado`)
-2.  **Tipo de Campo**: Elegir de una lista (string, int, fk, etc.)
-3.  **Requerimientos**: ¿Es obligatorio? ¿Buscable? ¿Filtrable?
-4.  **Claves Foráneas**: Si es tipo `fk`, te preguntará el nombre de la tabla destino.
-
-### 2. Modo CLI (Directo)
-Ideal para automatización o cuando ya tienes tu esquema definido.
+O la variante `--fields` explícita (con comillas simples para que el shell no consuma los pipes):
 
 ```bash
-php spark make:crud Producto --domain Catalogo --fields="nombre:string:required|searchable,precio:decimal:required|filterable,categoria_id:fk:categorias:required"
+php spark make:crud Producto --domain Catalogo --fields='nombre:string:required|searchable,precio:decimal:required|filterable,categoria_id:fk:categorias:required'
 ```
+
+> ⚠️ En entornos no-TTY `--fields` puede perder silenciosamente los modificadores separados por pipe y el motor cae a modo interactivo — que luego cuelga para siempre esperando input. Esta es exactamente la razón por la que existe `bin/make-crud.sh`.
 
 ## 🧬 Sintaxis Detallada de Campos (`--fields`)
 

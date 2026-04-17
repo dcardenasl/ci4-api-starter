@@ -10,7 +10,7 @@ Instead of a single "template" command, our engine uses specialized generators c
 2.  **MigrationGenerator**: Produces CI4 migrations with correct DB types, constraints, and Foreign Keys.
 3.  **ModelEntityGenerator**: Sets up the Entity (`$casts`) and Model (`$allowedFields`, `$searchableFields`, `$filterableFields`).
 4.  **ServiceGenerator**: Generates the Service Interface and the Business Logic layer.
-5.  **ControllerGenerator**: Orchestrates everything with the `HasCrudActions` trait and OpenAPI endpoint documentation.
+5.  **ControllerGenerator**: Emits a thin controller (each CRUD action explicit, delegating to `handleRequest()`) plus a co-located OpenAPI endpoint class in `app/Documentation/{Domain}/`.
 
 ## 🧠 Smart Wiring (ConfigWireman)
 
@@ -34,27 +34,37 @@ We use a unified **TypeMapper** to ensure consistency. For example, a `decimal` 
 
 ## 🛠️ How to Use (Usage Guide)
 
-The `make:crud` command is the primary entry point for building new features. It can be used in two modes:
+Two entry points — pick the one that matches your environment:
 
-### 1. Interactive Mode (Guided)
-Recommended for most developers as it ensures no steps or field options are missed.
+### 1. `bin/make-crud.sh` (recommended, shell-safe)
+
+Preferred default. Wraps `php spark make:crud`, quotes pipes correctly, auto-runs `composer cs-fix`, and prints the exact follow-up commands.
+
+```bash
+bash bin/make-crud.sh Product Catalog \
+  'name:string:required|searchable,price:decimal:required|filterable,category_id:fk:categories:required' \
+  yes
+```
+
+Signature: `bash bin/make-crud.sh <Resource> <Domain> '<Fields>' [SoftDelete=yes] [Route]`
+
+Use this in: CI pipelines, Claude Code / AI assistants, shell scripts, and any non-TTY context.
+
+### 2. `php spark make:crud` (interactive)
+
+When you want the engine to prompt you for each field and its modifiers:
 
 ```bash
 php spark make:crud Client --domain Sales
 ```
 
-The CLI will guide you through:
-1.  **Field Name**: (e.g., `title`, `price`, `status`)
-2.  **Field Type**: Choose from a list (string, int, fk, etc.)
-3.  **Requirements**: Is it required? Searchable? Filterable?
-4.  **Foreign Keys**: If it's a `fk` type, it will ask for the target table name.
-
-### 2. CLI Mode (Direct)
-Best for automation or when you have your schema already defined.
+Or the explicit `--fields` variant (quote carefully with single quotes so the shell doesn't eat the pipes):
 
 ```bash
-php spark make:crud Product --domain Catalog --fields="name:string:required|searchable,price:decimal:required|filterable,category_id:fk:categories:required"
+php spark make:crud Product --domain Catalog --fields='name:string:required|searchable,price:decimal:required|filterable,category_id:fk:categories:required'
 ```
+
+> ⚠️ In non-TTY environments `--fields` can silently lose pipe-separated modifiers, and the engine falls back to interactive mode — which then hangs forever waiting for input. That is the exact reason `bin/make-crud.sh` exists.
 
 ## 🧬 Detailed Field Syntax (`--fields`)
 

@@ -3,43 +3,94 @@
 Canonical guide for creating a new CRUD resource in this template.
 
 This flow is **recommended by default**:
-1. Scaffold first with `php spark make:crud ...`
-2. Customize generated files
-3. Add migration and persistence details
-4. Close tests/docs/quality gates
+1. Scaffold first with `bin/make-crud.sh` (or `php spark make:crud` for interactive)
+2. Validate wiring with `module:check`
+3. Apply migration, restart server, regenerate OpenAPI
+4. Customize only what business rules require
+5. Close tests and quality gates
 
 Manual CRUD creation is still valid when custom structure is required.
 
 ## 1. Pre-Checklist
 
-1. Define resource name (singular): `Product`
-2. Define domain folder: `Catalog`
-3. Define route slug (plural kebab): `products`
+1. Define resource name (singular, StudlyCase): `Product`
+2. Define domain folder (StudlyCase): `Catalog`
+3. Define route slug (plural kebab, optional): `products`
 4. Define access model (public read, admin write, etc.)
 5. Define minimum table schema and audit requirements
+6. Decide soft-delete vs. hard-delete (see §2.3)
 
 ## 2. Scaffold First
 
-The `make:crud` command handles the creation of all layers (Migration, Entity, Model, DTOs, Service, Controller).
+The `make:crud` engine generates all layers in one pass (Migration, Entity, Model, Request/Response DTOs, Service, Interface, Controller, OpenAPI doc class, i18n files, test skeletons, service wiring, and the route file).
 
-### Option A: Interactive Mode (Recommended)
-Run the command with just the resource and domain. The system will prompt you for each field's details.
+### 2.1 Recommended: `bin/make-crud.sh` (shell-safe)
+
+```bash
+bash bin/make-crud.sh Product Catalog \
+  'name:string:required|searchable,price:decimal:required|filterable,category_id:fk:categories:required' \
+  yes
+```
+
+Signature: `bash bin/make-crud.sh <Resource> <Domain> '<Fields>' [SoftDelete=yes] [Route]`
+
+Why prefer the wrapper:
+- Single-quote handling prevents shells from eating the `|` inside `--fields`
+- Runs `composer cs-fix` automatically post-generation (keeps pre-commit hooks happy)
+- Prints the exact follow-up commands with placeholders resolved
+- Safe in non-TTY environments (CI pipelines, Claude Code, automation scripts)
+
+### 2.2 Alternative: `php spark make:crud` (interactive)
+
+When you want the engine to prompt you for each field interactively:
 
 ```bash
 php spark make:crud Product --domain Catalog
 ```
 
-### Option B: CLI Mode (Fast)
-Define your schema in a single string using the `--fields` option.
+The `--fields` variant works too, but must be quoted carefully:
 
 ```bash
-php spark make:crud Product --domain Catalog --fields="name:string:required|searchable,price:decimal:required|filterable,category_id:fk:categories:required"
+php spark make:crud Product --domain Catalog --fields='name:string:required|searchable,price:decimal:required|filterable'
 ```
 
-**Field Syntax Guide:**
-- Format: `name:type:options`
-- Types: `string`, `text`, `int`, `bool`, `decimal`, `email`, `date`, `datetime`, `fk`, `json`.
-- Options (pipe separated): `required`, `nullable`, `searchable`, `filterable`, `fk:table_name`.
+> If you run `make:crud` in a non-interactive environment and forget to quote the pipes, the command silently drops all field flags and waits for interactive input — which never arrives. This is the #1 reason `bin/make-crud.sh` is preferred.
+
+### 2.3 The `SoftDelete` flag
+
+- **`yes` (default)** — Adds a `deleted_at TIMESTAMP NULL` column, sets `useSoftDeletes = true` in the Model, and includes `deleted_at` in the Entity `$dates`. Use for business entities (Users, Orders, Products) where you need an audit trail or restore capability.
+- **`no`** — No `deleted_at` column; deletes are physical. Use for lookup tables (Permissions, Roles, Statuses) and append-only tables (AuditLog).
+
+### 2.4 Field Syntax
+
+Format: `name:type:modifier1|modifier2|modifier3`
+
+Multiple fields separated by commas. Always wrap the whole string in **single quotes** when using pipes.
+
+**Supported Types:**
+
+| Type | Database | PHP | Example |
+|------|----------|-----|---------|
+| `string` | `VARCHAR(255)` | `string` | `name:string:required` |
+| `text` | `TEXT` | `string` | `description:text:nullable` |
+| `int` | `INT UNSIGNED` | `int` | `stock:int:required` |
+| `decimal` | `DECIMAL(10,2)` | `float` | `price:decimal:required` |
+| `bool` | `TINYINT` | `bool` | `is_active:bool` |
+| `email` | `VARCHAR(255)` | `string` | `email:email:required` |
+| `date` | `DATE` | `string` | `birth_date:date:nullable` |
+| `datetime` | `DATETIME` | `string` | `published_at:datetime` |
+| `json` | `JSON` | `array` | `metadata:json:nullable` |
+| `fk:table` | `INT + FK` | `int` | `category_id:fk:categories:required` |
+
+**Supported Modifiers:**
+
+| Modifier | Effect |
+|----------|--------|
+| `required` | `NOT NULL` in DB + `required` validation rule |
+| `nullable` | `NULL` allowed in DB + `permit_empty` validation rule |
+| `searchable` | Field is included in the `?search=` query (LIKE) |
+| `filterable` | Field is included in the `?filter[...]=` query (exact match) |
+| `fk:table` | Foreign key to `table.id` + `is_not_unique[table.id]` validation |
 
 What the scaffold generates:
 1. Database migration files

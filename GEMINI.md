@@ -13,7 +13,9 @@ A production-ready REST API starter template with an advanced **Automated Scaffo
 ## Essential Commands
 
 ### Development & Scaffolding
-- `php spark make:crud {Name} --domain {Domain} --fields="{fields}"`: Generate a 100% functional CRUD module.
+- `bash bin/make-crud.sh {Name} {Domain} '{fields}' yes [slug]`: Scaffold a 100% functional CRUD module (recommended — shell-safe).
+- `php spark make:crud {Name} --domain {Domain}`: Interactive alternative for TTY sessions.
+- `php spark module:check {Name} --domain {Domain}`: Validate generated wiring.
 - `php spark swagger:generate`: Generate `public/swagger.json` from DTO schemas.
 - `php spark migrate`: Apply database changes.
 
@@ -24,7 +26,7 @@ A production-ready REST API starter template with an advanced **Automated Scaffo
 ## Development Workflows
 
 ### 1. Automated Scaffolding (The Standard)
-**All new resources must be generated via `make:crud` to avoid human error.**
+**All new resources must be generated via the scaffolding engine (`bin/make-crud.sh` / `make:crud`) to avoid human error.**
 - **SSOT:** The generator synchronizes Migrations, DTOs, Entities, Models, and OpenAPI documentation from a single schema.
 - **Smart Wiring:** The engine automatically registers the new domain and services in `Config/Services.php` and its traits.
 - **Verification:** Every generation is backed by a Scaffolding Smoke Test to ensure syntactic correctness.

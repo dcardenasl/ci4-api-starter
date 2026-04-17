@@ -52,8 +52,18 @@ readonly class ResourceSchema
         return $this->toKebab($this->getResourcePlural());
     }
 
+    public function getResourcePluralSnakeCase(): string
+    {
+        return $this->toSnakeCase($this->getResourcePlural());
+    }
+
     public function toKebab(string $value): string
     {
         return strtolower((string) preg_replace('/(?<!^)[A-Z]/', '-$0', $value));
+    }
+
+    public function toSnakeCase(string $value): string
+    {
+        return strtolower((string) preg_replace('/(?<!^)[A-Z]/', '_$0', $value));
     }
 }

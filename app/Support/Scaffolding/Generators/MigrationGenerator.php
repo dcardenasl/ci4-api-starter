@@ -27,9 +27,10 @@ class MigrationGenerator
     private function template(ResourceSchema $schema): string
     {
         $resourcePlural = $schema->getResourcePlural();
-        $table = $schema->getResourcePluralLower();
+        $table = $schema->getResourcePluralSnakeCase();
         $fieldsContent = $this->generateFields($schema);
         $foreignKeys = $this->generateForeignKeys($schema);
+        $deletedAtField = $schema->softDelete ? $this->getDeletedAtField() : '';
 
         return <<<PHP
 <?php
@@ -59,11 +60,7 @@ class Create{$resourcePlural}Table extends Migration
                 'type' => 'DATETIME',
                 'null' => true,
             ],
-            'deleted_at' => [
-                'type' => 'DATETIME',
-                'null' => true,
-            ],
-        ]);
+{$deletedAtField}        ]);
 
         \$this->forge->addKey('id', true);
 {$foreignKeys}        \$this->forge->createTable('{$table}');
@@ -119,5 +116,16 @@ PHP;
             }
         }
         return $output;
+    }
+
+    private function getDeletedAtField(): string
+    {
+        return <<<'PHP'
+            'deleted_at' => [
+                'type' => 'DATETIME',
+                'null' => true,
+            ],
+
+PHP;
     }
 }

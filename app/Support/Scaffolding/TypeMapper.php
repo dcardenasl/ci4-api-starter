@@ -35,13 +35,19 @@ class TypeMapper
         'int' => [
             'db' => 'INT',
             'php' => 'int',
-            'val' => 'is_natural_no_zero',
+            'val' => 'integer',
+            'oa' => 'integer'
+        ],
+        'integer' => [
+            'db' => 'INT',
+            'php' => 'int',
+            'val' => 'integer',
             'oa' => 'integer'
         ],
         'bool' => [
             'db' => 'TINYINT',
             'php' => 'bool',
-            'val' => 'boolean',
+            'val' => 'boolean_like',
             'oa' => 'boolean'
         ],
         'decimal' => [
@@ -61,7 +67,7 @@ class TypeMapper
         'date' => [
             'db' => 'DATE',
             'php' => 'string',
-            'val' => 'valid_date',
+            'val' => 'valid_date[Y-m-d]',
             'oa' => 'string',
             'oa_format' => 'date'
         ],

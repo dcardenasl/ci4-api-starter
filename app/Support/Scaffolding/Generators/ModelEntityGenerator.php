@@ -69,15 +69,18 @@ PHP;
         $allowedFields = [];
         $searchableFields = [];
         $filterableFields = ["'id'"];
+        $sortableFields = ["'id'", "'created_at'"];
         $validationRules = "";
 
         foreach ($schema->fields as $field) {
             $allowedFields[] = "'{$field->name}'";
             if ($field->searchable) {
                 $searchableFields[] = "'{$field->name}'";
+                $sortableFields[] = "'{$field->name}'";
             }
             if ($field->filterable) {
                 $filterableFields[] = "'{$field->name}'";
+                $sortableFields[] = "'{$field->name}'";
             }
 
             // Pass the table name so TypeMapper can emit is_unique[table.col] for unique fields.
@@ -88,6 +91,7 @@ PHP;
         $allowedFieldsStr = implode(", ", $allowedFields);
         $searchableFieldsStr = implode(", ", $searchableFields);
         $filterableFieldsStr = implode(", ", $filterableFields);
+        $sortableFieldsStr = implode(", ", array_unique($sortableFields));
 
         return <<<PHP
 <?php
@@ -120,7 +124,7 @@ class {$schema->resource}Model extends BaseAuditableModel
     protected array \$filterableFields = [{$filterableFieldsStr}];
 
     /** @var array<int, string> */
-    protected array \$sortableFields = ['id', 'created_at'];
+    protected array \$sortableFields = [{$sortableFieldsStr}];
 
     protected \$validationRules = [
 {$validationRules}    ];

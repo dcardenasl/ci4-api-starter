@@ -2788,28 +2788,12 @@
                         ],
                         "nullable": true
                     },
-                    "order_by": {
-                        "description": "Field to sort by",
+                    "sort": {
+                        "description": "Sort field and direction",
                         "type": "string",
-                        "default": "id",
-                        "enum": [
-                            "id",
-                            "email",
-                            "created_at",
-                            "role",
-                            "status",
-                            "first_name",
-                            "last_name"
-                        ]
-                    },
-                    "order_dir": {
-                        "description": "Sort direction",
-                        "type": "string",
-                        "default": "DESC",
-                        "enum": [
-                            "ASC",
-                            "DESC"
-                        ]
+                        "default": "",
+                        "example": "created_at or -created_at",
+                        "nullable": true
                     }
                 },
                 "type": "object"

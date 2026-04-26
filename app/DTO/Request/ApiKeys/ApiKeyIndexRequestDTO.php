@@ -15,6 +15,7 @@ readonly class ApiKeyIndexRequestDTO extends BaseRequestDTO
     public int $per_page;
     public ?string $search;
     public ?int $is_active;
+    public string $sort;
 
     public function rules(): array
     {
@@ -23,6 +24,7 @@ readonly class ApiKeyIndexRequestDTO extends BaseRequestDTO
             'per_page'   => 'permit_empty|is_natural_no_zero|less_than[101]',
             'search'    => 'permit_empty|string|max_length[100]',
             'is_active'  => 'permit_empty|in_list[0,1]',
+            'sort'      => 'permit_empty|max_length[100]',
         ];
     }
 
@@ -44,6 +46,8 @@ readonly class ApiKeyIndexRequestDTO extends BaseRequestDTO
 
         $isActive = $data['is_active'] ?? $filter['is_active'] ?? null;
         $this->is_active = is_numeric($isActive) ? (int) $isActive : null;
+
+        $this->sort = (string) ($data['sort'] ?? '');
     }
 
     public function toArray(): array
@@ -52,6 +56,7 @@ readonly class ApiKeyIndexRequestDTO extends BaseRequestDTO
             'page'    => $this->page,
             'per_page' => $this->per_page,
             'search'  => $this->search,
+            'sort'    => $this->sort,
         ];
 
         if ($this->is_active !== null) {

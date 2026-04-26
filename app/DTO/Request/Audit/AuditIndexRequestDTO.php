@@ -23,6 +23,7 @@ readonly class AuditIndexRequestDTO extends BaseRequestDTO
     public ?string $result;
     public ?string $severity;
     public ?string $request_id;
+    public string $sort;
 
     public function rules(): array
     {
@@ -37,6 +38,7 @@ readonly class AuditIndexRequestDTO extends BaseRequestDTO
             'result'      => 'permit_empty|in_list[success,failure,denied]',
             'severity'    => 'permit_empty|in_list[info,warning,critical]',
             'request_id'  => 'permit_empty|string|max_length[64]',
+            'sort'        => 'permit_empty|max_length[100]',
         ];
     }
 
@@ -54,6 +56,7 @@ readonly class AuditIndexRequestDTO extends BaseRequestDTO
         $this->result = $this->extractString($data, $filter, 'result');
         $this->severity = $this->extractString($data, $filter, 'severity');
         $this->request_id = $this->extractString($data, $filter, 'request_id');
+        $this->sort = (string) ($data['sort'] ?? '');
     }
 
     public function toArray(): array
@@ -62,6 +65,7 @@ readonly class AuditIndexRequestDTO extends BaseRequestDTO
             'page'    => $this->page,
             'per_page' => $this->per_page,
             'search'  => $this->search,
+            'sort'    => $this->sort,
         ];
 
         if ($this->action) {

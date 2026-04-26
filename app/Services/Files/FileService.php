@@ -41,7 +41,8 @@ class FileService implements FileServiceInterface
         protected FilenameGenerator $filenameGenerator,
         protected MultipartProcessor $multipartProcessor,
         protected Base64Processor $base64Processor,
-        protected ?VirusScannerServiceInterface $virusScanner = null
+        protected ?VirusScannerServiceInterface $virusScanner = null,
+        private bool $userScopedFiles = true
     ) {
     }
 
@@ -135,11 +136,15 @@ class FileService implements FileServiceInterface
         /** @var \App\DTO\Request\Files\FileIndexRequestDTO $request */
         $userId = $this->resolveUserId($request, $context);
 
+        $baseCriteria = $this->userScopedFiles
+            ? fn ($model) => $model->where('user_id', $userId)
+            : null;
+
         $result = $this->fileRepository->paginateCriteria(
             $request->toArray(),
             $request->page,
             $request->per_page,
-            fn ($model) => $model->where('user_id', $userId)
+            $baseCriteria
         );
 
         $result['data'] = array_map(
@@ -202,7 +207,10 @@ class FileService implements FileServiceInterface
             throw new NotFoundException(lang('Files.file_not_found'));
         }
 
-        if (!$bypassOwnership && (int) $file->user_id !== $userId) {
+        $effectiveBypass = $bypassOwnership
+            || ($action === 'download' && !$this->userScopedFiles);
+
+        if (!$effectiveBypass && (int) $file->user_id !== $userId) {
             $deniedAction = $action === 'download' ? 'unauthorized_file_download' : 'unauthorized_file_delete';
             $this->auditService->log(
                 $deniedAction,

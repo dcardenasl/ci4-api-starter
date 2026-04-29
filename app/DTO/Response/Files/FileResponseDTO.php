@@ -29,6 +29,8 @@ readonly class FileResponseDTO implements DataTransferObjectInterface
         public string $filename,
         #[OA\Property(property: 'mime_type', description: 'MIME type', example: 'application/pdf')]
         public string $mime_type,
+        #[OA\Property(property: 'category', description: 'File category derived from MIME type', example: 'document')]
+        public string $category,
         #[OA\Property(property: 'size', description: 'File size in bytes', example: 102400)]
         public int $file_size,
         #[OA\Property(property: 'human_size', description: 'Human readable file size', example: '100 KB')]
@@ -51,13 +53,15 @@ readonly class FileResponseDTO implements DataTransferObjectInterface
 
         // Handle case where we receive an entity array or raw data
         $size = (int) ($data['file_size'] ?? $data['size'] ?? 0);
-        $is_image = isset($data['mime_type']) && str_starts_with((string)$data['mime_type'], 'image/');
+        $mime = (string) ($data['mime_type'] ?? '');
+        $is_image = str_starts_with($mime, 'image/');
 
         return new self(
             id: (int) ($data['id'] ?? 0),
             original_name: (string) ($data['original_name'] ?? ''),
             filename: (string) ($data['filename'] ?? $data['stored_name'] ?? ''),
-            mime_type: (string) ($data['mime_type'] ?? ''),
+            mime_type: $mime,
+            category: (string) ($data['category'] ?? self::categoryFromMime($mime)),
             file_size: $size,
             human_size: (string) ($data['human_size'] ?? self::calculateHumanSize($size)),
             is_image: (bool) ($data['is_image'] ?? $is_image),
@@ -78,15 +82,34 @@ readonly class FileResponseDTO implements DataTransferObjectInterface
     public function toArray(): array
     {
         return [
-            'id' => $this->id,
+            'id'            => $this->id,
             'original_name' => $this->original_name,
-            'filename' => $this->filename,
-            'mime_type' => $this->mime_type,
-            'size' => $this->file_size,
-            'human_size' => $this->human_size,
-            'is_image' => $this->is_image,
-            'url' => $this->url,
-            'uploaded_at' => $this->created_at,
+            'filename'      => $this->filename,
+            'mime_type'     => $this->mime_type,
+            'category'      => $this->category,
+            'size'          => $this->file_size,
+            'human_size'    => $this->human_size,
+            'is_image'      => $this->is_image,
+            'url'           => $this->url,
+            'uploaded_at'   => $this->created_at,
         ];
+    }
+
+    private static function categoryFromMime(string $mime): string
+    {
+        if (str_starts_with($mime, 'image/')) {
+            return 'image';
+        }
+        if (str_starts_with($mime, 'video/')) {
+            return 'video';
+        }
+        if (str_starts_with($mime, 'audio/')) {
+            return 'audio';
+        }
+        if (str_starts_with($mime, 'application/') || str_starts_with($mime, 'text/')) {
+            return 'document';
+        }
+
+        return 'other';
     }
 }

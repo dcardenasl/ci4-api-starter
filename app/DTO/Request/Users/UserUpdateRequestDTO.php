@@ -34,34 +34,40 @@ readonly class UserUpdateRequestDTO extends BaseRequestDTO
     #[OA\Property(description: 'Updated account role', enum: ['user', 'admin', 'superadmin'], nullable: true)]
     public ?string $role;
 
+    #[OA\Property(description: 'URL to user avatar image', example: 'https://example.com/avatar.jpg', nullable: true)]
+    public ?string $avatar_url;
+
     public function rules(): array
     {
         return [
-            'email'     => 'permit_empty|valid_email_idn|max_length[255]',
+            'email'      => 'permit_empty|valid_email_idn|max_length[255]',
             'first_name' => 'permit_empty|string|max_length[100]',
             'last_name'  => 'permit_empty|string|max_length[100]',
-            'password'  => 'permit_empty|strong_password',
-            'role'      => 'permit_empty|in_list[user,admin,superadmin]',
+            'password'   => 'permit_empty|strong_password',
+            'role'       => 'permit_empty|in_list[user,admin,superadmin]',
+            'avatar_url' => 'permit_empty|valid_url|max_length[255]',
         ];
     }
 
     protected function map(array $data): void
     {
-        $this->email = isset($data['email']) ? strtolower(trim((string) $data['email'])) : null;
+        $this->email      = isset($data['email']) ? strtolower(trim((string) $data['email'])) : null;
         $this->first_name = $data['first_name'] ?? null;
-        $this->last_name = $data['last_name'] ?? null;
-        $this->password = $data['password'] ?? null;
-        $this->role = $data['role'] ?? null;
+        $this->last_name  = $data['last_name'] ?? null;
+        $this->password   = $data['password'] ?? null;
+        $this->role       = $data['role'] ?? null;
+        $this->avatar_url = $data['avatar_url'] ?? null;
     }
 
     public function toArray(): array
     {
         return array_filter([
-            'email'     => $this->email,
+            'email'      => $this->email,
             'first_name' => $this->first_name,
             'last_name'  => $this->last_name,
-            'password'  => $this->password,
-            'role'      => $this->role,
+            'password'   => $this->password,
+            'role'       => $this->role,
+            'avatar_url' => $this->avatar_url,
         ], fn ($v) => $v !== null);
     }
 }

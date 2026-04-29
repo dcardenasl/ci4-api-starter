@@ -156,6 +156,21 @@ class FileService implements FileServiceInterface
     }
 
     /**
+     * Return JSON metadata for a single file without downloading the binary.
+     */
+    public function findById(int $id, ?SecurityContext $context = null): FileResponseDTO
+    {
+        $file = $this->fileRepository->find($id);
+        if (!$file) {
+            throw new NotFoundException(lang('Files.file_not_found'));
+        }
+
+        /** @var FileResponseDTO $response */
+        $response = $this->responseMapper->map($file);
+        return $response;
+    }
+
+    /**
      * Download a file
      */
     public function download(\App\Interfaces\DataTransferObjectInterface $request, ?SecurityContext $context = null): \App\Interfaces\DataTransferObjectInterface

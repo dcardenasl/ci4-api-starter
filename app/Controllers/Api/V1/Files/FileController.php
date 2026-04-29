@@ -80,6 +80,16 @@ class FileController extends ApiController
     }
 
     /**
+     * Return JSON metadata for a single file — no binary download.
+     */
+    public function info(int $id): ResponseInterface
+    {
+        return $this->handleRequest(
+            fn ($dto, $context) => $this->fileService->findById($id, $context)
+        );
+    }
+
+    /**
      * Delete a file
      */
     public function delete(int $id): ResponseInterface

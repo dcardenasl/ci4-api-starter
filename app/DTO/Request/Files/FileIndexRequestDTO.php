@@ -19,6 +19,7 @@ readonly class FileIndexRequestDTO extends BaseRequestDTO
     public int $user_id;
     public ?string $search;
     public string $sort;
+    public array $filter;
 
     public function rules(): array
     {
@@ -41,6 +42,7 @@ readonly class FileIndexRequestDTO extends BaseRequestDTO
         $this->per_page = isset($data['per_page']) ? (int) $data['per_page'] : 20;
         $this->search = $data['search'] ?? null;
         $this->sort = (string) ($data['sort'] ?? '');
+        $this->filter = isset($data['filter']) && is_array($data['filter']) ? $data['filter'] : [];
     }
 
     public function toArray(): array
@@ -51,6 +53,7 @@ readonly class FileIndexRequestDTO extends BaseRequestDTO
             'user_id'  => $this->user_id,
             'search'  => $this->search,
             'sort'    => $this->sort,
+            'filter'  => $this->filter,
         ];
     }
 }

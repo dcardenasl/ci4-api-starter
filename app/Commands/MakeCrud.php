@@ -163,6 +163,15 @@ class MakeCrud extends BaseCommand
             return $this->parseFieldsString($fieldsArg);
         }
 
+        // CLI::prompt() returns bool (not string) when stdin is not a TTY,
+        // causing a TypeError. Detect non-interactive environments early.
+        if (function_exists('posix_isatty') && ! posix_isatty(STDIN)) {
+            throw new InvalidArgumentException(
+                "--fields is required in non-interactive mode.\n" .
+                "Use: bash bin/make-crud.sh <Resource> <Domain> '<fields>' yes"
+            );
+        }
+
         return $this->gatherFieldsInteractively();
     }
 

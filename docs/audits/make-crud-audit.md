@@ -9,19 +9,20 @@
 | C01 | minimal happy path                    | ✅ PASS              | —         |
 | C02 | multi-field (string/decimal/text/bool/unique) | ✅ PASS    | —         |
 | C03 | valid FK + filterable                 | ✅ PASS              | P2        |
-| C04 | broken FK (`fk:nonexistent_table`)    | ⚠ generated 17 zombie files | **P1** |
+| C04 | broken FK (`fk:nonexistent_table`)    | ✅ PASS (abort pre-write) ~~⚠ zombie files~~ | ~~P1~~ **FIXED** |
 | C05 | `soft-delete=no`                      | ✅ PASS              | —         |
 | C06 | custom route slug                     | ✅ PASS              | —         |
-| C07 | acronym `APIKey` in `Security`        | ❌ FAIL (collides with starter module) | **P0** |
+| C07 | acronym `APIKey` in `Security`        | ✅ PASS (warns + aborts collision) ~~❌ FAIL~~ | ~~P0~~ **FIXED** |
 | C08 | reserved field `order`                | ✅ clean rejection   | —         |
 | C09 | idempotence (second run)              | ✅ clean rejection   | —         |
 | C10 | second resource, same domain          | ✅ PASS              | P2        |
 | C11 | missing arguments                     | ✅ clean rejection   | —         |
 | C12 | soft-delete `maybe`                   | ✅ clean rejection   | —         |
-| C13 | `php spark make:crud` with unquoted pipe | ❌ broken pipe (confirms wrapper is required) | P2 |
+| C13 | `php spark make:crud` in non-TTY (direct call) | ❌ TypeError + exit 0 (wrapper required) | **P1** (was P2) |
 | C14 | `module:check` after deletion         | ✅ correctly detected | —         |
 
-**Severity counts:** P0 = 1 · P1 = 1 · P2 = 4 · no severity = 9.
+**Severity counts (original):** P0 = 1 · P1 = 1 · P2 = 4 · no severity = 9.
+**Severity counts (post re-verification 2026-04-30):** P1 = 1 (C13, re-classified from P2) · P2 = 3 · no severity = 11 · FIXED = 3 (C04, C07, C02-bool).
 
 ## What works well
 
@@ -143,6 +144,56 @@ To seed against future regressions of these findings. Each test goes in `tests/U
 3. **`ScaffoldingCaseInsensitiveCollisionTest`** — assert that generating `APIKey/Security` when the repo already ships `ApiKey/*` raises an error with explicit suggestion.
 4. **`MakeCrudUpsertMessagingTest`** — generate two resources in the same domain and assert that the second's output does not say `CREATED:` for the routes file (regex over stdout).
 5. **`SoftDeleteFlagPropagationTest`** — synthesize a `ResourceSchema` with `softDelete=false` and assert that neither the migration nor the Model nor the Entity contains `deleted_at`. (Already partial; reinforce.)
+
+## Re-verification round (2026-04-30)
+
+After fixes implemented between the original audit and today, the same 14 scenarios were re-run
+against a fresh disposable copy at `/tmp/ci4-audit/audit-kit-api/` (MySQL on the existing
+`teatromuseo_mysql` container, port 3306, databases `audit_api`/`audit_api_test`).
+Raw traces in `/tmp/ci4-audit/_audit/traces/`.
+
+### Closed findings
+
+| Finding | Status | Evidence |
+|---|---|---|
+| **P0** — Acronyms produce broken table / lang names (`APIKey → a_p_i_keys`) | ✅ Closed | `StringHelper::toSnakeCase()` rewritten to treat uppercase runs as one word. C07 verified: wrapper warns about consecutive uppercase, derived names are `api_key` (table), `api-keys` (route), `$apiKey` (var). Collision with `ApiKey` starter module detected pre-write with explicit suggestion. |
+| **P1** — FK to non-existent table generates 17 zombie files | ✅ Closed | `FieldStringParser` now validates FK target against `INFORMATION_SCHEMA.TABLES` before writing any file. C04 verified: `ghost_id:fk:nonexistent_table` → abort with hint `"run the migration that creates the target table first"`, zero files written. |
+| **P2** — `bool` without `:required`/`:nullable` silently defaults to `false` | ✅ Closed | `FieldStringParser` now rejects `type:bool` without an explicit modifier (exit 1 with message `"bool fields must be tagged :required or :nullable"`). C02 verified. |
+
+### Closed findings — fix phase 2026-04-30
+
+| Finding | Status | Evidence |
+|---|---|---|
+| **P1** — `php spark make:crud` in non-TTY: `TypeError` + exit 0 | ✅ Fixed | `MakeCrud.php::gatherFields()` now throws `InvalidArgumentException` when `posix_isatty(STDIN)` is `false` and `--fields` is empty. Caught by existing `catch (InvalidArgumentException)` block → clean exit 1 with message. |
+| **P2** — Routes file emits `CREATED:` on second resource (upsert) | ✅ Already fixed | `MakeCrud.php:125` has `$orchestrator->wasExisting($file) ? 'UPDATED' : 'CREATED'`. `ScaffoldingOrchestrator::orchestrate()` snapshots `preExisting` for every planned path including the route file before writing. C10 appeared broken in the audit temp copy (older snapshot). Current source is correct. |
+| **P2** — `ON DELETE CASCADE` hardcoded for all FKs | ✅ Already fixed | `FieldStringParser.php` lines 51–54 already support `restrict` → `RESTRICT`, `setnull` → `SET NULL` as field option modifiers. `CASCADE` remains the default. |
+| **P2** — No `make:crud:remove` command | ✅ Already exists | `app/Commands/MakeCrudRemove.php` is fully implemented with `ScaffoldRemover` — deletes ~17 files, un-injects route block, un-registers service factories, emits migration rollback hint. |
+
+### New finding from re-verification · 🟠 P1 · `php spark make:crud` direct call: TypeError + exit 0 in non-TTY (C13 — severity re-evaluated)
+
+The original audit logged this as P2 ("broken pipe with unquoted `--fields`"). On re-run the failure
+mode is more serious: even with a syntactically correct `--fields=name:string:required` (no pipes),
+`php spark make:crud` in a non-TTY context falls into interactive mode, `CLI::prompt()` returns
+`bool` not `string`, and the command throws:
+
+```
+[TypeError]
+CodeIgniter\CLI\InputOutput::input(): Return value must be of type string, bool returned
+at SYSTEMPATH/CLI/InputOutput.php:46
+…
+```
+
+Exit code is **0** — a CI/CD step running `php spark make:crud … && echo done` will print "done"
+even though nothing was scaffolded. Re-classified to **P1** because:
+1. The failure is invisible (exit 0).
+2. It affects any context where `bin/make-crud.sh` is unavailable (Docker-only envs without the full repo, manual API docs, etc.).
+
+**Mitigation exists:** `bin/make-crud.sh` is the only safe call path; the wrapper, `CLAUDE.md`,
+and `ci4-api-starter/CLAUDE.md` all document this. The risk is that teams who copy the `spark`
+incantation from docs rather than from the wrapper will hit this silently.
+
+**Proposed fix:** `app/Commands/MakeCrud.php::gatherFields()` should detect non-TTY before
+calling `gatherFieldsInteractively()` and exit with `CLI::EXIT_ERROR` + helpful message.
 
 ## Appendix — how to reproduce
 

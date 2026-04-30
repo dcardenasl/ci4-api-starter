@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.0] — 2026-04-30
+
 ### Added
 - `env:check` Spark command to validate all required environment variables at startup
 - Swagger UI served at `/api/docs` in non-production environments
@@ -74,7 +76,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - **(PR #3)** Repository cleanup: removed dead code and stale files
 
-[unreleased]: https://github.com/dcardenasl/ci4-api-starter/compare/v1.3.4...HEAD
+[unreleased]: https://github.com/dcardenasl/ci4-api-starter/compare/v1.4.0...HEAD
+[1.4.0]: https://github.com/dcardenasl/ci4-api-starter/compare/v1.3.4...v1.4.0
 [1.3.4]: https://github.com/dcardenasl/ci4-api-starter/compare/v1.3.3...v1.3.4
 [1.3.3]: https://github.com/dcardenasl/ci4-api-starter/compare/v1.3.2...v1.3.3
 [1.3.2]: https://github.com/dcardenasl/ci4-api-starter/compare/v1.3.1...v1.3.2

@@ -6,15 +6,6 @@ namespace Config;
 
 trait RepositoryModelServices
 {
-    public static function demoproductRepository(bool $getShared = true): \App\Interfaces\Core\RepositoryInterface
-    {
-        if ($getShared) {
-            return static::getSharedInstance('demoproductRepository');
-        }
-
-        return new \App\Repositories\GenericRepository(new \App\Models\DemoproductModel());
-    }
-
     public static function userRepository(bool $getShared = true): \App\Interfaces\Users\UserRepositoryInterface
     {
         if ($getShared) {

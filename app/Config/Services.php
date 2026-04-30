@@ -12,7 +12,6 @@ require_once __DIR__ . '/FileDomainServices.php';
 require_once __DIR__ . '/ApiCoreServices.php';
 require_once __DIR__ . '/SystemMonitoringServices.php';
 require_once __DIR__ . '/RepositoryModelServices.php';
-require_once __DIR__ . '/CatalogDomainServices.php';
 
 /**
  * Services Configuration file.
@@ -28,7 +27,6 @@ class Services extends BaseService
     use ApiCoreServices;
     use SystemMonitoringServices;
     use RepositoryModelServices;
-    use CatalogDomainServices;
 
     /**
      * The Request Service

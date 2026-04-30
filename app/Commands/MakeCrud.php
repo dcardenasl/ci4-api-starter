@@ -8,6 +8,7 @@ use App\Support\Scaffolding\ConfigWireman;
 use App\Support\Scaffolding\Field;
 use App\Support\Scaffolding\FieldNameValidator;
 use App\Support\Scaffolding\FieldStringParser;
+use App\Support\Scaffolding\ForeignKeyValidator;
 use App\Support\Scaffolding\ResourceSchema;
 use App\Support\Scaffolding\ScaffoldConflictException;
 use App\Support\Scaffolding\ScaffoldingOrchestrator;
@@ -26,7 +27,12 @@ class MakeCrud extends BaseCommand
     protected $group = 'Scaffold';
     protected $name = 'make:crud';
     protected $description = 'Generate a complete CRUD module following the DTO-first architecture.';
-    protected $usage = 'make:crud <Resource> [--domain <Domain>] [--fields <fields_string>]';
+    protected $usage = "make:crud <Resource> [--domain <Domain>] [--fields '<fields_string>']\n"
+        . "\n"
+        . "  IMPORTANT: --fields must be SINGLE-QUOTED. Pipes ('|') in modifier lists\n"
+        . "  are shell-special and will be consumed if unquoted, leaving --fields\n"
+        . "  truncated and the scaffold incomplete. The recommended entry point is\n"
+        . "  the wrapper bin/make-crud.sh which handles quoting for you.";
     protected $arguments = [
         'Resource' => 'Resource singular name (e.g. Product, InvoiceItem)',
     ];
@@ -35,6 +41,7 @@ class MakeCrud extends BaseCommand
         '--route' => 'Route slug plural (default: kebab-case plural of resource)',
         '--fields' => 'Fields definition string (name:type:options,...)',
         '--soft-delete' => 'Enable soft deletes yes|no (default: yes)',
+        '--dry-run' => 'Show planned files and wiring without writing anything',
     ];
 
     public function run(array $params)
@@ -50,6 +57,18 @@ class MakeCrud extends BaseCommand
         $route = (string) (CLI::getOption('route') ?: StringHelper::toKebab(StringHelper::pluralize($resource)));
         $fieldsArg = (string) (CLI::getOption('fields') ?: '');
         $softDelete = $this->yesNoOption('soft-delete', true);
+        $dryRun = CLI::getOption('dry-run') !== null;
+
+        if (StringHelper::hasAcronymRun($resource)) {
+            CLI::write("⚠ Resource '{$resource}' contains a run of consecutive uppercase letters.", 'yellow');
+            CLI::write("  Derived names will keep the acronym intact:", 'yellow');
+            CLI::write("    table:    " . StringHelper::toSnakeCase(StringHelper::pluralize($resource)), 'yellow');
+            CLI::write("    route:    " . StringHelper::toKebab(StringHelper::pluralize($resource)), 'yellow');
+            CLI::write("    var:      \$" . StringHelper::toCamelCase($resource), 'yellow');
+            CLI::write("  Class/file names preserve the resource as-typed: {$resource}Controller.php", 'yellow');
+            CLI::write("  If you prefer canonical StudlyCase, re-run with: " . preg_replace_callback('/([A-Z]+)([A-Z][a-z]|$)/', static fn (array $m): string => ucfirst(strtolower($m[1])) . $m[2], $resource), 'yellow');
+            CLI::newLine();
+        }
 
         CLI::write("🚀 Preparing to scaffold resource: {$resource} in Domain: {$domain}", 'cyan');
 
@@ -75,12 +94,36 @@ class MakeCrud extends BaseCommand
                 softDelete: $softDelete
             );
 
+            // 2b. Verify FK targets exist (skipped if DB unreachable).
+            // Catches 'fk:nonexistent_table' before writing ~17 zombie files
+            // whose migration will fail later.
+            $fkWarnings = (new ForeignKeyValidator())->validate($schema);
+            foreach ($fkWarnings as $warning) {
+                CLI::write("⚠ {$warning}", 'yellow');
+            }
+
             // 3. Orchestrate File Generation
             $orchestrator = new ScaffoldingOrchestrator();
+
+            if ($dryRun) {
+                $plannedFiles = $orchestrator->plan($schema);
+                CLI::write('🔎 DRY RUN — no files will be written.', 'cyan');
+                CLI::newLine();
+                foreach ($plannedFiles as $path => $_content) {
+                    CLI::write("Would create: {$path}", 'green');
+                }
+                CLI::write("Would wire: \\Config\\Services::" . $schema->getResourceLower() . 'Service()', 'green');
+                CLI::write("Would wire: \\Config\\Services::" . $schema->getResourceLower() . 'ResponseMapper()', 'green');
+                CLI::newLine();
+                CLI::write('✅ Dry-run complete.', 'white', 'green');
+                return EXIT_SUCCESS;
+            }
+
             $createdFiles = $orchestrator->orchestrate($schema);
 
             foreach ($createdFiles as $file) {
-                CLI::write("CREATED: {$file}", 'green');
+                $verb = $orchestrator->wasExisting($file) ? 'UPDATED' : 'CREATED';
+                CLI::write("{$verb}: {$file}", 'green');
             }
 
             // 4. Wire Services and Config

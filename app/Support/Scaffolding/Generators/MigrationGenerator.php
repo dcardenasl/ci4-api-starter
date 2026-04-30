@@ -142,10 +142,19 @@ PHP;
     {
         $output = "";
         foreach ($schema->fields as $field) {
-            if ($field->fkTable) {
-                $onDelete = $field->nullable ? 'SET NULL' : 'CASCADE';
-                $output .= "        \$this->forge->addForeignKey('{$field->name}', '{$field->fkTable}', 'id', 'CASCADE', '{$onDelete}');\n";
+            if (!$field->fkTable) {
+                continue;
             }
+
+            // Explicit override from `fk:table:setnull|restrict|cascade` wins;
+            // otherwise the historical heuristic kicks in: nullable columns use
+            // SET NULL (parent delete preserves child with null FK), required
+            // columns use CASCADE (parent delete removes children).
+            $onDelete = $field->fkOnDelete !== 'CASCADE'
+                ? $field->fkOnDelete
+                : ($field->nullable ? 'SET NULL' : 'CASCADE');
+
+            $output .= "        \$this->forge->addForeignKey('{$field->name}', '{$field->fkTable}', 'id', '{$field->fkOnUpdate}', '{$onDelete}');\n";
         }
         return $output;
     }

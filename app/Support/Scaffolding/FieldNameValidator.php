@@ -83,6 +83,17 @@ final class FieldNameValidator
                 );
             }
 
+            // Bool fields without an explicit required/nullable modifier are ambiguous:
+            // the DTO ends up `permit_empty|boolean_like` (allows missing) but the PHP
+            // type is non-nullable bool with a silent default false. Clients that omit
+            // the field get false without knowing it. Force the caller to choose.
+            if ($field->type === 'bool' && !$field->required && !$field->nullable) {
+                throw new InvalidArgumentException(
+                    "Field '{$name}': bool fields must be tagged ':required' or ':nullable'. "
+                    . "Without one, the API silently defaults to false when the client omits the value."
+                );
+            }
+
             $seen[$lower] = true;
         }
     }

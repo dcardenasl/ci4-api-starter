@@ -41,12 +41,14 @@ class ScaffoldingOrchestrator
     }
 
     /**
-     * @return string[] List of created files
-     * @throws ScaffoldConflictException
+     * Compute the planned (path => content) map without writing anything.
+     * Used by --dry-run.
+     *
+     * @return array<string,string>
      */
-    public function orchestrate(ResourceSchema $schema): array
+    public function plan(ResourceSchema $schema): array
     {
-        $filesToCreate = array_merge(
+        return array_merge(
             $this->dtoGenerator->generate($schema),
             $this->migrationGenerator->generate($schema),
             $this->modelEntityGenerator->generate($schema),
@@ -56,6 +58,33 @@ class ScaffoldingOrchestrator
             $this->languageGenerator->generate($schema),
             $this->testGenerator->generate($schema)
         );
+    }
+
+    /**
+     * Track whether a planned file existed before this run so the caller can show
+     * accurate "CREATED:" vs "UPDATED:" labels for upsertable files (notably the
+     * domain routes file, which is created once and appended to thereafter).
+     */
+    private array $preExisting = [];
+
+    public function wasExisting(string $path): bool
+    {
+        return $this->preExisting[$path] ?? false;
+    }
+
+    /**
+     * @return string[] List of created or updated files
+     * @throws ScaffoldConflictException
+     */
+    public function orchestrate(ResourceSchema $schema): array
+    {
+        $filesToCreate = $this->plan($schema);
+
+        // Snapshot which paths existed before validation/write so we can label them.
+        $this->preExisting = [];
+        foreach (array_keys($filesToCreate) as $path) {
+            $this->preExisting[$path] = file_exists($path);
+        }
 
         $this->validateFilesDoNotExist($filesToCreate);
 
@@ -94,18 +123,62 @@ class ScaffoldingOrchestrator
     private function validateFilesDoNotExist(array $files): void
     {
         $existing = [];
+        $caseCollisions = [];
+
         foreach (array_keys($files) as $path) {
-            if (file_exists($path)) {
-                if ($this->isUpsertableRouteFile($path)) {
-                    continue;
-                }
+            if ($this->isUpsertableRouteFile($path) && file_exists($path)) {
+                continue;
+            }
+
+            // Resolve what's actually on disk (case-sensitively) regardless of how the
+            // OS answers file_exists(). Distinguishes:
+            //  - exact-name match (real overwrite scenario)
+            //  - case-insensitive collision (different file on Linux, same file on macOS;
+            //    in both cases the user's intent — generate a NEW resource — is broken)
+            $existingEntry = $this->resolveSibling($path);
+
+            if ($existingEntry === null) {
+                continue;
+            }
+
+            $basename = basename($path);
+            if ($existingEntry === $basename) {
                 $existing[] = $path;
+            } else {
+                $caseCollisions[$path] = dirname($path) . DIRECTORY_SEPARATOR . $existingEntry;
             }
         }
 
-        if (!empty($existing)) {
-            throw new ScaffoldConflictException($existing);
+        if (!empty($existing) || !empty($caseCollisions)) {
+            throw new ScaffoldConflictException($existing, $caseCollisions);
         }
+    }
+
+    /**
+     * Return the actual case-sensitive directory entry that matches the planned path,
+     * or null if no entry matches (case-insensitively).
+     */
+    private function resolveSibling(string $path): ?string
+    {
+        $dir = dirname($path);
+        if (!is_dir($dir)) {
+            return null;
+        }
+
+        $basename = basename($path);
+        $basenameLower = strtolower($basename);
+
+        $entries = @scandir($dir) ?: [];
+        foreach ($entries as $entry) {
+            if ($entry === '.' || $entry === '..') {
+                continue;
+            }
+            if (strtolower($entry) === $basenameLower) {
+                return $entry;
+            }
+        }
+
+        return null;
     }
 
     private function isUpsertableRouteFile(string $path): bool

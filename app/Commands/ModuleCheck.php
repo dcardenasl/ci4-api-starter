@@ -101,6 +101,10 @@ class ModuleCheck extends BaseCommand
             foreach ($missing as $item) {
                 CLI::write("- {$item}", 'red');
             }
+            CLI::newLine();
+            CLI::write('Possible next steps:', 'yellow');
+            CLI::write("  - Re-run scaffold:  bash bin/make-crud.sh {$resource} {$domain} '<fields>' yes", 'yellow');
+            CLI::write("  - Or remove leftover artifacts: php spark make:crud:remove {$resource} --domain {$domain}", 'yellow');
             return EXIT_ERROR;
         }
 

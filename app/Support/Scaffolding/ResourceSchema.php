@@ -26,7 +26,7 @@ readonly class ResourceSchema
 
     public function getResourceLower(): string
     {
-        return lcfirst($this->resource);
+        return StringHelper::toCamelCase($this->resource);
     }
 
     public function getResourcePlural(): string
@@ -36,7 +36,7 @@ readonly class ResourceSchema
 
     public function getResourcePluralLower(): string
     {
-        return lcfirst($this->getResourcePlural());
+        return StringHelper::toCamelCase($this->getResourcePlural());
     }
 
     public function getResourcePluralKebab(): string

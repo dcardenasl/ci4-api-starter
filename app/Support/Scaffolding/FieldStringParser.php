@@ -44,6 +44,17 @@ final class FieldStringParser
                 $options = explode('|', $segments[2] ?? '');
             }
 
+            // FK referential actions: cascade (default), restrict, setnull.
+            // Honored only when type === 'fk'; ignored otherwise.
+            $fkOnDelete = 'CASCADE';
+            if ($type === 'fk') {
+                if (in_array('restrict', $options, true)) {
+                    $fkOnDelete = 'RESTRICT';
+                } elseif (in_array('setnull', $options, true)) {
+                    $fkOnDelete = 'SET NULL';
+                }
+            }
+
             $fields[] = new Field(
                 name: $name,
                 type: $type,
@@ -53,7 +64,8 @@ final class FieldStringParser
                 filterable: in_array('filterable', $options, true),
                 fkTable: $fkTable,
                 unique: in_array('unique', $options, true),
-                index: in_array('index', $options, true)
+                index: in_array('index', $options, true),
+                fkOnDelete: $fkOnDelete
             );
         }
 

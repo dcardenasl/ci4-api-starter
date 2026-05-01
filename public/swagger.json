@@ -1310,39 +1310,6 @@
                 ]
             }
         },
-        "/api/v1/demo-products": {
-            "get": {
-                "tags": [
-                    "Demoproducts"
-                ],
-                "summary": "List Demoproducts",
-                "operationId": "2c110892f7e902e0879f1e7e707dc4aa",
-                "responses": {
-                    "200": {
-                        "description": "List retrieved successfully",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "status": {
-                                            "type": "string",
-                                            "example": "success"
-                                        },
-                                        "data": {
-                                            "type": "array",
-                                            "items": {
-                                                "$ref": "#/components/schemas/DemoproductResponse"
-                                            }
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
         "/api/v1/files": {
             "get": {
                 "tags": [
@@ -2835,6 +2802,12 @@
                             "superadmin"
                         ],
                         "nullable": true
+                    },
+                    "avatar_url": {
+                        "description": "URL to user avatar image",
+                        "type": "string",
+                        "example": "https://example.com/avatar.jpg",
+                        "nullable": true
                     }
                 },
                 "type": "object"
@@ -3113,32 +3086,6 @@
                 },
                 "type": "object"
             },
-            "DemoproductResponse": {
-                "title": "Demoproduct Response",
-                "required": [
-                    "id",
-                    "name"
-                ],
-                "properties": {
-                    "id": {
-                        "description": "Unique identifier",
-                        "type": "integer",
-                        "example": 1
-                    },
-                    "name": {
-                        "description": "Resource name",
-                        "type": "string",
-                        "example": "Example Name"
-                    },
-                    "created_at": {
-                        "description": "Creation timestamp",
-                        "type": "string",
-                        "example": "2026-02-26 12:00:00",
-                        "nullable": true
-                    }
-                },
-                "type": "object"
-            },
             "PaginatedResponse": {
                 "title": "Paginated Response",
                 "description": "Generic pagination payload",
@@ -3255,6 +3202,11 @@
                         "description": "MIME type",
                         "type": "string",
                         "example": "application/pdf"
+                    },
+                    "category": {
+                        "description": "File category derived from MIME type",
+                        "type": "string",
+                        "example": "document"
                     },
                     "size": {
                         "description": "File size in bytes",
@@ -3849,10 +3801,6 @@
         {
             "name": "API Keys",
             "description": "API Keys"
-        },
-        {
-            "name": "Demoproducts",
-            "description": "Demoproducts"
         }
     ]
 }

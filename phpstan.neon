@@ -19,7 +19,7 @@ parameters:
     excludePaths:
         - vendor
         - writable
-        - tests/_support
+        - tests/_support (?)
         - app/Config
         - app/Views
         - app/Commands

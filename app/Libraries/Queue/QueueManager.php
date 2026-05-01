@@ -21,7 +21,7 @@ class QueueManager
     public function __construct()
     {
         $this->config = config('Queue');
-        $this->db = Database::connect($this->config->databaseConnection);
+        $this->db = Database::connect($this->config->databaseConnection ?: 'default');
     }
 
     /**

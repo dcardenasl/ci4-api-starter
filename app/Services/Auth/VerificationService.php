@@ -64,7 +64,7 @@ class VerificationService implements \App\Interfaces\Auth\VerificationServiceInt
 
         $this->emailService->queueTemplate('verification', (string) $user->email, [
             'subject' => lang('Email.verification.subject'),
-            'display_name' => method_exists($user, 'getDisplayName') ? (string) $user->getDisplayName() : (string) $user->email,
+            'display_name' => (string) $user->getDisplayName(),
             'verification_link' => $verificationLink,
             'expires_at' => date('F j, Y g:i A', strtotime($expiresAt)),
         ]);

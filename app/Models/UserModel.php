@@ -25,7 +25,7 @@ class UserModel extends BaseAuditableModel
     protected $protectFields    = true;
 
     /**
-     * @var array<int, string>
+     * @var list<string>
      */
     protected $allowedFields    = [
         'email',

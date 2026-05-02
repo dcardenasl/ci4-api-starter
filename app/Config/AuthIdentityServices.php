@@ -93,21 +93,9 @@ trait AuthIdentityServices
         return new \App\Services\Users\UserService(
             $userRepository,
             static::userResponseMapper(),
-            static::userRoleGuard(),
             static::approveUserAction($userRepository),
             static::createUserAction($userRepository),
             static::updateUserAction($userRepository)
-        );
-    }
-
-    public static function userRoleGuard(bool $getShared = true): \App\Libraries\Security\UserRoleGuard
-    {
-        if ($getShared) {
-            return static::getSharedInstance('userRoleGuard');
-        }
-
-        return new \App\Libraries\Security\UserRoleGuard(
-            static::securityAuditLogger()
         );
     }
 
@@ -137,8 +125,7 @@ trait AuthIdentityServices
     public static function createUserAction(\App\Interfaces\Users\UserRepositoryInterface $userRepository): \App\Services\Users\Actions\CreateUserAction
     {
         return new \App\Services\Users\Actions\CreateUserAction(
-            $userRepository,
-            static::userInvitationService()
+            $userRepository
         );
     }
 
@@ -154,8 +141,7 @@ trait AuthIdentityServices
     public static function updateUserAction(\App\Interfaces\Users\UserRepositoryInterface $userRepository): \App\Services\Users\Actions\UpdateUserAction
     {
         return new \App\Services\Users\Actions\UpdateUserAction(
-            $userRepository,
-            static::userRoleGuard()
+            $userRepository
         );
     }
 

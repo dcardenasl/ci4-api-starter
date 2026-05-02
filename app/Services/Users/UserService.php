@@ -9,37 +9,28 @@ use App\Exceptions\NotFoundException;
 use App\Interfaces\Mappers\ResponseMapperInterface;
 use App\Interfaces\Users\UserRepositoryInterface;
 use App\Interfaces\Users\UserServiceInterface;
-use App\Libraries\Security\UserRoleGuard;
 use App\Services\Core\BaseCrudService;
 use App\Services\Users\Actions\ApproveUserAction;
 use App\Services\Users\Actions\CreateUserAction;
 use App\Services\Users\Actions\UpdateUserAction;
 
 /**
- * User Service (Refactored)
+ * User Service
  *
- * Handles CRUD operations for users by delegating security and invitation logic
- * to specialized components.
+ * Handles CRUD operations for users. Authorization is enforced at the route
+ * level via the `permission` filter (e.g. `permission:users.write`); the
+ * service trusts that any reachable call has already passed those gates.
  */
 class UserService extends BaseCrudService implements UserServiceInterface
 {
     public function __construct(
         protected UserRepositoryInterface $userRepository,
         ResponseMapperInterface $responseMapper,
-        protected UserRoleGuard $roleGuard,
         protected ApproveUserAction $approveUserAction,
         protected CreateUserAction $createUserAction,
         protected UpdateUserAction $updateUserAction
     ) {
         parent::__construct($userRepository, $responseMapper);
-    }
-
-    /**
-     * Enforce security criteria for user listings
-     */
-    protected function applyBaseCriteria(object $builder): void
-    {
-        $builder->where('role !=', 'superadmin');
     }
 
     /**
@@ -50,9 +41,6 @@ class UserService extends BaseCrudService implements UserServiceInterface
         /** @var \App\DTO\Request\Users\UserCreateRequestDTO $request */
         $context ??= SecurityContext::anonymous();
         return $this->wrapInTransaction(function () use ($request, $context) {
-            $actorRole = $context->user_role ?? 'user';
-            $this->roleGuard->assertCanAssignRole($actorRole, (string) $request->role);
-
             /** @var \App\Entities\UserEntity $user */
             $user = $this->createUserAction->execute($request, $context);
 
@@ -90,7 +78,7 @@ class UserService extends BaseCrudService implements UserServiceInterface
      */
     public function show(int $id, ?SecurityContext $context = null): \App\Interfaces\DataTransferObjectInterface
     {
-        if ($context !== null && !$context->isAdmin() && !$context->isUser($id)) {
+        if ($context !== null && ! $context->hasPermission('users.read') && ! $context->isUser($id)) {
             throw new \App\Exceptions\AuthorizationException(lang('Auth.insufficientPermissions'));
         }
 
@@ -106,9 +94,6 @@ class UserService extends BaseCrudService implements UserServiceInterface
         if (!$targetUser) {
             throw new NotFoundException(lang('Users.notFound'));
         }
-
-        $context ??= SecurityContext::anonymous();
-        $this->roleGuard->assertCanManageTarget($context->user_role ?? 'user', $context->user_id, $id, (string) $targetUser->role);
 
         return parent::destroy($id, $context);
     }

@@ -20,9 +20,10 @@ class CreateUserAction
     public function execute(UserCreateRequestDTO $request, ?SecurityContext $context = null): \App\Entities\UserEntity
     {
         $context ??= SecurityContext::anonymous();
-        $actorRole = $context->user_role ?? 'user';
         $adminId = $context->user_id;
-        $isPrivilegedCreator = in_array($actorRole, ['admin', 'superadmin'], true);
+        // Only an actor with users.write permission can create directly-active users;
+        // anyone else (including unauthenticated registration) creates invited records.
+        $isPrivilegedCreator = $context->hasPermission('users.write');
         $status = $isPrivilegedCreator ? 'active' : 'invited';
         $now = date('Y-m-d H:i:s');
         $generatedPassword = bin2hex(random_bytes(24)) . 'Aa1!';
@@ -32,7 +33,6 @@ class CreateUserAction
             'first_name'  => $request->first_name,
             'last_name'   => $request->last_name,
             'password'    => password_hash($generatedPassword, PASSWORD_BCRYPT),
-            'role'        => $request->role,
             'status'      => $status,
             'approved_at' => $status === 'active' ? $now : null,
             'approved_by' => $isPrivilegedCreator ? $adminId : null,

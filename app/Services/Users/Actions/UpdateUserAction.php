@@ -9,13 +9,11 @@ use App\DTO\SecurityContext;
 use App\Exceptions\NotFoundException;
 use App\Exceptions\ValidationException;
 use App\Interfaces\Users\UserRepositoryInterface;
-use App\Libraries\Security\UserRoleGuard;
 
 class UpdateUserAction
 {
     public function __construct(
-        protected UserRepositoryInterface $userRepository,
-        protected UserRoleGuard $roleGuard
+        protected UserRepositoryInterface $userRepository
     ) {
     }
 
@@ -25,20 +23,6 @@ class UpdateUserAction
         $targetUser = $this->userRepository->find($userId);
         if ($targetUser === null) {
             throw new NotFoundException(lang('Users.notFound'));
-        }
-
-        $context ??= SecurityContext::anonymous();
-        $actorRole = $context->user_role ?? 'user';
-        $actorId = $context->user_id;
-
-        $this->roleGuard->assertCanManageTarget($actorRole, $actorId, $userId, (string) $targetUser->role);
-
-        if ($request->role !== null) {
-            $this->roleGuard->assertCanChangeRole(
-                $actorRole,
-                (string) $targetUser->role,
-                (string) $request->role
-            );
         }
 
         $updateData = $this->buildUpdateData($request);
@@ -72,9 +56,6 @@ class UpdateUserAction
         }
         if ($request->password !== null) {
             $data['password'] = password_hash($request->password, PASSWORD_BCRYPT);
-        }
-        if ($request->role !== null) {
-            $data['role'] = $request->role;
         }
         if ($request->avatar_url !== null) {
             $data['avatar_url'] = $request->avatar_url;

@@ -20,7 +20,11 @@ class JwtAuthFilter implements FilterInterface
         $context = ContextHolder::get();
         if ($context !== null && $context->user_id !== null) {
             if ($request instanceof ApiRequest) {
-                $request->setAuthContext((int) $context->user_id, (string) $context->user_role);
+                $request->setAuthContext(
+                    (int) $context->user_id,
+                    (string) $context->user_role,
+                    $context->permissions
+                );
             }
             return $request;
         }
@@ -87,15 +91,22 @@ class JwtAuthFilter implements FilterInterface
             }
         }
 
+        $permissions = [];
+        if (isset($decoded->scope) && is_array($decoded->scope)) {
+            $permissions = array_values(array_map(static fn ($v) => (string) $v, $decoded->scope));
+        }
+
         if ($request instanceof ApiRequest) {
-            $request->setAuthContext((int) $decoded->uid, (string) $decoded->role);
+            $request->setAuthContext((int) $decoded->uid, (string) $decoded->role, $permissions);
         }
 
         // Also set global context for DTO enrichment
         ContextHolder::set($auditContextFactory->createContext(
             $request,
             (int) $decoded->uid,
-            (string) $decoded->role
+            (string) $decoded->role,
+            [],
+            $permissions
         ));
 
         return $request;

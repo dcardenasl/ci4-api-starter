@@ -35,12 +35,17 @@ class RequestAuditContextFactory
         return array_merge($metadata, $overrides);
     }
 
-    public function createContext(RequestInterface $request, ?int $userId = null, ?string $userRole = null, array $overrides = []): SecurityContext
+    /**
+     * @param array<string, mixed> $overrides
+     * @param list<string> $permissions
+     */
+    public function createContext(RequestInterface $request, ?int $userId = null, ?string $userRole = null, array $overrides = [], array $permissions = []): SecurityContext
     {
         return new SecurityContext(
             $userId,
             $userRole,
-            $this->buildMetadata($request, $overrides)
+            $this->buildMetadata($request, $overrides),
+            $permissions
         );
     }
 

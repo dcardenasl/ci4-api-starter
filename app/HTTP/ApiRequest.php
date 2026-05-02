@@ -13,6 +13,8 @@ class ApiRequest extends IncomingRequest
 {
     private ?int $authUserId = null;
     private ?string $authUserRole = null;
+    /** @var list<string> */
+    private array $authPermissions = [];
     private ?float $requestStartTime = null;
     /** @var array{limit:int,remaining:int,reset:int}|null */
     private ?array $rateLimitInfo = null;
@@ -26,10 +28,14 @@ class ApiRequest extends IncomingRequest
         parent::__construct($config, $uri, $body, $userAgent);
     }
 
-    public function setAuthContext(?int $user_id, ?string $role): void
+    /**
+     * @param list<string> $permissions
+     */
+    public function setAuthContext(?int $user_id, ?string $role, array $permissions = []): void
     {
         $this->authUserId = $user_id;
         $this->authUserRole = $role;
+        $this->authPermissions = array_values($permissions);
     }
 
     public function getAuthUserId(): ?int
@@ -40,6 +46,14 @@ class ApiRequest extends IncomingRequest
     public function getAuthUserRole(): ?string
     {
         return $this->authUserRole;
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function getAuthPermissions(): array
+    {
+        return $this->authPermissions;
     }
 
     public function setRequestStartTime(float $value): void

@@ -9,6 +9,7 @@ use App\Exceptions\AuthenticationException;
 use App\Interfaces\Tokens\JwtServiceInterface;
 use App\Models\RefreshTokenModel;
 use App\Models\UserModel;
+use App\Services\Iam\EffectivePermissionsResolver;
 use App\Services\Users\UserAccountGuard;
 use App\Support\OperationResult;
 
@@ -21,11 +22,14 @@ readonly class RefreshTokenService implements \App\Interfaces\Tokens\RefreshToke
 {
     use \App\Traits\HandlesTransactions;
 
+    private const APPLICATION_ID = 1;
+
     public function __construct(
         protected RefreshTokenModel $refreshTokenModel,
         protected JwtServiceInterface $jwtService,
         protected UserModel $userModel,
         protected UserAccountGuard $userAccountGuard,
+        protected EffectivePermissionsResolver $permissionsResolver,
         protected int $refreshTokenTtl = 604800,
         protected int $accessTokenTtl = 3600
     ) {
@@ -78,7 +82,8 @@ readonly class RefreshTokenService implements \App\Interfaces\Tokens\RefreshToke
             $this->userAccountGuard->assertCanAuthenticate($user);
 
             // Generate new access token
-            $accessToken = $this->jwtService->encode((int) $user->id, (string) ($user->role ?? 'user'));
+            $permissions = $this->permissionsResolver->resolve((int) $user->id, self::APPLICATION_ID);
+            $accessToken = $this->jwtService->encode((int) $user->id, (string) ($user->role ?? 'user'), $permissions);
 
             return \App\DTO\Response\Identity\TokenResponseDTO::fromArray([
                 'access_token'  => $accessToken,

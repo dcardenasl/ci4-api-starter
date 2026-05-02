@@ -12,15 +12,20 @@ namespace App\DTO;
  */
 readonly class SecurityContext
 {
+    /**
+     * @param array<string, mixed> $metadata
+     * @param list<string> $permissions Effective permission codes for the active application.
+     */
     public function __construct(
         public ?int $user_id = null,
         public ?string $user_role = null,
-        public array $metadata = []
+        public array $metadata = [],
+        public array $permissions = []
     ) {
     }
 
     /**
-     * Check if the actor is an administrator
+     * Check if the actor is an administrator (legacy role-based shortcut, removed in Sprint 3.5).
      */
     public function isAdmin(): bool
     {
@@ -28,7 +33,7 @@ readonly class SecurityContext
     }
 
     /**
-     * Check if the actor is a superadmin
+     * Check if the actor is a superadmin (legacy role-based shortcut, removed in Sprint 3.5).
      */
     public function isSuperadmin(): bool
     {
@@ -41,6 +46,14 @@ readonly class SecurityContext
     public function isUser(int $id): bool
     {
         return $this->user_id === $id;
+    }
+
+    /**
+     * Check whether the current actor holds a specific permission.
+     */
+    public function hasPermission(string $code): bool
+    {
+        return in_array($code, $this->permissions, true);
     }
 
     /**

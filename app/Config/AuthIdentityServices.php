@@ -46,6 +46,7 @@ trait AuthIdentityServices
         return new \App\Services\Auth\Support\SessionManager(
             static::jwtService(),
             static::refreshTokenService(),
+            static::effectivePermissionsResolver(),
             $accessTokenTtl
         );
     }

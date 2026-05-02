@@ -66,7 +66,8 @@ class ApiSmokeTest extends BaseCommand
         }
 
         $jwtService = Services::jwtService();
-        return $jwtService->encode((int)$admin->id, 'superadmin');
+        $permissions = Services::effectivePermissionsResolver()->resolve((int) $admin->id, 1);
+        return $jwtService->encode((int)$admin->id, 'superadmin', $permissions);
     }
 
     private function inspectEndpoint(string $method, string $path, string $label, string $token)

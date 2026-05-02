@@ -32,8 +32,10 @@ readonly class JwtService implements \App\Interfaces\Tokens\JwtServiceInterface
 
     /**
      * Generate a JWT token with JTI (unique identifier)
+     *
+     * @param list<string> $permissions Effective permission codes; encoded as the `scope` claim.
      */
-    public function encode(int $userId, string $role): string
+    public function encode(int $userId, string $role, array $permissions = []): string
     {
         $issuedAt = time();
         $expirationTime = $issuedAt + $this->expirationTime;
@@ -42,13 +44,14 @@ readonly class JwtService implements \App\Interfaces\Tokens\JwtServiceInterface
         $jti = bin2hex(random_bytes(16));
 
         $payload = [
-            'iss'  => $this->issuer,
-            'iat'  => $issuedAt,
-            'nbf'  => $issuedAt,
-            'exp'  => $expirationTime,
-            'jti'  => $jti,
-            'uid'  => $userId,
-            'role' => $role,
+            'iss'   => $this->issuer,
+            'iat'   => $issuedAt,
+            'nbf'   => $issuedAt,
+            'exp'   => $expirationTime,
+            'jti'   => $jti,
+            'uid'   => $userId,
+            'role'  => $role,
+            'scope' => array_values($permissions),
         ];
 
         return JWT::encode($payload, $this->secretKey, $this->algorithm);
@@ -99,5 +102,25 @@ readonly class JwtService implements \App\Interfaces\Tokens\JwtServiceInterface
     {
         $decoded = $this->decode($token);
         return isset($decoded->role) ? (string) $decoded->role : null;
+    }
+
+    /**
+     * Extract effective permissions (scope claim) from a token.
+     *
+     * @return list<string>
+     */
+    public function getPermissions(string $token): array
+    {
+        $decoded = $this->decode($token);
+        if ($decoded === null || ! isset($decoded->scope)) {
+            return [];
+        }
+
+        $scope = $decoded->scope;
+        if (! is_array($scope)) {
+            return [];
+        }
+
+        return array_values(array_map(static fn ($v) => (string) $v, $scope));
     }
 }

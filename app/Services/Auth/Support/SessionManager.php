@@ -6,6 +6,7 @@ namespace App\Services\Auth\Support;
 
 use App\Interfaces\Tokens\JwtServiceInterface;
 use App\Interfaces\Tokens\RefreshTokenServiceInterface;
+use App\Services\Iam\EffectivePermissionsResolver;
 
 /**
  * Session Manager
@@ -15,9 +16,12 @@ use App\Interfaces\Tokens\RefreshTokenServiceInterface;
  */
 class SessionManager
 {
+    private const APPLICATION_ID = 1;
+
     public function __construct(
         protected JwtServiceInterface $jwtService,
         protected RefreshTokenServiceInterface $refreshTokenService,
+        protected EffectivePermissionsResolver $permissionsResolver,
         protected int $accessTokenTtl = 3600
     ) {
     }
@@ -31,15 +35,19 @@ class SessionManager
     {
         $userId = (int) ($userData['id'] ?? 0);
         $role = (string) ($userData['role'] ?? 'user');
+        $permissions = $userId > 0 ? $this->permissionsResolver->resolve($userId, self::APPLICATION_ID) : [];
 
-        $accessToken = $this->jwtService->encode($userId, $role);
+        $accessToken = $this->jwtService->encode($userId, $role, $permissions);
         $refreshToken = $this->refreshTokenService->issueRefreshToken($userId);
+
+        $userResponse = $userData;
+        $userResponse['permissions'] = $permissions;
 
         return [
             'access_token' => $accessToken,
             'refresh_token' => $refreshToken,
             'expires_in' => $this->accessTokenTtl,
-            'user' => $userData,
+            'user' => $userResponse,
         ];
     }
 }

@@ -39,6 +39,7 @@ trait TokenSecurityServices
             static::jwtService(),
             static::userModel(),
             static::userAccountGuard(),
+            static::effectivePermissionsResolver(),
             $refreshTokenTtl,
             $accessTokenTtl
         );

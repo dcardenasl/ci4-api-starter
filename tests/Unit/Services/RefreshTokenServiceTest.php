@@ -28,6 +28,8 @@ class RefreshTokenServiceTest extends CIUnitTestCase
     protected RefreshTokenModel $mockRefreshTokenModel;
     protected JwtServiceInterface $mockJwtService;
     protected UserModel $mockUserModel;
+    protected \App\Services\Users\UserAccountGuard $mockUserAccountGuard;
+    protected \App\Services\Iam\EffectivePermissionsResolver $mockPermissionsResolver;
 
     protected function setUp(): void
     {
@@ -40,12 +42,14 @@ class RefreshTokenServiceTest extends CIUnitTestCase
         $this->mockUserModel = $this->createMock(UserModel::class);
 
         $this->mockUserAccountGuard = $this->createMock(\App\Services\Users\UserAccountGuard::class);
+        $this->mockPermissionsResolver = $this->createMock(\App\Services\Iam\EffectivePermissionsResolver::class);
 
         $this->service = new RefreshTokenService(
             $this->mockRefreshTokenModel,
             $this->mockJwtService,
             $this->mockUserModel,
-            $this->mockUserAccountGuard
+            $this->mockUserAccountGuard,
+            $this->mockPermissionsResolver
         );
     }
 

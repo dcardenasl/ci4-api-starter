@@ -41,7 +41,6 @@ trait AuthTestTrait
         $permissions = \App\Support\TestPermissionResolver::permissionsForRole($role);
         \App\Libraries\ContextHolder::set(new \App\DTO\SecurityContext(
             (int) $this->currentUserId,
-            (string) $role,
             [],
             $permissions
         ));

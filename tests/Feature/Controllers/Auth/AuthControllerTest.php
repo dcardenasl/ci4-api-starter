@@ -71,7 +71,6 @@ class AuthControllerTest extends ApiTestCase
         $this->userModel->insert([
             'email' => $email,
             'password' => password_hash('ValidPass123!', PASSWORD_BCRYPT),
-            'role' => 'user',
         ]);
 
         $result = $this->withBodyFormat('json')
@@ -94,7 +93,6 @@ class AuthControllerTest extends ApiTestCase
         $this->userModel->insert([
             'email' => 'login@example.com',
             'password' => password_hash('ValidPass123!', PASSWORD_BCRYPT),
-            'role' => 'user',
             'status' => 'active',
             'email_verified_at' => date('Y-m-d H:i:s'),
         ]);

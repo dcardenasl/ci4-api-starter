@@ -132,7 +132,7 @@ class FilterParserTest extends CIUnitTestCase
     public function testParseHandlesMultipleFilters(): void
     {
         $filters = [
-            'role' => 'admin',
+            'department' => 'sales',
             'age' => ['gt' => 18],
             'status' => ['in' => ['active', 'pending']],
         ];
@@ -140,7 +140,7 @@ class FilterParserTest extends CIUnitTestCase
         $result = FilterParser::parse($filters);
 
         $expected = [
-            'role' => ['=', 'admin'],
+            'department' => ['=', 'sales'],
             'age' => ['>', 18],
             'status' => ['IN', ['active', 'pending']],
         ];
@@ -167,14 +167,12 @@ class FilterParserTest extends CIUnitTestCase
         $filters = [
             'email' => 'test@example.com',
             'password' => 'secret',
-            'role' => 'admin',
         ];
 
         $result = FilterParser::filterAllowedFields($filters, ['email', 'role']);
 
         $expected = [
             'email' => 'test@example.com',
-            'role' => 'admin',
         ];
 
         $this->assertEquals($expected, $result);

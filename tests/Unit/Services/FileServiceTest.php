@@ -384,7 +384,7 @@ class FileServiceTest extends CIUnitTestCase
 
         $this->expectException(NotFoundException::class);
 
-        $this->service->destroy(999, new \App\DTO\SecurityContext(1, 'user'));
+        $this->service->destroy(999, new \App\DTO\SecurityContext(1));
     }
 
     public function testDestroyOtherUsersFileThrowsAuthorizationException(): void
@@ -400,7 +400,7 @@ class FileServiceTest extends CIUnitTestCase
 
         $this->expectException(AuthorizationException::class);
 
-        $this->service->destroy(1, new \App\DTO\SecurityContext(1, 'user'));
+        $this->service->destroy(1, new \App\DTO\SecurityContext(1));
     }
 
     public function testDestroyOwnFileReturnsSuccess(): void
@@ -427,7 +427,7 @@ class FileServiceTest extends CIUnitTestCase
             ->with(1)
             ->willReturn(true);
 
-        $result = $this->service->destroy(1, new \App\DTO\SecurityContext(1, 'user'));
+        $result = $this->service->destroy(1, new \App\DTO\SecurityContext(1));
 
         $this->assertTrue($result);
     }

@@ -96,7 +96,6 @@ class AuthServiceTest extends CIUnitTestCase
             'id' => 1,
             'email' => 'test@example.com',
             'password' => password_hash('ValidPass123!', PASSWORD_BCRYPT),
-            'role' => 'user',
             'status' => 'active',
             'email_verified_at' => date('Y-m-d H:i:s'),
         ]);
@@ -122,7 +121,6 @@ class AuthServiceTest extends CIUnitTestCase
         $user = new UserEntity([
             'id' => 1,
             'password' => password_hash('CorrectPass123!', PASSWORD_BCRYPT),
-            'role' => 'user',
             'status' => 'active'
         ]);
 
@@ -144,7 +142,6 @@ class AuthServiceTest extends CIUnitTestCase
             'email' => 'new@example.com',
             'first_name' => 'New',
             'last_name' => 'User',
-            'role' => 'user',
             'status' => 'pending_approval'
         ]);
 
@@ -189,7 +186,6 @@ class AuthServiceTest extends CIUnitTestCase
         $user = new UserEntity([
             'id' => 1,
             'email' => 'test@example.com',
-            'role' => 'user',
             'status' => 'active',
         ]);
         $service = $this->createServiceWithUserQuery($user);

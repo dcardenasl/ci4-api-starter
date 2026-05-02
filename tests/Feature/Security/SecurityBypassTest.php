@@ -37,7 +37,6 @@ class SecurityBypassTest extends ApiTestCase
         $userModel->insert([
             'email' => $email,
             'password' => 'RealPass123!',
-            'role' => 'user',
             'status' => 'active',
             'email_verified_at' => date('Y-m-d H:i:s')
         ]);
@@ -62,7 +61,6 @@ class SecurityBypassTest extends ApiTestCase
         $userModel->insert([
             'email' => $email,
             'password' => 'RealPass123!',
-            'role' => 'user',
             'status' => 'active',
             'email_verified_at' => date('Y-m-d H:i:s')
         ]);

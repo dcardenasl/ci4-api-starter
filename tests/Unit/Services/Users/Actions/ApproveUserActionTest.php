@@ -36,7 +36,7 @@ class ApproveUserActionTest extends CIUnitTestCase
         $this->mockUserRepository->expects($this->once())->method('find')->with(999)->willReturn(null);
 
         $this->expectException(NotFoundException::class);
-        $this->action->execute(999, new SecurityContext(1, 'admin'));
+        $this->action->execute(999, new SecurityContext(1));
     }
 
     public function testExecuteThrowsConflictWhenUserAlreadyActive(): void
@@ -46,7 +46,7 @@ class ApproveUserActionTest extends CIUnitTestCase
         $this->mockUserRepository->expects($this->never())->method('update');
 
         $this->expectException(ConflictException::class);
-        $this->action->execute(1, new SecurityContext(1, 'admin'));
+        $this->action->execute(1, new SecurityContext(1));
     }
 
     public function testExecuteThrowsConflictWhenUserIsInvited(): void
@@ -56,7 +56,7 @@ class ApproveUserActionTest extends CIUnitTestCase
         $this->mockUserRepository->expects($this->never())->method('update');
 
         $this->expectException(ConflictException::class);
-        $this->action->execute(1, new SecurityContext(1, 'admin'));
+        $this->action->execute(1, new SecurityContext(1));
     }
 
     public function testExecuteThrowsConflictWhenUserIsInInvalidState(): void
@@ -66,12 +66,12 @@ class ApproveUserActionTest extends CIUnitTestCase
         $this->mockUserRepository->expects($this->never())->method('update');
 
         $this->expectException(ConflictException::class);
-        $this->action->execute(1, new SecurityContext(1, 'admin'));
+        $this->action->execute(1, new SecurityContext(1));
     }
 
     public function testExecuteApprovesPendingUserAndQueuesEmail(): void
     {
-        $context = new SecurityContext(99, 'admin');
+        $context = new SecurityContext(99);
         $pendingUser = new UserEntity([
             'id' => 7,
             'email' => 'pending@example.com',

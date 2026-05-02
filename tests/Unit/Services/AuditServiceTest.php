@@ -62,7 +62,7 @@ class AuditServiceTest extends CIUnitTestCase
 
     public function testLogInsertsAuditRecord(): void
     {
-        $context = new SecurityContext(99, 'admin', ['ip_address' => '127.0.0.1']);
+        $context = new SecurityContext(99, ['ip_address' => '127.0.0.1']);
 
         $this->mockAuditRepository
             ->expects($this->once())
@@ -158,7 +158,7 @@ class AuditServiceTest extends CIUnitTestCase
 
     public function testLogPersistsControlFieldsAndSanitizedMetadata(): void
     {
-        $context = new SecurityContext(99, 'admin', [
+        $context = new SecurityContext(99, [
             'ip_address' => '10.0.0.10',
             'user_agent' => 'PHPUnit',
             'request_id' => 'req-test-123',
@@ -192,7 +192,7 @@ class AuditServiceTest extends CIUnitTestCase
 
     public function testLogEnqueuesNonCriticalEventWhenAsyncEnabled(): void
     {
-        $context = new SecurityContext(99, 'admin', ['ip_address' => '127.0.0.1']);
+        $context = new SecurityContext(99, ['ip_address' => '127.0.0.1']);
         $queueManager = $this->createMock(QueueManager::class);
         $auditConfig = new \Config\Audit();
         $auditConfig->asyncEnabled = true;
@@ -226,7 +226,7 @@ class AuditServiceTest extends CIUnitTestCase
 
     public function testLogPersistsCriticalEventSynchronouslyWhenAsyncEnabled(): void
     {
-        $context = new SecurityContext(99, 'admin', ['ip_address' => '127.0.0.1']);
+        $context = new SecurityContext(99, ['ip_address' => '127.0.0.1']);
         $queueManager = $this->createMock(QueueManager::class);
         $auditConfig = new \Config\Audit();
         $auditConfig->asyncEnabled = true;
@@ -260,7 +260,7 @@ class AuditServiceTest extends CIUnitTestCase
 
     public function testLogFallsBackToSyncWhenQueueFails(): void
     {
-        $context = new SecurityContext(99, 'admin', ['ip_address' => '127.0.0.1']);
+        $context = new SecurityContext(99, ['ip_address' => '127.0.0.1']);
         $queueManager = $this->createMock(QueueManager::class);
         $auditConfig = new \Config\Audit();
         $auditConfig->asyncEnabled = true;

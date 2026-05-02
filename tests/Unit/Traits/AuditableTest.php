@@ -42,7 +42,6 @@ class AuditableTest extends CIUnitTestCase
         $userId = $this->userModel->insert([
             'email' => 'audit@example.com',
             'password' => password_hash('Pass123!', PASSWORD_BCRYPT),
-            'role' => 'user',
             'first_name' => 'Audit',
             'last_name' => 'Test',
         ]);
@@ -67,7 +66,6 @@ class AuditableTest extends CIUnitTestCase
         $userId = $this->userModel->insert([
             'email' => 'update@example.com',
             'password' => password_hash('Pass123!', PASSWORD_BCRYPT),
-            'role' => 'user',
         ]);
 
         // Clear previous audit logs for cleaner test
@@ -78,7 +76,6 @@ class AuditableTest extends CIUnitTestCase
         // Update user
         $this->userModel->update($userId, [
             'first_name' => 'Updated',
-            'role' => 'admin',
         ]);
 
         // Check if audit log was created for update
@@ -97,7 +94,6 @@ class AuditableTest extends CIUnitTestCase
         $userId = $this->userModel->insert([
             'email' => 'delete@example.com',
             'password' => password_hash('Pass123!', PASSWORD_BCRYPT),
-            'role' => 'user',
         ]);
 
         // Delete user
@@ -119,7 +115,6 @@ class AuditableTest extends CIUnitTestCase
         $userId = $this->userModel->insert([
             'email' => 'values@example.com',
             'password' => password_hash('Pass123!', PASSWORD_BCRYPT),
-            'role' => 'user',
             'first_name' => 'Original',
         ]);
 
@@ -154,7 +149,6 @@ class AuditableTest extends CIUnitTestCase
         $userId = $this->userModel->insert([
             'email' => 'sensitive@example.com',
             'password' => password_hash('SecretPass123!', PASSWORD_BCRYPT),
-            'role' => 'user',
         ]);
 
         // Get the insert audit log
@@ -178,7 +172,6 @@ class AuditableTest extends CIUnitTestCase
         $userId = $this->userModel->insert([
             'email' => 'entitytype@example.com',
             'password' => password_hash('Pass123!', PASSWORD_BCRYPT),
-            'role' => 'user',
         ]);
 
         $auditLog = $this->db->table('audit_logs')

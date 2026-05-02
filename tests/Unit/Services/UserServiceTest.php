@@ -50,7 +50,6 @@ class UserServiceTest extends CIUnitTestCase
         $this->service = new UserService(
             $this->mockUserRepository,
             $this->responseMapper,
-            new \App\Libraries\Security\UserRoleGuard(),
             $this->mockApproveUserAction,
             $this->mockCreateUserAction,
             $this->mockUpdateUserAction
@@ -69,7 +68,6 @@ class UserServiceTest extends CIUnitTestCase
         $user = $this->createUserEntity([
             'id' => 1,
             'email' => 'test@example.com',
-            'role' => 'user',
         ]);
 
         $this->mockUserRepository->expects($this->once())->method('find')->with(1)->willReturn($user);
@@ -93,7 +91,6 @@ class UserServiceTest extends CIUnitTestCase
     {
         $request = new \App\DTO\Request\Users\UserCreateRequestDTO([
             'email' => 'new@example.com',
-            'role' => 'user',
         ], service('validation'));
 
         $expectedUser = $this->createUserEntity(['id' => 1, 'email' => 'new@example.com']);
@@ -121,7 +118,7 @@ class UserServiceTest extends CIUnitTestCase
     public function testApproveDelegatesToApproveUserAction(): void
     {
         $id = 1;
-        $context = new \App\DTO\SecurityContext(10, 'admin');
+        $context = new \App\DTO\SecurityContext(10);
         $approvedUser = $this->createUserEntity([
             'id' => $id,
             'email' => 'approved@example.com',

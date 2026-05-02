@@ -27,7 +27,6 @@ class PasswordResetControllerTest extends ApiTestCase
         $this->userModel->insert([
             'email' => 'test-pwd-final@example.com',
             'password' => password_hash('OldPass123!', PASSWORD_BCRYPT),
-            'role' => 'user',
             'status' => 'active',
         ]);
 
@@ -46,7 +45,6 @@ class PasswordResetControllerTest extends ApiTestCase
         $userId = $this->userModel->insert([
             'email' => 'deleted-pwd-final@example.com',
             'password' => password_hash('OldPass123!', PASSWORD_BCRYPT),
-            'role' => 'user',
             'status' => 'active',
             'approved_at' => date('Y-m-d H:i:s'),
             'approved_by' => 99,
@@ -74,7 +72,6 @@ class PasswordResetControllerTest extends ApiTestCase
         $this->userModel->insert([
             'email' => $email,
             'password' => password_hash('Pass123!', PASSWORD_BCRYPT),
-            'role' => 'user',
         ]);
 
         $token = bin2hex(random_bytes(16));
@@ -111,7 +108,6 @@ class PasswordResetControllerTest extends ApiTestCase
         $this->userModel->insert([
             'email' => $email,
             'password' => password_hash('OldPass123!', PASSWORD_BCRYPT),
-            'role' => 'user',
         ]);
 
         $token = bin2hex(random_bytes(16));

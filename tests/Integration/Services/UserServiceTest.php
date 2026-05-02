@@ -42,10 +42,9 @@ class UserServiceTest extends CIUnitTestCase
             'email' => 'integration@example.com',
             'first_name' => 'Integration',
             'last_name' => 'User',
-            'role' => 'user',
         ], service('validation'));
 
-        $result = $this->userService->store($request, new SecurityContext(1, 'admin'));
+        $result = $this->userService->store($request, new SecurityContext(1));
         $data = $result->toArray();
 
         $user = $this->userModel->find($data['id']);
@@ -57,7 +56,6 @@ class UserServiceTest extends CIUnitTestCase
         $userId = $this->userModel->insert([
             'email' => 'show@example.com',
             'password' => password_hash('ValidPass123!', PASSWORD_BCRYPT),
-            'role' => 'user',
         ]);
 
         $result = $this->userService->show((int) $userId);
@@ -69,7 +67,6 @@ class UserServiceTest extends CIUnitTestCase
         $userId = $this->userModel->insert([
             'email' => 'old@example.com',
             'password' => password_hash('ValidPass123!', PASSWORD_BCRYPT),
-            'role' => 'user',
         ]);
 
         $request = new UserUpdateRequestDTO([
@@ -77,7 +74,7 @@ class UserServiceTest extends CIUnitTestCase
             'first_name' => 'New',
         ], service('validation'));
 
-        $result = $this->userService->update((int) $userId, $request, new SecurityContext(1, 'admin'));
+        $result = $this->userService->update((int) $userId, $request, new SecurityContext(1));
 
         $user = $this->userModel->find($userId);
         $this->assertEquals('new@example.com', $user->email);
@@ -88,10 +85,9 @@ class UserServiceTest extends CIUnitTestCase
         $userId = $this->userModel->insert([
             'email' => 'delete@example.com',
             'password' => password_hash('ValidPass123!', PASSWORD_BCRYPT),
-            'role' => 'user',
         ]);
 
-        $result = $this->userService->destroy((int) $userId, new SecurityContext(1, 'admin'));
+        $result = $this->userService->destroy((int) $userId, new SecurityContext(1));
         $this->assertTrue($result);
 
         $this->assertNull($this->userModel->find($userId));
@@ -103,11 +99,10 @@ class UserServiceTest extends CIUnitTestCase
         $userId = $this->userModel->insert([
             'email' => 'pending-approve@example.com',
             'password' => password_hash('ValidPass123!', PASSWORD_BCRYPT),
-            'role' => 'user',
             'status' => 'pending_approval',
         ]);
 
-        $result = $this->userService->approve((int) $userId, new SecurityContext(1, 'admin'));
+        $result = $this->userService->approve((int) $userId, new SecurityContext(1));
 
         $user = $this->userModel->find($userId);
         $this->assertEquals('active', $user->status);
@@ -120,11 +115,10 @@ class UserServiceTest extends CIUnitTestCase
         $userId = $this->userModel->insert([
             'email' => 'already-active@example.com',
             'password' => password_hash('ValidPass123!', PASSWORD_BCRYPT),
-            'role' => 'user',
             'status' => 'active',
         ]);
 
         $this->expectException(ConflictException::class);
-        $this->userService->approve((int) $userId, new SecurityContext(1, 'admin'));
+        $this->userService->approve((int) $userId, new SecurityContext(1));
     }
 }

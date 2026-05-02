@@ -42,8 +42,8 @@ class FilterableTest extends CIUnitTestCase
     {
         $filters = [
             'email' => 'test@example.com',
-            'password' => 'secret',  // Not in filterableFields
             'role' => 'admin',
+            'password' => 'secret',  // Not in filterableFields
         ];
 
         $this->model->applyFilters($filters);
@@ -85,7 +85,7 @@ class FilterableTest extends CIUnitTestCase
     public function testApplyFiltersHandlesMultipleFilters(): void
     {
         $filters = [
-            'role' => 'user',
+            'role' => 'admin',
             'status' => 'active',
         ];
 
@@ -94,7 +94,7 @@ class FilterableTest extends CIUnitTestCase
         $sql = $this->model->builder()->getCompiledSelect();
 
         $this->assertStringContainsString('role', $sql);
-        $this->assertStringContainsString('user', $sql);
+        $this->assertStringContainsString('admin', $sql);
         $this->assertStringContainsString('status', $sql);
         $this->assertStringContainsString('active', $sql);
     }

@@ -48,7 +48,7 @@ final class SecurityAuditLoggerTest extends CIUnitTestCase
     {
         $mockAudit = $this->createMock(AuditServiceInterface::class);
         $logger = new SecurityAuditLogger($mockAudit, new RequestAuditContextFactory());
-        $context = new SecurityContext(10, 'admin', ['request_id' => 'req-123']);
+        $context = new SecurityContext(10, ['request_id' => 'req-123']);
 
         $mockAudit->expects($this->once())
             ->method('log')

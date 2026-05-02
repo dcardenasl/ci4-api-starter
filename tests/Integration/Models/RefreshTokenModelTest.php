@@ -35,7 +35,6 @@ class RefreshTokenModelTest extends CIUnitTestCase
         $this->testUserId = $this->userModel->insert([
             'email' => 'test@example.com',
             'password' => password_hash('Pass123!', PASSWORD_BCRYPT),
-            'role' => 'user',
         ]);
     }
 

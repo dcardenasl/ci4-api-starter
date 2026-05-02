@@ -96,7 +96,6 @@ abstract class ApiController extends Controller
 
         $securityContext = new SecurityContext(
             $this->getUserId(),
-            $this->getUserRole(),
             $this->buildRequestMetadata(),
             $this->getUserPermissions()
         );
@@ -159,10 +158,6 @@ abstract class ApiController extends Controller
             $data['user_id'] = $context->user_id;
         }
 
-        if (!isset($data['user_role']) && $context->user_role !== null) {
-            $data['user_role'] = $context->user_role;
-        }
-
         return $data;
     }
 
@@ -215,11 +210,6 @@ abstract class ApiController extends Controller
     protected function getUserId(): ?int
     {
         return $this->request instanceof ApiRequest ? $this->request->getAuthUserId() : null;
-    }
-
-    protected function getUserRole(): ?string
-    {
-        return $this->request instanceof ApiRequest ? $this->request->getAuthUserRole() : null;
     }
 
     /**

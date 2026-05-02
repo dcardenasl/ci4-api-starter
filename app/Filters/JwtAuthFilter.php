@@ -22,7 +22,6 @@ class JwtAuthFilter implements FilterInterface
             if ($request instanceof ApiRequest) {
                 $request->setAuthContext(
                     (int) $context->user_id,
-                    (string) $context->user_role,
                     $context->permissions
                 );
             }
@@ -65,7 +64,7 @@ class JwtAuthFilter implements FilterInterface
                     $securityAuditLogger->logRevokedTokenReuse(
                         $request,
                         (int) ($decoded->uid ?? 0) ?: null,
-                        isset($decoded->role) ? (string) $decoded->role : null,
+                        null,
                         (string) $jti
                     );
                     return $this->unauthorized(lang('Auth.tokenRevoked'));
@@ -97,14 +96,13 @@ class JwtAuthFilter implements FilterInterface
         }
 
         if ($request instanceof ApiRequest) {
-            $request->setAuthContext((int) $decoded->uid, (string) $decoded->role, $permissions);
+            $request->setAuthContext((int) $decoded->uid, $permissions);
         }
 
         // Also set global context for DTO enrichment
         ContextHolder::set($auditContextFactory->createContext(
             $request,
             (int) $decoded->uid,
-            (string) $decoded->role,
             [],
             $permissions
         ));

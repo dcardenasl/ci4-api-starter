@@ -35,7 +35,7 @@ readonly class JwtService implements \App\Interfaces\Tokens\JwtServiceInterface
      *
      * @param list<string> $permissions Effective permission codes; encoded as the `scope` claim.
      */
-    public function encode(int $userId, string $role, array $permissions = []): string
+    public function encode(int $userId, array $permissions = []): string
     {
         $issuedAt = time();
         $expirationTime = $issuedAt + $this->expirationTime;
@@ -50,7 +50,6 @@ readonly class JwtService implements \App\Interfaces\Tokens\JwtServiceInterface
             'exp'   => $expirationTime,
             'jti'   => $jti,
             'uid'   => $userId,
-            'role'  => $role,
             'scope' => array_values($permissions),
         ];
 
@@ -93,15 +92,6 @@ readonly class JwtService implements \App\Interfaces\Tokens\JwtServiceInterface
     {
         $decoded = $this->decode($token);
         return isset($decoded->uid) ? (int) $decoded->uid : null;
-    }
-
-    /**
-     * Extract role from token
-     */
-    public function getRole(string $token): ?string
-    {
-        $decoded = $this->decode($token);
-        return isset($decoded->role) ? (string) $decoded->role : null;
     }
 
     /**

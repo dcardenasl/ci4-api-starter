@@ -23,18 +23,18 @@ class SecurityAuditLogger
 
     public function logAuthorizationDeniedFromRequest(
         RequestInterface $request,
-        string $requiredRole,
-        ?string $actorRole,
+        string $required,
+        ?string $actorContext,
         ?int $actorId,
-        string $action = 'authorization_denied_role'
+        string $action = 'authorization_denied_permission'
     ): void {
         $payload = [
-            'required_role' => $requiredRole,
-            'actor_role' => $actorRole,
-            'path' => $this->extractPath($request),
+            'required'      => $required,
+            'actor_context' => $actorContext,
+            'path'          => $this->extractPath($request),
         ];
 
-        $context = $this->contextFactory->createContext($request, $actorId, $actorRole);
+        $context = $this->contextFactory->createContext($request, $actorId);
 
         $this->safeLog($action, 'authorization', null, [], $payload, $context, 'denied', 'critical');
     }
@@ -64,14 +64,14 @@ class SecurityAuditLogger
             'user_id' => $userId,
         ];
 
-        $context = new SecurityContext($userId, null, ['ip_address' => $ip]);
+        $context = new SecurityContext($userId, ['ip_address' => $ip]);
 
         $this->safeLog('api_key_rate_limit_exceeded', 'api_keys', (int) $apiKey->id, [], $payload, $context, 'denied', 'warning');
     }
 
-    public function logRevokedTokenReuse(RequestInterface $request, ?int $userId, ?string $userRole, string $jti): void
+    public function logRevokedTokenReuse(RequestInterface $request, ?int $userId, ?string $userContext, string $jti): void
     {
-        $context = $this->contextFactory->createContext($request, $userId, $userRole);
+        $context = $this->contextFactory->createContext($request, $userId);
         $this->safeLog(
             'revoked_token_reuse_detected',
             'tokens',

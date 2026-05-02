@@ -12,7 +12,6 @@ use Config\App;
 class ApiRequest extends IncomingRequest
 {
     private ?int $authUserId = null;
-    private ?string $authUserRole = null;
     /** @var list<string> */
     private array $authPermissions = [];
     private ?float $requestStartTime = null;
@@ -31,21 +30,15 @@ class ApiRequest extends IncomingRequest
     /**
      * @param list<string> $permissions
      */
-    public function setAuthContext(?int $user_id, ?string $role, array $permissions = []): void
+    public function setAuthContext(?int $user_id, array $permissions = []): void
     {
         $this->authUserId = $user_id;
-        $this->authUserRole = $role;
         $this->authPermissions = array_values($permissions);
     }
 
     public function getAuthUserId(): ?int
     {
         return $this->authUserId;
-    }
-
-    public function getAuthUserRole(): ?string
-    {
-        return $this->authUserRole;
     }
 
     /**

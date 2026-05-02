@@ -41,9 +41,6 @@ class PermissionFilter implements FilterInterface
             $permissions = $context->permissions;
         }
 
-        $userRole = $request instanceof ApiRequest ? $request->getAuthUserRole() : null;
-        $userRole ??= $context?->user_role;
-
         $securityAuditLogger = Services::securityAuditLogger();
 
         if ($actorId === null) {
@@ -55,7 +52,7 @@ class PermissionFilter implements FilterInterface
         }
 
         if ($required === '' || ! in_array($required, $permissions, true)) {
-            $securityAuditLogger->logAuthorizationDeniedFromRequest($request, $required, $userRole, $actorId);
+            $securityAuditLogger->logAuthorizationDeniedFromRequest($request, $required, null, $actorId);
 
             return Services::response()
                 ->setJSON(ApiResponse::forbidden(lang('Auth.insufficientPermissions')))

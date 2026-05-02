@@ -16,7 +16,7 @@ interface JwtServiceInterface
      *
      * @param list<string> $permissions Effective permission codes; encoded as the `scope` claim.
      */
-    public function encode(int $userId, string $role, array $permissions = []): string;
+    public function encode(int $userId, array $permissions = []): string;
 
     /**
      * Decode and validate a JWT token
@@ -41,14 +41,6 @@ interface JwtServiceInterface
      * @return int|null
      */
     public function getUserId(string $token): ?int;
-
-    /**
-     * Extract role from token
-     *
-     * @param string $token
-     * @return string|null
-     */
-    public function getRole(string $token): ?string;
 
     /**
      * Extract effective permissions (scope claim) from a token.

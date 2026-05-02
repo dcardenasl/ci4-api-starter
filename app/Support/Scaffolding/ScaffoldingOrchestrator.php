@@ -89,9 +89,18 @@ class ScaffoldingOrchestrator
         $this->validateFilesDoNotExist($filesToCreate);
 
         $createdFiles = [];
+        $snapshots    = []; // original content of pre-existing files overwritten in this run
         try {
             foreach ($filesToCreate as $path => $content) {
                 $this->ensureDirectoryExists(dirname($path));
+
+                if (($this->preExisting[$path] ?? false) && is_readable($path)) {
+                    $original = file_get_contents($path);
+                    if ($original !== false) {
+                        $snapshots[$path] = $original;
+                    }
+                }
+
                 if (file_put_contents($path, $content) === false) {
                     throw new \RuntimeException("Failed to write scaffolded file: {$path}");
                 }
@@ -101,7 +110,7 @@ class ScaffoldingOrchestrator
             // Avoid leaving the project in a half-scaffolded state: delete any file
             // we wrote in this run before re-throwing so the user can fix the cause
             // and retry without a ScaffoldConflictException from orphaned files.
-            $this->rollback($createdFiles);
+            $this->rollback($createdFiles, $snapshots);
             throw $e;
         }
 
@@ -109,12 +118,20 @@ class ScaffoldingOrchestrator
     }
 
     /**
-     * @param string[] $createdFiles
+     * @param string[]              $createdFiles
+     * @param array<string, string> $snapshots    Original content of pre-existing files overwritten in this run
      */
-    private function rollback(array $createdFiles): void
+    private function rollback(array $createdFiles, array $snapshots = []): void
     {
         foreach ($createdFiles as $path) {
-            if (file_exists($path)) {
+            if (!file_exists($path)) {
+                continue;
+            }
+
+            if (isset($snapshots[$path])) {
+                // Pre-existing file: restore original content instead of deleting.
+                file_put_contents($path, $snapshots[$path]);
+            } else {
                 @unlink($path);
             }
         }

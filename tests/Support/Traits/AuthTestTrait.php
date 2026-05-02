@@ -38,7 +38,13 @@ trait AuthTestTrait
         $token = $this->loginAndGetToken($email, $password);
 
         // Inject identity into static holder for direct service access in tests
-        \App\Libraries\ContextHolder::set(new \App\DTO\SecurityContext((int) $this->currentUserId, (string) $role));
+        $permissions = \App\Support\TestPermissionResolver::permissionsForRole($role);
+        \App\Libraries\ContextHolder::set(new \App\DTO\SecurityContext(
+            (int) $this->currentUserId,
+            (string) $role,
+            [],
+            $permissions
+        ));
 
         $headers = [
             'Authorization' => "Bearer {$token}",
@@ -81,16 +87,68 @@ trait AuthTestTrait
         // Ensure we don't try to re-create the same user in a test run
         $existing = $userModel->where('email', $email)->first();
         if ($existing) {
-            return (int) $existing->id;
+            $userId = (int) $existing->id;
+            $this->ensureMembership($userId, $role);
+            return $userId;
         }
 
-        return (int) $userModel->insert([
+        $userId = (int) $userModel->insert([
             'email' => $email,
             'password' => password_hash($password, PASSWORD_BCRYPT),
             'role' => $role,
             'status' => $status,
             'email_verified_at' => $verified ? date('Y-m-d H:i:s') : null,
         ]);
+
+        $this->ensureMembership($userId, $role);
+
+        return $userId;
+    }
+
+    /**
+     * Mirrors the role assignment in the new IAM tables so the user resolves
+     * the same effective permissions through real auth flows.
+     */
+    private function ensureMembership(int $userId, string $roleCode): void
+    {
+        $db = \Config\Database::connect();
+
+        $role = $db->table('roles')->where('code', $roleCode)->where('application_id', 1)->get()?->getRowArray();
+        if ($role === null) {
+            return;
+        }
+
+        $membership = $db->table('app_user_memberships')
+            ->where('user_id', $userId)
+            ->where('application_id', 1)
+            ->get()?->getRowArray();
+
+        if ($membership === null) {
+            $now = date('Y-m-d H:i:s');
+            $db->table('app_user_memberships')->insert([
+                'user_id'        => $userId,
+                'application_id' => 1,
+                'status'         => 'active',
+                'accepted_at'    => $now,
+                'created_at'     => $now,
+                'updated_at'     => $now,
+            ]);
+            $membershipId = (int) $db->insertID();
+        } else {
+            $membershipId = (int) $membership['id'];
+        }
+
+        $exists = $db->table('membership_roles')
+            ->where('membership_id', $membershipId)
+            ->where('role_id', (int) $role['id'])
+            ->countAllResults() > 0;
+
+        if (! $exists) {
+            $db->table('membership_roles')->insert([
+                'membership_id' => $membershipId,
+                'role_id'       => (int) $role['id'],
+            ]);
+        }
     }
 
     protected function loginAndGetToken(string $email, string $password): string

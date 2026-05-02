@@ -29,8 +29,20 @@ class TestAuthFilter implements FilterInterface
 
         // If test established context, populate request and allow
         if ($context !== null && $context->user_id !== null) {
+            $permissions = $context->permissions;
+            if ($permissions === [] && $context->user_role !== null && $context->user_role !== '') {
+                $permissions = \App\Support\TestPermissionResolver::permissionsForRole($context->user_role);
+                if ($permissions !== []) {
+                    \App\Libraries\ContextHolder::set(new \App\DTO\SecurityContext(
+                        $context->user_id,
+                        $context->user_role,
+                        $context->metadata,
+                        $permissions
+                    ));
+                }
+            }
             if ($request instanceof ApiRequest) {
-                $request->setAuthContext((int) $context->user_id, (string) $context->user_role);
+                $request->setAuthContext((int) $context->user_id, (string) $context->user_role, $permissions);
             }
             return $request;
         }
@@ -39,9 +51,15 @@ class TestAuthFilter implements FilterInterface
         $testUserId = $request->getHeaderLine('X-Test-User-Id');
         if ($testUserId !== '') {
             $testUserRole = $request->getHeaderLine('X-Test-User-Role') ?: 'user';
-            \App\Libraries\ContextHolder::set(new \App\DTO\SecurityContext((int) $testUserId, (string) $testUserRole));
+            $permissions = \App\Support\TestPermissionResolver::permissionsForRole($testUserRole);
+            \App\Libraries\ContextHolder::set(new \App\DTO\SecurityContext(
+                (int) $testUserId,
+                (string) $testUserRole,
+                [],
+                $permissions
+            ));
             if ($request instanceof ApiRequest) {
-                $request->setAuthContext((int) $testUserId, $testUserRole);
+                $request->setAuthContext((int) $testUserId, $testUserRole, $permissions);
             }
             return $request;
         }

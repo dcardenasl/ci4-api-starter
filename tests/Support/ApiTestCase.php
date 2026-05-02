@@ -28,6 +28,8 @@ abstract class ApiTestCase extends CIUnitTestCase
     protected $migrateOnce = true;
     protected $refresh     = true;
     protected $namespace   = 'App';
+    protected $seed        = \App\Database\Seeds\RbacBootstrapSeeder::class;
+    protected $basePath    = APPPATH . 'Database';
 
     /**
      * Reset the request and other services before each test.

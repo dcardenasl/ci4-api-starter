@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace App\Commands;
 
+use App\Database\Seeds\RbacBootstrapSeeder;
 use CodeIgniter\CLI\BaseCommand;
 use CodeIgniter\CLI\CLI;
 use CodeIgniter\Database\BaseConnection;
 use CodeIgniter\Database\Exceptions\DatabaseException;
 use CodeIgniter\Database\MigrationRunner;
+use CodeIgniter\Database\Seeder;
 use Config\Database;
 use Config\Migrations;
 
@@ -49,8 +51,18 @@ class PrepareTestDatabase extends BaseCommand
             return EXIT_ERROR;
         }
 
+        $this->seedRbacBootstrap($db);
+
         CLI::write('Test database prepared.', 'green');
         return EXIT_SUCCESS;
+    }
+
+    private function seedRbacBootstrap(BaseConnection $db): void
+    {
+        $config = new \Config\Database();
+        $seeder = new Seeder($config, $db);
+        $seeder->call(RbacBootstrapSeeder::class);
+        CLI::write('Seeded IAM bootstrap (applications, roles, permissions).', 'green');
     }
 
     private function connectToTestsDatabase(): ?BaseConnection

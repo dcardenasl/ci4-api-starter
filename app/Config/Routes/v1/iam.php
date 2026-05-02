@@ -5,7 +5,7 @@
 $routes->group('iam', ['namespace' => '\App\Controllers\Api\V1\Iam'], function ($routes) {
 
     // Auth & Admin Protected Group
-    $routes->group('', ['filter' => ['jwtauth', 'roleauth:admin', 'throttle']], function ($routes) {
+    $routes->group('', ['filter' => ['jwtauth', 'permission:iam.admin-access', 'throttle']], function ($routes) {
         // Permission Routes
         $routes->get('permissions', 'PermissionController::index');
         $routes->get('permissions/(:num)', 'PermissionController::show/$1');

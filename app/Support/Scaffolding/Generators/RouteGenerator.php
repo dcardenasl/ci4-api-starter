@@ -35,7 +35,7 @@ class RouteGenerator
 \$routes->group('{$domainKebab}', ['namespace' => '\App\Controllers\Api\V1\\{$schema->domain}'], function (\$routes) {
 
     // Auth & Admin Protected Group
-    \$routes->group('', ['filter' => ['jwtauth', 'roleauth:admin', 'throttle']], function (\$routes) {
+    \$routes->group('', ['filter' => ['jwtauth', 'permission:iam.admin-access', 'throttle']], function (\$routes) {
         // Resource routes will be injected here
     });
 });
@@ -63,7 +63,7 @@ PHP;
         }
 
         // Try to inject inside the protected group
-        $search = "['filter' => ['jwtauth', 'roleauth:admin', 'throttle']], function (\$routes) {";
+        $search = "['filter' => ['jwtauth', 'permission:iam.admin-access', 'throttle']], function (\$routes) {";
         if (str_contains($content, $search)) {
             $pos = strpos($content, $search) + strlen($search);
             return substr($content, 0, $pos) . "\n" . $routeBlock . substr($content, $pos);

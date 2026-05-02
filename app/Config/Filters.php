@@ -7,8 +7,8 @@ use App\Filters\CorsFilter;
 use App\Filters\FeatureToggleFilter;
 use App\Filters\JwtAuthFilter;
 use App\Filters\LocaleFilter;
+use App\Filters\PermissionFilter;
 use App\Filters\RequestLoggingFilter;
-use App\Filters\RoleAuthorizationFilter;
 use App\Filters\SecurityHeadersFilter;
 use App\Filters\ThrottleFilter;
 use CodeIgniter\Config\Filters as BaseFilters;
@@ -61,7 +61,7 @@ class Filters extends BaseFilters
         'testauth'      => \App\Filters\TestAuthFilter::class,
         'throttle'      => ThrottleFilter::class,
         'authThrottle'  => AuthThrottleFilter::class,
-        'roleauth'      => RoleAuthorizationFilter::class,
+        'permission'    => PermissionFilter::class,
         'requestLogging' => RequestLoggingFilter::class,
         'locale'        => LocaleFilter::class,
         'featureToggle' => FeatureToggleFilter::class,

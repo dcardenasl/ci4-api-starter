@@ -22,7 +22,7 @@ class SecurityBypassTest extends ApiTestCase
         $response = $this->withHeaders(['X-Test-User-Role' => 'superadmin'])
                          ->get('/api/v1/users');
 
-        // Should return 401 because jwtauth is missing, and the header should be ignored by roleauth
+        // Should return 401 because jwtauth is missing, and the header should be ignored by the permission filter
         $response->assertStatus(401);
     }
 

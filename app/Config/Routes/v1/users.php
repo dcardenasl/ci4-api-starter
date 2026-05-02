@@ -5,9 +5,11 @@
 $routes->group('users', ['filter' => ['jwtauth', 'throttle']], function ($routes) {
     $routes->get('(:num)', '\App\Controllers\Api\V1\Users\UserController::show/$1');
 
-    // Admin only
-    $routes->group('', ['filter' => 'roleauth:admin'], function ($routes) {
+    // Admin only — uses fine-grained permissions (users.read for list, users.write for mutations)
+    $routes->group('', ['filter' => 'permission:users.read'], function ($routes) {
         $routes->get('', '\App\Controllers\Api\V1\Users\UserController::index');
+    });
+    $routes->group('', ['filter' => 'permission:users.write'], function ($routes) {
         $routes->post('', '\App\Controllers\Api\V1\Users\UserController::create');
         $routes->put('(:num)', '\App\Controllers\Api\V1\Users\UserController::update/$1');
         $routes->delete('(:num)', '\App\Controllers\Api\V1\Users\UserController::delete/$1');

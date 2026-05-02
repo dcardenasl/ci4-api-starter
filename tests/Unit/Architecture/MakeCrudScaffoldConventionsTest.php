@@ -27,7 +27,7 @@ class MakeCrudScaffoldConventionsTest extends CIUnitTestCase
         $source = file_get_contents($path);
 
         $this->assertIsString($source);
-        $this->assertStringContainsString("['filter' => ['jwtauth', 'roleauth:admin', 'throttle']]", $source);
+        $this->assertStringContainsString("['filter' => ['jwtauth', 'permission:iam.admin-access', 'throttle']]", $source);
     }
 
     public function testMakeCrudDtoTemplatesUsePublicRulesMethod(): void

@@ -63,8 +63,7 @@ class RbacBootstrapSeeder extends Seeder
     {
         $appId = $this->ensureApplication(self::APP_SELF);
         $permissionIds = $this->ensurePermissions($appId);
-        $roleIds = $this->ensureRoles($appId, $permissionIds);
-        $this->ensureMembershipsForExistingUsers($appId, $roleIds);
+        $this->ensureRoles($appId, $permissionIds);
     }
 
     private function ensureApplication(string $name): int
@@ -182,57 +181,4 @@ class RbacBootstrapSeeder extends Seeder
         $this->db->table('role_permissions')->insertBatch($rows);
     }
 
-    /**
-     * @param array<string, int> $roleIds map of role code → id
-     */
-    private function ensureMembershipsForExistingUsers(int $appId, array $roleIds): void
-    {
-        if (! $this->db->fieldExists('role', 'users')) {
-            return;
-        }
-
-        $users = $this->db->table('users')->select('id, role')->get()->getResultArray();
-        if ($users === []) {
-            return;
-        }
-
-        $now = date('Y-m-d H:i:s');
-
-        foreach ($users as $user) {
-            $userId = (int) $user['id'];
-            $roleCode = (string) ($user['role'] ?? 'user');
-            $roleId = $roleIds[$roleCode] ?? $roleIds['user'];
-
-            $membership = $this->db->table('app_user_memberships')
-                ->where('user_id', $userId)
-                ->where('application_id', $appId)
-                ->get()->getRowArray();
-
-            if ($membership !== null) {
-                $membershipId = (int) $membership['id'];
-            } else {
-                $this->db->table('app_user_memberships')->insert([
-                    'user_id'        => $userId,
-                    'application_id' => $appId,
-                    'status'         => 'active',
-                    'accepted_at'    => $now,
-                    'created_at'     => $now,
-                    'updated_at'     => $now,
-                ]);
-                $membershipId = (int) $this->db->insertID();
-            }
-
-            $hasRole = $this->db->table('membership_roles')
-                ->where('membership_id', $membershipId)
-                ->where('role_id', $roleId)
-                ->countAllResults() > 0;
-
-            if (! $hasRole) {
-                $this->db->table('membership_roles')->insert([
-                    'membership_id' => $membershipId,
-                    'role_id'       => $roleId,
-                ]);
-            }
-        }
-    }
 }

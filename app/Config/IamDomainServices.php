@@ -52,6 +52,30 @@ trait IamDomainServices
         );
     }
 
+    public static function appUserMembershipResponseMapper(bool $getShared = true): \App\Interfaces\Mappers\ResponseMapperInterface
+    {
+        if ($getShared) {
+            return static::getSharedInstance('appUserMembershipResponseMapper');
+        }
+
+        return new \App\Services\Core\Mappers\DtoResponseMapper(
+            \App\DTO\Response\Iam\AppUserMembershipResponseDTO::class
+        );
+    }
+
+    public static function appUserMembershipService(bool $getShared = true): \App\Interfaces\Iam\AppUserMembershipServiceInterface
+    {
+        if ($getShared) {
+            return static::getSharedInstance('appUserMembershipService');
+        }
+
+        return new \App\Services\Iam\AppUserMembershipService(
+            new \App\Repositories\GenericRepository(model(\App\Models\AppUserMembershipModel::class)),
+            static::appUserMembershipResponseMapper(),
+            static::effectivePermissionsResolver()
+        );
+    }
+
     public static function effectivePermissionsResolver(bool $getShared = true): \App\Services\Iam\EffectivePermissionsResolver
     {
         if ($getShared) {

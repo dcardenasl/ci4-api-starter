@@ -6,6 +6,22 @@ $routes->group('iam', ['namespace' => '\App\Controllers\Api\V1\Iam'], function (
 
     // Auth & Admin Protected Group
     $routes->group('', ['filter' => ['jwtauth', 'permission:iam.admin-access', 'throttle']], function ($routes) {
+        // AppUserMembership Routes
+        $routes->get('memberships', 'AppUserMembershipController::index');
+        $routes->get('memberships/(:num)', 'AppUserMembershipController::show/$1');
+        $routes->post('memberships', 'AppUserMembershipController::create');
+        $routes->put('memberships/(:num)', 'AppUserMembershipController::update/$1');
+        $routes->delete('memberships/(:num)', 'AppUserMembershipController::delete/$1');
+
+        // Membership ↔ Role relations
+        $routes->get('memberships/(:num)/roles', 'AppUserMembershipController::listRoles/$1');
+        $routes->post('memberships/(:num)/roles/attach', 'AppUserMembershipController::attachRoles/$1');
+        $routes->delete('memberships/(:num)/roles/(:num)', 'AppUserMembershipController::detachRole/$1/$2');
+
+        // User-centric IAM lookups
+        $routes->get('users/(:num)/memberships', 'AppUserMembershipController::listForUser/$1');
+        $routes->get('users/(:num)/permissions', 'AppUserMembershipController::listEffectivePermissionsForUser/$1');
+
         // Permission Routes
         $routes->get('permissions', 'PermissionController::index');
         $routes->get('permissions/(:num)', 'PermissionController::show/$1');

@@ -160,10 +160,11 @@ class FileService implements FileServiceInterface
      */
     public function findById(int $id, ?SecurityContext $context = null): FileResponseDTO
     {
-        $file = $this->fileRepository->find($id);
-        if (!$file) {
-            throw new NotFoundException(lang('Files.file_not_found'));
+        if ($context?->user_id === null) {
+            throw new AuthorizationException(lang('Api.unauthorized'));
         }
+
+        $file = $this->findFileAndAuthorize($id, $context->user_id, 'view', $context->isAdmin(), $context);
 
         /** @var FileResponseDTO $response */
         $response = $this->responseMapper->map($file);
@@ -224,10 +225,14 @@ class FileService implements FileServiceInterface
         }
 
         $effectiveBypass = $bypassOwnership
-            || ($action === 'download' && !$this->userScopedFiles);
+            || (in_array($action, ['download', 'view'], true) && !$this->userScopedFiles);
 
         if (!$effectiveBypass && (int) $file->user_id !== $userId) {
-            $deniedAction = $action === 'download' ? 'unauthorized_file_download' : 'unauthorized_file_delete';
+            $deniedAction = match ($action) {
+                'download' => 'unauthorized_file_download',
+                'delete'   => 'unauthorized_file_delete',
+                default    => 'unauthorized_file_access',
+            };
             $this->auditService->log(
                 $deniedAction,
                 'files',

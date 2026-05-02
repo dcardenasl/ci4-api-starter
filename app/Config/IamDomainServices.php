@@ -51,4 +51,16 @@ trait IamDomainServices
             static::permissionResponseMapper()
         );
     }
+
+    public static function effectivePermissionsResolver(bool $getShared = true): \App\Services\Iam\EffectivePermissionsResolver
+    {
+        if ($getShared) {
+            return static::getSharedInstance('effectivePermissionsResolver');
+        }
+
+        return new \App\Services\Iam\EffectivePermissionsResolver(
+            \Config\Database::connect(),
+            static::cache()
+        );
+    }
 }

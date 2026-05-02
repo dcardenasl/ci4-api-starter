@@ -13,32 +13,28 @@ class RoleModel extends BaseAuditableModel
     use Filterable;
     use Searchable;
 
-    /** @var string */
-    protected $table            = 'roles';
-    protected $primaryKey       = 'id';
-    protected $useAutoIncrement = true;
-    protected $returnType       = RoleEntity::class;
-    protected $useSoftDeletes   = false;
-    protected $protectFields    = true;
-
-    /** @var list<string> */
-    protected $allowedFields = [
-        'application_id',
-        'code',
-        'name',
-        'description',
-        'is_system',
-    ];
-
+    protected $table = 'roles';
+    protected $primaryKey = 'id';
+    protected $returnType = RoleEntity::class;
+    protected $useSoftDeletes = false;
     protected $useTimestamps = true;
-    protected $dateFormat    = 'datetime';
-    protected $createdField  = 'created_at';
-    protected $updatedField  = 'updated_at';
+
+    protected $allowedFields = ['application_id', 'code', 'name', 'description', 'is_system'];
 
     /** @var array<int, string> */
-    protected array $searchableFields = ['code', 'name', 'description'];
+    protected array $searchableFields = ['code', 'name'];
+
     /** @var array<int, string> */
-    protected array $filterableFields = ['application_id', 'is_system', 'code', 'created_at'];
+    protected array $filterableFields = ['id', 'application_id', 'is_system'];
+
     /** @var array<int, string> */
-    protected array $sortableFields = ['id', 'code', 'name', 'created_at'];
+    protected array $sortableFields = ['id', 'created_at', 'application_id', 'code', 'name', 'is_system'];
+
+    protected $validationRules = [
+        'application_id' => 'permit_empty|integer',
+        'code' => 'required|string|max_length[100]',
+        'name' => 'required|string|max_length[100]',
+        'description' => 'permit_empty|string',
+        'is_system' => 'permit_empty|in_list[0,1]',
+    ];
 }

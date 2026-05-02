@@ -1702,6 +1702,330 @@
                 }
             }
         },
+        "/api/v1/permissions": {
+            "get": {
+                "tags": [
+                    "Iam"
+                ],
+                "summary": "List Permissions",
+                "operationId": "502622a255362c811db579d2b04e98fa",
+                "responses": {
+                    "200": {
+                        "description": "List retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/PermissionResponse"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Iam"
+                ],
+                "summary": "Create new Permission",
+                "operationId": "19afd648e3f6975944d51febe3549dc3",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PermissionCreateRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Created successfully"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                }
+            }
+        },
+        "/api/v1/permissions/{id}": {
+            "get": {
+                "tags": [
+                    "Iam"
+                ],
+                "summary": "Get Permission by ID",
+                "operationId": "45e62e9213f9164f7523f6d91a2c1e33",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PermissionResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not found"
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Iam"
+                ],
+                "summary": "Update existing Permission",
+                "operationId": "838f17e9d3353b6ca31b3ef8cf91252a",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PermissionUpdateRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PermissionResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Iam"
+                ],
+                "summary": "Delete Permission by ID",
+                "operationId": "ea7f660a2495fbb1e7876ab2aeff4a7c",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Deleted successfully"
+                    },
+                    "404": {
+                        "description": "Not found"
+                    }
+                }
+            }
+        },
+        "/api/v1/roles": {
+            "get": {
+                "tags": [
+                    "Iam"
+                ],
+                "summary": "List Roles",
+                "operationId": "e0b1cfefc67992e068b6422394ad9a9e",
+                "responses": {
+                    "200": {
+                        "description": "List retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/RoleResponse"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Iam"
+                ],
+                "summary": "Create new Role",
+                "operationId": "4ac8c070b4b2a6dfc0d715f53326f784",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RoleCreateRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Created successfully"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                }
+            }
+        },
+        "/api/v1/roles/{id}": {
+            "get": {
+                "tags": [
+                    "Iam"
+                ],
+                "summary": "Get Role by ID",
+                "operationId": "04e69ec78b74099ac4ccffb01e7e8e0d",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RoleResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not found"
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Iam"
+                ],
+                "summary": "Update existing Role",
+                "operationId": "0a0d27f20fec4718fd5280a90c73abb0",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RoleUpdateRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RoleResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Iam"
+                ],
+                "summary": "Delete Role by ID",
+                "operationId": "d48073893d81dd228cef7eac59aff4ea",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Deleted successfully"
+                    },
+                    "404": {
+                        "description": "Not found"
+                    }
+                }
+            }
+        },
         "/api/v1/metrics": {
             "get": {
                 "tags": [
@@ -2653,6 +2977,134 @@
                 },
                 "type": "object"
             },
+            "AttachPermissionsRequest": {
+                "required": [
+                    "permission_ids"
+                ],
+                "properties": {
+                    "permission_ids": {
+                        "description": "Permission ids to attach to the role",
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "PermissionCreateRequest": {
+                "properties": {
+                    "application_id": {
+                        "description": "application_id",
+                        "type": "integer"
+                    },
+                    "code": {
+                        "description": "code",
+                        "type": "string"
+                    },
+                    "resource": {
+                        "description": "resource",
+                        "type": "string"
+                    },
+                    "action": {
+                        "description": "action",
+                        "type": "string"
+                    },
+                    "description": {
+                        "description": "description",
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "PermissionIndexRequest": {},
+            "PermissionUpdateRequest": {
+                "properties": {
+                    "application_id": {
+                        "description": "application_id",
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "code": {
+                        "description": "code",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "resource": {
+                        "description": "resource",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "action": {
+                        "description": "action",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "description": {
+                        "description": "description",
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "RoleCreateRequest": {
+                "properties": {
+                    "application_id": {
+                        "description": "Application id; null for global roles",
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "code": {
+                        "description": "Role code (unique within application)",
+                        "type": "string"
+                    },
+                    "name": {
+                        "description": "Display name",
+                        "type": "string"
+                    },
+                    "description": {
+                        "description": "Free-form description",
+                        "type": "string"
+                    },
+                    "is_system": {
+                        "description": "System role (cannot be deleted)",
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
+            "RoleIndexRequest": {},
+            "RoleUpdateRequest": {
+                "properties": {
+                    "application_id": {
+                        "description": "Application id; null for global roles",
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "code": {
+                        "description": "Role code (unique within application)",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "name": {
+                        "description": "Display name",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "description": {
+                        "description": "Free-form description",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "is_system": {
+                        "description": "System role (cannot be deleted)",
+                        "type": "boolean",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
             "UserCreateRequest": {
                 "title": "User Create Request",
                 "description": "Data needed to create a new user",
@@ -3237,6 +3689,105 @@
                 },
                 "type": "object"
             },
+            "PermissionResponse": {
+                "title": "Permission Response",
+                "required": [
+                    "id",
+                    "application_id",
+                    "code"
+                ],
+                "properties": {
+                    "id": {
+                        "description": "Unique identifier",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "application_id": {
+                        "description": "application_id",
+                        "type": "integer"
+                    },
+                    "code": {
+                        "description": "code",
+                        "type": "string"
+                    },
+                    "resource": {
+                        "description": "resource",
+                        "type": "string"
+                    },
+                    "action": {
+                        "description": "action",
+                        "type": "string"
+                    },
+                    "description": {
+                        "description": "description",
+                        "type": "string"
+                    },
+                    "created_at": {
+                        "description": "Creation timestamp",
+                        "type": "string",
+                        "example": "2026-02-26 12:00:00",
+                        "nullable": true
+                    },
+                    "updated_at": {
+                        "description": "Last update timestamp",
+                        "type": "string",
+                        "example": "2026-02-26 12:00:00",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "RoleResponse": {
+                "title": "Role Response",
+                "required": [
+                    "id",
+                    "code",
+                    "name",
+                    "is_system"
+                ],
+                "properties": {
+                    "id": {
+                        "description": "Unique identifier",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "application_id": {
+                        "description": "Application id; null for global roles",
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "code": {
+                        "description": "Role code",
+                        "type": "string"
+                    },
+                    "name": {
+                        "description": "Display name",
+                        "type": "string"
+                    },
+                    "description": {
+                        "description": "Description",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "is_system": {
+                        "description": "System role flag",
+                        "type": "boolean"
+                    },
+                    "created_at": {
+                        "description": "Creation timestamp",
+                        "type": "string",
+                        "example": "2026-02-26 12:00:00",
+                        "nullable": true
+                    },
+                    "updated_at": {
+                        "description": "Last update timestamp",
+                        "type": "string",
+                        "example": "2026-02-26 12:00:00",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
             "GoogleIdentityResponse": {
                 "title": "Google Identity Response",
                 "description": "Verified identity data returned by Google",
@@ -3801,6 +4352,10 @@
         {
             "name": "API Keys",
             "description": "API Keys"
+        },
+        {
+            "name": "Iam",
+            "description": "Iam"
         }
     ]
 }

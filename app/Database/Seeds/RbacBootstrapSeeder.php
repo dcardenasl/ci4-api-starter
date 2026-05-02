@@ -18,16 +18,16 @@ class RbacBootstrapSeeder extends Seeder
 
     /** @var array<int, array{code: string, resource: string, action: string, description: string}> */
     private const PERMISSIONS = [
-        ['code' => 'users:read',             'resource' => 'users',    'action' => 'read',              'description' => 'Read user records'],
-        ['code' => 'users:write',            'resource' => 'users',    'action' => 'write',             'description' => 'Create, update or delete users'],
-        ['code' => 'files:read',             'resource' => 'files',    'action' => 'read',              'description' => 'Read files'],
-        ['code' => 'files:write',            'resource' => 'files',    'action' => 'write',             'description' => 'Upload or delete files'],
-        ['code' => 'audit:read',             'resource' => 'audit',    'action' => 'read',              'description' => 'Read audit log entries'],
-        ['code' => 'metrics:read',           'resource' => 'metrics',  'action' => 'read',              'description' => 'Read metrics dashboards'],
-        ['code' => 'apikeys:read',           'resource' => 'apikeys',  'action' => 'read',              'description' => 'Read API keys'],
-        ['code' => 'apikeys:write',          'resource' => 'apikeys',  'action' => 'write',             'description' => 'Create, update or revoke API keys'],
-        ['code' => 'iam:admin-access',       'resource' => 'iam',      'action' => 'admin-access',      'description' => 'Access the admin panel'],
-        ['code' => 'iam:superadmin-access',  'resource' => 'iam',      'action' => 'superadmin-access', 'description' => 'Access superadmin-only operations'],
+        ['code' => 'users.read',             'resource' => 'users',    'action' => 'read',              'description' => 'Read user records'],
+        ['code' => 'users.write',            'resource' => 'users',    'action' => 'write',             'description' => 'Create, update or delete users'],
+        ['code' => 'files.read',             'resource' => 'files',    'action' => 'read',              'description' => 'Read files'],
+        ['code' => 'files.write',            'resource' => 'files',    'action' => 'write',             'description' => 'Upload or delete files'],
+        ['code' => 'audit.read',             'resource' => 'audit',    'action' => 'read',              'description' => 'Read audit log entries'],
+        ['code' => 'metrics.read',           'resource' => 'metrics',  'action' => 'read',              'description' => 'Read metrics dashboards'],
+        ['code' => 'apikeys.read',           'resource' => 'apikeys',  'action' => 'read',              'description' => 'Read API keys'],
+        ['code' => 'apikeys.write',          'resource' => 'apikeys',  'action' => 'write',             'description' => 'Create, update or revoke API keys'],
+        ['code' => 'iam.admin-access',       'resource' => 'iam',      'action' => 'admin-access',      'description' => 'Access the admin panel'],
+        ['code' => 'iam.superadmin-access',  'resource' => 'iam',      'action' => 'superadmin-access', 'description' => 'Access superadmin-only operations'],
     ];
 
     /** @var array<int, array{code: string, name: string, description: string, permissions: array<int, string>|string}> */
@@ -43,19 +43,19 @@ class RbacBootstrapSeeder extends Seeder
             'name'        => 'Administrator',
             'description' => 'Administrative access excluding superadmin-only operations.',
             'permissions' => [
-                'users:read', 'users:write',
-                'files:read', 'files:write',
-                'audit:read',
-                'metrics:read',
-                'apikeys:read', 'apikeys:write',
-                'iam:admin-access',
+                'users.read', 'users.write',
+                'files.read', 'files.write',
+                'audit.read',
+                'metrics.read',
+                'apikeys.read', 'apikeys.write',
+                'iam.admin-access',
             ],
         ],
         [
             'code'        => 'user',
             'name'        => 'User',
             'description' => 'Default role for end users.',
-            'permissions' => ['files:read', 'files:write'],
+            'permissions' => ['files.read', 'files.write'],
         ],
     ];
 

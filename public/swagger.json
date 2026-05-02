@@ -1702,6 +1702,168 @@
                 }
             }
         },
+        "/api/v1/memberships": {
+            "get": {
+                "tags": [
+                    "Iam"
+                ],
+                "summary": "List AppUserMemberships",
+                "operationId": "a4906a4977fb5860678f4a50792007ec",
+                "responses": {
+                    "200": {
+                        "description": "List retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/AppUserMembershipResponse"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Iam"
+                ],
+                "summary": "Create new AppUserMembership",
+                "operationId": "4d2fe6fe449cf045fed5eadf46de9fc2",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AppUserMembershipCreateRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Created successfully"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                }
+            }
+        },
+        "/api/v1/memberships/{id}": {
+            "get": {
+                "tags": [
+                    "Iam"
+                ],
+                "summary": "Get AppUserMembership by ID",
+                "operationId": "a852e6373ec0a62bf7b586e113a1ed6c",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AppUserMembershipResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not found"
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Iam"
+                ],
+                "summary": "Update existing AppUserMembership",
+                "operationId": "96405b2b7d1e257327ecf99c92f32f68",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AppUserMembershipUpdateRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AppUserMembershipResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Iam"
+                ],
+                "summary": "Delete AppUserMembership by ID",
+                "operationId": "37ba743ec4bb640b2376230168d7396d",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Deleted successfully"
+                    },
+                    "404": {
+                        "description": "Not found"
+                    }
+                }
+            }
+        },
         "/api/v1/permissions": {
             "get": {
                 "tags": [
@@ -2977,6 +3139,44 @@
                 },
                 "type": "object"
             },
+            "AppUserMembershipCreateRequest": {
+                "properties": {
+                    "user_id": {
+                        "description": "user_id",
+                        "type": "integer"
+                    },
+                    "application_id": {
+                        "description": "application_id",
+                        "type": "integer"
+                    },
+                    "status": {
+                        "description": "status",
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "AppUserMembershipIndexRequest": {},
+            "AppUserMembershipUpdateRequest": {
+                "properties": {
+                    "user_id": {
+                        "description": "user_id",
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "application_id": {
+                        "description": "application_id",
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "status": {
+                        "description": "status",
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
             "AttachPermissionsRequest": {
                 "required": [
                     "permission_ids"
@@ -2984,6 +3184,21 @@
                 "properties": {
                     "permission_ids": {
                         "description": "Permission ids to attach to the role",
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "AttachRolesRequest": {
+                "required": [
+                    "role_ids"
+                ],
+                "properties": {
+                    "role_ids": {
+                        "description": "Role ids to attach to the membership",
                         "type": "array",
                         "items": {
                             "type": "integer"
@@ -3129,17 +3344,6 @@
                         "example": "Doe",
                         "nullable": true
                     },
-                    "role": {
-                        "description": "Account role",
-                        "type": "string",
-                        "example": "user",
-                        "nullable": true,
-                        "enum": [
-                            "user",
-                            "admin",
-                            "superadmin"
-                        ]
-                    },
                     "oauth_provider": {
                         "description": "OAuth provider name",
                         "type": "string",
@@ -3185,16 +3389,6 @@
                         "type": "string",
                         "example": "john",
                         "nullable": true
-                    },
-                    "role": {
-                        "description": "Filter by account role",
-                        "type": "string",
-                        "nullable": true,
-                        "enum": [
-                            "user",
-                            "admin",
-                            "superadmin"
-                        ]
                     },
                     "status": {
                         "description": "Filter by account status",
@@ -3244,16 +3438,6 @@
                         "type": "string",
                         "example": "P@ssw0rd123!",
                         "nullable": true
-                    },
-                    "role": {
-                        "description": "Updated account role",
-                        "type": "string",
-                        "nullable": true,
-                        "enum": [
-                            "user",
-                            "admin",
-                            "superadmin"
-                        ]
                     },
                     "avatar_url": {
                         "description": "URL to user avatar image",
@@ -3485,7 +3669,6 @@
                     "email",
                     "first_name",
                     "last_name",
-                    "role",
                     "status"
                 ],
                 "properties": {
@@ -3508,16 +3691,6 @@
                         "description": "User last name",
                         "type": "string",
                         "example": "Doe"
-                    },
-                    "role": {
-                        "description": "User role",
-                        "type": "string",
-                        "example": "user",
-                        "enum": [
-                            "user",
-                            "admin",
-                            "superadmin"
-                        ]
                     },
                     "status": {
                         "description": "Account status",
@@ -3682,6 +3855,46 @@
                     },
                     "uploaded_at": {
                         "description": "Upload timestamp",
+                        "type": "string",
+                        "example": "2026-02-26 12:00:00",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "AppUserMembershipResponse": {
+                "title": "AppUserMembership Response",
+                "required": [
+                    "id",
+                    "user_id",
+                    "application_id"
+                ],
+                "properties": {
+                    "id": {
+                        "description": "Unique identifier",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "user_id": {
+                        "description": "user_id",
+                        "type": "integer"
+                    },
+                    "application_id": {
+                        "description": "application_id",
+                        "type": "integer"
+                    },
+                    "status": {
+                        "description": "status",
+                        "type": "string"
+                    },
+                    "created_at": {
+                        "description": "Creation timestamp",
+                        "type": "string",
+                        "example": "2026-02-26 12:00:00",
+                        "nullable": true
+                    },
+                    "updated_at": {
+                        "description": "Last update timestamp",
                         "type": "string",
                         "example": "2026-02-26 12:00:00",
                         "nullable": true
@@ -3999,7 +4212,6 @@
                 "required": [
                     "id",
                     "email",
-                    "role",
                     "status"
                 ],
                 "properties": {
@@ -4024,16 +4236,6 @@
                         "type": "string",
                         "example": "Doe",
                         "nullable": true
-                    },
-                    "role": {
-                        "description": "User role",
-                        "type": "string",
-                        "example": "user",
-                        "enum": [
-                            "user",
-                            "admin",
-                            "superadmin"
-                        ]
                     },
                     "status": {
                         "description": "Account status",

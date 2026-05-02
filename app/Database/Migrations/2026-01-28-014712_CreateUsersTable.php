@@ -50,12 +50,6 @@ class CreateUsersTable extends Migration
                 'constraint' => 255,
                 'null'       => true,
             ],
-            'role' => [
-                'type'       => 'VARCHAR',
-                'constraint' => 50,
-                'default'    => 'user',
-                'null'       => false,
-            ],
             'status' => [
                 'type'       => 'VARCHAR',
                 'constraint' => 20,

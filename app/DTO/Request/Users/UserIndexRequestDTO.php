@@ -28,9 +28,6 @@ readonly class UserIndexRequestDTO extends BaseRequestDTO
     #[OA\Property(description: 'Search term for email, first name or last name', nullable: true, example: 'john')]
     public ?string $search;
 
-    #[OA\Property(description: 'Filter by account role', enum: ['user', 'admin', 'superadmin'], nullable: true)]
-    public ?string $role;
-
     #[OA\Property(description: 'Filter by account status', enum: ['active', 'inactive', 'pending_approval', 'invited'], nullable: true)]
     public ?string $status;
 
@@ -43,7 +40,6 @@ readonly class UserIndexRequestDTO extends BaseRequestDTO
             'page'     => 'permit_empty|is_natural_no_zero',
             'per_page'  => 'permit_empty|is_natural_no_zero|less_than[101]',
             'search'   => 'permit_empty|string|max_length[100]',
-            'role'     => 'permit_empty|in_list[user,admin,superadmin]',
             'status'   => 'permit_empty|in_list[active,inactive,pending_approval,invited]',
             'sort'     => 'permit_empty|max_length[100]',
         ];
@@ -63,7 +59,6 @@ readonly class UserIndexRequestDTO extends BaseRequestDTO
             $this->search = $candidate === '' ? null : $candidate;
         }
 
-        $this->role = $this->extractString($data, $filter, 'role');
         $this->status = $this->extractString($data, $filter, 'status');
 
         $this->sort = (string) ($data['sort'] ?? '');
@@ -78,9 +73,6 @@ readonly class UserIndexRequestDTO extends BaseRequestDTO
             'sort'     => $this->sort,
         ];
 
-        if ($this->role) {
-            $data['filter']['role'] = ['eq' => $this->role];
-        }
         if ($this->status) {
             $data['filter']['status'] = ['eq' => $this->status];
         }

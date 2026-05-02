@@ -68,24 +68,6 @@ class UserEntity extends Entity
     }
 
     /**
-     * Check if user is an admin or superadmin
-     */
-    public function isAdmin(): bool
-    {
-        $role = (string) ($this->attributes['role'] ?? '');
-
-        return in_array($role, ['admin', 'superadmin'], true);
-    }
-
-    /**
-     * Check if user is a superadmin
-     */
-    public function isSuperAdmin(): bool
-    {
-        return ($this->attributes['role'] ?? '') === 'superadmin';
-    }
-
-    /**
      * Check if user account is active
      */
     public function isActive(): bool

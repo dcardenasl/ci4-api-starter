@@ -16,7 +16,7 @@ use OpenApi\Attributes as OA;
     schema: 'UserResponse',
     title: 'User Response',
     description: 'User data returned by the API',
-    required: ['id', 'email', 'role', 'status']
+    required: ['id', 'email', 'status']
 )]
 readonly class UserResponseDTO implements DataTransferObjectInterface
 {
@@ -29,8 +29,6 @@ readonly class UserResponseDTO implements DataTransferObjectInterface
         public string $first_name,
         #[OA\Property(property: 'last_name', description: 'User last name', example: 'Doe', nullable: true)]
         public string $last_name,
-        #[OA\Property(description: 'User role', example: 'user', enum: ['user', 'admin', 'superadmin'])]
-        public string $role,
         #[OA\Property(description: 'Account status', example: 'active', enum: ['pending_approval', 'active', 'invited'])]
         public string $status,
         #[OA\Property(property: 'avatar_url', description: 'URL to user avatar', example: 'https://example.com/avatar.png', nullable: true)]
@@ -59,7 +57,6 @@ readonly class UserResponseDTO implements DataTransferObjectInterface
             email: (string) ($data['email'] ?? ''),
             first_name: (string) ($data['first_name'] ?? ''),
             last_name: (string) ($data['last_name'] ?? ''),
-            role: (string) ($data['role'] ?? 'user'),
             status: (string) ($data['status'] ?? 'pending'),
             avatar_url: isset($data['avatar_url']) ? (string) $data['avatar_url'] : null,
             created_at: $created_at ? (string) $created_at : null,
@@ -74,7 +71,6 @@ readonly class UserResponseDTO implements DataTransferObjectInterface
             'email' => $this->email,
             'first_name' => $this->first_name,
             'last_name' => $this->last_name,
-            'role' => $this->role,
             'status' => $this->status,
             'avatar_url' => $this->avatar_url,
             'created_at' => $this->created_at,

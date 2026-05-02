@@ -31,9 +31,6 @@ readonly class UserUpdateRequestDTO extends BaseRequestDTO
     #[OA\Property(description: 'New password (must be strong)', example: 'P@ssw0rd123!', nullable: true)]
     public ?string $password;
 
-    #[OA\Property(description: 'Updated account role', enum: ['user', 'admin', 'superadmin'], nullable: true)]
-    public ?string $role;
-
     #[OA\Property(description: 'URL to user avatar image', example: 'https://example.com/avatar.jpg', nullable: true)]
     public ?string $avatar_url;
 
@@ -44,7 +41,6 @@ readonly class UserUpdateRequestDTO extends BaseRequestDTO
             'first_name' => 'permit_empty|string|max_length[100]',
             'last_name'  => 'permit_empty|string|max_length[100]',
             'password'   => 'permit_empty|strong_password',
-            'role'       => 'permit_empty|in_list[user,admin,superadmin]',
             'avatar_url' => 'permit_empty|valid_url|max_length[255]',
         ];
     }
@@ -55,7 +51,6 @@ readonly class UserUpdateRequestDTO extends BaseRequestDTO
         $this->first_name = $data['first_name'] ?? null;
         $this->last_name  = $data['last_name'] ?? null;
         $this->password   = $data['password'] ?? null;
-        $this->role       = $data['role'] ?? null;
         $this->avatar_url = $data['avatar_url'] ?? null;
     }
 
@@ -66,7 +61,6 @@ readonly class UserUpdateRequestDTO extends BaseRequestDTO
             'first_name' => $this->first_name,
             'last_name'  => $this->last_name,
             'password'   => $this->password,
-            'role'       => $this->role,
             'avatar_url' => $this->avatar_url,
         ], fn ($v) => $v !== null);
     }

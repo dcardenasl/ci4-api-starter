@@ -164,7 +164,7 @@ class FileService implements FileServiceInterface
             throw new AuthorizationException(lang('Api.unauthorized'));
         }
 
-        $file = $this->findFileAndAuthorize($id, $context->user_id, 'view', $context->isAdmin(), $context);
+        $file = $this->findFileAndAuthorize($id, $context->user_id, 'view', $context->hasPermission('files.read'), $context);
 
         /** @var FileResponseDTO $response */
         $response = $this->responseMapper->map($file);
@@ -192,7 +192,7 @@ class FileService implements FileServiceInterface
             throw new AuthorizationException(lang('Api.unauthorized'));
         }
 
-        $file = $this->findFileAndAuthorize($id, $context->user_id, 'delete', $context->isAdmin(), $context);
+        $file = $this->findFileAndAuthorize($id, $context->user_id, 'delete', $context->hasPermission('files.read'), $context);
 
         return $this->wrapInTransaction(function () use ($file) {
             $this->storage->delete($file->path);

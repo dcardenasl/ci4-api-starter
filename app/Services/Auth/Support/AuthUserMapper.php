@@ -23,7 +23,6 @@ class AuthUserMapper
             'first_name' => (string) ($user->first_name ?? ''),
             'last_name' => (string) ($user->last_name ?? ''),
             'avatar_url' => (string) ($user->avatar_url ?? ''),
-            'role' => (string) ($user->role ?? 'user'),
         ];
     }
 

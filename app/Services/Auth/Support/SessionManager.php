@@ -34,10 +34,9 @@ class SessionManager
     public function generateSessionResponse(array $userData): array
     {
         $userId = (int) ($userData['id'] ?? 0);
-        $role = (string) ($userData['role'] ?? 'user');
         $permissions = $userId > 0 ? $this->permissionsResolver->resolve($userId, self::APPLICATION_ID) : [];
 
-        $accessToken = $this->jwtService->encode($userId, $role, $permissions);
+        $accessToken = $this->jwtService->encode($userId, $permissions);
         $refreshToken = $this->refreshTokenService->issueRefreshToken($userId);
 
         $userResponse = $userData;

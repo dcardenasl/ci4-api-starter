@@ -58,7 +58,7 @@ class GoogleLoginAction
             $pending = $this->googleHandler->createPendingUser($identity->toArray());
             $this->sendPendingApprovalEmail($pending);
 
-            $userContext = new SecurityContext((int) $pending->id, (string) $pending->role, $context->metadata);
+            $userContext = new SecurityContext((int) $pending->id, $context->metadata);
             $this->auditService->log(
                 'google_registration_pending',
                 'users',
@@ -121,7 +121,7 @@ class GoogleLoginAction
             throw new \RuntimeException(lang('Auth.googleUserMissing'));
         }
 
-        $userContext = new SecurityContext((int) $freshUser->id, (string) $freshUser->role, $context->metadata);
+        $userContext = new SecurityContext((int) $freshUser->id, $context->metadata);
         $this->auditService->log(
             'google_login_success',
             'users',

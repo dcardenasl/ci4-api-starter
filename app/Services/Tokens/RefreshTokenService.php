@@ -83,7 +83,7 @@ readonly class RefreshTokenService implements \App\Interfaces\Tokens\RefreshToke
 
             // Generate new access token
             $permissions = $this->permissionsResolver->resolve((int) $user->id, self::APPLICATION_ID);
-            $accessToken = $this->jwtService->encode((int) $user->id, (string) ($user->role ?? 'user'), $permissions);
+            $accessToken = $this->jwtService->encode((int) $user->id, $permissions);
 
             return \App\DTO\Response\Identity\TokenResponseDTO::fromArray([
                 'access_token'  => $accessToken,

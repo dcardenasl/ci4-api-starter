@@ -133,7 +133,7 @@ class PasswordResetService implements \App\Interfaces\Auth\PasswordResetServiceI
             $this->userRepository->update($user->id, $updateData);
 
             // Elevate context on success
-            $userContext = new SecurityContext((int) $user->id, (string) $user->role, $context !== null ? $context->metadata : []);
+            $userContext = new SecurityContext((int) $user->id, $context !== null ? $context->metadata : []);
             $this->auditService->log('password_reset_success', 'users', (int) $user->id, [], ['email' => $user->email], $userContext);
 
             $tokenHash = \hash_token($request->token);

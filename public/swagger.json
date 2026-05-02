@@ -292,11 +292,11 @@
                                     },
                                     "is_active": {
                                         "type": "integer",
+                                        "example": 0,
                                         "enum": [
                                             0,
                                             1
-                                        ],
-                                        "example": 0
+                                        ]
                                     },
                                     "rate_limit_requests": {
                                         "type": "integer",
@@ -1716,13 +1716,13 @@
                         "required": false,
                         "schema": {
                             "type": "string",
+                            "example": "24h",
                             "enum": [
                                 "1h",
                                 "24h",
                                 "7d",
                                 "30d"
-                            ],
-                            "example": "24h"
+                            ]
                         }
                     }
                 ],
@@ -1774,13 +1774,13 @@
                         "required": false,
                         "schema": {
                             "type": "string",
+                            "example": "24h",
                             "enum": [
                                 "1h",
                                 "24h",
                                 "7d",
                                 "30d"
-                            ],
-                            "example": "24h"
+                            ]
                         }
                     }
                 ],
@@ -1898,13 +1898,13 @@
                         "required": false,
                         "schema": {
                             "type": "string",
+                            "example": "24h",
                             "enum": [
                                 "1h",
                                 "24h",
                                 "7d",
                                 "30d"
-                            ],
-                            "example": "24h"
+                            ]
                         }
                     },
                     {
@@ -2680,22 +2680,22 @@
                     "role": {
                         "description": "Account role",
                         "type": "string",
+                        "example": "user",
+                        "nullable": true,
                         "enum": [
                             "user",
                             "admin",
                             "superadmin"
-                        ],
-                        "example": "user",
-                        "nullable": true
+                        ]
                     },
                     "oauth_provider": {
                         "description": "OAuth provider name",
                         "type": "string",
+                        "nullable": true,
                         "enum": [
                             "google",
                             "github"
-                        ],
-                        "nullable": true
+                        ]
                     },
                     "oauth_provider_id": {
                         "description": "OAuth unique identifier from provider",
@@ -2718,15 +2718,15 @@
                     "page": {
                         "description": "Current page number",
                         "type": "integer",
-                        "default": 1,
-                        "example": 1
+                        "example": 1,
+                        "default": 1
                     },
                     "per_page": {
                         "description": "Items per page",
                         "type": "integer",
+                        "example": 20,
                         "default": 20,
-                        "maximum": 100,
-                        "example": 20
+                        "maximum": 100
                     },
                     "search": {
                         "description": "Search term for email, first name or last name",
@@ -2737,30 +2737,30 @@
                     "role": {
                         "description": "Filter by account role",
                         "type": "string",
+                        "nullable": true,
                         "enum": [
                             "user",
                             "admin",
                             "superadmin"
-                        ],
-                        "nullable": true
+                        ]
                     },
                     "status": {
                         "description": "Filter by account status",
                         "type": "string",
+                        "nullable": true,
                         "enum": [
                             "active",
                             "inactive",
                             "pending_approval",
                             "invited"
-                        ],
-                        "nullable": true
+                        ]
                     },
                     "sort": {
                         "description": "Sort field and direction",
                         "type": "string",
-                        "default": "",
                         "example": "created_at or -created_at",
-                        "nullable": true
+                        "nullable": true,
+                        "default": ""
                     }
                 },
                 "type": "object"
@@ -2796,12 +2796,12 @@
                     "role": {
                         "description": "Updated account role",
                         "type": "string",
+                        "nullable": true,
                         "enum": [
                             "user",
                             "admin",
                             "superadmin"
-                        ],
-                        "nullable": true
+                        ]
                     },
                     "avatar_url": {
                         "description": "URL to user avatar image",
@@ -2901,14 +2901,14 @@
                     "action": {
                         "description": "Action performed",
                         "type": "string",
+                        "example": "update",
                         "enum": [
                             "create",
                             "update",
                             "delete",
                             "login_success",
                             "login_failure"
-                        ],
-                        "example": "update"
+                        ]
                     },
                     "entity_type": {
                         "description": "Affected entity type",
@@ -2958,22 +2958,22 @@
                     "result": {
                         "description": "Execution result",
                         "type": "string",
+                        "example": "success",
                         "enum": [
                             "success",
                             "failure",
                             "denied"
-                        ],
-                        "example": "success"
+                        ]
                     },
                     "severity": {
                         "description": "Event severity",
                         "type": "string",
+                        "example": "info",
                         "enum": [
                             "info",
                             "warning",
                             "critical"
-                        ],
-                        "example": "info"
+                        ]
                     },
                     "request_id": {
                         "description": "Request correlation ID",
@@ -3060,22 +3060,22 @@
                     "role": {
                         "description": "User role",
                         "type": "string",
+                        "example": "user",
                         "enum": [
                             "user",
                             "admin",
                             "superadmin"
-                        ],
-                        "example": "user"
+                        ]
                     },
                     "status": {
                         "description": "Account status",
                         "type": "string",
+                        "example": "pending_approval",
                         "enum": [
                             "pending_approval",
                             "active",
                             "invited"
-                        ],
-                        "example": "pending_approval"
+                        ]
                     },
                     "created_at": {
                         "description": "Creation timestamp",
@@ -3477,22 +3477,22 @@
                     "role": {
                         "description": "User role",
                         "type": "string",
+                        "example": "user",
                         "enum": [
                             "user",
                             "admin",
                             "superadmin"
-                        ],
-                        "example": "user"
+                        ]
                     },
                     "status": {
                         "description": "Account status",
                         "type": "string",
+                        "example": "active",
                         "enum": [
                             "pending_approval",
                             "active",
                             "invited"
-                        ],
-                        "example": "active"
+                        ]
                     },
                     "avatar_url": {
                         "description": "URL to user avatar",

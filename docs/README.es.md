@@ -2,6 +2,16 @@
 
 Bienvenido a la documentación del **CodeIgniter 4 API Starter Kit**. Este índice solo lista archivos que existen en el template.
 
+## 📚 Ruta de Aprendizaje del Scaffolding
+
+Si nunca has generado un CRUD en este kit, sigue este orden:
+
+1. **Quickstart (5 min)** — [`../GETTING_STARTED.md`](../GETTING_STARTED.md) § "Your First CRUD"
+2. **Playbook canónico** — [`template/CRUD_FROM_ZERO.es.md`](template/CRUD_FROM_ZERO.es.md) (sintaxis de campos, modificadores, post-scaffolding)
+3. **Checklist antes del PR** — [`template/MODULE_BOOTSTRAP_CHECKLIST.es.md`](template/MODULE_BOOTSTRAP_CHECKLIST.es.md)
+4. **Deep dive técnico** — [`tech/scaffolding-engine.es.md`](tech/scaffolding-engine.es.md) (generadores, wiring, type mapping)
+5. **Contrato arquitectural** — [`template/ARCHITECTURE_CONTRACT.es.md`](template/ARCHITECTURE_CONTRACT.es.md) (qué debe producir el scaffold)
+
 ## Sistemas Core
 
 - [Motor de Scaffolding](tech/scaffolding-engine.es.md)

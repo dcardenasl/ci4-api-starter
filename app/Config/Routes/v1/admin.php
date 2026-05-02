@@ -26,9 +26,3 @@ $routes->group('audit', ['filter' => ['jwtauth', 'roleauth:admin', 'throttle']],
     $routes->get('(:num)', '\App\Controllers\Api\V1\Admin\AuditController::show/$1');
     $routes->get('entity/(:segment)/(:num)', '\App\Controllers\Api\V1\Admin\AuditController::byEntity/$1/$2');
 });
-
-// Admin Catalog Management
-$routes->group('catalogs', ['filter' => ['jwtauth', 'roleauth:admin', 'throttle']], function ($routes) {
-    $routes->get('', '\App\Controllers\Api\V1\Admin\CatalogController::index');
-    $routes->get('audit-facets', '\App\Controllers\Api\V1\Admin\CatalogController::auditFacets');
-});

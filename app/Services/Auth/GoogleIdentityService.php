@@ -38,7 +38,6 @@ class GoogleIdentityService implements \App\Interfaces\Auth\GoogleIdentityServic
         }
 
         try {
-            /** @var object $googleClient */
             $googleClient = new \Google\Client(['client_id' => $clientId]);
 
             /** @var array<string, mixed>|false $payload */

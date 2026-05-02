@@ -26,34 +26,36 @@ readonly class ResourceSchema
 
     public function getResourceLower(): string
     {
-        return lcfirst($this->resource);
+        return StringHelper::toCamelCase($this->resource);
     }
 
     public function getResourcePlural(): string
     {
-        // Simple pluralization logic for the schema
-        if (preg_match('/y$/i', $this->resource)) {
-            return preg_replace('/y$/i', 'ies', $this->resource) ?? ($this->resource . 's');
-        }
-        if (preg_match('/(s|x|z|ch|sh)$/i', $this->resource)) {
-            return $this->resource . 'es';
-        }
-
-        return $this->resource . 's';
+        return StringHelper::pluralize($this->resource);
     }
 
     public function getResourcePluralLower(): string
     {
-        return lcfirst($this->getResourcePlural());
+        return StringHelper::toCamelCase($this->getResourcePlural());
     }
 
     public function getResourcePluralKebab(): string
     {
-        return $this->toKebab($this->getResourcePlural());
+        return StringHelper::toKebab($this->getResourcePlural());
+    }
+
+    public function getResourcePluralSnakeCase(): string
+    {
+        return StringHelper::toSnakeCase($this->getResourcePlural());
     }
 
     public function toKebab(string $value): string
     {
-        return strtolower((string) preg_replace('/(?<!^)[A-Z]/', '-$0', $value));
+        return StringHelper::toKebab($value);
+    }
+
+    public function toSnakeCase(string $value): string
+    {
+        return StringHelper::toSnakeCase($value);
     }
 }

@@ -6,22 +6,24 @@ Esta "Hoja de Trucos" está diseñada para un onboarding rápido y un desarrollo
 
 | Comando | Propósito | ¿Cuándo usarlo? |
 |---------|-----------|-----------------|
-| `php spark make:crud {Nombre}` | **Scaffold Module** | Al empezar un nuevo recurso CRUD. |
-| `php spark migrate` | **Aplicar cambios DB** | Después de generar un nuevo CRUD. |
+| `bash bin/make-crud.sh <Res> <Dom> '<fields>'` | **Scaffold Module (recomendado)** | Al empezar un nuevo recurso CRUD — shell-safe, funciona en no-TTY. |
+| `php spark make:crud {Nombre}` | **Scaffold Module (interactivo)** | Cuando quieras ser consultado por cada campo. |
+| `php spark module:check {Nombre} --domain {Dom}` | **Validar wiring** | Justo después del scaffold. |
+| `php spark migrate` | **Aplicar cambios DB** | Después del scaffold, revisa la migración y aplícala. |
+| `pkill -f 'spark serve'; php spark serve &` | **Reiniciar servidor** | Obligatorio tras el scaffold — los archivos de ruta nuevos no se cargan en caliente. |
 | `php spark swagger:generate` | **Actualizar OpenAPI** | Al añadir endpoints o DTOs. |
 | `composer quality` | **Check de Salud Total**| Antes de hacer push de cualquier código. |
 | `composer cs-fix` | **Corregir Estilo** | Para auto-formatear tu código. |
 
-## 🏗️ Sintaxis de Scaffolding (Modo CLI)
+## 🏗️ Sintaxis de Scaffolding
 
-Usa la opción `--fields` para una generación rápida:
-`php spark make:crud Nombre --domain Dominio --fields="col:tipo:opciones"`
+Firma: `bash bin/make-crud.sh <Resource> <Domain> '<Fields>' [SoftDelete=yes] [Route]`
 
 **Tipos Disponibles:** `string`, `text`, `int`, `bool`, `decimal`, `email`, `date`, `datetime`, `fk`, `json`.
 **Opciones Comunes:** `required`, `nullable`, `searchable`, `filterable`, `fk:tableName`.
 
 *Ejemplo:*
-`php spark make:crud Producto --fields="nombre:string:required|searchable,categoria_id:fk:categorias"`
+`bash bin/make-crud.sh Producto Catalogo 'nombre:string:required|searchable,categoria_id:fk:categorias:required' yes`
 
 ## ✅ Lista de Estándares de Calidad
 

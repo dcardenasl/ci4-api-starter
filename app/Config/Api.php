@@ -44,6 +44,7 @@ class Api extends BaseConfig
     public string $fileAllowedTypes = 'jpg,jpeg,png,gif,pdf,doc,docx,txt,zip';
     public string $fileStorageDriver = 'local';
     public string $fileUploadPath = 'writable/uploads/';
+    public bool $filesUserScoped = true;
 
     // Logging & Monitoring
     public bool $requestLoggingEnabled = true;
@@ -80,6 +81,7 @@ class Api extends BaseConfig
         $this->fileAllowedTypes = (string) $this->envValue('FILE_ALLOWED_TYPES', 'jpg,jpeg,png,gif,pdf,doc,docx,txt,zip');
         $this->fileStorageDriver = (string) $this->envValue('FILE_STORAGE_DRIVER', 'local');
         $this->fileUploadPath = (string) $this->envValue('FILE_UPLOAD_PATH', 'writable/uploads/');
+        $this->filesUserScoped = filter_var($this->envValue('FILES_USER_SCOPED', true), FILTER_VALIDATE_BOOLEAN);
 
         $this->requestLoggingEnabled = filter_var($this->envValue('REQUEST_LOGGING_ENABLED', true), FILTER_VALIDATE_BOOLEAN);
         $this->slowQueryThreshold = (int) $this->envValue('SLOW_QUERY_THRESHOLD', 1000);

@@ -93,6 +93,9 @@ php_errors.log
 #-------------------------
 setup_db.php
 setup_mysql.php
+init.log
+install.log
+setup.log
 
 #-------------------------
 # User Guide Temp Files

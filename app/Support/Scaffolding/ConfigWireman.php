@@ -49,10 +49,11 @@ PHP;
         $requireLine = "require_once __DIR__ . '/{$domain}DomainServices.php';";
         $useLine = "    use {$domain}DomainServices;";
 
-        // Inject require_once if not present
+        // Inject require_once if not present. Character class accepts alphanumerics
+        // so domains like `Upa2Events` or `V2Reports` don't silently fall through.
         if (!str_contains($content, $requireLine)) {
             $content = preg_replace(
-                '/(require_once __DIR__ \. \'\/[a-zA-Z]+Services\.php\';)/',
+                '/(require_once __DIR__ \. \'\/[A-Za-z0-9]+Services\.php\';)/',
                 "$0\n" . $requireLine,
                 $content,
                 1
@@ -62,7 +63,7 @@ PHP;
         // Inject use trait if not present
         if (!str_contains($content, $useLine)) {
             $content = preg_replace(
-                '/(    use [a-zA-Z]+DomainServices;)/',
+                '/(    use [A-Za-z0-9]+DomainServices;)/',
                 "$0\n" . $useLine,
                 $content,
                 1

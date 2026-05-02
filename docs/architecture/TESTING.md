@@ -65,8 +65,9 @@ public function testAdminCanListUsers()
 ### Step 2: Use Generators (Optional but Recommended)
 The custom CRUD generator creates placeholder tests for all three layers:
 ```bash
-php spark make:crud Product --domain Catalog
+bash bin/make-crud.sh Product Catalog 'name:string:required' yes
 ```
+Interactive alternative: `php spark make:crud Product --domain Catalog`.
 
 ### Step 3: Writing the Test
 **Standard Pattern (Arrange-Act-Assert):**

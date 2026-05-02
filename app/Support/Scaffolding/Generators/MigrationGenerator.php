@@ -15,6 +15,10 @@ class MigrationGenerator
 {
     public function generate(ResourceSchema $schema): array
     {
+        // CI4's MigrationRunner regex requires exactly YYYYMMDDHHMMSS_ClassName.
+        // We can't encode sub-second precision in the filename, so collisions in
+        // the same second are guarded by ScaffoldingOrchestrator::validateFilesDoNotExist()
+        // which throws ScaffoldConflictException (never silent overwrite).
         $timestamp = date('Y-m-d-His');
         $resourcePlural = $schema->getResourcePlural();
         $fileName = "{$timestamp}_Create{$resourcePlural}Table.php";
@@ -27,9 +31,11 @@ class MigrationGenerator
     private function template(ResourceSchema $schema): string
     {
         $resourcePlural = $schema->getResourcePlural();
-        $table = $schema->getResourcePluralLower();
+        $table = $schema->getResourcePluralSnakeCase();
         $fieldsContent = $this->generateFields($schema);
+        $indexes = $this->generateIndexes($schema);
         $foreignKeys = $this->generateForeignKeys($schema);
+        $deletedAtField = $schema->softDelete ? $this->getDeletedAtField() : '';
 
         return <<<PHP
 <?php
@@ -59,14 +65,10 @@ class Create{$resourcePlural}Table extends Migration
                 'type' => 'DATETIME',
                 'null' => true,
             ],
-            'deleted_at' => [
-                'type' => 'DATETIME',
-                'null' => true,
-            ],
-        ]);
+{$deletedAtField}        ]);
 
         \$this->forge->addKey('id', true);
-{$foreignKeys}        \$this->forge->createTable('{$table}');
+{$indexes}{$foreignKeys}        \$this->forge->createTable('{$table}');
     }
 
     public function down()
@@ -75,6 +77,33 @@ class Create{$resourcePlural}Table extends Migration
     }
 }
 PHP;
+    }
+
+    /**
+     * Emit `addUniqueKey` / `addKey` lines for fields flagged unique/index,
+     * plus implicit indexes for searchable/filterable columns so common
+     * `WHERE filter=? AND name LIKE ?` lookups don't degrade on large tables.
+     */
+    private function generateIndexes(ResourceSchema $schema): string
+    {
+        $output = '';
+        $indexed = [];
+        foreach ($schema->fields as $field) {
+            if ($field->unique) {
+                $output .= "        \$this->forge->addUniqueKey('{$field->name}');\n";
+                $indexed[$field->name] = true;
+                continue;
+            }
+            if ($field->index || $field->searchable || $field->filterable) {
+                if (isset($indexed[$field->name])) {
+                    continue;
+                }
+                $output .= "        \$this->forge->addKey('{$field->name}');\n";
+                $indexed[$field->name] = true;
+            }
+        }
+
+        return $output;
     }
 
     private function generateFields(ResourceSchema $schema): string
@@ -113,11 +142,31 @@ PHP;
     {
         $output = "";
         foreach ($schema->fields as $field) {
-            if ($field->fkTable) {
-                $onDelete = $field->nullable ? 'SET NULL' : 'CASCADE';
-                $output .= "        \$this->forge->addForeignKey('{$field->name}', '{$field->fkTable}', 'id', 'CASCADE', '{$onDelete}');\n";
+            if (!$field->fkTable) {
+                continue;
             }
+
+            // Explicit override from `fk:table:setnull|restrict|cascade` wins;
+            // otherwise the historical heuristic kicks in: nullable columns use
+            // SET NULL (parent delete preserves child with null FK), required
+            // columns use CASCADE (parent delete removes children).
+            $onDelete = $field->fkOnDelete !== 'CASCADE'
+                ? $field->fkOnDelete
+                : ($field->nullable ? 'SET NULL' : 'CASCADE');
+
+            $output .= "        \$this->forge->addForeignKey('{$field->name}', '{$field->fkTable}', 'id', '{$field->fkOnUpdate}', '{$onDelete}');\n";
         }
         return $output;
+    }
+
+    private function getDeletedAtField(): string
+    {
+        return <<<'PHP'
+            'deleted_at' => [
+                'type' => 'DATETIME',
+                'null' => true,
+            ],
+
+PHP;
     }
 }

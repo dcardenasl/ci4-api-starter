@@ -38,7 +38,7 @@ The agent automatically activates when you ask Claude Code to:
 
 The agent will:
 1. **Research** existing patterns in your codebase
-2. **Scaffold first** with `php spark make:crud ...` for new CRUD resources
+2. **Scaffold first** with `bash bin/make-crud.sh ...` for new CRUD resources (the wrapper is mandatory in non-TTY environments like Claude Code; `php spark make:crud` is available for interactive sessions)
 3. **Validate bootstrap** with `php spark module:check ...`
 4. **Plan** the implementation (migration, entity/model alignment, DTO/service/controller/tests)
 5. **Implement** following exact architectural patterns

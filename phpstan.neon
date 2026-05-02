@@ -19,11 +19,12 @@ parameters:
     excludePaths:
         - vendor
         - writable
-        - tests/_support
+        - tests/_support (?)
         - app/Config
         - app/Views
         - app/Commands
     reportUnmatchedIgnoredErrors: false
+    treatPhpDocTypesAsCertain: false
     ignoreErrors:
         - '#Call to an undefined method CodeIgniter\\Database\\BaseBuilder::#'
         - '#Function (esc|lang|service|helper|model|config|cache|view|is_cli|env|base_url|site_url|redirect|clean_path|log_message) not found#'

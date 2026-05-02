@@ -34,58 +34,51 @@ Utilizamos un **TypeMapper** unificado para asegurar la consistencia. Por ejempl
 
 ## 🛠️ Cómo Usar (Guía de Uso)
 
-El comando `make:crud` es el punto de entrada principal para construir nuevas funcionalidades. Puede usarse en dos modos:
+Dos puntos de entrada — elige el que encaje con tu entorno:
 
-### 1. Modo Interactivo (Guiado)
-Recomendado para la mayoría de los desarrolladores, ya que asegura que no se omitan pasos ni opciones de campos.
+### 1. `bin/make-crud.sh` (recomendado, shell-safe)
+
+Default preferido. Envuelve `php spark make:crud`, cita los pipes correctamente, ejecuta `composer cs-fix` automáticamente e imprime los comandos de seguimiento exactos.
+
+```bash
+bash bin/make-crud.sh Producto Catalogo \
+  'nombre:string:required|searchable,precio:decimal:required|filterable,categoria_id:fk:categorias:required' \
+  yes
+```
+
+Firma: `bash bin/make-crud.sh <Resource> <Domain> '<Fields>' [SoftDelete=yes] [Route]`
+
+Úsalo en: pipelines de CI, Claude Code / asistentes IA, scripts de shell y cualquier contexto no-TTY.
+
+### 2. `php spark make:crud` (interactivo)
+
+Cuando quieras que el motor te consulte cada campo y sus modificadores:
 
 ```bash
 php spark make:crud Cliente --domain Ventas
 ```
 
-El CLI te guiará a través de:
-1.  **Nombre del Campo**: (ej: `nombre`, `precio`, `estado`)
-2.  **Tipo de Campo**: Elegir de una lista (string, int, fk, etc.)
-3.  **Requerimientos**: ¿Es obligatorio? ¿Buscable? ¿Filtrable?
-4.  **Claves Foráneas**: Si es tipo `fk`, te preguntará el nombre de la tabla destino.
-
-### 2. Modo CLI (Directo)
-Ideal para automatización o cuando ya tienes tu esquema definido.
+O la variante `--fields` explícita (con comillas simples para que el shell no consuma los pipes):
 
 ```bash
-php spark make:crud Producto --domain Catalogo --fields="nombre:string:required|searchable,precio:decimal:required|filterable,categoria_id:fk:categorias:required"
+php spark make:crud Producto --domain Catalogo --fields='nombre:string:required|searchable,precio:decimal:required|filterable,categoria_id:fk:categorias:required'
 ```
 
-## 🧬 Sintaxis Detallada de Campos (`--fields`)
+> ⚠️ En entornos no-TTY `--fields` puede perder silenciosamente los modificadores separados por pipe y el motor cae a modo interactivo — que luego cuelga para siempre esperando input. Esta es exactamente la razón por la que existe `bin/make-crud.sh`.
 
-Al usar el modo CLI, la cadena de campos sigue este formato:
-`nombre:tipo:opciones,nombre2:tipo2:opciones2`
+## 🧬 Sintaxis de Campos
 
-### Tipos Soportados
-- `string`: VARCHAR(255) estándar.
-- `text`: Campo TEXT largo.
-- `int`: INTEGER.
-- `bool`: BOOLEAN (TINYINT 1).
-- `decimal`: DECIMAL(10,2) mapeado a float.
-- `email`: VARCHAR(255) con validación de email.
-- `date`: DATE.
-- `datetime`: DATETIME.
-- `fk`: Clave foránea (BigInt Unsigned). Requiere nombre de tabla en opciones.
-- `json`: Campo JSON para datos estructurados.
+La referencia canónica de tipos, modificadores y el flag `SoftDelete` vive en el playbook para mantener una sola fuente de verdad:
 
-### Opciones de Campos (Separadas por `|`)
-- `required`: El campo debe estar presente y no estar vacío.
-- `nullable`: Permite explícitamente valores NULL.
-- `searchable`: Habilita búsqueda parcial (`LIKE %query%`) en el endpoint Index.
-- `filterable`: Habilita filtrado por coincidencia exacta en el endpoint Index.
-- `fk:nombre_tabla`: **(Requerido para tipo `fk`)** Especifica la tabla de base de datos relacionada.
+- [`docs/template/CRUD_FROM_ZERO.es.md`](../template/CRUD_FROM_ZERO.es.md#24-sintaxis-de-campos)
 
-## 🚀 Flujo de Trabajo Post-Scaffolding
+## 🚀 Flujo Post-Scaffolding
 
-Después de ejecutar `make:crud`, sigue siempre estos tres pasos para finalizar tu módulo:
+Tras ejecutar `make:crud`, corre estos en orden. La justificación detallada por comando está en el playbook, [§3 Post-Scaffolding](../template/CRUD_FROM_ZERO.es.md#3-post-scaffolding-qué-hace-cada-comando-de-seguimiento).
 
-1.  **Verificar Registro**: Ejecuta `php spark module:check {Recurso} --domain {Dominio}`. Esto asegura que el servicio y los traits de dominio estén correctamente conectados en `Config/Services.php`.
-2.  **Aplicar Cambios en la BD**: Ejecuta `php spark migrate`. El scaffold genera un archivo de migración en `app/Database/Migrations/`.
-3.  **Sincronizar Documentación**: Ejecuta `php spark swagger:generate`. Esto lee los nuevos DTOs y archivos de documentación para actualizar `public/swagger.json`.
+1. **Verificar wiring** — `php spark module:check {Recurso} --domain {Dominio}`
+2. **Aplicar schema** — `php spark migrate`
+3. **Reiniciar servidor** — `pkill -f 'spark serve'; php spark serve --port 8080 &` (CI4 no recarga archivos de rutas nuevos en caliente)
+4. **Regenerar spec** — `php spark swagger:generate`
 
-Tus nuevos endpoints de API estarán disponibles inmediatamente en `/api/v1/{ruta}`.
+Tus nuevos endpoints estarán disponibles en `/api/v1/{ruta}`.

@@ -19,8 +19,9 @@ class CreateUserAction
 
     public function execute(UserCreateRequestDTO $request, ?SecurityContext $context = null): \App\Entities\UserEntity
     {
-        $actorRole = $context?->user_role ?? 'user';
-        $adminId = $context?->user_id;
+        $context ??= SecurityContext::anonymous();
+        $actorRole = $context->user_role ?? 'user';
+        $adminId = $context->user_id;
         $isPrivilegedCreator = in_array($actorRole, ['admin', 'superadmin'], true);
         $status = $isPrivilegedCreator ? 'active' : 'invited';
         $now = date('Y-m-d H:i:s');

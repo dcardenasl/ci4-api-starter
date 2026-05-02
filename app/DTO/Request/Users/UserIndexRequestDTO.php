@@ -34,11 +34,8 @@ readonly class UserIndexRequestDTO extends BaseRequestDTO
     #[OA\Property(description: 'Filter by account status', enum: ['active', 'inactive', 'pending_approval', 'invited'], nullable: true)]
     public ?string $status;
 
-    #[OA\Property(description: 'Field to sort by', enum: ['id', 'email', 'created_at', 'role', 'status', 'first_name', 'last_name'], default: 'id')]
-    public string $order_by;
-
-    #[OA\Property(description: 'Sort direction', enum: ['ASC', 'DESC'], default: 'DESC')]
-    public string $order_dir;
+    #[OA\Property(description: 'Sort field and direction', default: '', example: 'created_at or -created_at', nullable: true)]
+    public string $sort;
 
     public function rules(): array
     {
@@ -48,8 +45,7 @@ readonly class UserIndexRequestDTO extends BaseRequestDTO
             'search'   => 'permit_empty|string|max_length[100]',
             'role'     => 'permit_empty|in_list[user,admin,superadmin]',
             'status'   => 'permit_empty|in_list[active,inactive,pending_approval,invited]',
-            'order_by'  => 'permit_empty|in_list[id,email,created_at,role,status,first_name,last_name]',
-            'order_dir' => 'permit_empty|in_list[ASC,DESC,asc,desc]',
+            'sort'     => 'permit_empty|max_length[100]',
         ];
     }
 
@@ -70,8 +66,7 @@ readonly class UserIndexRequestDTO extends BaseRequestDTO
         $this->role = $this->extractString($data, $filter, 'role');
         $this->status = $this->extractString($data, $filter, 'status');
 
-        $this->order_by = $data['order_by'] ?? 'id';
-        $this->order_dir = strtoupper($data['order_dir'] ?? 'DESC');
+        $this->sort = (string) ($data['sort'] ?? '');
     }
 
     public function toArray(): array
@@ -80,8 +75,7 @@ readonly class UserIndexRequestDTO extends BaseRequestDTO
             'page'     => $this->page,
             'per_page'  => $this->per_page,
             'search'   => $this->search,
-            'order_by'  => $this->order_by,
-            'order_dir' => $this->order_dir,
+            'sort'     => $this->sort,
         ];
 
         if ($this->role) {

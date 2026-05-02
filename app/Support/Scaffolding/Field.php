@@ -22,7 +22,15 @@ readonly class Field
         public ?string $fkTable = null,
         public ?string $defaultValue = null,
         public ?int $length = null,
-        public ?string $precision = null // For decimals e.g. "10,2"
+        public ?string $precision = null, // For decimals e.g. "10,2"
+        public bool $unique = false,
+        public bool $index = false,
+        // Foreign key referential action overrides. Default 'CASCADE' preserves
+        // historical behavior; 'RESTRICT' blocks parent deletion when children
+        // exist (safer for orders/customers); 'SET NULL' nulls the child column
+        // (requires the field to be nullable).
+        public string $fkOnDelete = 'CASCADE',
+        public string $fkOnUpdate = 'CASCADE'
     ) {
     }
 }

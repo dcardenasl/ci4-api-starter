@@ -45,7 +45,7 @@ class UserInvitationService
         ]);
 
         $resetLink = $this->buildResetPasswordUrl($token, $email, $clientBaseUrl);
-        $displayName = method_exists($user, 'getDisplayName') ? (string) $user->getDisplayName() : 'User';
+        $displayName = (string) $user->getDisplayName();
 
         $this->emailService->queueTemplate('invitation', $email, [
             'subject' => lang('Email.invitation.subject'),

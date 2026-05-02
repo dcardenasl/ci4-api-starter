@@ -81,7 +81,7 @@ class AuthService implements \App\Interfaces\Auth\AuthServiceInterface
         }
 
         // Elevate context for successful login audit
-        $userContext = new SecurityContext((int) $user->id, (string) $user->role, $context?->metadata ?? []);
+        $userContext = new SecurityContext((int) $user->id, (string) $user->role, $context !== null ? $context->metadata : []);
         $this->auditService->log('login_success', 'users', (int) $user->id, [], ['email' => (string) $user->email], $userContext);
 
         $this->userAccessPolicy->assertCanAuthenticate($user);

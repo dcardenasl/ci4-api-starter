@@ -48,8 +48,9 @@ class UserService extends BaseCrudService implements UserServiceInterface
     public function store(\App\Interfaces\DataTransferObjectInterface $request, ?SecurityContext $context = null): \App\Interfaces\DataTransferObjectInterface
     {
         /** @var \App\DTO\Request\Users\UserCreateRequestDTO $request */
+        $context ??= SecurityContext::anonymous();
         return $this->wrapInTransaction(function () use ($request, $context) {
-            $actorRole = $context?->user_role ?? 'user';
+            $actorRole = $context->user_role ?? 'user';
             $this->roleGuard->assertCanAssignRole($actorRole, (string) $request->role);
 
             /** @var \App\Entities\UserEntity $user */
@@ -106,7 +107,8 @@ class UserService extends BaseCrudService implements UserServiceInterface
             throw new NotFoundException(lang('Users.notFound'));
         }
 
-        $this->roleGuard->assertCanManageTarget($context?->user_role ?? 'user', $context?->user_id, $id, (string) $targetUser->role);
+        $context ??= SecurityContext::anonymous();
+        $this->roleGuard->assertCanManageTarget($context->user_role ?? 'user', $context->user_id, $id, (string) $targetUser->role);
 
         return parent::destroy($id, $context);
     }

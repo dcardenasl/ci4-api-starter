@@ -10,7 +10,7 @@ Instead of a single "template" command, our engine uses specialized generators c
 2.  **MigrationGenerator**: Produces CI4 migrations with correct DB types, constraints, and Foreign Keys.
 3.  **ModelEntityGenerator**: Sets up the Entity (`$casts`) and Model (`$allowedFields`, `$searchableFields`, `$filterableFields`).
 4.  **ServiceGenerator**: Generates the Service Interface and the Business Logic layer.
-5.  **ControllerGenerator**: Orchestrates everything with the `HasCrudActions` trait and OpenAPI endpoint documentation.
+5.  **ControllerGenerator**: Emits a thin controller (each CRUD action explicit, delegating to `handleRequest()`) plus a co-located OpenAPI endpoint class in `app/Documentation/{Domain}/`.
 
 ## 🧠 Smart Wiring (ConfigWireman)
 
@@ -34,58 +34,51 @@ We use a unified **TypeMapper** to ensure consistency. For example, a `decimal` 
 
 ## 🛠️ How to Use (Usage Guide)
 
-The `make:crud` command is the primary entry point for building new features. It can be used in two modes:
+Two entry points — pick the one that matches your environment:
 
-### 1. Interactive Mode (Guided)
-Recommended for most developers as it ensures no steps or field options are missed.
+### 1. `bin/make-crud.sh` (recommended, shell-safe)
+
+Preferred default. Wraps `php spark make:crud`, quotes pipes correctly, auto-runs `composer cs-fix`, and prints the exact follow-up commands.
+
+```bash
+bash bin/make-crud.sh Product Catalog \
+  'name:string:required|searchable,price:decimal:required|filterable,category_id:fk:categories:required' \
+  yes
+```
+
+Signature: `bash bin/make-crud.sh <Resource> <Domain> '<Fields>' [SoftDelete=yes] [Route]`
+
+Use this in: CI pipelines, Claude Code / AI assistants, shell scripts, and any non-TTY context.
+
+### 2. `php spark make:crud` (interactive)
+
+When you want the engine to prompt you for each field and its modifiers:
 
 ```bash
 php spark make:crud Client --domain Sales
 ```
 
-The CLI will guide you through:
-1.  **Field Name**: (e.g., `title`, `price`, `status`)
-2.  **Field Type**: Choose from a list (string, int, fk, etc.)
-3.  **Requirements**: Is it required? Searchable? Filterable?
-4.  **Foreign Keys**: If it's a `fk` type, it will ask for the target table name.
-
-### 2. CLI Mode (Direct)
-Best for automation or when you have your schema already defined.
+Or the explicit `--fields` variant (quote carefully with single quotes so the shell doesn't eat the pipes):
 
 ```bash
-php spark make:crud Product --domain Catalog --fields="name:string:required|searchable,price:decimal:required|filterable,category_id:fk:categories:required"
+php spark make:crud Product --domain Catalog --fields='name:string:required|searchable,price:decimal:required|filterable,category_id:fk:categories:required'
 ```
 
-## 🧬 Detailed Field Syntax (`--fields`)
+> ⚠️ In non-TTY environments `--fields` can silently lose pipe-separated modifiers, and the engine falls back to interactive mode — which then hangs forever waiting for input. That is the exact reason `bin/make-crud.sh` exists.
 
-When using CLI mode, the fields string follows this format:
-`name:type:options,name2:type2:options2`
+## 🧬 Field Syntax
 
-### Supported Types
-- `string`: Standard VARCHAR(255).
-- `text`: Long TEXT field.
-- `int`: INTEGER.
-- `bool`: BOOLEAN (TINYINT 1).
-- `decimal`: DECIMAL(10,2) mapped to float.
-- `email`: VARCHAR(255) with email validation.
-- `date`: DATE.
-- `datetime`: DATETIME.
-- `fk`: Foreign Key (BigInt Unsigned). Requires table name in options.
-- `json`: JSON field for structured data.
+The canonical reference for supported types, modifiers, and the `SoftDelete` flag lives in the playbook to keep a single source of truth:
 
-### Field Options (Separated by `|`)
-- `required`: Field must be present and not empty.
-- `nullable`: Explicitly allow NULL values.
-- `searchable`: Enables partial string matching (`LIKE %query%`) in the Index endpoint.
-- `filterable`: Enables exact match filtering in the Index endpoint.
-- `fk:table_name`: **(Required for `fk` type)** Specifies the related database table.
+- [`docs/template/CRUD_FROM_ZERO.md`](../template/CRUD_FROM_ZERO.md#24-field-syntax)
 
 ## 🚀 Post-Scaffolding Workflow
 
-After running `make:crud`, always follow these three steps to finalize your module:
+After running `make:crud`, run these in order. Full rationale per command is in the playbook's [§3 After Scaffolding](../template/CRUD_FROM_ZERO.md#3-after-scaffolding-what-each-follow-up-command-does).
 
-1.  **Verify Registration**: Run `php spark module:check {Resource} --domain {Domain}`. This ensures the service and domain traits are correctly wired into `Config/Services.php`.
-2.  **Apply Database Changes**: Run `php spark migrate`. The scaffold generates a migration file in `app/Database/Migrations/`.
-3.  **Synchronize Documentation**: Run `php spark swagger:generate`. This reads the new DTOs and Documentation files to update `public/swagger.json`.
+1. **Verify wiring** — `php spark module:check {Resource} --domain {Domain}`
+2. **Apply schema** — `php spark migrate`
+3. **Restart server** — `pkill -f 'spark serve'; php spark serve --port 8080 &` (CI4 doesn't hot-reload new route files)
+4. **Regenerate spec** — `php spark swagger:generate`
 
-Your new API endpoints will be immediately available at `/api/v1/{route}`.
+Your new API endpoints will then be available at `/api/v1/{route}`.

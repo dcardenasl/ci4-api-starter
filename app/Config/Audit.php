@@ -39,9 +39,7 @@ class Audit extends BaseConfig
     {
         parent::__construct();
 
-        $this->asyncEnabled = ENVIRONMENT !== 'testing'
-            ? (bool) env('AUDIT_ASYNC_ENABLED', true)
-            : (bool) env('AUDIT_ASYNC_ENABLED', false);
+        $this->asyncEnabled = ENVIRONMENT !== 'testing' && (bool) env('AUDIT_ASYNC_ENABLED', true);
         $this->queueName = (string) env('AUDIT_QUEUE_NAME', 'audit');
         $this->maxPayloadBytes = (int) env('AUDIT_MAX_PAYLOAD_BYTES', 60000);
     }

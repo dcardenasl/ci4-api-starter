@@ -14,7 +14,6 @@ class AuditableModelConventionsTest extends CIUnitTestCase
         $models = [
             'app/Models/UserModel.php',
             'app/Models/FileModel.php',
-            'app/Models/DemoproductModel.php',
             'app/Models/ApiKeyModel.php',
         ];
 

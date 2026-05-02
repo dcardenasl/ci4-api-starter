@@ -38,6 +38,10 @@ class ModelEntityGenerator
             $casts .= "        '{$field->name}' => '{$castType}',\n";
         }
 
+        $dates = $schema->softDelete
+            ? "['created_at', 'updated_at', 'deleted_at']"
+            : "['created_at', 'updated_at']";
+
         return <<<PHP
 <?php
 
@@ -52,37 +56,42 @@ class {$schema->resource}Entity extends Entity
     protected \$casts = [
 {$casts}    ];
 
-    protected \$dates = ['created_at', 'updated_at', 'deleted_at'];
+    protected \$dates = {$dates};
 }
 PHP;
     }
 
     private function modelTemplate(ResourceSchema $schema): string
     {
-        $table = $schema->getResourcePluralLower();
+        $table = $schema->getResourcePluralSnakeCase();
         $softDelete = $schema->softDelete ? 'true' : 'false';
 
         $allowedFields = [];
         $searchableFields = [];
         $filterableFields = ["'id'"];
+        $sortableFields = ["'id'", "'created_at'"];
         $validationRules = "";
 
         foreach ($schema->fields as $field) {
             $allowedFields[] = "'{$field->name}'";
             if ($field->searchable) {
                 $searchableFields[] = "'{$field->name}'";
+                $sortableFields[] = "'{$field->name}'";
             }
             if ($field->filterable) {
                 $filterableFields[] = "'{$field->name}'";
+                $sortableFields[] = "'{$field->name}'";
             }
 
-            $rules = TypeMapper::getValidationRules($field);
+            // Pass the table name so TypeMapper can emit is_unique[table.col] for unique fields.
+            $rules = TypeMapper::getValidationRules($field, $table);
             $validationRules .= "        '{$field->name}' => '{$rules}',\n";
         }
 
         $allowedFieldsStr = implode(", ", $allowedFields);
         $searchableFieldsStr = implode(", ", $searchableFields);
         $filterableFieldsStr = implode(", ", $filterableFields);
+        $sortableFieldsStr = implode(", ", array_unique($sortableFields));
 
         return <<<PHP
 <?php
@@ -108,9 +117,14 @@ class {$schema->resource}Model extends BaseAuditableModel
     
     protected \$allowedFields = [{$allowedFieldsStr}];
 
+    /** @var array<int, string> */
     protected array \$searchableFields = [{$searchableFieldsStr}];
+
+    /** @var array<int, string> */
     protected array \$filterableFields = [{$filterableFieldsStr}];
-    protected array \$sortableFields = ['id', 'created_at'];
+
+    /** @var array<int, string> */
+    protected array \$sortableFields = [{$sortableFieldsStr}];
 
     protected \$validationRules = [
 {$validationRules}    ];

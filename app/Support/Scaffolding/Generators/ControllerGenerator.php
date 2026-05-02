@@ -28,6 +28,7 @@ class ControllerGenerator
         $resource = $schema->resource;
         $resourceLower = $schema->getResourceLower();
         $domain = $schema->domain;
+        $resourceInterface = $resource . 'ServiceInterface';
 
         return <<<PHP
 <?php
@@ -37,28 +38,55 @@ declare(strict_types=1);
 namespace App\Controllers\Api\V1\\{$domain};
 
 use App\Controllers\ApiController;
-use App\DTO\Request\\{$domain}\\{$resource}IndexRequestDTO;
 use App\DTO\Request\\{$domain}\\{$resource}CreateRequestDTO;
+use App\DTO\Request\\{$domain}\\{$resource}IndexRequestDTO;
 use App\DTO\Request\\{$domain}\\{$resource}UpdateRequestDTO;
-use App\Traits\Controllers\HasCrudActions;
+use App\Interfaces\\{$domain}\\{$resourceInterface};
+use CodeIgniter\HTTP\ResponseInterface;
 use Config\Services;
 
 class {$resource}Controller extends ApiController
 {
-    use HasCrudActions;
+    protected {$resourceInterface} \${$resourceLower}Service;
 
     protected function resolveDefaultService(): object
     {
-        return Services::{$resourceLower}Service();
-    }
+        \$this->{$resourceLower}Service = Services::{$resourceLower}Service();
 
-    protected string \$indexDto = {$resource}IndexRequestDTO::class;
-    protected string \$createDto = {$resource}CreateRequestDTO::class;
-    protected string \$updateDto = {$resource}UpdateRequestDTO::class;
+        return \$this->{$resourceLower}Service;
+    }
 
     protected array \$statusCodes = [
         'store' => 201,
     ];
+
+    public function index(): ResponseInterface
+    {
+        return \$this->handleRequest('index', {$resource}IndexRequestDTO::class);
+    }
+
+    public function create(): ResponseInterface
+    {
+        return \$this->handleRequest('store', {$resource}CreateRequestDTO::class);
+    }
+
+    public function update(int \$id): ResponseInterface
+    {
+        return \$this->handleRequest(
+            fn (\$dto, \$context) => \$this->{$resourceLower}Service->update(\$id, \$dto, \$context),
+            {$resource}UpdateRequestDTO::class
+        );
+    }
+
+    public function show(int \$id): ResponseInterface
+    {
+        return \$this->handleRequest(fn (\$dto, \$context) => \$this->{$resourceLower}Service->show(\$id, \$context));
+    }
+
+    public function delete(int \$id): ResponseInterface
+    {
+        return \$this->handleRequest(fn (\$dto, \$context) => \$this->{$resourceLower}Service->destroy(\$id, \$context));
+    }
 }
 PHP;
     }
@@ -133,11 +161,52 @@ class {$resource}Endpoints
             new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))
         ],
         responses: [
-            new OA\Response(response: 200, description: 'Found'),
+            new OA\Response(
+                response: 200,
+                description: 'Found',
+                content: new OA\JsonContent(ref: '#/components/schemas/{$resource}Response')
+            ),
             new OA\Response(response: 404, description: 'Not found')
         ]
     )]
     public function show() {}
+
+    #[OA\Put(
+        path: '/api/v1/{$route}/{id}',
+        tags: ['{$domain}'],
+        summary: 'Update existing {$resource}',
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))
+        ],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(ref: '#/components/schemas/{$resource}UpdateRequest')
+        ),
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Updated successfully',
+                content: new OA\JsonContent(ref: '#/components/schemas/{$resource}Response')
+            ),
+            new OA\Response(response: 404, description: 'Not found'),
+            new OA\Response(response: 422, description: 'Validation error')
+        ]
+    )]
+    public function update() {}
+
+    #[OA\Delete(
+        path: '/api/v1/{$route}/{id}',
+        tags: ['{$domain}'],
+        summary: 'Delete {$resource} by ID',
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))
+        ],
+        responses: [
+            new OA\Response(response: 204, description: 'Deleted successfully'),
+            new OA\Response(response: 404, description: 'Not found')
+        ]
+    )]
+    public function delete() {}
 }
 PHP;
     }

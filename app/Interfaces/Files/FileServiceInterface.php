@@ -29,6 +29,11 @@ interface FileServiceInterface
     public function download(\App\Interfaces\DataTransferObjectInterface $request, ?SecurityContext $context = null): \App\Interfaces\DataTransferObjectInterface;
 
     /**
+     * Return JSON metadata for a single file without downloading the binary.
+     */
+    public function findById(int $id, ?SecurityContext $context = null): \App\DTO\Response\Files\FileResponseDTO;
+
+    /**
      * Destroy a file (alias for delete to match CRUD contract)
      */
     public function destroy(int $id, ?SecurityContext $context = null): bool;

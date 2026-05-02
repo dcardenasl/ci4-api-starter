@@ -35,13 +35,19 @@ class TypeMapper
         'int' => [
             'db' => 'INT',
             'php' => 'int',
-            'val' => 'is_natural_no_zero',
+            'val' => 'integer',
+            'oa' => 'integer'
+        ],
+        'integer' => [
+            'db' => 'INT',
+            'php' => 'int',
+            'val' => 'integer',
             'oa' => 'integer'
         ],
         'bool' => [
             'db' => 'TINYINT',
             'php' => 'bool',
-            'val' => 'boolean',
+            'val' => 'boolean_like',
             'oa' => 'boolean'
         ],
         'decimal' => [
@@ -61,7 +67,7 @@ class TypeMapper
         'date' => [
             'db' => 'DATE',
             'php' => 'string',
-            'val' => 'valid_date',
+            'val' => 'valid_date[Y-m-d]',
             'oa' => 'string',
             'oa_format' => 'date'
         ],
@@ -106,20 +112,37 @@ class TypeMapper
         return ($nullable ? '?' : '') . $phpType;
     }
 
-    public static function getValidationRules(Field $field): string
+    public static function getValidationRules(Field $field, ?string $tableForUnique = null): string
     {
         $mapping = self::get($field->type);
-        $rules = $field->required ? 'required|' : 'permit_empty|';
-        $rules .= $mapping['val'];
+        $rules = [$field->required ? 'required' : 'permit_empty'];
 
-        if ($field->validationRules) {
-            $rules .= '|' . $field->validationRules;
+        // Split the type's val on `|` and merge, so rules like json's `permit_empty` don't
+        // duplicate the leading required/permit_empty token.
+        if ($mapping['val'] !== '') {
+            foreach (explode('|', $mapping['val']) as $rule) {
+                if ($rule !== '' && !in_array($rule, $rules, true)) {
+                    $rules[] = $rule;
+                }
+            }
+        }
+
+        if ($field->validationRules !== null && $field->validationRules !== '') {
+            foreach (explode('|', $field->validationRules) as $rule) {
+                if ($rule !== '' && !in_array($rule, $rules, true)) {
+                    $rules[] = $rule;
+                }
+            }
         }
 
         if ($field->fkTable) {
-            $rules .= "|is_not_unique[{$field->fkTable}.id]";
+            $rules[] = "is_not_unique[{$field->fkTable}.id]";
         }
 
-        return $rules;
+        if ($field->unique && $tableForUnique !== null) {
+            $rules[] = "is_unique[{$tableForUnique}.{$field->name}]";
+        }
+
+        return implode('|', $rules);
     }
 }

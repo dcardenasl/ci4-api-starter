@@ -41,7 +41,8 @@ class FileService implements FileServiceInterface
         protected FilenameGenerator $filenameGenerator,
         protected MultipartProcessor $multipartProcessor,
         protected Base64Processor $base64Processor,
-        protected ?VirusScannerServiceInterface $virusScanner = null
+        protected ?VirusScannerServiceInterface $virusScanner = null,
+        private bool $userScopedFiles = true
     ) {
     }
 
@@ -135,11 +136,15 @@ class FileService implements FileServiceInterface
         /** @var \App\DTO\Request\Files\FileIndexRequestDTO $request */
         $userId = $this->resolveUserId($request, $context);
 
+        $baseCriteria = $this->userScopedFiles
+            ? fn ($model) => $model->where('user_id', $userId)
+            : null;
+
         $result = $this->fileRepository->paginateCriteria(
             $request->toArray(),
             $request->page,
             $request->per_page,
-            fn ($model) => $model->where('user_id', $userId)
+            $baseCriteria
         );
 
         $result['data'] = array_map(
@@ -148,6 +153,21 @@ class FileService implements FileServiceInterface
         );
 
         return PaginatedResponseDTO::fromArray($result);
+    }
+
+    /**
+     * Return JSON metadata for a single file without downloading the binary.
+     */
+    public function findById(int $id, ?SecurityContext $context = null): FileResponseDTO
+    {
+        $file = $this->fileRepository->find($id);
+        if (!$file) {
+            throw new NotFoundException(lang('Files.file_not_found'));
+        }
+
+        /** @var FileResponseDTO $response */
+        $response = $this->responseMapper->map($file);
+        return $response;
     }
 
     /**
@@ -182,7 +202,8 @@ class FileService implements FileServiceInterface
     protected function resolveUserId(object|array $request, ?SecurityContext $context): int
     {
         $data = $request instanceof \App\Interfaces\DataTransferObjectInterface ? $request->toArray() : (array)$request;
-        $userId = $context?->user_id ?? (int) ($data['user_id'] ?? 0);
+        $context ??= SecurityContext::anonymous();
+        $userId = $context->user_id ?? (int) ($data['user_id'] ?? 0);
 
         if ($userId === 0) {
             throw new AuthorizationException(lang('Api.unauthorized'));
@@ -202,7 +223,10 @@ class FileService implements FileServiceInterface
             throw new NotFoundException(lang('Files.file_not_found'));
         }
 
-        if (!$bypassOwnership && (int) $file->user_id !== $userId) {
+        $effectiveBypass = $bypassOwnership
+            || ($action === 'download' && !$this->userScopedFiles);
+
+        if (!$effectiveBypass && (int) $file->user_id !== $userId) {
             $deniedAction = $action === 'download' ? 'unauthorized_file_download' : 'unauthorized_file_delete';
             $this->auditService->log(
                 $deniedAction,

@@ -4,10 +4,11 @@ Checklist para crear módulos nuevos de forma consistente.
 
 ## 1. Scaffold
 
-1. Ejecutar `php spark make:crud {Resource} --domain {Domain} --route {slug}`.
+1. Ejecutar `bash bin/make-crud.sh {Resource} {Domain} '{fields}' yes [{slug}]`. Para prompts interactivos usa `php spark make:crud {Resource} --domain {Domain}`.
 2. Confirmar archivos generados en capas, tests y migraciones (`Database/Migrations`).
 3. Ejecutar `php spark module:check {Resource} --domain {Domain}` y corregir los faltantes reportados.
 4. Considerar que `module:check` no valida contenido de migraciones, solo su existencia.
+5. Reiniciar el servidor para que los archivos de ruta nuevos se descubran: `pkill -f 'spark serve'; php spark serve --port 8080 &`.
 
 ## 2. Persistencia
 

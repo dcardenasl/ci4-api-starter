@@ -25,11 +25,12 @@ composer quality                # Run all quality checks (PHPStan, PHPUnit, etc.
 composer cs-fix                 # Fix code style (PSR-12)
 ```
 
-### Database
+### Database & Scaffolding
 ```bash
-php spark migrate               # Run migrations
-php spark make:crud {Name} --domain {Domain} --route {endpoint}  # Scaffold new CRUD (Recommended default)
-php spark module:check {Name} --domain {Domain}                  # Validate scaffold output
+php spark migrate                                                        # Run migrations
+bash bin/make-crud.sh {Name} {Domain} '{fields}' yes [slug]              # Scaffold new CRUD (recommended)
+php spark make:crud {Name} --domain {Domain}                             # Alternative: interactive scaffold
+php spark module:check {Name} --domain {Domain}                          # Validate scaffold output
 ```
 
 ### OpenAPI Documentation
@@ -99,7 +100,86 @@ For architecture rules and onboarding, prefer:
 3. `docs/template/CRUD_FROM_ZERO.md`
 4. `docs/template/QUALITY_GATES.md`
 
-## CRUD Notes
+## CRUD Scaffolding
+
+### Quick Start
+```bash
+bash bin/make-crud.sh ResourceName DomainName \
+    'field1:type:required|searchable,field2:type' \
+    yes
+```
+
+**IMPORTANT:** Always wrap the fields argument in SINGLE QUOTES — pipes (`|`) are shell-special and will be consumed by the shell otherwise. `bin/make-crud.sh` requires it; direct `php spark make:crud --fields='…'` also requires it.
+
+### Scaffolding System Fixes (Permanent Solutions)
+
+The scaffolding system has been fixed to resolve three architectural issues:
+
+**Issue 1 - Fixed:** Table names now always use snake_case
+- **Root cause:** ResourceSchema only applied lcfirst(), no snake_case conversion
+- **Solution:** Added `toSnakeCase()` and `getResourcePluralSnakeCase()` methods
+- **Commit:** fdac166
+
+**Issue 2 - Fixed:** Soft-delete flag now respected correctly
+- **Root cause:** MigrationGenerator template always hardcoded deleted_at
+- **Solution:** Made deleted_at conditional based on $schema->softDelete flag
+- **Commit:** fdac166
+
+**Issue 3 - Fixed:** Controller trait property conflicts eliminated
+- **Root cause:** ControllerGenerator used HasCrudActions trait, which conflicted with redefined DTO properties
+- **Solution:** Switched to explicit method implementations
+- **Commit:** fdac166
+
+No manual workarounds needed for future CRUDs.
+
+## Scaffolding Rules (Always Follow)
+
+### ALWAYS use `bin/make-crud.sh` — never `php spark make:crud` directly
+
+In non-TTY environments (Claude Code, CI/CD, parallel calls), `php spark make:crud` can enter interactive mode if `--fields` arrives empty due to shell pipe expansion. `bin/make-crud.sh` handles quoting correctly and adds validation steps.
+
+### Full signature
+
+```bash
+bash bin/make-crud.sh <Resource> <Domain> '<Fields>' [SoftDelete=yes] [Route]
+```
+
+Examples:
+
+```bash
+# Default route (auto-pluralized):
+bash bin/make-crud.sh User Users 'name:string:required|searchable,email:string:required|unique' yes
+
+# Custom route (when it differs from the resource name):
+bash bin/make-crud.sh UpaEvent Events 'title:string:required|searchable,year:int:required|filterable' yes upa-events
+
+# Lookup table (no soft delete):
+bash bin/make-crud.sh Permission Users 'name:string:required|searchable' no
+```
+
+### Restart server after scaffolding
+
+Adding a new route file (`app/Config/Routes/v1/{domain}.php`) requires restarting `php spark serve`. Routes are not detected hot.
+
+```bash
+pkill -f 'spark serve'; php spark serve --port 8080 &
+```
+
+## Troubleshooting
+
+### Pre-commit hook fails on generated files (PHP CS Fixer)
+**Cause:** Generated code may have PSR-12 style violations (blank lines in constructors, missing EOF newlines)  
+**Fix:** Use `bin/make-crud.sh` which runs `composer cs-fix` automatically (post-scaffolding improvement). If hook still fails:
+
+```bash
+composer cs-fix           # Auto-fix style violations
+git add -u                # Re-stage modified files
+git commit                # Now passes the hook
+```
+
+**Do NOT use `--no-verify`** except for documented emergencies. The hook exists to catch these issues.
+
+### Notes
 
 1. `make:crud` generates a migration file automatically. Review it after scaffolding, then run `php spark migrate` to apply it.
 2. Default persistence for CRUD is `GenericRepository`; create dedicated repositories only for non-trivial domain queries.

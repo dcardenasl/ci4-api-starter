@@ -18,7 +18,8 @@
 - `composer install` installs dependencies.
 - `php spark serve` runs the dev server.
 - `php spark migrate` applies migrations.
-- `php spark make:crud {Resource} --domain {Domain} --route {endpoint}` scaffolds new resources (recommended default first step).
+- `bash bin/make-crud.sh {Resource} {Domain} '{fields}' yes [slug]` scaffolds new resources (recommended — shell-safe, non-TTY friendly). For interactive prompts use `php spark make:crud {Resource} --domain {Domain}`.
+- `php spark module:check {Resource} --domain {Domain}` validates the generated wiring.
 - `vendor/bin/phpunit` runs the test suite.
 - `composer quality` runs all quality gates (PHPStan, tests, CS-check).
 - `php spark swagger:generate` regenerates `public/swagger.json` from DTO and Documentation annotations.

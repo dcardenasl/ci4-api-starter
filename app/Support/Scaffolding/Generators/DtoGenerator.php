@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Support\Scaffolding\Generators;
 
+use App\Support\Scaffolding\Field;
 use App\Support\Scaffolding\ResourceSchema;
 use App\Support\Scaffolding\TypeMapper;
 
@@ -13,6 +14,58 @@ use App\Support\Scaffolding\TypeMapper;
  */
 class DtoGenerator
 {
+    /**
+     * Build the right-hand expression that maps a raw array value to a strongly-typed property.
+     * Handles int/float/bool/string consistently so the readonly property type matches the runtime value.
+     */
+    /**
+     * Emit an OA\Property attribute line for a request-DTO property.
+     * Keeps the scaffolded DTO visually aligned with the hand-maintained gold standard
+     * (e.g. UserCreateRequestDTO) without requiring manual edits.
+     */
+    private function buildPropertyAttribute(Field $field, bool $nullableOverride): string
+    {
+        $mapping = TypeMapper::get($field->type);
+        $parts = ["description: '" . addslashes($field->name) . "'"];
+        $parts[] = "type: '{$mapping['oa']}'";
+        if (isset($mapping['oa_format'])) {
+            $parts[] = "format: '{$mapping['oa_format']}'";
+        }
+        if ($nullableOverride || $field->nullable) {
+            $parts[] = 'nullable: true';
+        }
+
+        return "    #[OA\\Property(" . implode(', ', $parts) . ")]\n";
+    }
+
+    private function buildMapExpression(Field $field, bool $nullable = false): string
+    {
+        $access = "\$data['{$field->name}']";
+        $phpType = TypeMapper::get($field->type)['php'];
+
+        // The property is nullable when either:
+        //  - the caller forced it (update DTO treats every field as nullable), or
+        //  - the field itself was declared nullable in the schema.
+        // Without this, a nullable Create DTO field would coerce `null` to `0`/`''` silently.
+        if ($nullable || $field->nullable) {
+            return match ($phpType) {
+                'int'    => "isset({$access}) ? (int) {$access} : null",
+                'float'  => "isset({$access}) ? (float) {$access} : null",
+                'bool'   => "isset({$access}) ? (bool) {$access} : null",
+                'array'  => "isset({$access}) ? (array) {$access} : null",
+                default  => "{$access} ?? null",
+            };
+        }
+
+        return match ($phpType) {
+            'int'    => "(int) ({$access} ?? 0)",
+            'float'  => "(float) ({$access} ?? 0)",
+            'bool'   => "(bool) ({$access} ?? false)",
+            'array'  => "(array) ({$access} ?? [])",
+            default  => "(string) ({$access} ?? '')",
+        };
+    }
+
     public function generate(ResourceSchema $schema): array
     {
         $domain = $schema->domain;
@@ -44,6 +97,7 @@ readonly class {$schema->resource}IndexRequestDTO extends BaseRequestDTO
     public int \$page;
     public int \$per_page;
     public ?string \$search;
+    public string \$sort;
 
     public function rules(): array
     {
@@ -51,6 +105,7 @@ readonly class {$schema->resource}IndexRequestDTO extends BaseRequestDTO
             'page'      => 'permit_empty|is_natural_no_zero',
             'per_page'  => 'permit_empty|is_natural_no_zero|less_than[101]',
             'search'    => 'permit_empty|string|max_length[100]',
+            'sort'      => 'permit_empty|max_length[100]',
         ];
     }
 
@@ -59,6 +114,7 @@ readonly class {$schema->resource}IndexRequestDTO extends BaseRequestDTO
         \$this->page = isset(\$data['page']) ? (int) \$data['page'] : 1;
         \$this->per_page = isset(\$data['per_page']) ? (int) \$data['per_page'] : 20;
         \$this->search = \$data['search'] ?? null;
+        \$this->sort = (string) (\$data['sort'] ?? '');
     }
 
     public function toArray(): array
@@ -67,6 +123,7 @@ readonly class {$schema->resource}IndexRequestDTO extends BaseRequestDTO
             'page' => \$this->page,
             'per_page' => \$this->per_page,
             'search' => \$this->search,
+            'sort' => \$this->sort,
         ];
     }
 }
@@ -80,15 +137,19 @@ PHP;
         $mappings = '';
         $toArray = '';
 
+        $table = $schema->getResourcePluralSnakeCase();
+
         foreach ($schema->fields as $field) {
             $phpType = TypeMapper::getPhpType($field->type, $field->nullable);
-            $validation = TypeMapper::getValidationRules($field);
+            // Create DTO validates uniqueness against the full table; Update DTO intentionally skips
+            // it because it would reject the record's own value (needs id-in-context to do right).
+            $validation = TypeMapper::getValidationRules($field, $table);
 
+            $properties .= $this->buildPropertyAttribute($field, nullableOverride: $field->nullable);
             $properties .= "    public {$phpType} \${$field->name};\n";
             $rules .= "            '{$field->name}' => '{$validation}',\n";
 
-            $cast = ($field->type === 'int') ? "(int) " : "";
-            $mappings .= "        \$this->{$field->name} = {$cast}(\$data['{$field->name}'] ?? '');\n";
+            $mappings .= "        \$this->{$field->name} = " . $this->buildMapExpression($field) . ";\n";
             $toArray .= "            '{$field->name}' => \$this->{$field->name},\n";
         }
 
@@ -134,12 +195,18 @@ PHP;
 
         foreach ($schema->fields as $field) {
             $phpType = TypeMapper::getPhpType($field->type, true); // Update fields are usually optional
-            $validation = str_replace('required', 'permit_empty', TypeMapper::getValidationRules($field));
+            // Use word boundaries so compound rules like `required_if`, `required_with` are preserved.
+            $validation = preg_replace(
+                '/\brequired\b(?![_\-a-zA-Z])/',
+                'permit_empty',
+                TypeMapper::getValidationRules($field)
+            ) ?? TypeMapper::getValidationRules($field);
 
+            $properties .= $this->buildPropertyAttribute($field, nullableOverride: true);
             $properties .= "    public {$phpType} \${$field->name};\n";
             $rules .= "            '{$field->name}' => '{$validation}',\n";
 
-            $mappings .= "        \$this->{$field->name} = isset(\$data['{$field->name}']) ? \$data['{$field->name}'] : null;\n";
+            $mappings .= "        \$this->{$field->name} = " . $this->buildMapExpression($field, nullable: true) . ";\n";
             $toArray .= "            '{$field->name}' => \$this->{$field->name},\n";
         }
 
@@ -201,6 +268,9 @@ PHP;
 
         $requiredJson = json_encode($requiredFields);
 
+        // Remove leading newline from $params to avoid blank line after public int $id,
+        $params = ltrim($params, "\n");
+
         return <<<PHP
 <?php
 
@@ -223,7 +293,9 @@ readonly class {$schema->resource}ResponseDTO implements DataTransferObjectInter
         public int \$id,
 {$params}
         #[OA\Property(property: 'created_at', description: 'Creation timestamp', example: '2026-02-26 12:00:00', nullable: true)]
-        public ?string \$createdAt = null
+        public ?string \$createdAt = null,
+        #[OA\Property(property: 'updated_at', description: 'Last update timestamp', example: '2026-02-26 12:00:00', nullable: true)]
+        public ?string \$updatedAt = null
     ) {}
 
     public function toArray(): array
@@ -231,6 +303,7 @@ readonly class {$schema->resource}ResponseDTO implements DataTransferObjectInter
         return [
             'id' => \$this->id,
 {$toArray}            'created_at' => \$this->createdAt,
+            'updated_at' => \$this->updatedAt,
         ];
     }
 }

@@ -126,17 +126,6 @@ trait SystemMonitoringServices
         );
     }
 
-    public static function catalogService(bool $getShared = true): \App\Interfaces\System\CatalogServiceInterface
-    {
-        if ($getShared) {
-            return static::getSharedInstance('catalogService');
-        }
-
-        return new \App\Services\System\CatalogService(
-            static::auditRepository()
-        );
-    }
-
     private static function buildMailerFromConfig(\Config\Email $config): ?MailerInterface
     {
         $provider = strtolower(trim((string) $config->provider));

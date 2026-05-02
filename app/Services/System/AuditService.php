@@ -233,7 +233,7 @@ class AuditService extends BaseCrudService implements \App\Interfaces\System\Aud
             return true;
         }
 
-        $criticalActions = $this->auditConfig?->criticalActions ?? [];
+        $criticalActions = $this->auditConfig->criticalActions;
         return in_array($action, $criticalActions, true);
     }
 
@@ -243,7 +243,7 @@ class AuditService extends BaseCrudService implements \App\Interfaces\System\Aud
      */
     private function shrinkForQueue(array $data): array
     {
-        $maxBytes = max(1024, (int) ($this->auditConfig?->maxPayloadBytes ?? 60000));
+        $maxBytes = max(1024, $this->auditConfig->maxPayloadBytes);
 
         if ($this->jsonByteLength($data) <= $maxBytes) {
             return $data;

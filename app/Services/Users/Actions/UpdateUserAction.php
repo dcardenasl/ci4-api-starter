@@ -27,8 +27,9 @@ class UpdateUserAction
             throw new NotFoundException(lang('Users.notFound'));
         }
 
-        $actorRole = $context?->user_role ?? 'user';
-        $actorId = $context?->user_id;
+        $context ??= SecurityContext::anonymous();
+        $actorRole = $context->user_role ?? 'user';
+        $actorId = $context->user_id;
 
         $this->roleGuard->assertCanManageTarget($actorRole, $actorId, $userId, (string) $targetUser->role);
 
@@ -74,6 +75,9 @@ class UpdateUserAction
         }
         if ($request->role !== null) {
             $data['role'] = $request->role;
+        }
+        if ($request->avatar_url !== null) {
+            $data['avatar_url'] = $request->avatar_url;
         }
 
         return $data;

@@ -1,6 +1,8 @@
 # CRUD From Zero (Template Playbook)
 
-Canonical guide for creating a new CRUD resource in this template.
+> **Authoritative version:** `vendor/dcardenasl/ci4-scaffolding/docs/CRUD_FROM_ZERO.md`. This copy is kept as a local reference; when the package and this file diverge, the package version is correct.
+
+Canonical guide for creating a new CRUD resource in this project.
 
 This flow is **recommended by default**:
 1. Scaffold first with `bin/make-crud.sh` (or `php spark make:crud` for interactive)

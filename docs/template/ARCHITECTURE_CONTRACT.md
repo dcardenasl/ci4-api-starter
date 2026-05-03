@@ -1,6 +1,8 @@
 # Template Architecture Contract
 
-This file defines the non-negotiable architecture rules for modules built from this template.
+> **Authoritative version:** `vendor/dcardenasl/ci4-scaffolding/docs/ARCHITECTURE_CONTRACT.md`. This copy is kept as a local reference; when the package and this file diverge, the package version is correct.
+
+This file defines the non-negotiable architecture rules for modules built with this template.
 
 ## 1. Layer Contracts
 

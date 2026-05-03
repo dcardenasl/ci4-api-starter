@@ -17,10 +17,10 @@
         "zircote/swagger-php": "^6.0"
     },
     "repositories": [
-        { "type": "path", "url": "../../ci4-scaffolding", "options": { "symlink": true } }
+        { "type": "path", "url": "../../ci4-api-crud-maker", "options": { "symlink": true } }
     ],
     "require-dev": {
-        "dcardenasl/ci4-scaffolding": "*@dev",
+        "dcardenasl/ci4-api-crud-maker": "*@dev",
         "fakerphp/faker": "^1.9",
         "friendsofphp/php-cs-fixer": "^3.48",
         "mikey179/vfsstream": "^1.6",

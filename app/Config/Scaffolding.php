@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Config;
 
-use dcardenasl\CI4Scaffolding\Config\BaseScaffoldingConfig;
-use dcardenasl\CI4Scaffolding\Config\ScaffoldingConfig;
+use dcardenasl\CI4ApiCrudMaker\Config\BaseScaffoldingConfig;
+use dcardenasl\CI4ApiCrudMaker\Config\ScaffoldingConfig;
 
 class Scaffolding extends BaseScaffoldingConfig
 {

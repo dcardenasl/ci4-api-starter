@@ -69,7 +69,7 @@ readonly class FileUploadRequestDTO extends BaseRequestDTO
 
         // 3. Fallback: Search for potential Base64 or large strings in other keys
         foreach ($data as $key => $value) {
-            if (in_array($key, ['user_id', 'user_role', 'filename', 'visibility'], true)) {
+            if (in_array($key, ['user_id', 'filename', 'visibility'], true)) {
                 continue;
             }
 

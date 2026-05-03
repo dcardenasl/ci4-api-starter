@@ -3177,6 +3177,7 @@
                 },
                 "type": "object"
             },
+            "ApplicationIndexRequest": {},
             "AttachPermissionsRequest": {
                 "required": [
                     "permission_ids"
@@ -3885,6 +3886,37 @@
                     },
                     "status": {
                         "description": "status",
+                        "type": "string"
+                    },
+                    "created_at": {
+                        "description": "Creation timestamp",
+                        "type": "string",
+                        "example": "2026-02-26 12:00:00",
+                        "nullable": true
+                    },
+                    "updated_at": {
+                        "description": "Last update timestamp",
+                        "type": "string",
+                        "example": "2026-02-26 12:00:00",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "ApplicationResponse": {
+                "title": "Application Response",
+                "required": [
+                    "id",
+                    "name"
+                ],
+                "properties": {
+                    "id": {
+                        "description": "Unique identifier",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "name": {
+                        "description": "Application name",
                         "type": "string"
                     },
                     "created_at": {

@@ -30,7 +30,7 @@ composer cs-fix                 # Fix code style (PSR-12)
 php spark migrate                                                        # Run migrations
 php spark db:seed RbacBootstrapSeeder                                    # Seed IAM (apps, permissions, roles) — idempotent
 php spark users:bootstrap-superadmin --email <e> --password <p>          # Create the first superadmin (requires seeder above)
-bash bin/make-crud.sh {Name} {Domain} '{fields}' yes [slug]              # Scaffold new CRUD (recommended)
+bash vendor/bin/make-crud.sh {Name} {Domain} '{fields}' yes [slug]       # Scaffold new CRUD (recommended)
 php spark make:crud {Name} --domain {Domain}                             # Alternative: interactive scaffold
 php spark module:check {Name} --domain {Domain}                          # Validate scaffold output
 ```
@@ -64,7 +64,7 @@ REST endpoints live under `/api/v1/iam/` (all gated by `permission:iam.admin-acc
 - `memberships` CRUD + `memberships/{id}/roles` (list/attach/detach)
 - `users/{user_id}/memberships` and `users/{user_id}/permissions?application_id=N` (effective permissions)
 
-When scaffolding new modules, `bin/make-crud.sh` (via `RouteGenerator.php`) emits `permission:iam.admin-access` for the protected route group.
+When scaffolding new modules, `vendor/bin/make-crud.sh` (via `dcardenasl/ci4-scaffolding` package) emits `permission:iam.admin-access` for the protected route group.
 
 ### Key Design Principles
 
@@ -126,60 +126,43 @@ For architecture rules and onboarding, prefer:
 
 ## CRUD Scaffolding
 
+Scaffolding is provided by the `dcardenasl/ci4-scaffolding` package (installed as a Composer dev dependency, symlinked from `../../ci4-scaffolding`). Consumer config lives in `app/Config/Scaffolding.php` (a one-liner returning `ScaffoldingConfig::defaults()`).
+
 ### Quick Start
 ```bash
-bash bin/make-crud.sh ResourceName DomainName \
+bash vendor/bin/make-crud.sh ResourceName DomainName \
     'field1:type:required|searchable,field2:type' \
     yes
 ```
 
-**IMPORTANT:** Always wrap the fields argument in SINGLE QUOTES — pipes (`|`) are shell-special and will be consumed by the shell otherwise. `bin/make-crud.sh` requires it; direct `php spark make:crud --fields='…'` also requires it.
-
-### Scaffolding System Fixes (Permanent Solutions)
-
-The scaffolding system has been fixed to resolve three architectural issues:
-
-**Issue 1 - Fixed:** Table names now always use snake_case
-- **Root cause:** ResourceSchema only applied lcfirst(), no snake_case conversion
-- **Solution:** Added `toSnakeCase()` and `getResourcePluralSnakeCase()` methods
-- **Commit:** fdac166
-
-**Issue 2 - Fixed:** Soft-delete flag now respected correctly
-- **Root cause:** MigrationGenerator template always hardcoded deleted_at
-- **Solution:** Made deleted_at conditional based on $schema->softDelete flag
-- **Commit:** fdac166
-
-**Issue 3 - Fixed:** Controller trait property conflicts eliminated
-- **Root cause:** ControllerGenerator used HasCrudActions trait, which conflicted with redefined DTO properties
-- **Solution:** Switched to explicit method implementations
-- **Commit:** fdac166
-
-No manual workarounds needed for future CRUDs.
-
-## Scaffolding Rules (Always Follow)
-
-### ALWAYS use `bin/make-crud.sh` — never `php spark make:crud` directly
-
-In non-TTY environments (Claude Code, CI/CD, parallel calls), `php spark make:crud` can enter interactive mode if `--fields` arrives empty due to shell pipe expansion. `bin/make-crud.sh` handles quoting correctly and adds validation steps.
+**IMPORTANT:** Always wrap the fields argument in SINGLE QUOTES — pipes (`|`) are shell-special and will be consumed by the shell otherwise.
 
 ### Full signature
 
 ```bash
-bash bin/make-crud.sh <Resource> <Domain> '<Fields>' [SoftDelete=yes] [Route]
+bash vendor/bin/make-crud.sh <Resource> <Domain> '<Fields>' [SoftDelete=yes] [Route]
 ```
+
+Options:
+- `--dry-run` — preview files and wiring without writing anything
+- `--no-wire` — skip injecting service/mapper into `app/Config/` (use when wiring manually)
 
 Examples:
 
 ```bash
 # Default route (auto-pluralized):
-bash bin/make-crud.sh User Users 'name:string:required|searchable,email:string:required|unique' yes
+bash vendor/bin/make-crud.sh User Users 'name:string:required|searchable,email:string:required|unique' yes
 
 # Custom route (when it differs from the resource name):
-bash bin/make-crud.sh UpaEvent Events 'title:string:required|searchable,year:int:required|filterable' yes upa-events
+bash vendor/bin/make-crud.sh UpaEvent Events 'title:string:required|searchable,year:int:required|filterable' yes upa-events
 
 # Lookup table (no soft delete):
-bash bin/make-crud.sh Permission Users 'name:string:required|searchable' no
+bash vendor/bin/make-crud.sh Permission Users 'name:string:required|searchable' no
 ```
+
+### ALWAYS use `vendor/bin/make-crud.sh` — never `php spark make:crud` directly
+
+In non-TTY environments (Claude Code, CI/CD, parallel calls), `php spark make:crud` can enter interactive mode if `--fields` arrives empty due to shell pipe expansion. `vendor/bin/make-crud.sh` handles quoting correctly and adds validation steps.
 
 ### Restart server after scaffolding
 
@@ -193,7 +176,7 @@ pkill -f 'spark serve'; php spark serve --port 8080 &
 
 ### Pre-commit hook fails on generated files (PHP CS Fixer)
 **Cause:** Generated code may have PSR-12 style violations (blank lines in constructors, missing EOF newlines)  
-**Fix:** Use `bin/make-crud.sh` which runs `composer cs-fix` automatically (post-scaffolding improvement). If hook still fails:
+**Fix:** Use `vendor/bin/make-crud.sh` which runs `composer cs-fix` automatically. If hook still fails:
 
 ```bash
 composer cs-fix           # Auto-fix style violations

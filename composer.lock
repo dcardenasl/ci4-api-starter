@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "8162907d400ad1e91d9c2068e88d343d",
+    "content-hash": "677483477ac8e84f29205bceb441ec21",
     "packages": [
         {
             "name": "aws/aws-crt-php",
@@ -4221,6 +4221,78 @@
             "time": "2024-05-06T16:37:16+00:00"
         },
         {
+            "name": "dcardenasl/ci4-scaffolding",
+            "version": "dev-main",
+            "dist": {
+                "type": "path",
+                "url": "../../ci4-scaffolding",
+                "reference": "67be1c35773fec79ea67d7522ba5b1b6d454427c"
+            },
+            "require": {
+                "codeigniter4/framework": "^4.5",
+                "php": "^8.2"
+            },
+            "require-dev": {
+                "phpstan/phpstan": "^1.10",
+                "phpunit/phpunit": "^10.5"
+            },
+            "bin": [
+                "bin/make-crud.sh",
+                "bin/validate-crud.sh"
+            ],
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-main": "0.1.x-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "dcardenasl\\CI4Scaffolding\\": "src/"
+                }
+            },
+            "autoload-dev": {
+                "psr-4": {
+                    "Tests\\": "tests/"
+                }
+            },
+            "scripts": {
+                "test": [
+                    "phpunit"
+                ],
+                "analyse": [
+                    "phpstan analyse src --level=5"
+                ]
+            },
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "David Cárdenas L.",
+                    "email": "code.dcl@gmail.com"
+                }
+            ],
+            "description": "DTO-first CRUD scaffolding engine for CodeIgniter 4 APIs (extracted from ci4-api-starter)",
+            "homepage": "https://github.com/dcardenasl/ci4-scaffolding",
+            "keywords": [
+                "api",
+                "code-generation",
+                "codeigniter4",
+                "crud",
+                "dto",
+                "scaffolding"
+            ],
+            "support": {
+                "issues": "https://github.com/dcardenasl/ci4-scaffolding/issues",
+                "source": "https://github.com/dcardenasl/ci4-scaffolding"
+            },
+            "transport-options": {
+                "symlink": true,
+                "relative": true
+            }
+        },
+        {
             "name": "ergebnis/agent-detector",
             "version": "1.1.1",
             "source": {
@@ -7401,7 +7473,9 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {},
+    "stability-flags": {
+        "dcardenasl/ci4-scaffolding": 20
+    },
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {

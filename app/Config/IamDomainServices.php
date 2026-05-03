@@ -76,6 +76,29 @@ trait IamDomainServices
         );
     }
 
+    public static function applicationResponseMapper(bool $getShared = true): \App\Interfaces\Mappers\ResponseMapperInterface
+    {
+        if ($getShared) {
+            return static::getSharedInstance('applicationResponseMapper');
+        }
+
+        return new \App\Services\Core\Mappers\DtoResponseMapper(
+            \App\DTO\Response\Iam\ApplicationResponseDTO::class
+        );
+    }
+
+    public static function applicationService(bool $getShared = true): \App\Interfaces\Iam\ApplicationServiceInterface
+    {
+        if ($getShared) {
+            return static::getSharedInstance('applicationService');
+        }
+
+        return new \App\Services\Iam\ApplicationService(
+            new \App\Repositories\GenericRepository(model(\App\Models\ApplicationModel::class)),
+            static::applicationResponseMapper()
+        );
+    }
+
     public static function effectivePermissionsResolver(bool $getShared = true): \App\Services\Iam\EffectivePermissionsResolver
     {
         if ($getShared) {

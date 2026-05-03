@@ -22,6 +22,10 @@ $routes->group('iam', ['namespace' => '\App\Controllers\Api\V1\Iam'], function (
         $routes->get('users/(:num)/memberships', 'AppUserMembershipController::listForUser/$1');
         $routes->get('users/(:num)/permissions', 'AppUserMembershipController::listEffectivePermissionsForUser/$1');
 
+        // Application Routes (read-only lookup)
+        $routes->get('applications', 'ApplicationController::index');
+        $routes->get('applications/(:num)', 'ApplicationController::show/$1');
+
         // Permission Routes
         $routes->get('permissions', 'PermissionController::index');
         $routes->get('permissions/(:num)', 'PermissionController::show/$1');

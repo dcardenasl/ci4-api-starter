@@ -4,15 +4,19 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use CodeIgniter\Model;
+use App\Entities\ApplicationEntity;
+use App\Traits\Filterable;
+use App\Traits\Searchable;
 
-class ApplicationModel extends Model
+class ApplicationModel extends BaseAuditableModel
 {
-    /** @var string */
+    use Filterable;
+    use Searchable;
+
     protected $table            = 'applications';
     protected $primaryKey       = 'id';
     protected $useAutoIncrement = true;
-    protected $returnType       = 'array';
+    protected $returnType       = ApplicationEntity::class;
     protected $useSoftDeletes   = false;
     protected $protectFields    = true;
 
@@ -23,4 +27,13 @@ class ApplicationModel extends Model
     protected $dateFormat    = 'datetime';
     protected $createdField  = 'created_at';
     protected $updatedField  = 'updated_at';
+
+    /** @var array<int, string> */
+    protected array $searchableFields = ['name'];
+
+    /** @var array<int, string> */
+    protected array $filterableFields = ['id', 'name'];
+
+    /** @var array<int, string> */
+    protected array $sortableFields = ['id', 'name', 'created_at'];
 }

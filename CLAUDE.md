@@ -28,6 +28,8 @@ composer cs-fix                 # Fix code style (PSR-12)
 ### Database & Scaffolding
 ```bash
 php spark migrate                                                        # Run migrations
+php spark db:seed RbacBootstrapSeeder                                    # Seed IAM (apps, permissions, roles) — idempotent
+php spark users:bootstrap-superadmin --email <e> --password <p>          # Create the first superadmin (requires seeder above)
 bash bin/make-crud.sh {Name} {Domain} '{fields}' yes [slug]              # Scaffold new CRUD (recommended)
 php spark make:crud {Name} --domain {Domain}                             # Alternative: interactive scaffold
 php spark module:check {Name} --domain {Domain}                          # Validate scaffold output
@@ -41,6 +43,28 @@ php spark swagger:generate      # Generate public/swagger.json from DTOs and app
 ## Architecture Overview (Modernized DTO-First)
 
 This is a **Declarative DTO-First Layered REST API** following the pattern: **Controller → [RequestDTO] → Service → Model → Entity → [ResponseDTO]**.
+
+## Authorization (RBAC)
+
+The API ships a granular IAM model under the `Iam` domain:
+
+- Six tables: `applications`, `permissions`, `roles`, `role_permissions`, `app_user_memberships`, `membership_roles`.
+- Single seeded application: `self` (`id=1`). The `users.role` column was removed — authorization is membership-driven.
+- **Permission code separator is `.` (dot), NOT `:`** — `users.write`, `iam.admin-access`, `metrics.read`. Reason: `Filters::getCleanName()` runs `explode(':', $filter)` without a limit, so `permission:users:write` parses as filter=`permission` with arg=`['users']` and silently drops `:write`.
+
+Key components:
+- `app/Filters/PermissionFilter.php` — alias `permission`, used in routes as `permission:<code>` (e.g. `permission:iam.admin-access`).
+- `app/Services/Iam/EffectivePermissionsResolver.php` — derives a user's effective permission codes from active memberships → roles → role_permissions.
+- `SessionManager::generateSessionResponse()` — embeds `permissions: string[]` in the `user` object of the login/refresh response, and the JWT carries a `scope` claim with the same codes.
+- `app/Database/Seeds/RbacBootstrapSeeder.php` — idempotent seeder for the `self` application, the canonical permission set (`users.read/write`, `files.read/write`, `audit.read`, `metrics.read`, `apikeys.read/write`, `iam.admin-access`, `iam.superadmin-access`), and the three system roles (`superadmin`, `admin`, `user`) with their default permission grants. Must run before `php spark users:bootstrap-superadmin`, which now attaches the `superadmin` role via an `app_user_memberships` row.
+
+REST endpoints live under `/api/v1/iam/` (all gated by `permission:iam.admin-access`):
+- `roles` CRUD + `roles/{id}/permissions` (list/attach/detach)
+- `permissions` CRUD
+- `memberships` CRUD + `memberships/{id}/roles` (list/attach/detach)
+- `users/{user_id}/memberships` and `users/{user_id}/permissions?application_id=N` (effective permissions)
+
+When scaffolding new modules, `bin/make-crud.sh` (via `RouteGenerator.php`) emits `permission:iam.admin-access` for the protected route group.
 
 ### Key Design Principles
 

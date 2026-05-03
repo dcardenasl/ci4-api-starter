@@ -292,6 +292,19 @@ ci4_run_migrations() {
   fi
 }
 
+# Seed the RBAC bootstrap data (applications, permissions, roles).
+# Idempotent — safe to re-run. Required before bootstrap-superadmin so the
+# 'superadmin' role exists when the command attaches it to the new user.
+ci4_seed_rbac() {
+  print_header "RBAC bootstrap (applications, permissions, roles)"
+  if php spark db:seed RbacBootstrapSeeder; then
+    print_ok "RBAC bootstrap completed"
+  else
+    print_error "RBAC seeder failed. Run 'php spark db:seed RbacBootstrapSeeder' manually."
+    exit 1
+  fi
+}
+
 # Generate the OpenAPI / Swagger schema.
 ci4_generate_swagger() {
   print_header "Generating OpenAPI schema"

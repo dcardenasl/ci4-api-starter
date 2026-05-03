@@ -114,6 +114,7 @@ if [ "$SKIP_DB" = false ]; then
   ci4_prepare_databases
   ci4_verify_database
   ci4_run_migrations
+  ci4_seed_rbac
 fi
 
 ci4_generate_swagger

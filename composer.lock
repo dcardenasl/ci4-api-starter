@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "677483477ac8e84f29205bceb441ec21",
+    "content-hash": "b29fd3c4c845fd1afa5052fa63ceb3dd",
     "packages": [
         {
             "name": "aws/aws-crt-php",
@@ -4221,12 +4221,18 @@
             "time": "2024-05-06T16:37:16+00:00"
         },
         {
-            "name": "dcardenasl/ci4-scaffolding",
+            "name": "dcardenasl/ci4-api-crud-maker",
             "version": "dev-main",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/dcardenasl/ci4-api-crud-maker.git",
+                "reference": "79e5b0108a23966fd188d0e8ac52ecabe95e62d8"
+            },
             "dist": {
-                "type": "path",
-                "url": "../../ci4-scaffolding",
-                "reference": "67be1c35773fec79ea67d7522ba5b1b6d454427c"
+                "type": "zip",
+                "url": "https://api.github.com/repos/dcardenasl/ci4-api-crud-maker/zipball/79e5b0108a23966fd188d0e8ac52ecabe95e62d8",
+                "reference": "79e5b0108a23966fd188d0e8ac52ecabe95e62d8",
+                "shasum": ""
             },
             "require": {
                 "codeigniter4/framework": "^4.5",
@@ -4236,6 +4242,7 @@
                 "phpstan/phpstan": "^1.10",
                 "phpunit/phpunit": "^10.5"
             },
+            "default-branch": true,
             "bin": [
                 "bin/make-crud.sh",
                 "bin/validate-crud.sh"
@@ -4248,7 +4255,7 @@
             },
             "autoload": {
                 "psr-4": {
-                    "dcardenasl\\CI4Scaffolding\\": "src/"
+                    "dcardenasl\\CI4ApiCrudMaker\\": "src/"
                 }
             },
             "autoload-dev": {
@@ -4274,7 +4281,7 @@
                 }
             ],
             "description": "DTO-first CRUD scaffolding engine for CodeIgniter 4 APIs (extracted from ci4-api-starter)",
-            "homepage": "https://github.com/dcardenasl/ci4-scaffolding",
+            "homepage": "https://github.com/dcardenasl/ci4-api-crud-maker",
             "keywords": [
                 "api",
                 "code-generation",
@@ -4284,13 +4291,10 @@
                 "scaffolding"
             ],
             "support": {
-                "issues": "https://github.com/dcardenasl/ci4-scaffolding/issues",
-                "source": "https://github.com/dcardenasl/ci4-scaffolding"
+                "issues": "https://github.com/dcardenasl/ci4-api-crud-maker/issues",
+                "source": "https://github.com/dcardenasl/ci4-api-crud-maker"
             },
-            "transport-options": {
-                "symlink": true,
-                "relative": true
-            }
+            "time": "2026-05-03T19:33:38+00:00"
         },
         {
             "name": "ergebnis/agent-detector",
@@ -7474,7 +7478,7 @@
     "aliases": [],
     "minimum-stability": "stable",
     "stability-flags": {
-        "dcardenasl/ci4-scaffolding": 20
+        "dcardenasl/ci4-api-crud-maker": 20
     },
     "prefer-stable": true,
     "prefer-lowest": false,

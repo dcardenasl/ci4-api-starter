@@ -28,6 +28,37 @@ require_cmd() {
 }
 
 # ---------------------------------------------------------------------------
+# Timeout wrapper
+# ---------------------------------------------------------------------------
+# Run a command with a hard timeout to prevent hangs in CI/CD or non-TTY runs.
+# Uses GNU `timeout` (Linux) or `gtimeout` (macOS w/ coreutils). When neither
+# is available, runs the command without a timeout and logs a warning.
+#
+# Usage: run_with_timeout <seconds> <command> [args...]
+run_with_timeout() {
+  local seconds="$1"
+  shift
+
+  local cmd
+  if command -v timeout >/dev/null 2>&1; then
+    cmd="timeout"
+  elif command -v gtimeout >/dev/null 2>&1; then
+    cmd="gtimeout"
+  else
+    print_warn "Neither 'timeout' nor 'gtimeout' available; running without timeout (install coreutils on macOS)."
+    "$@"
+    return $?
+  fi
+
+  "$cmd" "$seconds" "$@"
+  local rc=$?
+  if [ "$rc" -eq 124 ]; then
+    print_error "Command timed out after ${seconds}s: $*"
+  fi
+  return $rc
+}
+
+# ---------------------------------------------------------------------------
 # Input helpers
 # ---------------------------------------------------------------------------
 
@@ -281,13 +312,15 @@ ci4_verify_database() {
   fi
 }
 
-# Run database migrations.
+# Run database migrations. Wrapped with a hard timeout so a hung DB connection
+# never blocks `init.sh` indefinitely (matters for CI/CD and `new-project.sh`).
 ci4_run_migrations() {
   print_header "Running migrations"
-  if php spark migrate; then
+  local migrate_timeout="${CI4_MIGRATE_TIMEOUT:-120}"
+  if run_with_timeout "$migrate_timeout" php spark migrate; then
     print_ok "Migrations completed"
   else
-    print_error "Migrations failed. Fix the error above and run 'php spark migrate' manually."
+    print_error "Migrations failed (or timed out after ${migrate_timeout}s). Fix and run 'php spark migrate' manually."
     exit 1
   fi
 }
@@ -297,20 +330,23 @@ ci4_run_migrations() {
 # 'superadmin' role exists when the command attaches it to the new user.
 ci4_seed_rbac() {
   print_header "RBAC bootstrap (applications, permissions, roles)"
-  if php spark db:seed RbacBootstrapSeeder; then
+  local seed_timeout="${CI4_SEED_TIMEOUT:-60}"
+  if run_with_timeout "$seed_timeout" php spark db:seed RbacBootstrapSeeder; then
     print_ok "RBAC bootstrap completed"
   else
-    print_error "RBAC seeder failed. Run 'php spark db:seed RbacBootstrapSeeder' manually."
+    print_error "RBAC seeder failed (or timed out after ${seed_timeout}s). Run 'php spark db:seed RbacBootstrapSeeder' manually."
     exit 1
   fi
 }
 
-# Generate the OpenAPI / Swagger schema.
+# Generate the OpenAPI / Swagger schema. Non-fatal: a slow generator should
+# not block the rest of init.sh, but it must not hang forever either.
 ci4_generate_swagger() {
   print_header "Generating OpenAPI schema"
-  if php spark swagger:generate; then
+  local swagger_timeout="${CI4_SWAGGER_TIMEOUT:-90}"
+  if run_with_timeout "$swagger_timeout" php spark swagger:generate; then
     print_ok "OpenAPI schema generated"
   else
-    print_warn "Swagger generation failed. Run 'php spark swagger:generate' manually."
+    print_warn "Swagger generation failed or timed out after ${swagger_timeout}s. Run 'php spark swagger:generate' manually."
   fi
 }

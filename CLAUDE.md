@@ -48,21 +48,25 @@ This is a **Declarative DTO-First Layered REST API** following the pattern: **Co
 
 The API ships a granular IAM model under the `Iam` domain:
 
-- Six tables: `applications`, `permissions`, `roles`, `role_permissions`, `app_user_memberships`, `membership_roles`.
-- Single seeded application: `self` (`id=1`). The `users.role` column was removed — authorization is membership-driven.
+- Five tables: `applications`, `permissions`, `roles`, `role_permissions`, `user_roles`.
+- Single seeded application: `self` (`id=1`). The `users.role` column was removed — authorization is role-driven via the `user_roles` join.
 - **Permission code separator is `.` (dot), NOT `:`** — `users.write`, `iam.admin-access`, `metrics.read`. Reason: `Filters::getCleanName()` runs `explode(':', $filter)` without a limit, so `permission:users:write` parses as filter=`permission` with arg=`['users']` and silently drops `:write`.
+
+> **Schema note (2026-05-03 refactor):** the legacy pair `app_user_memberships` + `membership_roles` was replaced by a single `user_roles(user_id, role_id, assigned_at, assigned_by_user_id)` join. Migrations `2026-05-03-100003` … `100007` perform the change (create user_roles, backfill from membership_roles inside a transaction, drop legacy tables). Roles are now **global** (`roles.application_id` was dropped in migration `100006`); per-application scoping lives on `permissions.application_id`.
 
 Key components:
 - `app/Filters/PermissionFilter.php` — alias `permission`, used in routes as `permission:<code>` (e.g. `permission:iam.admin-access`).
-- `app/Services/Iam/EffectivePermissionsResolver.php` — derives a user's effective permission codes from active memberships → roles → role_permissions.
+- `app/Services/Iam/EffectivePermissionsResolver.php` — derives a user's effective permission codes from `user_roles → roles → role_permissions → permissions`.
+- `app/Models/UserRoleModel.php` — the join model for user↔role assignments.
 - `SessionManager::generateSessionResponse()` — embeds `permissions: string[]` in the `user` object of the login/refresh response, and the JWT carries a `scope` claim with the same codes.
-- `app/Database/Seeds/RbacBootstrapSeeder.php` — idempotent seeder for the `self` application, the canonical permission set (`users.read/write`, `files.read/write`, `audit.read`, `metrics.read`, `apikeys.read/write`, `iam.admin-access`, `iam.superadmin-access`), and the three system roles (`superadmin`, `admin`, `user`) with their default permission grants. Must run before `php spark users:bootstrap-superadmin`, which now attaches the `superadmin` role via an `app_user_memberships` row.
+- `app/Database/Seeds/RbacBootstrapSeeder.php` — idempotent seeder for the `self` application, the canonical permission set (`users.read/write`, `files.read/write`, `audit.read`, `metrics.read`, `apikeys.read/write`, `iam.admin-access`, `iam.superadmin-access`), and the three system roles (`superadmin`, `admin`, `user`) with their default permission grants. Must run before `php spark users:bootstrap-superadmin`, which now attaches the `superadmin` role via a `user_roles` row.
 
 REST endpoints live under `/api/v1/iam/` (all gated by `permission:iam.admin-access`):
 - `roles` CRUD + `roles/{id}/permissions` (list/attach/detach)
 - `permissions` CRUD
-- `memberships` CRUD + `memberships/{id}/roles` (list/attach/detach)
-- `users/{user_id}/memberships` and `users/{user_id}/permissions?application_id=N` (effective permissions)
+- `users/{user_id}/permissions?application_id=N` (effective permissions)
+
+Role assignment to users happens directly through the **Users** module (`/api/v1/users/{id}` accepts `role_ids[]` in the payload), not through a separate membership resource.
 
 When scaffolding new modules, `vendor/bin/make-crud.sh` (via `dcardenasl/ci4-scaffolding` package) emits `permission:iam.admin-access` for the protected route group.
 

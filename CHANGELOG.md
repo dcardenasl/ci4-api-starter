@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **IAM schema simplified**: the `app_user_memberships` + `membership_roles` pair was collapsed into a single `user_roles(user_id, role_id, assigned_at, assigned_by_user_id)` join table. Roles are now global (the `roles.application_id` column was dropped); per-application scoping is preserved via `permissions.application_id`. See migrations `2026-05-03-100003_CreateUserRolesTable` through `2026-05-03-100007_DropMembershipsTables`. Migration `100004` (the data backfill) runs inside a transaction so a partial failure does not leave `user_roles` half-populated.
+- **`users:bootstrap-superadmin`** now attaches the `superadmin` role via a `user_roles` row (was: `app_user_memberships` row).
+- **`EffectivePermissionsResolver`** now derives codes from `user_roles → roles → role_permissions → permissions`.
+
+### Added
+- `php spark env:check [--strict]` — validates required environment variables, secret strength (length, placeholder detection, hex2bin/base64 normalization), and treats `CORS_ALLOWED_ORIGINS` as required in production. `init.sh` invokes it before running migrations.
+
+### Removed
+- IAM REST endpoints under `/api/v1/iam/memberships` and `/api/v1/users/{id}/memberships`. Role assignment to users is performed through the existing `Users` resource (`role_ids[]` in the payload).
+
 ## [2.0.0] — 2026-05-03
 
 ### ⚠️ Breaking Changes

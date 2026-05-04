@@ -70,7 +70,10 @@ class FileController extends ApiController
                 $filePath = FCPATH . config('Api')->fileUploadPath . $result->path;
 
                 if (file_exists($filePath)) {
-                    return $this->response->download($filePath, null)->setFileName($result->original_name);
+                    $download = $this->response->download($filePath, null);
+                    if ($download !== null) {
+                        return $download->setFileName($result->original_name);
+                    }
                 }
             }
 

@@ -29,23 +29,38 @@ class AuditService extends BaseCrudService implements \App\Interfaces\System\Aud
      */
     public static bool $forceEnabledInTests = false;
 
+    /**
+     * Promoted-then-narrowed dependencies. Each is nullable in the
+     * constructor signature (so callers can omit them) but is guaranteed
+     * non-null once the constructor finishes via the `??=` defaults below.
+     * The narrowed properties below shadow the promoted ones with non-nullable
+     * types so PHPStan trusts dereferences in the rest of the class.
+     */
+    protected AuditPayloadSanitizer $payloadSanitizer;
+
+    protected AuditWriter $auditWriter;
+
+    protected AuditConfig $auditConfig;
+
+    protected RelationLabelLoader $labels;
+
     public function __construct(
         protected AuditRepositoryInterface $auditRepository,
         ResponseMapperInterface $responseMapper,
-        protected ?AuditWriter $auditWriter = null,
+        ?AuditWriter $auditWriter = null,
         protected ?QueueManager $queueManager = null,
-        protected ?AuditConfig $auditConfig = null,
+        ?AuditConfig $auditConfig = null,
         protected bool $enabled = true,
         protected string $defaultIpAddress = '127.0.0.1',
         protected string $defaultUserAgent = 'system',
-        protected ?AuditPayloadSanitizer $payloadSanitizer = null,
-        protected ?RelationLabelLoader $labels = null
+        ?AuditPayloadSanitizer $payloadSanitizer = null,
+        ?RelationLabelLoader $labels = null
     ) {
         parent::__construct($auditRepository, $responseMapper);
-        $this->payloadSanitizer ??= new AuditPayloadSanitizer();
-        $this->auditWriter ??= new AuditWriter($auditRepository);
-        $this->auditConfig ??= config('Audit');
-        $this->labels ??= new RelationLabelLoader();
+        $this->payloadSanitizer = $payloadSanitizer ?? new AuditPayloadSanitizer();
+        $this->auditWriter      = $auditWriter      ?? new AuditWriter($auditRepository);
+        $this->auditConfig      = $auditConfig      ?? config('Audit');
+        $this->labels           = $labels           ?? new RelationLabelLoader();
     }
 
     protected function enrichEntities(array $entities): array
@@ -204,7 +219,7 @@ class AuditService extends BaseCrudService implements \App\Interfaces\System\Aud
     private function persistSynchronously(array $data): void
     {
         try {
-            $this->auditWriter?->write($data);
+            $this->auditWriter->write($data);
         } catch (\Throwable $e) {
             // Audit logging must be non-blocking for primary flows.
             log_message('error', '[Audit] Synchronous write failed: ' . $e->getMessage());
@@ -216,7 +231,7 @@ class AuditService extends BaseCrudService implements \App\Interfaces\System\Aud
      */
     private function enqueueAudit(array $data): bool
     {
-        if (!$this->auditConfig?->asyncEnabled || $this->queueManager === null) {
+        if (!$this->auditConfig->asyncEnabled || $this->queueManager === null) {
             return false;
         }
 

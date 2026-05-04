@@ -69,8 +69,9 @@ class FilenameGenerator
             $basename = $matches[1];
         }
 
-        // Clean filename: only alphanumeric, underscore, and dash
-        $basename = preg_replace('/[^a-zA-Z0-9_-]/', '', $basename);
+        // Clean filename: only alphanumeric, underscore, and dash. preg_replace
+        // returns null on PCRE error — fall back to 'file' in that case.
+        $basename = preg_replace('/[^a-zA-Z0-9_-]/', '', $basename) ?? '';
         $basename = substr($basename, 0, 80); // Limit length
 
         return empty($basename) ? 'file' : $basename;

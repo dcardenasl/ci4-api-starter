@@ -62,7 +62,11 @@ class AuthController extends ApiController
     public function me(): ResponseInterface
     {
         return $this->handleRequest(function () {
-            return $this->authService->me($this->getUserId());
+            $userId = $this->getUserId();
+            if ($userId === null) {
+                throw new \App\Exceptions\AuthenticationException(lang('Auth.authRequired'));
+            }
+            return $this->authService->me($userId);
         });
     }
 }

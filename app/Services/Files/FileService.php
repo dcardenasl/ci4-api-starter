@@ -123,6 +123,9 @@ class FileService implements FileServiceInterface
         }
 
         $savedFile = $this->fileRepository->find($fileId);
+        if ($savedFile === null) {
+            throw new \RuntimeException(sprintf('File row %d disappeared after insert.', (int) $fileId));
+        }
         /** @var FileResponseDTO $response */
         $response = $this->responseMapper->map($savedFile);
         return $response;

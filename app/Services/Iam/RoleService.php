@@ -20,6 +20,7 @@ class RoleService extends BaseCrudService implements RoleServiceInterface
     public function __construct(
         RepositoryInterface $roleRepository,
         ResponseMapperInterface $responseMapper,
+        private readonly IamAuthorizationService $authz,
         private readonly RelationLabelLoader $labels = new RelationLabelLoader()
     ) {
         parent::__construct($roleRepository, $responseMapper);
@@ -34,6 +35,20 @@ class RoleService extends BaseCrudService implements RoleServiceInterface
             relatedTable: 'applications',
             relatedLabel: 'name'
         );
+    }
+
+    protected function beforeUpdate(int $id, array $data, ?SecurityContext $context): array
+    {
+        $this->authz->assertCanModifyRole($context, $id);
+
+        return parent::beforeUpdate($id, $data, $context);
+    }
+
+    protected function beforeDelete(int $id, ?SecurityContext $context): void
+    {
+        $this->authz->assertCanModifyRole($context, $id);
+
+        parent::beforeDelete($id, $context);
     }
 
     /**
@@ -67,8 +82,10 @@ class RoleService extends BaseCrudService implements RoleServiceInterface
      */
     public function attachPermissions(int $roleId, AttachPermissionsRequestDTO $request, ?SecurityContext $context = null): array
     {
-        return $this->wrapInTransaction(function () use ($roleId, $request) {
+        return $this->wrapInTransaction(function () use ($roleId, $request, $context) {
             $this->ensureRoleExists($roleId);
+            $this->authz->assertCanModifyRole($context, $roleId);
+            $this->authz->assertCanGrantPermissions($context, $request->permission_ids);
 
             $db = Database::connect();
             $existingQuery = $db->table('role_permissions')
@@ -106,8 +123,10 @@ class RoleService extends BaseCrudService implements RoleServiceInterface
      */
     public function detachPermission(int $roleId, int $permissionId, ?SecurityContext $context = null): bool
     {
-        return $this->wrapInTransaction(function () use ($roleId, $permissionId) {
+        return $this->wrapInTransaction(function () use ($roleId, $permissionId, $context) {
             $this->ensureRoleExists($roleId);
+            $this->authz->assertCanModifyRole($context, $roleId);
+            $this->authz->assertCanGrantPermissions($context, [$permissionId]);
 
             $db = Database::connect();
             $db->table('role_permissions')

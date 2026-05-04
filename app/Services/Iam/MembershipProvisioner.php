@@ -16,12 +16,10 @@ use Config\Database;
  */
 class MembershipProvisioner
 {
-    public const SELF_APPLICATION_ID = 1;
-
     public function ensureSelfMembership(int $userId, ?string $now = null): void
     {
         $now   = $now ?? date('Y-m-d H:i:s');
-        $appId = self::SELF_APPLICATION_ID;
+        $appId = IamAuthorizationService::DEFAULT_APPLICATION_ID;
         $db    = Database::connect();
 
         $exists = $db->table('app_user_memberships')

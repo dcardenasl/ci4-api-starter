@@ -40,6 +40,7 @@ class UserServiceTest extends CIUnitTestCase
         $this->mockApproveUserAction = $this->createMock(ApproveUserAction::class);
         $this->mockCreateUserAction = $this->createMock(CreateUserAction::class);
         $this->mockUpdateUserAction = $this->createMock(UpdateUserAction::class);
+        $mockAuthz = $this->createMock(\App\Services\Iam\IamAuthorizationService::class);
         $this->responseMapper = new class () implements ResponseMapperInterface {
             public function map(object $entity): \App\Interfaces\DataTransferObjectInterface
             {
@@ -52,7 +53,8 @@ class UserServiceTest extends CIUnitTestCase
             $this->responseMapper,
             $this->mockApproveUserAction,
             $this->mockCreateUserAction,
-            $this->mockUpdateUserAction
+            $this->mockUpdateUserAction,
+            $mockAuthz
         );
     }
 

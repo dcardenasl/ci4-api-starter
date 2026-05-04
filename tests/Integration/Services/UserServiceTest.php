@@ -22,8 +22,10 @@ class UserServiceTest extends CIUnitTestCase
     use DatabaseTestTrait;
     use CustomAssertionsTrait;
 
-    protected $migrate     = true;
-    protected $namespace   = 'App';
+    protected $migrate   = true;
+    protected $namespace = 'App';
+    protected $seed      = \App\Database\Seeds\RbacBootstrapSeeder::class;
+    protected $basePath  = APPPATH . 'Database';
 
     protected UserService $userService;
     protected UserModel $userModel;
@@ -74,7 +76,7 @@ class UserServiceTest extends CIUnitTestCase
             'first_name' => 'New',
         ], service('validation'));
 
-        $result = $this->userService->update((int) $userId, $request, new SecurityContext(1));
+        $result = $this->userService->update((int) $userId, $request, new SecurityContext(999));
 
         $user = $this->userModel->find($userId);
         $this->assertEquals('new@example.com', $user->email);
@@ -87,7 +89,7 @@ class UserServiceTest extends CIUnitTestCase
             'password' => password_hash('ValidPass123!', PASSWORD_BCRYPT),
         ]);
 
-        $result = $this->userService->destroy((int) $userId, new SecurityContext(1));
+        $result = $this->userService->destroy((int) $userId, new SecurityContext(999));
         $this->assertTrue($result);
 
         $this->assertNull($this->userModel->find($userId));
@@ -102,7 +104,7 @@ class UserServiceTest extends CIUnitTestCase
             'status' => 'pending_approval',
         ]);
 
-        $result = $this->userService->approve((int) $userId, new SecurityContext(1));
+        $result = $this->userService->approve((int) $userId, new SecurityContext(999));
 
         $user = $this->userModel->find($userId);
         $this->assertEquals('active', $user->status);
@@ -119,6 +121,6 @@ class UserServiceTest extends CIUnitTestCase
         ]);
 
         $this->expectException(ConflictException::class);
-        $this->userService->approve((int) $userId, new SecurityContext(1));
+        $this->userService->approve((int) $userId, new SecurityContext(999));
     }
 }

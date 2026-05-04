@@ -9,7 +9,9 @@ use App\Exceptions\NotFoundException;
 use App\Interfaces\Mappers\ResponseMapperInterface;
 use App\Interfaces\Users\UserRepositoryInterface;
 use App\Interfaces\Users\UserServiceInterface;
+use App\Libraries\ContextHolder;
 use App\Services\Core\BaseCrudService;
+use App\Services\Iam\IamAuthorizationService;
 use App\Services\Users\Actions\ApproveUserAction;
 use App\Services\Users\Actions\CreateUserAction;
 use App\Services\Users\Actions\UpdateUserAction;
@@ -28,7 +30,8 @@ class UserService extends BaseCrudService implements UserServiceInterface
         ResponseMapperInterface $responseMapper,
         protected ApproveUserAction $approveUserAction,
         protected CreateUserAction $createUserAction,
-        protected UpdateUserAction $updateUserAction
+        protected UpdateUserAction $updateUserAction,
+        protected IamAuthorizationService $authz
     ) {
         parent::__construct($userRepository, $responseMapper);
     }
@@ -54,6 +57,8 @@ class UserService extends BaseCrudService implements UserServiceInterface
     public function update(int $id, \App\Interfaces\DataTransferObjectInterface $request, ?SecurityContext $context = null): \App\Interfaces\DataTransferObjectInterface
     {
         /** @var \App\DTO\Request\Users\UserUpdateRequestDTO $request */
+        $this->authz->assertCanModifySubject($context, $id);
+
         return $this->wrapInTransaction(function () use ($id, $request, $context) {
             /** @var \App\Entities\UserEntity $updatedUser */
             $updatedUser = $this->updateUserAction->execute($id, $request, $context);
@@ -66,6 +71,8 @@ class UserService extends BaseCrudService implements UserServiceInterface
      */
     public function approve(int $id, ?SecurityContext $context = null, ?string $clientBaseUrl = null): \App\Interfaces\DataTransferObjectInterface
     {
+        $this->authz->assertCanModifySubject($context, $id);
+
         return $this->wrapInTransaction(function () use ($id, $context, $clientBaseUrl) {
             $approvedUser = $this->approveUserAction->execute($id, $context, $clientBaseUrl);
 
@@ -82,18 +89,47 @@ class UserService extends BaseCrudService implements UserServiceInterface
             throw new \App\Exceptions\AuthorizationException(lang('Auth.insufficientPermissions'));
         }
 
+        if ($context !== null && ! $context->isUser($id)) {
+            $this->authz->assertCanActOnSubject($context, $id);
+        }
+
         return parent::show($id, $context);
     }
 
     /**
      * Delete a user
      */
+    /**
+     * Hide SuperAdmin users from listings when the current actor is not a
+     * SuperAdmin. The write paths are already locked down, but listing them
+     * still leaks identity and is unnecessary for a regular admin.
+     */
+    protected function applyBaseCriteria(object $builder): void
+    {
+        $context = ContextHolder::get();
+        if ($context === null || $this->authz->isSuperAdmin($context)) {
+            return;
+        }
+
+        $sub = '(SELECT m.user_id FROM app_user_memberships m'
+            . ' INNER JOIN membership_roles mr ON mr.membership_id = m.id'
+            . ' INNER JOIN role_permissions rp ON rp.role_id = mr.role_id'
+            . ' INNER JOIN permissions p ON p.id = rp.permission_id'
+            . " WHERE p.code = 'iam.superadmin-access')";
+
+        if (method_exists($builder, 'where')) {
+            $builder->where("users.id NOT IN {$sub}", null, false);
+        }
+    }
+
     public function destroy(int $id, ?SecurityContext $context = null): bool
     {
         $targetUser = $this->repository->find($id);
         if (!$targetUser) {
             throw new NotFoundException(lang('Users.notFound'));
         }
+
+        $this->authz->assertCanModifySubject($context, $id);
 
         return parent::destroy($id, $context);
     }

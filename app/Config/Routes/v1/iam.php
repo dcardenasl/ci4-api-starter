@@ -4,7 +4,14 @@
 
 $routes->group('iam', ['namespace' => '\App\Controllers\Api\V1\Iam'], function ($routes) {
 
-    // Auth & Admin Protected Group
+    // Admin-accessible group: a regular admin can read the IAM graph and
+    // manage memberships/roles for non-SuperAdmin users. The hierarchical
+    // guardrails inside each service prevent privilege escalation:
+    //   - `is_system` roles are immutable for non-SA actors,
+    //   - permissions/roles cannot be granted that the actor doesn't hold,
+    //   - SuperAdmin subjects (users, memberships) are off-limits to admins.
+    // SA-only mutations (Permission CRUD, modifying is_system roles) are
+    // enforced one layer deeper, in the service `before*` hooks.
     $routes->group('', ['filter' => ['jwtauth', 'permission:iam.admin-access', 'throttle']], function ($routes) {
         // AppUserMembership Routes
         $routes->get('memberships', 'AppUserMembershipController::index');

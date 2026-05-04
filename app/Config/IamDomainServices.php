@@ -25,7 +25,8 @@ trait IamDomainServices
 
         return new \App\Services\Iam\RoleService(
             new \App\Repositories\GenericRepository(model(\App\Models\RoleModel::class)),
-            static::roleResponseMapper()
+            static::roleResponseMapper(),
+            static::iamAuthorizationService()
         );
     }
 
@@ -48,7 +49,8 @@ trait IamDomainServices
 
         return new \App\Services\Iam\PermissionService(
             new \App\Repositories\GenericRepository(model(\App\Models\PermissionModel::class)),
-            static::permissionResponseMapper()
+            static::permissionResponseMapper(),
+            static::iamAuthorizationService()
         );
     }
 
@@ -72,7 +74,8 @@ trait IamDomainServices
         return new \App\Services\Iam\AppUserMembershipService(
             new \App\Repositories\GenericRepository(model(\App\Models\AppUserMembershipModel::class)),
             static::appUserMembershipResponseMapper(),
-            static::effectivePermissionsResolver()
+            static::effectivePermissionsResolver(),
+            static::iamAuthorizationService()
         );
     }
 
@@ -118,5 +121,17 @@ trait IamDomainServices
         }
 
         return new \App\Services\Iam\MembershipProvisioner();
+    }
+
+    public static function iamAuthorizationService(bool $getShared = true): \App\Services\Iam\IamAuthorizationService
+    {
+        if ($getShared) {
+            return static::getSharedInstance('iamAuthorizationService');
+        }
+
+        return new \App\Services\Iam\IamAuthorizationService(
+            static::effectivePermissionsResolver(),
+            static::securityAuditLogger()
+        );
     }
 }

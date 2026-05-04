@@ -97,7 +97,8 @@ trait AuthIdentityServices
             static::userResponseMapper(),
             static::approveUserAction($userRepository),
             static::createUserAction($userRepository),
-            static::updateUserAction($userRepository)
+            static::updateUserAction($userRepository),
+            static::iamAuthorizationService()
         );
     }
 

@@ -35,7 +35,7 @@ final class TestPermissionResolver
                 ->join('role_permissions rp', 'rp.role_id = r.id')
                 ->join('permissions p', 'p.id = rp.permission_id')
                 ->where('r.code', $role)
-                ->where('r.application_id', self::APPLICATION_ID)
+                ->where('p.application_id', self::APPLICATION_ID)
                 ->orderBy('p.code', 'ASC')
                 ->get();
         } catch (\Throwable) {

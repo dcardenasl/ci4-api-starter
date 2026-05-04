@@ -9,11 +9,16 @@ use CodeIgniter\Database\ConnectionInterface;
 
 /**
  * Resolves the set of effective permission codes a user has within an
- * application by walking memberships → roles → role_permissions → permissions.
+ * application by walking user_roles → role_permissions → permissions
+ * (filtered by the target application).
  *
- * Results are cached for 60 seconds. Use invalidateForUser() after mutations to
- * memberships or membership_roles for a specific user; invalidateAll() when
- * role/permission mappings change globally.
+ * Roles are global (cross-app); permissions belong to a specific application.
+ * The effective permissions for (user, app) are all permissions of all the
+ * user's roles whose application_id matches the requested app.
+ *
+ * Results are cached for 60 seconds. Use invalidateForUser() after changes to
+ * a specific user's roles; invalidateAll() when role/permission mappings
+ * change globally (covers the cross-app cache fan-out cheaply).
  */
 class EffectivePermissionsResolver
 {
@@ -52,10 +57,6 @@ class EffectivePermissionsResolver
         $this->cache->delete(self::cacheKey($userId, $applicationId));
     }
 
-    /**
-     * Bulk invalidation: for cases where role/permission mappings change and
-     * affect potentially many users at once.
-     */
     public function invalidateAll(): void
     {
         $this->cache->deleteMatching('iam_eff_perms_*');
@@ -66,16 +67,12 @@ class EffectivePermissionsResolver
      */
     private function load(int $userId, int $applicationId): array
     {
-        $query = $this->db->table('app_user_memberships m')
+        $query = $this->db->table('user_roles ur')
             ->select('p.code')
             ->distinct()
-            ->join('membership_roles mr', 'mr.membership_id = m.id')
-            ->join('roles r', 'r.id = mr.role_id')
-            ->join('role_permissions rp', 'rp.role_id = r.id')
+            ->join('role_permissions rp', 'rp.role_id = ur.role_id')
             ->join('permissions p', 'p.id = rp.permission_id')
-            ->where('m.user_id', $userId)
-            ->where('m.application_id', $applicationId)
-            ->where('m.status', 'active')
+            ->where('ur.user_id', $userId)
             ->where('p.application_id', $applicationId)
             ->orderBy('p.code', 'ASC')
             ->get();

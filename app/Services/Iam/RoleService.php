@@ -12,15 +12,28 @@ use App\Interfaces\Core\RepositoryInterface;
 use App\Interfaces\Iam\RoleServiceInterface;
 use App\Interfaces\Mappers\ResponseMapperInterface;
 use App\Services\Core\BaseCrudService;
+use App\Services\Core\Support\RelationLabelLoader;
 use Config\Database;
 
 class RoleService extends BaseCrudService implements RoleServiceInterface
 {
     public function __construct(
         RepositoryInterface $roleRepository,
-        ResponseMapperInterface $responseMapper
+        ResponseMapperInterface $responseMapper,
+        private readonly RelationLabelLoader $labels = new RelationLabelLoader()
     ) {
         parent::__construct($roleRepository, $responseMapper);
+    }
+
+    protected function enrichEntities(array $entities): array
+    {
+        return $this->labels->attachLabel(
+            $entities,
+            sourceField: 'application_id',
+            targetField: 'application_name',
+            relatedTable: 'applications',
+            relatedLabel: 'name'
+        );
     }
 
     /**
@@ -34,8 +47,9 @@ class RoleService extends BaseCrudService implements RoleServiceInterface
 
         $db = Database::connect();
         $query = $db->table('role_permissions rp')
-            ->select('p.id, p.application_id, p.code, p.resource, p.action, p.description, p.created_at, p.updated_at')
+            ->select('p.id, p.application_id, a.name AS application_name, p.code, p.resource, p.action, p.description, p.created_at, p.updated_at')
             ->join('permissions p', 'p.id = rp.permission_id')
+            ->join('applications a', 'a.id = p.application_id', 'left')
             ->where('rp.role_id', $roleId)
             ->orderBy('p.code', 'ASC')
             ->get();
@@ -125,6 +139,7 @@ class RoleService extends BaseCrudService implements RoleServiceInterface
             resource: (string) $row['resource'],
             action: (string) $row['action'],
             description: (string) ($row['description'] ?? ''),
+            application_name: isset($row['application_name']) ? (string) $row['application_name'] : null,
             createdAt: isset($row['created_at']) ? (string) $row['created_at'] : null,
             updatedAt: isset($row['updated_at']) ? (string) $row['updated_at'] : null,
         );

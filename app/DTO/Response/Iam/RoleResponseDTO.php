@@ -27,6 +27,8 @@ readonly class RoleResponseDTO implements DataTransferObjectInterface
         public ?string $description,
         #[OA\Property(description: 'System role flag', type: 'boolean')]
         public bool $is_system,
+        #[OA\Property(property: 'application_name', description: 'Display name of the related application', type: 'string', nullable: true)]
+        public ?string $application_name = null,
         #[OA\Property(property: 'created_at', description: 'Creation timestamp', example: '2026-02-26 12:00:00', nullable: true)]
         public ?string $createdAt = null,
         #[OA\Property(property: 'updated_at', description: 'Last update timestamp', example: '2026-02-26 12:00:00', nullable: true)]
@@ -39,6 +41,7 @@ readonly class RoleResponseDTO implements DataTransferObjectInterface
         return [
             'id' => $this->id,
             'application_id' => $this->application_id,
+            'application_name' => $this->application_name,
             'code' => $this->code,
             'name' => $this->name,
             'description' => $this->description,

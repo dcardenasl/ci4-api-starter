@@ -12,6 +12,7 @@ use App\Interfaces\Core\RepositoryInterface;
 use App\Interfaces\Iam\AppUserMembershipServiceInterface;
 use App\Interfaces\Mappers\ResponseMapperInterface;
 use App\Services\Core\BaseCrudService;
+use App\Services\Core\Support\RelationLabelLoader;
 use Config\Database;
 
 class AppUserMembershipService extends BaseCrudService implements AppUserMembershipServiceInterface
@@ -19,9 +20,23 @@ class AppUserMembershipService extends BaseCrudService implements AppUserMembers
     public function __construct(
         RepositoryInterface $appUserMembershipRepository,
         ResponseMapperInterface $responseMapper,
-        private readonly EffectivePermissionsResolver $permissionsResolver
+        private readonly EffectivePermissionsResolver $permissionsResolver,
+        private readonly RelationLabelLoader $labels = new RelationLabelLoader()
     ) {
         parent::__construct($appUserMembershipRepository, $responseMapper);
+    }
+
+    protected function enrichEntities(array $entities): array
+    {
+        $entities = $this->labels->attachLabel(
+            $entities,
+            sourceField: 'application_id',
+            targetField: 'application_name',
+            relatedTable: 'applications',
+            relatedLabel: 'name'
+        );
+
+        return $this->labels->attachUserLabels($entities, 'user_id');
     }
 
     /**
@@ -33,8 +48,9 @@ class AppUserMembershipService extends BaseCrudService implements AppUserMembers
 
         $db = Database::connect();
         $query = $db->table('membership_roles mr')
-            ->select('r.id, r.application_id, r.code, r.name, r.description, r.is_system, r.created_at, r.updated_at')
+            ->select('r.id, r.application_id, a.name AS application_name, r.code, r.name, r.description, r.is_system, r.created_at, r.updated_at')
             ->join('roles r', 'r.id = mr.role_id')
+            ->join('applications a', 'a.id = r.application_id', 'left')
             ->where('mr.membership_id', $membershipId)
             ->orderBy('r.code', 'ASC')
             ->get();
@@ -123,16 +139,18 @@ class AppUserMembershipService extends BaseCrudService implements AppUserMembers
             ->orderBy('application_id', 'ASC')
             ->get();
 
-        $rows = $query === false ? [] : $query->getResultArray();
-        $result = [];
+        $rows     = $query === false ? [] : $query->getResultArray();
+        $entities = [];
         foreach ($rows as $row) {
             $entity = $this->repository->find((int) $row['id']);
             if ($entity !== null) {
-                $result[] = $this->mapToResponse($entity);
+                $entities[] = $entity;
             }
         }
 
-        return $result;
+        $entities = $this->enrichEntities($entities);
+
+        return array_map(fn ($e) => $this->mapToResponse($e), $entities);
     }
 
     /**
@@ -162,6 +180,7 @@ class AppUserMembershipService extends BaseCrudService implements AppUserMembers
             name: (string) $row['name'],
             description: $row['description'] !== null ? (string) $row['description'] : null,
             is_system: (bool) $row['is_system'],
+            application_name: isset($row['application_name']) ? (string) $row['application_name'] : null,
             createdAt: isset($row['created_at']) ? (string) $row['created_at'] : null,
             updatedAt: isset($row['updated_at']) ? (string) $row['updated_at'] : null,
         );

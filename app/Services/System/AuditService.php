@@ -13,6 +13,7 @@ use App\Interfaces\System\AuditRepositoryInterface;
 use App\Libraries\Queue\Jobs\WriteAuditLogJob;
 use App\Libraries\Queue\QueueManager;
 use App\Services\Core\BaseCrudService;
+use App\Services\Core\Support\RelationLabelLoader;
 use Config\Audit as AuditConfig;
 
 /**
@@ -37,12 +38,19 @@ class AuditService extends BaseCrudService implements \App\Interfaces\System\Aud
         protected bool $enabled = true,
         protected string $defaultIpAddress = '127.0.0.1',
         protected string $defaultUserAgent = 'system',
-        protected ?AuditPayloadSanitizer $payloadSanitizer = null
+        protected ?AuditPayloadSanitizer $payloadSanitizer = null,
+        protected ?RelationLabelLoader $labels = null
     ) {
         parent::__construct($auditRepository, $responseMapper);
         $this->payloadSanitizer ??= new AuditPayloadSanitizer();
         $this->auditWriter ??= new AuditWriter($auditRepository);
         $this->auditConfig ??= config('Audit');
+        $this->labels ??= new RelationLabelLoader();
+    }
+
+    protected function enrichEntities(array $entities): array
+    {
+        return $this->labels->attachUserLabels($entities, 'user_id');
     }
 
     /**
@@ -304,8 +312,8 @@ class AuditService extends BaseCrudService implements \App\Interfaces\System\Aud
         $entityId = $request->entity_id;
         $entityType = $this->normalizeEntityType($request->entity_type);
 
-        $logs = $this->auditRepository->getByEntity($entityType, $entityId);
-
+        $logs    = $this->auditRepository->getByEntity($entityType, $entityId);
+        $logs    = $this->enrichEntities($logs);
         $payload = array_map(
             fn ($log) => $this->mapToResponse($log)->toArray(),
             $logs

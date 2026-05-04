@@ -110,4 +110,13 @@ trait IamDomainServices
             static::cache()
         );
     }
+
+    public static function membershipProvisioner(bool $getShared = true): \App\Services\Iam\MembershipProvisioner
+    {
+        if ($getShared) {
+            return static::getSharedInstance('membershipProvisioner');
+        }
+
+        return new \App\Services\Iam\MembershipProvisioner();
+    }
 }

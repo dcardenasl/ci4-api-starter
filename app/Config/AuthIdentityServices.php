@@ -55,7 +55,8 @@ trait AuthIdentityServices
     {
         return new \App\Services\Auth\Support\GoogleAuthHandler(
             $userRepository,
-            static::refreshTokenService()
+            static::refreshTokenService(),
+            static::membershipProvisioner()
         );
     }
 
@@ -64,7 +65,8 @@ trait AuthIdentityServices
         return new \App\Services\Auth\Actions\RegisterUserAction(
             $userRepository,
             static::verificationService(),
-            static::emailService()
+            static::emailService(),
+            static::membershipProvisioner()
         );
     }
 
@@ -125,7 +127,8 @@ trait AuthIdentityServices
     public static function createUserAction(\App\Interfaces\Users\UserRepositoryInterface $userRepository): \App\Services\Users\Actions\CreateUserAction
     {
         return new \App\Services\Users\Actions\CreateUserAction(
-            $userRepository
+            $userRepository,
+            static::membershipProvisioner()
         );
     }
 

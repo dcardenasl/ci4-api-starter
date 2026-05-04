@@ -7,6 +7,7 @@ namespace App\Services\Auth\Support;
 use App\Exceptions\ValidationException;
 use App\Interfaces\Tokens\RefreshTokenServiceInterface;
 use App\Interfaces\Users\UserRepositoryInterface;
+use App\Services\Iam\MembershipProvisioner;
 
 /**
  * Google Auth Handler
@@ -19,7 +20,8 @@ class GoogleAuthHandler
 
     public function __construct(
         protected UserRepositoryInterface $userRepository,
-        protected RefreshTokenServiceInterface $refreshTokenService
+        protected RefreshTokenServiceInterface $refreshTokenService,
+        protected MembershipProvisioner $membershipProvisioner
     ) {
     }
 
@@ -51,6 +53,9 @@ class GoogleAuthHandler
 
         /** @var \App\Entities\UserEntity $user */
         $user = $this->userRepository->find((int) $userId);
+
+        $this->membershipProvisioner->ensureSelfMembership((int) $userId, $now);
+
         return $user;
     }
 

@@ -8,12 +8,14 @@ use App\DTO\Request\Users\UserCreateRequestDTO;
 use App\DTO\SecurityContext;
 use App\Exceptions\ValidationException;
 use App\Interfaces\Users\UserRepositoryInterface;
+use App\Services\Iam\MembershipProvisioner;
 use CodeIgniter\Events\Events;
 
 class CreateUserAction
 {
     public function __construct(
-        protected UserRepositoryInterface $userRepository
+        protected UserRepositoryInterface $userRepository,
+        protected MembershipProvisioner $membershipProvisioner
     ) {
     }
 
@@ -51,6 +53,8 @@ class CreateUserAction
         if ($user === null) {
             throw new ValidationException(lang('Api.validationFailed'), ['user' => lang('Api.resourceNotFound')]);
         }
+
+        $this->membershipProvisioner->ensureSelfMembership((int) $userId, $now);
 
         // Trigger Domain Event for side effects (email, logs, etc.)
         Events::trigger('user.created', $user, $context);

@@ -10,6 +10,7 @@ use App\Exceptions\ValidationException;
 use App\Interfaces\Auth\VerificationServiceInterface;
 use App\Interfaces\System\EmailServiceInterface;
 use App\Interfaces\Users\UserRepositoryInterface;
+use App\Services\Iam\MembershipProvisioner;
 use App\Traits\ResolvesWebAppLinks;
 
 class RegisterUserAction
@@ -19,7 +20,8 @@ class RegisterUserAction
     public function __construct(
         protected UserRepositoryInterface $userRepository,
         protected VerificationServiceInterface $verificationService,
-        protected EmailServiceInterface $emailService
+        protected EmailServiceInterface $emailService,
+        protected MembershipProvisioner $membershipProvisioner
     ) {
     }
 
@@ -48,6 +50,8 @@ class RegisterUserAction
         if ($user === null) {
             throw new ValidationException(lang('Api.validationFailed'), ['user' => lang('Api.resourceNotFound')]);
         }
+
+        $this->membershipProvisioner->ensureSelfMembership((int) $userId, $now);
 
         if ($requiresVerification) {
             try {

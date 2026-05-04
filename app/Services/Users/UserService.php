@@ -111,9 +111,8 @@ class UserService extends BaseCrudService implements UserServiceInterface
             return;
         }
 
-        $sub = '(SELECT m.user_id FROM app_user_memberships m'
-            . ' INNER JOIN membership_roles mr ON mr.membership_id = m.id'
-            . ' INNER JOIN role_permissions rp ON rp.role_id = mr.role_id'
+        $sub = '(SELECT ur.user_id FROM user_roles ur'
+            . ' INNER JOIN role_permissions rp ON rp.role_id = ur.role_id'
             . ' INNER JOIN permissions p ON p.id = rp.permission_id'
             . " WHERE p.code = 'iam.superadmin-access')";
 

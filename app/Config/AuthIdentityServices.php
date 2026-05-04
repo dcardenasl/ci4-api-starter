@@ -56,7 +56,7 @@ trait AuthIdentityServices
         return new \App\Services\Auth\Support\GoogleAuthHandler(
             $userRepository,
             static::refreshTokenService(),
-            static::membershipProvisioner()
+            static::userRoleAssignmentService()
         );
     }
 
@@ -66,7 +66,7 @@ trait AuthIdentityServices
             $userRepository,
             static::verificationService(),
             static::emailService(),
-            static::membershipProvisioner()
+            static::userRoleAssignmentService()
         );
     }
 
@@ -129,7 +129,7 @@ trait AuthIdentityServices
     {
         return new \App\Services\Users\Actions\CreateUserAction(
             $userRepository,
-            static::membershipProvisioner()
+            static::userRoleAssignmentService()
         );
     }
 
@@ -145,7 +145,8 @@ trait AuthIdentityServices
     public static function updateUserAction(\App\Interfaces\Users\UserRepositoryInterface $userRepository): \App\Services\Users\Actions\UpdateUserAction
     {
         return new \App\Services\Users\Actions\UpdateUserAction(
-            $userRepository
+            $userRepository,
+            static::userRoleAssignmentService()
         );
     }
 

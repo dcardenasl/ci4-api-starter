@@ -54,31 +54,6 @@ trait IamDomainServices
         );
     }
 
-    public static function appUserMembershipResponseMapper(bool $getShared = true): \App\Interfaces\Mappers\ResponseMapperInterface
-    {
-        if ($getShared) {
-            return static::getSharedInstance('appUserMembershipResponseMapper');
-        }
-
-        return new \App\Services\Core\Mappers\DtoResponseMapper(
-            \App\DTO\Response\Iam\AppUserMembershipResponseDTO::class
-        );
-    }
-
-    public static function appUserMembershipService(bool $getShared = true): \App\Interfaces\Iam\AppUserMembershipServiceInterface
-    {
-        if ($getShared) {
-            return static::getSharedInstance('appUserMembershipService');
-        }
-
-        return new \App\Services\Iam\AppUserMembershipService(
-            new \App\Repositories\GenericRepository(model(\App\Models\AppUserMembershipModel::class)),
-            static::appUserMembershipResponseMapper(),
-            static::effectivePermissionsResolver(),
-            static::iamAuthorizationService()
-        );
-    }
-
     public static function applicationResponseMapper(bool $getShared = true): \App\Interfaces\Mappers\ResponseMapperInterface
     {
         if ($getShared) {
@@ -114,13 +89,16 @@ trait IamDomainServices
         );
     }
 
-    public static function membershipProvisioner(bool $getShared = true): \App\Services\Iam\MembershipProvisioner
+    public static function userRoleAssignmentService(bool $getShared = true): \App\Services\Iam\UserRoleAssignmentService
     {
         if ($getShared) {
-            return static::getSharedInstance('membershipProvisioner');
+            return static::getSharedInstance('userRoleAssignmentService');
         }
 
-        return new \App\Services\Iam\MembershipProvisioner();
+        return new \App\Services\Iam\UserRoleAssignmentService(
+            \Config\Database::connect(),
+            static::effectivePermissionsResolver()
+        );
     }
 
     public static function iamAuthorizationService(bool $getShared = true): \App\Services\Iam\IamAuthorizationService

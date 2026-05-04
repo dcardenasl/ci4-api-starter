@@ -9,11 +9,13 @@ use App\DTO\SecurityContext;
 use App\Exceptions\NotFoundException;
 use App\Exceptions\ValidationException;
 use App\Interfaces\Users\UserRepositoryInterface;
+use App\Services\Iam\UserRoleAssignmentService;
 
 class UpdateUserAction
 {
     public function __construct(
-        protected UserRepositoryInterface $userRepository
+        protected UserRepositoryInterface $userRepository,
+        protected UserRoleAssignmentService $userRoleAssignmentService
     ) {
     }
 
@@ -26,11 +28,24 @@ class UpdateUserAction
         }
 
         $updateData = $this->buildUpdateData($request);
-        if ($updateData === []) {
+        $hasFieldUpdates = $updateData !== [];
+        $hasRoleUpdates = $request->role_ids !== null;
+
+        if (! $hasFieldUpdates && ! $hasRoleUpdates) {
             throw new ValidationException(lang('Api.validationFailed'), ['update' => lang('Api.noFieldsToUpdate')]);
         }
 
-        $this->userRepository->update($userId, $updateData);
+        if ($hasFieldUpdates) {
+            $this->userRepository->update($userId, $updateData);
+        }
+
+        if ($hasRoleUpdates) {
+            $this->userRoleAssignmentService->syncRoles(
+                $userId,
+                $request->role_ids ?? [],
+                $context?->user_id
+            );
+        }
 
         /** @var \App\Entities\UserEntity|null $updatedUser */
         $updatedUser = $this->userRepository->find($userId);

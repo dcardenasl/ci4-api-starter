@@ -10,7 +10,7 @@ use App\Exceptions\ValidationException;
 use App\Interfaces\Auth\VerificationServiceInterface;
 use App\Interfaces\System\EmailServiceInterface;
 use App\Interfaces\Users\UserRepositoryInterface;
-use App\Services\Iam\MembershipProvisioner;
+use App\Services\Iam\UserRoleAssignmentService;
 use App\Traits\ResolvesWebAppLinks;
 
 class RegisterUserAction
@@ -21,7 +21,7 @@ class RegisterUserAction
         protected UserRepositoryInterface $userRepository,
         protected VerificationServiceInterface $verificationService,
         protected EmailServiceInterface $emailService,
-        protected MembershipProvisioner $membershipProvisioner
+        protected UserRoleAssignmentService $userRoleAssignmentService
     ) {
     }
 
@@ -51,7 +51,7 @@ class RegisterUserAction
             throw new ValidationException(lang('Api.validationFailed'), ['user' => lang('Api.resourceNotFound')]);
         }
 
-        $this->membershipProvisioner->ensureSelfMembership((int) $userId, $now);
+        $this->userRoleAssignmentService->assignRoleByCode((int) $userId, 'user');
 
         if ($requiresVerification) {
             try {

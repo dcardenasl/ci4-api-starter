@@ -49,13 +49,15 @@ abstract class BaseCrudService implements \App\Interfaces\Core\CrudServiceContra
         $criteria = $this->applyQueryOptions($requestData);
         $result = $this->repository->paginateCriteria($criteria, (int) $page, (int) $perPage, $baseCriteria);
 
+        $entities = $this->enrichEntities((array) $result['data']);
+
         // Auto-map entities to response DTOs
         $result['data'] = array_map(
             function ($entity) {
                 /** @var object $entity */
                 return $this->mapToResponse($entity);
             },
-            (array) $result['data']
+            $entities
         );
 
         return PaginatedResponseDTO::fromArray([
@@ -78,7 +80,9 @@ abstract class BaseCrudService implements \App\Interfaces\Core\CrudServiceContra
             throw new NotFoundException(lang('Api.resourceNotFound'));
         }
 
-        return $this->mapToResponse($entity);
+        $enriched = $this->enrichEntities([$entity]);
+
+        return $this->mapToResponse($enriched[0] ?? $entity);
     }
 
     /**
@@ -217,6 +221,19 @@ abstract class BaseCrudService implements \App\Interfaces\Core\CrudServiceContra
     protected function applyQueryOptions(array $criteria): array
     {
         return $criteria; // Default: pass through unmodified
+    }
+
+    /**
+     * Optional hook to attach extra attributes to entities before they are
+     * mapped to Response DTOs. Used to batch-enrich rows with related labels
+     * (e.g. application_name, user_email) without N+1 queries.
+     *
+     * @param  array<int, object>  $entities
+     * @return array<int, object>
+     */
+    protected function enrichEntities(array $entities): array
+    {
+        return $entities; // Default: pass through unmodified
     }
 
     /**

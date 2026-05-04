@@ -7,6 +7,65 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.0] — 2026-05-03
+
+### ⚠️ Breaking Changes
+- **`users.role` column removed** from schema, model, DTOs, JWT, security context, and login/refresh/OAuth response payloads. Authorization is now membership-driven.
+- **JWT contract changed**: `role` claim removed; new `scope: string[]` claim carries the user's effective permission codes.
+- **Login/refresh response shape changed**: the `user` object no longer exposes `role`; it now exposes `permissions: string[]`.
+- **`RoleAuthorizationFilter` (`userroleguard`) removed**. Replaced by the fine-grained `permission:<code>` filter.
+- **Permission code separator is `.` (dot), not `:` (colon)** — e.g. `users.write`, `iam.admin-access`. Reason: CI4's `Filters::getCleanName()` splits on `:` without a limit, so `permission:users:write` was silently truncated to filter `permission` with arg `users`.
+- **`users:bootstrap-superadmin` requires the RBAC seeder first**. Run `php spark db:seed RbacBootstrapSeeder` before bootstrapping the superadmin; the command now attaches the `superadmin` role via an `app_user_memberships` row instead of writing the (removed) `users.role` column.
+- **In-tree CRUD scaffolding commands removed** (`app/Commands/MakeCrud.php`, `MakeCrudRemove.php`, `ModuleCheck.php`). Scaffolding is now provided by the `dcardenasl/ci4-api-crud-maker` Composer package; consumer config lives in `app/Config/Scaffolding.php`.
+
+### Added
+- Granular RBAC/IAM model with six tables: `applications`, `permissions`, `roles`, `role_permissions`, `app_user_memberships`, `membership_roles`
+- `RbacBootstrapSeeder` — idempotent seeder for the `self` application, the canonical permission set (`users.read/write`, `files.read/write`, `audit.read`, `metrics.read`, `apikeys.read/write`, `iam.admin-access`, `iam.superadmin-access`), and the three system roles (`superadmin`, `admin`, `user`)
+- IAM REST endpoints under `/api/v1/iam/` (all gated by `permission:iam.admin-access`):
+  - `roles` CRUD + `roles/{id}/permissions` (list / attach / detach)
+  - `permissions` CRUD
+  - `memberships` CRUD + `memberships/{id}/roles` (list / attach / detach)
+  - `applications` (read-only)
+  - `users/{user_id}/memberships` and `users/{user_id}/permissions?application_id=N` (effective permissions)
+- `EffectivePermissionsResolver` — derives a user's effective permission codes from active memberships → roles → role permissions
+- `permission:<code>` route filter for fine-grained authorization
+- `permissions: string[]` field on the `user` object of login/refresh responses, sourced from the resolver
+- `scope: string[]` JWT claim carrying the same effective permission codes
+- `iam:smoke-test` Spark command for IAM end-to-end verification
+- IAM-specific OpenAPI documentation (`app/Documentation/Iam/`)
+
+### Changed
+- `users:bootstrap-superadmin` now creates the user and attaches the `superadmin` role via an `app_user_memberships` row (no more `users.role` write)
+- `init.sh` chains `migrate → db:seed RbacBootstrapSeeder → swagger:generate → users:bootstrap-superadmin`
+- File access control: admin override now checks the `files.read` permission (previously the legacy role); `FileService::findById` enforces ownership at the data layer
+- Authentication flows (`login`, `refresh`, OAuth) no longer carry `role` through the pipeline
+- CRUD scaffolding migrated to the external `dcardenasl/ci4-api-crud-maker` package (referenced by VCS); `vendor/bin/make-crud.sh` is the entry point and now emits `permission:iam.admin-access` for the protected route group of generated modules
+- IAM migration timestamps realigned with the project's chronological migration order
+- `symfony/mailer` and remaining transitive dependencies bumped to latest patch/minor
+
+### Fixed
+- `FileService::findById` enforces the ownership check that was previously only applied at the index layer
+- Scaffolding rollback now restores pre-existing files instead of deleting them when generation aborts
+- Test suite aligned with permission-based authorization (no remaining references to the removed `role` column or `RoleAuthorizationFilter`)
+
+### Removed
+- `users.role` column and all related code paths (DTO fields, model casts, seeders, JWT claim, security context property, login/refresh/OAuth response field)
+- `RoleAuthorizationFilter` and the `userroleguard` filter alias
+- `UserRoleGuard` indirection
+- `AuditFacetsRequestDTO` (unused)
+- In-tree scaffolding commands (`MakeCrud`, `MakeCrudRemove`, `ModuleCheck`) — now provided by `dcardenasl/ci4-api-crud-maker`
+
+### Migration Guide
+
+Existing deployments upgrading from `1.4.x` must:
+
+1. Pull the new code and run `composer install`.
+2. Run database migrations: `php spark migrate` (six new IAM tables + drop of `users.role`).
+3. Seed the RBAC baseline (idempotent): `php spark db:seed RbacBootstrapSeeder`.
+4. Re-attach roles to existing users by inserting `app_user_memberships` + `membership_roles` rows (or rerun `php spark users:bootstrap-superadmin` for the first superadmin).
+5. Update any custom routes that used `userroleguard` / `roleAuth:` filters to `permission:<code>` — note the dot separator.
+6. Update API clients that read `user.role` from the login response or the `role` claim from the JWT to consume `user.permissions[]` and the `scope` claim instead.
+
 ## [1.4.0] — 2026-04-30
 
 ### Added
@@ -76,7 +135,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - **(PR #3)** Repository cleanup: removed dead code and stale files
 
-[unreleased]: https://github.com/dcardenasl/ci4-api-starter/compare/v1.4.0...HEAD
+[unreleased]: https://github.com/dcardenasl/ci4-api-starter/compare/v2.0.0...HEAD
+[2.0.0]: https://github.com/dcardenasl/ci4-api-starter/compare/v1.4.0...v2.0.0
 [1.4.0]: https://github.com/dcardenasl/ci4-api-starter/compare/v1.3.4...v1.4.0
 [1.3.4]: https://github.com/dcardenasl/ci4-api-starter/compare/v1.3.3...v1.3.4
 [1.3.3]: https://github.com/dcardenasl/ci4-api-starter/compare/v1.3.2...v1.3.3

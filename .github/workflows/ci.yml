@@ -104,6 +104,9 @@ jobs:
           # File upload configuration for testing (override to exclude txt)
           sed -i 's/^FILE_ALLOWED_TYPES =.*/FILE_ALLOWED_TYPES = jpg,jpeg,png,gif,pdf/' .env
 
+      - name: Validate environment configuration
+        run: php spark env:check
+
       - name: Validate Swagger documentation
         run: composer swagger-validate
 

@@ -62,6 +62,6 @@ class CreateAppUserMembershipsTable extends Migration
 
     public function down()
     {
-        $this->forge->dropTable('app_user_memberships');
+        $this->forge->dropTable('app_user_memberships', true);
     }
 }

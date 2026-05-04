@@ -31,6 +31,6 @@ class CreateMembershipRolesTable extends Migration
 
     public function down()
     {
-        $this->forge->dropTable('membership_roles');
+        $this->forge->dropTable('membership_roles', true);
     }
 }

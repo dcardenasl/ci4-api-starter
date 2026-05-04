@@ -65,11 +65,12 @@ class AuthServiceTest extends CIUnitTestCase
 
         $userMapper = new AuthUserMapper();
         $sessionManager = new SessionManager($this->mockJwtService, $this->mockRefreshTokenService, $this->createMock(\App\Services\Iam\EffectivePermissionsResolver::class));
-        $registerUserAction = new RegisterUserAction($mockUserRepository, $this->mockVerificationService, $this->mockEmailService);
+        $userRoleAssignmentService = $this->createMock(\App\Services\Iam\UserRoleAssignmentService::class);
+        $registerUserAction = new RegisterUserAction($mockUserRepository, $this->mockVerificationService, $this->mockEmailService, $userRoleAssignmentService);
         $googleLoginAction = new GoogleLoginAction(
             $mockUserRepository,
             $this->mockGoogleIdentityService,
-            new GoogleAuthHandler($mockUserRepository, $this->mockRefreshTokenService),
+            new GoogleAuthHandler($mockUserRepository, $this->mockRefreshTokenService, $userRoleAssignmentService),
             $sessionManager,
             $userMapper,
             new UserAccountGuard(),

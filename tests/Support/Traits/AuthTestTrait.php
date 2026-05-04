@@ -105,47 +105,29 @@ trait AuthTestTrait
     }
 
     /**
-     * Mirrors the role assignment in the new IAM tables so the user resolves
-     * the same effective permissions through real auth flows.
+     * Assigns the given global role to the user via the user_roles table so
+     * that EffectivePermissionsResolver returns the expected permission set.
      */
     private function ensureMembership(int $userId, string $roleCode): void
     {
         $db = \Config\Database::connect();
 
-        $role = $db->table('roles')->where('code', $roleCode)->where('application_id', 1)->get()?->getRowArray();
+        $role = $db->table('roles')->where('code', $roleCode)->get()?->getRowArray();
         if ($role === null) {
             return;
         }
 
-        $membership = $db->table('app_user_memberships')
+        $userRoleExists = $db->table('user_roles')
             ->where('user_id', $userId)
-            ->where('application_id', 1)
-            ->get()?->getRowArray();
-
-        if ($membership === null) {
-            $now = date('Y-m-d H:i:s');
-            $db->table('app_user_memberships')->insert([
-                'user_id'        => $userId,
-                'application_id' => 1,
-                'status'         => 'active',
-                'accepted_at'    => $now,
-                'created_at'     => $now,
-                'updated_at'     => $now,
-            ]);
-            $membershipId = (int) $db->insertID();
-        } else {
-            $membershipId = (int) $membership['id'];
-        }
-
-        $exists = $db->table('membership_roles')
-            ->where('membership_id', $membershipId)
             ->where('role_id', (int) $role['id'])
             ->countAllResults() > 0;
 
-        if (! $exists) {
-            $db->table('membership_roles')->insert([
-                'membership_id' => $membershipId,
-                'role_id'       => (int) $role['id'],
+        if (! $userRoleExists) {
+            $db->table('user_roles')->insert([
+                'user_id'             => $userId,
+                'role_id'             => (int) $role['id'],
+                'assigned_at'         => date('Y-m-d H:i:s'),
+                'assigned_by_user_id' => null,
             ]);
         }
     }

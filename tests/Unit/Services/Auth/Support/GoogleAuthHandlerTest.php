@@ -22,10 +22,12 @@ class GoogleAuthHandlerTest extends CIUnitTestCase
 
         $this->mockUserRepository = $this->createMock(UserRepositoryInterface::class);
         $this->mockRefreshTokenService = $this->createMock(RefreshTokenServiceInterface::class);
+        $userRoleAssignmentService = $this->createMock(\App\Services\Iam\UserRoleAssignmentService::class);
 
         $this->handler = new GoogleAuthHandler(
             $this->mockUserRepository,
-            $this->mockRefreshTokenService
+            $this->mockRefreshTokenService,
+            $userRoleAssignmentService
         );
     }
 

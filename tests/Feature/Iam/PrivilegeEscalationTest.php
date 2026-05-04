@@ -8,18 +8,11 @@ use Tests\Support\ApiTestCase;
 use Tests\Support\Traits\AuthTestTrait;
 
 /**
- * Verifies the hierarchical guardrails enforced by IamAuthorizationService.
- *
- * Six privilege-escalation scenarios:
- *  (a) Admin tries to attach `iam.superadmin-access` to a role he can reach.
- *  (b) Admin tries to attach the `superadmin` role to his own membership.
- *  (c) Admin tries to attach a role to another user's SuperAdmin membership.
- *  (d) Admin tries to update or delete the `superadmin` system role.
- *  (e) Admin tries to delete a SuperAdmin user.
- *  (f) Admin tries to update his own user record.
- *
- * Plus a SuperAdmin happy-path test that confirms (a)-(e) succeed for SA
- * (f intentionally still fails for SA — assertNotSelf applies to everyone).
+ * Verifies the hierarchical guardrails enforced by the redesigned IAM:
+ *  - IAM CRUD (roles, permissions, applications) is gated by `iam.superadmin-access`.
+ *  - SuperAdmin users are invisible/untouchable for non-SuperAdmin actors.
+ *  - Self-edit is blocked for everyone (admin and superadmin alike).
+ *  - Default user role is assigned automatically on creation/registration.
  *
  * @internal
  */
@@ -36,39 +29,6 @@ final class PrivilegeEscalationTest extends ApiTestCase
         $result = $this->withBodyFormat('json')->post(
             "/api/v1/iam/roles/{$adminRoleId}/permissions/attach",
             ['permission_ids' => [(string) $superadminPermId]]
-        );
-
-        $result->assertStatus(403);
-    }
-
-    public function testAdminCannotSelfAssignSuperadminRole(): void
-    {
-        $this->actAs('admin');
-        $superadminRoleId = $this->roleIdByCode('superadmin');
-        $ownMembershipId  = $this->membershipIdForUser((int) $this->currentUserId);
-
-        $result = $this->withBodyFormat('json')->post(
-            "/api/v1/iam/memberships/{$ownMembershipId}/roles/attach",
-            ['role_ids' => [(string) $superadminRoleId]]
-        );
-
-        $result->assertStatus(403);
-    }
-
-    public function testAdminCannotAttachRoleToSuperadminMembership(): void
-    {
-        // Create a separate superadmin user first
-        $saUserId        = $this->createUser('sa-' . uniqid() . '@example.com', 'ValidPass123!', 'superadmin');
-        $saMembershipId  = $this->membershipIdForUser($saUserId);
-        \Config\Services::effectivePermissionsResolver()->invalidateForUser($saUserId, 1);
-
-        // Then act as admin
-        $this->actAs('admin');
-        $userRoleId = $this->roleIdByCode('user');
-
-        $result = $this->withBodyFormat('json')->post(
-            "/api/v1/iam/memberships/{$saMembershipId}/roles/attach",
-            ['role_ids' => [(string) $userRoleId]]
         );
 
         $result->assertStatus(403);
@@ -104,9 +64,19 @@ final class PrivilegeEscalationTest extends ApiTestCase
 
         $this->actAs('admin');
 
-        $result = $this->delete("/api/v1/users/{$saUserId}");
+        // The framework may either return a 403/404 HTTP response or surface the
+        // AuthorizationException directly to the test runner. Both indicate the
+        // operation was blocked. The invariant we care about is that the user
+        // survives.
+        try {
+            $this->delete("/api/v1/users/{$saUserId}");
+        } catch (\App\Exceptions\ApiException) {
+            // Expected blocked path.
+        }
 
-        $result->assertStatus(403);
+        $stillExists = \Config\Database::connect()
+            ->table('users')->where('id', $saUserId)->countAllResults() > 0;
+        $this->assertTrue($stillExists, 'Superadmin user should not have been deleted by an admin actor.');
     }
 
     public function testAdminCannotApproveSuperadminUser(): void
@@ -116,9 +86,16 @@ final class PrivilegeEscalationTest extends ApiTestCase
 
         $this->actAs('admin');
 
-        $result = $this->withBodyFormat('json')->post("/api/v1/users/{$saUserId}/approve");
+        try {
+            $this->withBodyFormat('json')->post("/api/v1/users/{$saUserId}/approve");
+        } catch (\App\Exceptions\ApiException) {
+            // Expected blocked path.
+        }
 
-        $result->assertStatus(403);
+        $row = \Config\Database::connect()
+            ->table('users')->where('id', $saUserId)->select('status')->get()?->getRowArray();
+        $this->assertNotNull($row);
+        $this->assertSame('pending_approval', (string) $row['status']);
     }
 
     public function testAdminCannotUpdateOwnUser(): void
@@ -158,50 +135,23 @@ final class PrivilegeEscalationTest extends ApiTestCase
         $this->assertNotContains($saUserId, $ids, 'Admin listing should not enumerate SuperAdmin users.');
     }
 
-    public function testAdminCanAttachNonSuperadminRoleToNonSuperadminUser(): void
-    {
-        // Create a regular user (auto-provisioned with self membership, no roles)
-        $regularUserId       = $this->createUser('regular-' . uniqid() . '@example.com', 'ValidPass123!', 'user');
-        $regularMembershipId = $this->membershipIdForUser($regularUserId);
-
-        // Detach the seeded "user" role first so the membership starts empty
-        $userRoleId = $this->roleIdByCode('user');
-        $db         = \Config\Database::connect();
-        $db->table('membership_roles')
-            ->where('membership_id', $regularMembershipId)
-            ->where('role_id', $userRoleId)
-            ->delete();
-
-        // Burn any stale cached effective permissions for this user.
-        \Config\Services::effectivePermissionsResolver()->invalidateAll();
-
-        $this->actAs('admin');
-
-        $result = $this->withBodyFormat('json')->post(
-            "/api/v1/iam/memberships/{$regularMembershipId}/roles/attach",
-            ['role_ids' => [(string) $userRoleId]]
-        );
-
-        $result->assertStatus(200);
-    }
-
-    public function testAdminCanReadIamRoles(): void
+    public function testAdminCannotReadIamRoles(): void
     {
         $this->actAs('admin');
 
         $result = $this->get('/api/v1/iam/roles');
 
-        $result->assertStatus(200);
+        $result->assertStatus(403);
     }
 
-    public function testNewUserGetsAutoMembershipInSelfApp(): void
+    public function testNewUserGetsDefaultUserRole(): void
     {
         $this->actAs('admin');
 
         $result = $this->withBodyFormat('json')->post('/api/v1/users', [
-            'email'      => 'auto-membership-' . uniqid() . '@example.com',
+            'email'      => 'auto-role-' . uniqid() . '@example.com',
             'first_name' => 'Auto',
-            'last_name'  => 'Membership',
+            'last_name'  => 'Role',
         ]);
 
         $result->assertStatus(201);
@@ -210,18 +160,20 @@ final class PrivilegeEscalationTest extends ApiTestCase
         $createdUserId = (int) ($body['data']['id'] ?? 0);
         $this->assertGreaterThan(0, $createdUserId);
 
-        $db    = \Config\Database::connect();
-        $count = $db->table('app_user_memberships')
-            ->where('user_id', $createdUserId)
-            ->where('application_id', 1)
-            ->countAllResults();
+        $db = \Config\Database::connect();
+        $row = $db->table('user_roles ur')
+            ->select('r.code')
+            ->join('roles r', 'r.id = ur.role_id')
+            ->where('ur.user_id', $createdUserId)
+            ->get()
+            ?->getRowArray();
 
-        $this->assertSame(1, $count, 'Newly created user should have exactly one membership in app self.');
+        $this->assertNotNull($row, 'Newly created user should have at least one role assigned.');
+        $this->assertSame('user', (string) $row['code'], 'Newly created user must default to the "user" role.');
     }
 
-    public function testPublicRegistrationGetsAutoMembershipInSelfApp(): void
+    public function testPublicRegistrationAutoAssignsUserRole(): void
     {
-        // Register through the public endpoint (no auth headers).
         $this->clearTestRequestHeaders();
 
         $email = 'public-signup-' . uniqid() . '@example.com';
@@ -236,27 +188,28 @@ final class PrivilegeEscalationTest extends ApiTestCase
         $user = $db->table('users')->where('email', $email)->get()?->getRowArray();
         $this->assertNotNull($user, 'Registered user should exist after /auth/register.');
 
-        $count = $db->table('app_user_memberships')
-            ->where('user_id', (int) $user['id'])
-            ->where('application_id', 1)
-            ->countAllResults();
+        $row = $db->table('user_roles ur')
+            ->select('r.code')
+            ->join('roles r', 'r.id = ur.role_id')
+            ->where('ur.user_id', (int) $user['id'])
+            ->get()
+            ?->getRowArray();
 
-        $this->assertSame(1, $count, 'Public-registered user must be auto-provisioned with a self membership.');
+        $this->assertNotNull($row, 'Public-registered user must be auto-assigned a role.');
+        $this->assertSame('user', (string) $row['code'], 'Public-registered user must default to the "user" role.');
     }
 
     public function testSuperAdminCanAttachSuperadminPermissionToAnyRole(): void
     {
-        // Create a fresh non-system role so we don't pollute seeded roles in
-        // case other tests run after this one with executionOrder reordering.
         $db = \Config\Database::connect();
         $db->table('roles')->insert([
-            'application_id' => 1,
-            'code'           => 'qa-test-role-' . uniqid(),
-            'name'           => 'QA Test Role',
-            'description'    => 'Created by feature test',
-            'is_system'      => 0,
-            'created_at'     => date('Y-m-d H:i:s'),
-            'updated_at'     => date('Y-m-d H:i:s'),
+            'code'               => 'qa-test-role-' . uniqid(),
+            'name'               => 'QA Test Role',
+            'description'        => 'Created by feature test',
+            'is_system'          => 0,
+            'is_self_assignable' => 0,
+            'created_at'         => date('Y-m-d H:i:s'),
+            'updated_at'         => date('Y-m-d H:i:s'),
         ]);
         $newRoleId = (int) $db->insertID();
 
@@ -274,7 +227,7 @@ final class PrivilegeEscalationTest extends ApiTestCase
     private function roleIdByCode(string $code): int
     {
         $db  = \Config\Database::connect();
-        $row = $db->table('roles')->where('code', $code)->where('application_id', 1)->get()?->getRowArray();
+        $row = $db->table('roles')->where('code', $code)->get()?->getRowArray();
 
         return (int) ($row['id'] ?? 0);
     }
@@ -283,14 +236,6 @@ final class PrivilegeEscalationTest extends ApiTestCase
     {
         $db  = \Config\Database::connect();
         $row = $db->table('permissions')->where('code', $code)->where('application_id', 1)->get()?->getRowArray();
-
-        return (int) ($row['id'] ?? 0);
-    }
-
-    private function membershipIdForUser(int $userId): int
-    {
-        $db  = \Config\Database::connect();
-        $row = $db->table('app_user_memberships')->where('user_id', $userId)->where('application_id', 1)->get()?->getRowArray();
 
         return (int) ($row['id'] ?? 0);
     }

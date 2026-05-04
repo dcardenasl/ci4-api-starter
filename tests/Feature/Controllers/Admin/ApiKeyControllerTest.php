@@ -26,7 +26,7 @@ class ApiKeyControllerTest extends ApiTestCase
     {
         parent::setUp();
         $this->apiKeyModel = new ApiKeyModel();
-        $this->actAs('admin');
+        $this->actAs('superadmin');
 
         // Ensure static context is set for background model operations (Auditable trait)
         \App\Libraries\ContextHolder::set(new \App\DTO\SecurityContext($this->currentUserId, [], \App\Support\TestPermissionResolver::permissionsForRole((string) $this->currentUserRole)));

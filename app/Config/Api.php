@@ -51,6 +51,21 @@ class Api extends BaseConfig
     public int $slowQueryThreshold = 1000;
     public int $sloP95TargetMs = 500;
 
+    /**
+     * Routes (path-only, leading slash optional) that authenticate normally
+     * via JWT but skip post-auth access policy checks such as email verification.
+     *
+     * The canonical case is `auth/resend-verification`: a logged-in but unverified
+     * user must be allowed to call it, otherwise the user can never unblock
+     * themselves. Add a new route here ONLY when the same logical exemption
+     * applies (i.e. the endpoint exists to recover from an unmet policy).
+     *
+     * @var list<string>
+     */
+    public array $accessPolicyBypassRoutes = [
+        'api/v1/auth/resend-verification',
+    ];
+
     public function __construct()
     {
         parent::__construct();

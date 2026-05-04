@@ -165,15 +165,16 @@ class JwtAuthFilter implements FilterInterface
 
     private function shouldBypassAccessPolicy(RequestInterface $request): bool
     {
-        $path = $request->getUri()->getPath();
+        $path           = $request->getUri()->getPath();
         $normalizedPath = ltrim($path, '/');
+        $bypassRoutes   = config('Api')->accessPolicyBypassRoutes;
 
-        return in_array(
-            $normalizedPath,
-            [
-                'api/v1/auth/resend-verification',
-            ],
-            true
-        );
+        foreach ($bypassRoutes as $route) {
+            if ($normalizedPath === ltrim((string) $route, '/')) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

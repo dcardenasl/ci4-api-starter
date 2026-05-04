@@ -1,46 +1,17 @@
-# Template Architecture Contract
+# Architecture Contract — pointer
 
-> **Authoritative version:** `vendor/dcardenasl/ci4-scaffolding/docs/ARCHITECTURE_CONTRACT.md`. This copy is kept as a local reference; when the package and this file diverge, the package version is correct.
+> **The authoritative document lives in the scaffolding package, not here.**
+>
+> Read it at: `vendor/dcardenasl/ci4-api-crud-maker/docs/ARCHITECTURE_CONTRACT.md`
+> (or, in the upstream repo: `https://github.com/dcardenasl/ci4-api-crud-maker/blob/main/docs/ARCHITECTURE_CONTRACT.md`)
 
-This file defines the non-negotiable architecture rules for modules built with this template.
+This file used to be a maintained copy of the contract, which led to drift between the two
+versions. The drift was identified in the May 2026 audit. To prevent future divergence:
 
-## 1. Layer Contracts
+- The package's copy is the single source of truth for module-level architecture rules.
+- This stub stays in place so existing links (CLAUDE.md, README.md, etc.) keep working.
+- Do **not** edit the package's copy from this repo — change it in `ci4-api-crud-maker`
+  and re-install via composer.
 
-1. Controllers must extend `ApiController`.
-2. Controllers must use `handleRequest(...)` and request DTO classes for input validation.
-3. Services must contain business logic only (no HTTP response construction).
-4. Service reads must return DTOs (`DataTransferObjectInterface`).
-5. Command-style service flows must return `OperationResult`.
-6. Persistence remains in Models/Entities.
-
-## 2. DTO-First Rules
-
-1. All cross-layer payloads must use DTOs.
-2. Request DTOs must extend `BaseRequestDTO`.
-3. Request DTOs must validate with `rules()` and constructor auto-validation.
-4. Response DTOs must implement `DataTransferObjectInterface`.
-5. Response DTOs should expose only API-safe fields.
-
-## 3. CRUD Base Contract
-
-For services implementing `CrudServiceContract`/`BaseCrudService`:
-
-1. `index()` must return `DataTransferObjectInterface` (paginated shape via `PaginatedResponseDTO`).
-2. `show()`, `store()`, and `update()` return resource DTOs.
-3. `destroy()` returns `bool`.
-
-## 4. Controller Pipeline Rules
-
-1. Do not call `collectRequestData()` directly in concrete controllers.
-2. Do not reimplement try/catch API normalization in concrete controllers.
-3. Keep controllers thin: orchestration only.
-
-## 5. Operational Rules
-
-1. New services must be registered in `app/Config/Services.php`.
-2. New modules must include `en` and `es` language files.
-3. New modules must include Unit/Feature tests (and Integration when persistence logic is relevant).
-4. `make:crud` is the recommended default bootstrap, followed by explicit migration creation.
-5. Default CRUD persistence should use `GenericRepository`; dedicated repositories are required only for non-trivial domain queries.
-6. Runtime classes (`Commands`, `Filters`) should resolve dependencies via container/model helpers (`Config\Services`, `model()`), not direct `new *Model()` or `service('...')` patterns.
-7. `composer quality` must pass before merge.
+If `composer install` has not yet been run in this project, the file in
+`vendor/dcardenasl/ci4-api-crud-maker/docs/` will not exist. Run `composer install` first.

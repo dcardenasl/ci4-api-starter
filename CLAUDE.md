@@ -68,7 +68,7 @@ REST endpoints live under `/api/v1/iam/` (all gated by `permission:iam.admin-acc
 
 Role assignment to users happens directly through the **Users** module (`/api/v1/users/{id}` accepts `role_ids[]` in the payload), not through a separate membership resource.
 
-When scaffolding new modules, `vendor/bin/make-crud.sh` (via `dcardenasl/ci4-scaffolding` package) emits `permission:iam.admin-access` for the protected route group.
+When scaffolding new modules, `vendor/bin/make-crud.sh` (via `dcardenasl/ci4-api-crud-maker` package) emits the protected route filters configured in `app/Config/Scaffolding.php` (defaults to `['jwtauth', 'permission:iam.admin-access', 'throttle']`). **Note:** the default `iam.admin-access` permission was deprecated by `RbacBootstrapSeeder` and is no longer seeded — adjust `protectedRouteFilters` in your scaffolding config to match your project's actual IAM model.
 
 ### Key Design Principles
 
@@ -130,7 +130,7 @@ For architecture rules and onboarding, prefer:
 
 ## CRUD Scaffolding
 
-Scaffolding is provided by the `dcardenasl/ci4-scaffolding` package (installed as a Composer dev dependency, symlinked from `../../ci4-scaffolding`). Consumer config lives in `app/Config/Scaffolding.php` (a one-liner returning `ScaffoldingConfig::defaults()`).
+Scaffolding is provided by the `dcardenasl/ci4-api-crud-maker` package (installed as a Composer dev dependency from a VCS repo at github.com/dcardenasl/ci4-api-crud-maker; in this monorepo it is consumed via path repository pointing at `../ci4-api-crud-maker`). Consumer config lives in `app/Config/Scaffolding.php` (a one-liner returning `ScaffoldingConfig::defaults()`).
 
 ### Quick Start
 ```bash

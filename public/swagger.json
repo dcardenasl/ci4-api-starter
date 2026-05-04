@@ -3580,6 +3580,12 @@
                         "example": "admin@example.com",
                         "nullable": true
                     },
+                    "user_full_name": {
+                        "description": "Full name of user who performed the action",
+                        "type": "string",
+                        "example": "Jane Doe",
+                        "nullable": true
+                    },
                     "ip_address": {
                         "description": "IP address of the requester",
                         "type": "string",
@@ -3888,6 +3894,21 @@
                         "description": "status",
                         "type": "string"
                     },
+                    "application_name": {
+                        "description": "Display name of the related application",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "user_email": {
+                        "description": "Email of the related user",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "user_label": {
+                        "description": "Human-readable label \"First Last <email>\" for the related user",
+                        "type": "string",
+                        "nullable": true
+                    },
                     "created_at": {
                         "description": "Creation timestamp",
                         "type": "string",
@@ -3967,6 +3988,11 @@
                         "description": "description",
                         "type": "string"
                     },
+                    "application_name": {
+                        "description": "Display name of the related application",
+                        "type": "string",
+                        "nullable": true
+                    },
                     "created_at": {
                         "description": "Creation timestamp",
                         "type": "string",
@@ -4017,6 +4043,11 @@
                     "is_system": {
                         "description": "System role flag",
                         "type": "boolean"
+                    },
+                    "application_name": {
+                        "description": "Display name of the related application",
+                        "type": "string",
+                        "nullable": true
                     },
                     "created_at": {
                         "description": "Creation timestamp",

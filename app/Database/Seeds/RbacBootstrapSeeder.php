@@ -7,8 +7,9 @@ namespace App\Database\Seeds;
 use CodeIgniter\Database\Seeder;
 
 /**
- * Bootstraps the IAM tables with the system app, permissions, system roles,
- * role-permission map, and memberships for any existing users.
+ * Bootstraps the IAM tables with the system app, permissions and the three
+ * system roles (superadmin, admin, user). Roles are global (cross-app) and
+ * carry permissions that belong to specific applications.
  *
  * Idempotent: every insert checks for an existing row first. Safe to re-run.
  */
@@ -18,6 +19,7 @@ class RbacBootstrapSeeder extends Seeder
 
     /** @var array<int, array{code: string, resource: string, action: string, description: string}> */
     private const PERMISSIONS = [
+        ['code' => 'self.access',            'resource' => 'self',     'action' => 'access',            'description' => 'Baseline access to the self application'],
         ['code' => 'users.read',             'resource' => 'users',    'action' => 'read',              'description' => 'Read user records'],
         ['code' => 'users.write',            'resource' => 'users',    'action' => 'write',             'description' => 'Create, update or delete users'],
         ['code' => 'files.read',             'resource' => 'files',    'action' => 'read',              'description' => 'Read files'],
@@ -26,36 +28,38 @@ class RbacBootstrapSeeder extends Seeder
         ['code' => 'metrics.read',           'resource' => 'metrics',  'action' => 'read',              'description' => 'Read metrics dashboards'],
         ['code' => 'apikeys.read',           'resource' => 'apikeys',  'action' => 'read',              'description' => 'Read API keys'],
         ['code' => 'apikeys.write',          'resource' => 'apikeys',  'action' => 'write',             'description' => 'Create, update or revoke API keys'],
-        ['code' => 'iam.admin-access',       'resource' => 'iam',      'action' => 'admin-access',      'description' => 'Access the admin panel'],
         ['code' => 'iam.superadmin-access',  'resource' => 'iam',      'action' => 'superadmin-access', 'description' => 'Access superadmin-only operations'],
     ];
 
-    /** @var array<int, array{code: string, name: string, description: string, permissions: array<int, string>|string}> */
+    /** @var array<int, array{code: string, name: string, description: string, permissions: array<int, string>|string, is_self_assignable: int}> */
     private const ROLES = [
         [
-            'code'        => 'superadmin',
-            'name'        => 'Super Administrator',
-            'description' => 'Full access to all resources and IAM operations.',
-            'permissions' => '*',
+            'code'               => 'superadmin',
+            'name'               => 'Super Administrator',
+            'description'        => 'Full access to all resources and IAM operations.',
+            'permissions'        => '*',
+            'is_self_assignable' => 0,
         ],
         [
-            'code'        => 'admin',
-            'name'        => 'Administrator',
-            'description' => 'Administrative access excluding superadmin-only operations.',
-            'permissions' => [
+            'code'               => 'admin',
+            'name'               => 'Administrator',
+            'description'        => 'Administrative access excluding IAM and API-key mutations.',
+            'permissions'        => [
+                'self.access',
                 'users.read', 'users.write',
                 'files.read', 'files.write',
                 'audit.read',
                 'metrics.read',
-                'apikeys.read', 'apikeys.write',
-                'iam.admin-access',
+                'apikeys.read',
             ],
+            'is_self_assignable' => 0,
         ],
         [
-            'code'        => 'user',
-            'name'        => 'User',
-            'description' => 'Default role for end users.',
-            'permissions' => ['files.read', 'files.write'],
+            'code'               => 'user',
+            'name'               => 'User',
+            'description'        => 'Default role for end users.',
+            'permissions'        => ['self.access', 'files.read', 'files.write'],
+            'is_self_assignable' => 1,
         ],
     ];
 
@@ -63,7 +67,7 @@ class RbacBootstrapSeeder extends Seeder
     {
         $appId = $this->ensureApplication(self::APP_SELF);
         $permissionIds = $this->ensurePermissions($appId);
-        $this->ensureRoles($appId, $permissionIds);
+        $this->ensureRoles($permissionIds);
     }
 
     private function ensureApplication(string $name): int
@@ -75,6 +79,7 @@ class RbacBootstrapSeeder extends Seeder
 
         $now = date('Y-m-d H:i:s');
         $this->db->table('applications')->insert([
+            'code'       => strtolower($name),
             'name'       => $name,
             'created_at' => $now,
             'updated_at' => $now,
@@ -116,6 +121,12 @@ class RbacBootstrapSeeder extends Seeder
             $map[$perm['code']] = (int) $this->db->insertID();
         }
 
+        // Drop the legacy iam.admin-access permission if still present (deprecated).
+        $this->db->table('permissions')
+            ->where('application_id', $appId)
+            ->where('code', 'iam.admin-access')
+            ->delete();
+
         return $map;
     }
 
@@ -123,7 +134,7 @@ class RbacBootstrapSeeder extends Seeder
      * @param array<string, int> $permissionIds map of permission code → id
      * @return array<string, int> map of role code → id
      */
-    private function ensureRoles(int $appId, array $permissionIds): array
+    private function ensureRoles(array $permissionIds): array
     {
         $now = date('Y-m-d H:i:s');
         /** @var array<string, int> $map */
@@ -131,21 +142,27 @@ class RbacBootstrapSeeder extends Seeder
 
         foreach (self::ROLES as $roleDef) {
             $existing = $this->db->table('roles')
-                ->where('application_id', $appId)
                 ->where('code', $roleDef['code'])
                 ->get()->getRowArray();
 
             if ($existing !== null) {
                 $roleId = (int) $existing['id'];
+                $this->db->table('roles')->where('id', $roleId)->update([
+                    'name'               => $roleDef['name'],
+                    'description'        => $roleDef['description'],
+                    'is_system'          => 1,
+                    'is_self_assignable' => $roleDef['is_self_assignable'],
+                    'updated_at'         => $now,
+                ]);
             } else {
                 $this->db->table('roles')->insert([
-                    'application_id' => $appId,
-                    'code'           => $roleDef['code'],
-                    'name'           => $roleDef['name'],
-                    'description'    => $roleDef['description'],
-                    'is_system'      => 1,
-                    'created_at'     => $now,
-                    'updated_at'     => $now,
+                    'code'               => $roleDef['code'],
+                    'name'               => $roleDef['name'],
+                    'description'        => $roleDef['description'],
+                    'is_system'          => 1,
+                    'is_self_assignable' => $roleDef['is_self_assignable'],
+                    'created_at'         => $now,
+                    'updated_at'         => $now,
                 ]);
                 $roleId = (int) $this->db->insertID();
             }
@@ -170,15 +187,21 @@ class RbacBootstrapSeeder extends Seeder
         $existingIds = array_map(static fn (array $row) => (int) $row['permission_id'], $existing);
 
         $toInsert = array_diff($permissionIds, $existingIds);
-        if ($toInsert === []) {
-            return;
+        $toRemove = array_diff($existingIds, $permissionIds);
+
+        if ($toInsert !== []) {
+            $rows = [];
+            foreach ($toInsert as $permissionId) {
+                $rows[] = ['role_id' => $roleId, 'permission_id' => $permissionId];
+            }
+            $this->db->table('role_permissions')->insertBatch($rows);
         }
 
-        $rows = [];
-        foreach ($toInsert as $permissionId) {
-            $rows[] = ['role_id' => $roleId, 'permission_id' => $permissionId];
+        if ($toRemove !== []) {
+            $this->db->table('role_permissions')
+                ->where('role_id', $roleId)
+                ->whereIn('permission_id', $toRemove)
+                ->delete();
         }
-        $this->db->table('role_permissions')->insertBatch($rows);
     }
-
 }

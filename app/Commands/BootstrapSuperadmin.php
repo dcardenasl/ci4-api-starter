@@ -6,11 +6,10 @@ namespace App\Commands;
 
 use CodeIgniter\CLI\BaseCommand;
 use CodeIgniter\CLI\CLI;
+use Config\Services;
 
 class BootstrapSuperadmin extends BaseCommand
 {
-    private const APPLICATION_ID = 1;
-
     protected $group = 'Users';
     protected $name = 'users:bootstrap-superadmin';
     protected $description = 'Create the first superadmin user (fails if one already exists).';
@@ -43,7 +42,6 @@ class BootstrapSuperadmin extends BaseCommand
 
         $superadminRole = $db->table('roles')
             ->where('code', 'superadmin')
-            ->where('application_id', self::APPLICATION_ID)
             ->get()?->getRowArray();
 
         if ($superadminRole === null) {
@@ -53,11 +51,9 @@ class BootstrapSuperadmin extends BaseCommand
 
         $superadminRoleId = (int) $superadminRole['id'];
 
-        // Refuse to run if any user already has the superadmin role membership
-        $existingSuperadmin = $db->table('membership_roles mr')
-            ->select('m.user_id')
-            ->join('app_user_memberships m', 'm.id = mr.membership_id')
-            ->where('mr.role_id', $superadminRoleId)
+        // Refuse to run if any user already has the superadmin role
+        $existingSuperadmin = $db->table('user_roles')
+            ->where('role_id', $superadminRoleId)
             ->limit(1)
             ->get()?->getRowArray();
 
@@ -99,7 +95,7 @@ class BootstrapSuperadmin extends BaseCommand
                 return EXIT_ERROR;
             }
 
-            $this->grantSuperadminMembership($db, (int) $existingUser->id, $superadminRoleId);
+            Services::userRoleAssignmentService()->assignRole((int) $existingUser->id, $superadminRoleId);
             CLI::write('Existing user promoted to superadmin.', 'green');
             CLI::write('User ID: ' . (int) $existingUser->id, 'green');
             return EXIT_SUCCESS;
@@ -119,46 +115,10 @@ class BootstrapSuperadmin extends BaseCommand
             return EXIT_ERROR;
         }
 
-        $this->grantSuperadminMembership($db, (int) $userId, $superadminRoleId);
+        Services::userRoleAssignmentService()->assignRole((int) $userId, $superadminRoleId);
         CLI::write('Superadmin user created successfully.', 'green');
         CLI::write('User ID: ' . (int) $userId, 'green');
         return EXIT_SUCCESS;
-    }
-
-    private function grantSuperadminMembership($db, int $userId, int $superadminRoleId): void
-    {
-        $now = date('Y-m-d H:i:s');
-
-        $membership = $db->table('app_user_memberships')
-            ->where('user_id', $userId)
-            ->where('application_id', self::APPLICATION_ID)
-            ->get()?->getRowArray();
-
-        if ($membership !== null) {
-            $membershipId = (int) $membership['id'];
-        } else {
-            $db->table('app_user_memberships')->insert([
-                'user_id'        => $userId,
-                'application_id' => self::APPLICATION_ID,
-                'status'         => 'active',
-                'accepted_at'    => $now,
-                'created_at'     => $now,
-                'updated_at'     => $now,
-            ]);
-            $membershipId = (int) $db->insertID();
-        }
-
-        $exists = $db->table('membership_roles')
-            ->where('membership_id', $membershipId)
-            ->where('role_id', $superadminRoleId)
-            ->countAllResults() > 0;
-
-        if (! $exists) {
-            $db->table('membership_roles')->insert([
-                'membership_id' => $membershipId,
-                'role_id'       => $superadminRoleId,
-            ]);
-        }
     }
 
     private function resolveOptional(string $option): ?string

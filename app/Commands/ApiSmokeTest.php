@@ -58,17 +58,15 @@ class ApiSmokeTest extends BaseCommand
     {
         /** @var \App\Models\UserModel $userModel */
         $db = \Config\Database::connect();
-        $row = $db->table('app_user_memberships m')
-            ->select('m.user_id')
-            ->join('membership_roles mr', 'mr.membership_id = m.id')
-            ->join('roles r', 'r.id = mr.role_id')
+        $row = $db->table('user_roles ur')
+            ->select('ur.user_id')
+            ->join('roles r', 'r.id = ur.role_id')
             ->where('r.code', 'superadmin')
-            ->where('m.application_id', 1)
             ->limit(1)
             ->get()?->getRowArray();
 
         if ($row === null) {
-            CLI::error('No superadmin membership found. Run "php spark users:bootstrap-superadmin" first.');
+            CLI::error('No superadmin found. Run "php spark users:bootstrap-superadmin" first.');
             return null;
         }
 

@@ -40,6 +40,17 @@ php spark module:check {Name} --domain {Domain}                          # Valid
 php spark swagger:generate      # Generate public/swagger.json from DTOs and app/Documentation/
 ```
 
+### Environment validation
+```bash
+php spark env:check             # Validate required env vars + secret strength + prod CORS
+php spark env:check --strict    # Treat production-recommended vars as required (CI/CD pipelines)
+```
+`init.sh` runs `env:check` before migrations, and the GitHub Actions
+workflow (`ci.yml`) runs it before tests. The command refuses to pass when
+JWT_SECRET_KEY < 64 bytes, contains a placeholder substring (`change-me`,
+`your-secret`, etc.), or when `CORS_ALLOWED_ORIGINS` is unset under
+`CI_ENVIRONMENT=production`.
+
 ## Architecture Overview (Modernized DTO-First)
 
 This is a **Declarative DTO-First Layered REST API** following the pattern: **Controller → [RequestDTO] → Service → Model → Entity → [ResponseDTO]**.
@@ -118,6 +129,20 @@ When scaffolding new modules, `vendor/bin/make-crud.sh` (via `dcardenasl/ci4-api
 - ❌ Returning `ApiResponse` from a service.
 - ❌ Passing raw arrays to service methods.
 - ❌ Not using `wrapInTransaction` for state-changing operations.
+
+## Static analysis & quality
+
+PHPStan runs at **level 8** with a `phpstan-baseline.neon` capturing
+historical type-debt (currently ~125 entries, mostly
+`missingType.iterableValue`). New code must not introduce errors against
+the level-8 ruleset; clean up baseline entries opportunistically as you
+touch their files. The framework-noise patterns (CI4 helpers, constants,
+magic methods) live in `phpstan.neon` under `ignoreErrors:` — keep them
+narrow.
+
+Run `composer quality` (PHPStan + PHPUnit + CS-Fixer + swagger-validate)
+locally before pushing. CI runs the same. `composer cs-fix` auto-fixes
+style violations; the pre-commit hook also runs it on staged files.
 
 ## Single Source of Truth
 

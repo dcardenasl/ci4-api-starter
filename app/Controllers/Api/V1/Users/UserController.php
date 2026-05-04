@@ -9,6 +9,7 @@ use App\DTO\Request\Users\UserCreateRequestDTO;
 use App\DTO\Request\Users\UserIndexRequestDTO;
 use App\DTO\Request\Users\UserUpdateRequestDTO;
 use App\Interfaces\Users\UserServiceInterface;
+use App\Libraries\ApiResponse;
 use CodeIgniter\HTTP\ResponseInterface;
 use Config\Services;
 
@@ -86,6 +87,52 @@ class UserController extends ApiController
     public function delete(int $id): ResponseInterface
     {
         return $this->handleRequest(fn ($dto, $context) => $this->userService->destroy($id, $context));
+    }
+
+    /**
+     * Lists the global roles the current actor is allowed to assign to other
+     * users. Anti-escalation: a role appears only if all its permissions are
+     * a subset of the actor's effective permissions in the current application.
+     */
+    public function assignableRoles(): ResponseInterface
+    {
+        return $this->handleRequest(function ($dto, $context) {
+            $db = \Config\Database::connect();
+            $actorPerms = $context !== null ? $context->permissions : [];
+
+            $rolesResult = $db->table('roles r')
+                ->select('r.id, r.code, r.name, r.description, r.is_system, r.is_self_assignable')
+                ->orderBy('r.name', 'ASC')
+                ->get();
+            $roles = $rolesResult !== false ? $rolesResult->getResultArray() : [];
+
+            $rolePerms  = [];
+            $rpcResult  = $db->table('role_permissions rp')
+                ->select('rp.role_id, p.code')
+                ->join('permissions p', 'p.id = rp.permission_id')
+                ->get();
+            $rows = $rpcResult !== false ? $rpcResult->getResultArray() : [];
+            foreach ($rows as $row) {
+                $rolePerms[(int) $row['role_id']][] = (string) $row['code'];
+            }
+
+            $assignable = [];
+            foreach ($roles as $role) {
+                $codes = $rolePerms[(int) $role['id']] ?? [];
+                if (array_diff($codes, $actorPerms) === []) {
+                    $assignable[] = [
+                        'id'                 => (int) $role['id'],
+                        'code'               => (string) $role['code'],
+                        'name'               => (string) $role['name'],
+                        'description'        => $role['description'] !== null ? (string) $role['description'] : null,
+                        'is_system'          => (int) $role['is_system'],
+                        'is_self_assignable' => (int) $role['is_self_assignable'],
+                    ];
+                }
+            }
+
+            return $this->response->setJSON(ApiResponse::success($assignable));
+        });
     }
 
 }

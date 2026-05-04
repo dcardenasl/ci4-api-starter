@@ -3,6 +3,11 @@
 /** @var \CodeIgniter\Router\RouteCollection $routes */
 
 $routes->group('users', ['filter' => ['jwtauth', 'throttle']], function ($routes) {
+    // Static path comes BEFORE the (:num) route so it isn't consumed as an id.
+    $routes->get('assignable-roles', '\App\Controllers\Api\V1\Users\UserController::assignableRoles', [
+        'filter' => 'permission:users.write',
+    ]);
+
     $routes->get('(:num)', '\App\Controllers\Api\V1\Users\UserController::show/$1');
 
     // Admin only — uses fine-grained permissions (users.read for list, users.write for mutations)

@@ -36,7 +36,21 @@ readonly class UserResponseDTO implements DataTransferObjectInterface
         #[OA\Property(property: 'created_at', description: 'Creation timestamp', example: '2026-02-26 12:00:00', nullable: true)]
         public ?string $created_at = null,
         #[OA\Property(property: 'updated_at', description: 'Last update timestamp', example: '2026-02-26 12:00:00', nullable: true)]
-        public ?string $updated_at = null
+        public ?string $updated_at = null,
+        /** @var list<array{id:int, code:string, name:string}> */
+        #[OA\Property(
+            description: 'Global roles assigned to this user.',
+            type: 'array',
+            items: new OA\Items(
+                type: 'object',
+                properties: [
+                    new OA\Property(property: 'id', type: 'integer'),
+                    new OA\Property(property: 'code', type: 'string'),
+                    new OA\Property(property: 'name', type: 'string'),
+                ]
+            )
+        )]
+        public array $roles = []
     ) {
     }
 
@@ -52,6 +66,8 @@ readonly class UserResponseDTO implements DataTransferObjectInterface
             $updated_at = $updated_at->format('Y-m-d H:i:s');
         }
 
+        $roles = self::resolveRoles((int) ($data['id'] ?? 0));
+
         return new self(
             id: (int) ($data['id'] ?? 0),
             email: (string) ($data['email'] ?? ''),
@@ -60,7 +76,8 @@ readonly class UserResponseDTO implements DataTransferObjectInterface
             status: (string) ($data['status'] ?? 'pending'),
             avatar_url: isset($data['avatar_url']) ? (string) $data['avatar_url'] : null,
             created_at: $created_at ? (string) $created_at : null,
-            updated_at: $updated_at ? (string) $updated_at : null
+            updated_at: $updated_at ? (string) $updated_at : null,
+            roles: $roles,
         );
     }
 
@@ -75,6 +92,36 @@ readonly class UserResponseDTO implements DataTransferObjectInterface
             'avatar_url' => $this->avatar_url,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
+            'roles' => $this->roles,
         ];
+    }
+
+    /**
+     * @return list<array{id:int, code:string, name:string}>
+     */
+    private static function resolveRoles(int $userId): array
+    {
+        if ($userId <= 0) {
+            return [];
+        }
+
+        try {
+            $rows = \Config\Database::connect()
+                ->table('user_roles ur')
+                ->select('r.id, r.code, r.name')
+                ->join('roles r', 'r.id = ur.role_id')
+                ->where('ur.user_id', $userId)
+                ->orderBy('r.name', 'ASC')
+                ->get()
+                ?->getResultArray() ?? [];
+        } catch (\Throwable) {
+            return [];
+        }
+
+        return array_map(static fn (array $r) => [
+            'id'   => (int) $r['id'],
+            'code' => (string) $r['code'],
+            'name' => (string) $r['name'],
+        ], $rows);
     }
 }

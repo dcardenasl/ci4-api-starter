@@ -110,6 +110,12 @@ else
   ci4_configure_env
 fi
 
+print_header "Validating environment"
+if ! php spark env:check; then
+  print_error "Environment validation failed. Fix .env before continuing."
+  exit 1
+fi
+
 if [ "$SKIP_DB" = false ]; then
   ci4_prepare_databases
   ci4_verify_database

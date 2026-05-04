@@ -55,8 +55,21 @@ class MigrateMembershipRolesToUserRoles extends Migration
             $existingPairs[$key] = true;
         }
 
-        if ($batch !== []) {
-            $this->db->table('user_roles')->insertBatch($batch);
+        if ($batch === []) {
+            return;
+        }
+
+        // Wrap the batch insert in a transaction so a partial failure doesn't
+        // leave user_roles with half the legacy data while migrate continues.
+        $this->db->transStart();
+        $this->db->table('user_roles')->insertBatch($batch);
+        $this->db->transComplete();
+
+        if ($this->db->transStatus() === false) {
+            throw new \RuntimeException(
+                'Failed to backfill user_roles from membership_roles. The transaction was rolled back. '
+                . 'Inspect the logs and re-run "php spark migrate" once the underlying issue is resolved.'
+            );
         }
     }
 

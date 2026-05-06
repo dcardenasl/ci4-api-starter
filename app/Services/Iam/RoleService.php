@@ -5,10 +5,13 @@ declare(strict_types=1);
 namespace App\Services\Iam;
 
 use App\DTO\Request\Iam\AttachPermissionsRequestDTO;
+use App\DTO\Request\Iam\RoleCreateRequestDTO;
+use App\DTO\Request\Iam\RoleUpdateRequestDTO;
 use App\DTO\Response\Iam\PermissionResponseDTO;
 use App\DTO\SecurityContext;
 use App\Exceptions\NotFoundException;
 use App\Interfaces\Core\RepositoryInterface;
+use App\Interfaces\DataTransferObjectInterface;
 use App\Interfaces\Iam\RoleServiceInterface;
 use App\Interfaces\Mappers\ResponseMapperInterface;
 use App\Services\Core\BaseCrudService;
@@ -21,9 +24,73 @@ class RoleService extends BaseCrudService implements RoleServiceInterface
         RepositoryInterface $roleRepository,
         ResponseMapperInterface $responseMapper,
         private readonly IamAuthorizationService $authz,
+        private readonly RolePermissionAssignmentService $permissionAssignment,
         private readonly RelationLabelLoader $labels = new RelationLabelLoader()
     ) {
         parent::__construct($roleRepository, $responseMapper);
+    }
+
+    /**
+     * Override to consume `permission_ids` from RoleCreateRequestDTO and
+     * sync the role↔permission M2M atomically in the same transaction.
+     */
+    public function store(DataTransferObjectInterface $request, ?SecurityContext $context = null): DataTransferObjectInterface
+    {
+        return $this->wrapInTransaction(function () use ($request, $context) {
+            $response = parent::store($request, $context);
+
+            if ($request instanceof RoleCreateRequestDTO && $request->permission_ids !== null && $response instanceof \App\DTO\Response\Iam\RoleResponseDTO) {
+                $this->permissionAssignment->syncPermissions(
+                    $response->id,
+                    $request->permission_ids,
+                    $context
+                );
+                // Re-map so the caller sees a consistent post-sync entity.
+                $response = $this->show($response->id, $context);
+            }
+
+            return $response;
+        });
+    }
+
+    /**
+     * Override to consume `permission_ids` from RoleUpdateRequestDTO. Unlike
+     * the field set, `permission_ids` may be the only thing being updated,
+     * so we short-circuit BaseCrudService::update's "no fields to update"
+     * guard when only permissions changed.
+     */
+    public function update(int $id, DataTransferObjectInterface $request, ?SecurityContext $context = null): DataTransferObjectInterface
+    {
+        if (! $request instanceof RoleUpdateRequestDTO) {
+            return parent::update($id, $request, $context);
+        }
+
+        return $this->wrapInTransaction(function () use ($id, $request, $context) {
+            $hasFieldUpdates       = $request->toArray() !== [];
+            $hasPermissionUpdates  = $request->permission_ids !== null;
+
+            if (! $hasFieldUpdates && ! $hasPermissionUpdates) {
+                throw new \App\Exceptions\BadRequestException(lang('Api.noFieldsToUpdate'));
+            }
+
+            if ($hasFieldUpdates) {
+                parent::update($id, $request, $context);
+            } else {
+                // Run the same authz that beforeUpdate() would have applied.
+                $this->ensureRoleExists($id);
+                $this->authz->assertCanModifyRole($context, $id);
+            }
+
+            if ($hasPermissionUpdates) {
+                $this->permissionAssignment->syncPermissions(
+                    $id,
+                    $request->permission_ids,
+                    $context
+                );
+            }
+
+            return $this->show($id, $context);
+        });
     }
 
     protected function enrichEntities(array $entities): array

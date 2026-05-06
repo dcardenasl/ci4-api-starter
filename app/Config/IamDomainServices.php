@@ -26,7 +26,21 @@ trait IamDomainServices
         return new \App\Services\Iam\RoleService(
             new \App\Repositories\GenericRepository(model(\App\Models\RoleModel::class)),
             static::roleResponseMapper(),
-            static::iamAuthorizationService()
+            static::iamAuthorizationService(),
+            static::rolePermissionAssignmentService()
+        );
+    }
+
+    public static function rolePermissionAssignmentService(bool $getShared = true): \App\Services\Iam\RolePermissionAssignmentService
+    {
+        if ($getShared) {
+            return static::getSharedInstance('rolePermissionAssignmentService');
+        }
+
+        return new \App\Services\Iam\RolePermissionAssignmentService(
+            \Config\Database::connect(),
+            static::iamAuthorizationService(),
+            static::effectivePermissionsResolver()
         );
     }
 

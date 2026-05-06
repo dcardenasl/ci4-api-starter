@@ -78,6 +78,8 @@ class AuthServiceTest extends CIUnitTestCase
             $this->mockEmailService
         );
 
+        $updateSelfProfileAction = new \App\Services\Users\Actions\UpdateSelfProfileAction($mockUserRepository);
+
         return new AuthService(
             $mockUserRepository,
             $registerUserAction,
@@ -85,7 +87,8 @@ class AuthServiceTest extends CIUnitTestCase
             $this->mockAuditService,
             $userMapper,
             $sessionManager,
-            new UserAccountGuard()
+            new UserAccountGuard(),
+            $updateSelfProfileAction
         );
     }
 
@@ -174,7 +177,8 @@ class AuthServiceTest extends CIUnitTestCase
             $this->mockAuditService,
             $userMapper,
             $sessionManager,
-            new UserAccountGuard()
+            new UserAccountGuard(),
+            new \App\Services\Users\Actions\UpdateSelfProfileAction($mockUserRepository)
         );
 
         $result = $service->register($request);

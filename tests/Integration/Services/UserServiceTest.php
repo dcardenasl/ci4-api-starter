@@ -76,7 +76,9 @@ class UserServiceTest extends CIUnitTestCase
             'first_name' => 'New',
         ], service('validation'));
 
-        $result = $this->userService->update((int) $userId, $request, new SecurityContext(999));
+        // Email mutation is now restricted to superadmin actors. Pass a superadmin
+        // context so the integration test continues to exercise the field path.
+        $result = $this->userService->update((int) $userId, $request, new SecurityContext(999, [], ['iam.superadmin-access']));
 
         $user = $this->userModel->find($userId);
         $this->assertEquals('new@example.com', $user->email);

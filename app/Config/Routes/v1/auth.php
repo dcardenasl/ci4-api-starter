@@ -20,6 +20,7 @@ $routes->group('', ['filter' => 'authThrottle'], function ($routes) {
 // Protected routes
 $routes->group('', ['filter' => ['jwtauth', 'throttle']], function ($routes) {
     $routes->get('auth/me', '\App\Controllers\Api\V1\Auth\AuthController::me');
+    $routes->patch('auth/me', '\App\Controllers\Api\V1\Auth\AuthController::updateMe');
     $routes->post('auth/resend-verification', '\App\Controllers\Api\V1\Identity\VerificationController::resend');
     $routes->post('auth/revoke', '\App\Controllers\Api\V1\Auth\TokenController::revoke');
     $routes->post('auth/revoke-all', '\App\Controllers\Api\V1\Auth\TokenController::revokeAll');

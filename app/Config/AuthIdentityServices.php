@@ -22,7 +22,15 @@ trait AuthIdentityServices
             static::authUserMapper(),
             static::sessionManager(),
             static::userAccountGuard(),
+            static::updateSelfProfileAction($userRepository),
             ENVIRONMENT === 'testing'
+        );
+    }
+
+    public static function updateSelfProfileAction(\App\Interfaces\Users\UserRepositoryInterface $userRepository): \App\Services\Users\Actions\UpdateSelfProfileAction
+    {
+        return new \App\Services\Users\Actions\UpdateSelfProfileAction(
+            $userRepository
         );
     }
 
@@ -146,7 +154,8 @@ trait AuthIdentityServices
     {
         return new \App\Services\Users\Actions\UpdateUserAction(
             $userRepository,
-            static::userRoleAssignmentService()
+            static::userRoleAssignmentService(),
+            static::iamAuthorizationService()
         );
     }
 

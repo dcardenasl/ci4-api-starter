@@ -17,6 +17,7 @@ use App\Services\Auth\Actions\GoogleLoginAction;
 use App\Services\Auth\Actions\RegisterUserAction;
 use App\Services\Auth\Support\AuthUserMapper;
 use App\Services\Auth\Support\SessionManager;
+use App\Services\Users\Actions\UpdateSelfProfileAction;
 use App\Services\Users\UserAccountGuard;
 use App\Support\OperationResult;
 
@@ -40,6 +41,7 @@ class AuthService implements \App\Interfaces\Auth\AuthServiceInterface
         protected AuthUserMapper $userMapper,
         protected SessionManager $sessionManager,
         protected UserAccountGuard $userAccessPolicy,
+        protected UpdateSelfProfileAction $updateSelfProfileAction,
         protected bool $allowTestPasswordBypass = false
     ) {
         $this->registerUserAction = $registerUserAction;
@@ -127,4 +129,25 @@ class AuthService implements \App\Interfaces\Auth\AuthServiceInterface
         });
     }
 
+    /**
+     * Update the authenticated user's own profile.
+     *
+     * Authorization is implicit: the subject id is taken from the security
+     * context — the caller cannot target another user. Allowlist is enforced
+     * by `UpdateMeRequestDTO` (only first_name, last_name, avatar_url).
+     */
+    public function updateMe(DataTransferObjectInterface $request, ?SecurityContext $context = null): DataTransferObjectInterface
+    {
+        /** @var \App\DTO\Request\Auth\UpdateMeRequestDTO $request */
+        if ($context === null || $context->user_id === null) {
+            throw new AuthenticationException(lang('Auth.unauthorized'));
+        }
+
+        $userId = $context->user_id;
+
+        return $this->wrapInTransaction(function () use ($userId, $request) {
+            $updatedUser = $this->updateSelfProfileAction->execute($userId, $request);
+            return \App\DTO\Response\Users\UserResponseDTO::fromArray($updatedUser->toArray());
+        });
+    }
 }

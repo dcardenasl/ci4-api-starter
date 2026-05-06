@@ -93,6 +93,11 @@ REST endpoints live under `/api/v1/iam/` (all gated by `permission:iam.admin-acc
 
 Role assignment to users happens directly through the **Users** module (`/api/v1/users/{id}` accepts `role_ids[]` in the payload), not through a separate membership resource.
 
+### User modification rules
+
+- `PATCH /api/v1/auth/me` — self-update endpoint. Authenticated user only. Allowlist: `first_name`, `last_name`, `avatar_url`. Email/password/role assignments are not part of the DTO and are silently ignored if sent. Subject id comes from the JWT, never the body.
+- `PUT /api/v1/users/{id}` — admin endpoint. Gated by `permission:users.write`. Still rejects self-edit (`assertNotSelf`) and operating on superadmins by non-superadmins (`assertCanActOnSubject`). **Email change requires superadmin** — anything else gets `403 Iam.cannotModifyEmail` (enforced in `UpdateUserAction::execute`).
+
 When scaffolding new modules, `vendor/bin/make-crud.sh` (via `dcardenasl/ci4-api-crud-maker` package) emits the protected route filters configured in `app/Config/Scaffolding.php` (defaults to `['jwtauth', 'permission:iam.admin-access', 'throttle']`). **Note:** the default `iam.admin-access` permission was deprecated by `RbacBootstrapSeeder` and is no longer seeded — adjust `protectedRouteFilters` in your scaffolding config to match your project's actual IAM model.
 
 ### Key Design Principles

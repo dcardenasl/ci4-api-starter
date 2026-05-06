@@ -190,4 +190,42 @@ class UserControllerTest extends ApiTestCase
         $approveResult = $this->post("/api/v1/users/{$activeUserId}/approve");
         $approveResult->assertStatus(409);
     }
+
+    public function testAdminCannotChangeAnotherUserEmail(): void
+    {
+        // Default actAs('admin') in setUp() — admin has users.write but not iam.superadmin-access.
+        $targetId = $this->createUser('email-target@example.com', 'ValidPass123!', 'user');
+        $this->resetRequest();
+
+        $result = $this->withBodyFormat('json')->put("/api/v1/users/{$targetId}", [
+            'email' => 'hijacked@example.com',
+        ]);
+
+        $result->assertStatus(403);
+
+        /** @var \App\Entities\UserEntity|null $unchanged */
+        $unchanged = $this->userModel->find($targetId);
+        $this->assertNotNull($unchanged);
+        $this->assertSame('email-target@example.com', strtolower((string) $unchanged->email));
+    }
+
+    public function testSuperadminCanChangeAnotherUserEmail(): void
+    {
+        $this->actAs('superadmin');
+        \App\Libraries\ContextHolder::set(new \App\DTO\SecurityContext($this->currentUserId, [], \App\Support\TestPermissionResolver::permissionsForRole((string) $this->currentUserRole)));
+
+        $targetId = $this->createUser('to-rename@example.com', 'ValidPass123!', 'user');
+        $this->resetRequest();
+
+        $result = $this->withBodyFormat('json')->put("/api/v1/users/{$targetId}", [
+            'email' => 'renamed@example.com',
+        ]);
+
+        $result->assertStatus(200);
+
+        /** @var \App\Entities\UserEntity|null $renamed */
+        $renamed = $this->userModel->find($targetId);
+        $this->assertNotNull($renamed);
+        $this->assertSame('renamed@example.com', strtolower((string) $renamed->email));
+    }
 }

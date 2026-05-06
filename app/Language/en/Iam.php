@@ -8,4 +8,5 @@ return [
     'cannotModifySelf'                  => 'You cannot modify your own membership or account.',
     'cannotActOnSuperAdmin'             => 'You cannot operate on a super administrator.',
     'cannotPerformSuperAdminOperation'  => 'This operation requires super administrator privileges.',
+    'cannotModifyEmail'                 => 'Only a super administrator may modify a user email.',
 ];

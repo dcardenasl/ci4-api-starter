@@ -33,4 +33,9 @@ interface AuthServiceInterface
      * Register a new user with password
      */
     public function register(\App\Interfaces\DataTransferObjectInterface $request, ?SecurityContext $context = null): \App\Interfaces\DataTransferObjectInterface;
+
+    /**
+     * Update the authenticated user's own profile (allowlist: first_name, last_name, avatar_url).
+     */
+    public function updateMe(\App\Interfaces\DataTransferObjectInterface $request, ?SecurityContext $context = null): \App\Interfaces\DataTransferObjectInterface;
 }

@@ -6,16 +6,19 @@ namespace App\Services\Users\Actions;
 
 use App\DTO\Request\Users\UserUpdateRequestDTO;
 use App\DTO\SecurityContext;
+use App\Exceptions\AuthorizationException;
 use App\Exceptions\NotFoundException;
 use App\Exceptions\ValidationException;
 use App\Interfaces\Users\UserRepositoryInterface;
+use App\Services\Iam\IamAuthorizationService;
 use App\Services\Iam\UserRoleAssignmentService;
 
 class UpdateUserAction
 {
     public function __construct(
         protected UserRepositoryInterface $userRepository,
-        protected UserRoleAssignmentService $userRoleAssignmentService
+        protected UserRoleAssignmentService $userRoleAssignmentService,
+        protected IamAuthorizationService $authz
     ) {
     }
 
@@ -33,6 +36,17 @@ class UpdateUserAction
 
         if (! $hasFieldUpdates && ! $hasRoleUpdates) {
             throw new ValidationException(lang('Api.validationFailed'), ['update' => lang('Api.noFieldsToUpdate')]);
+        }
+
+        // Email is the security anchor of the account. Only superadmin may
+        // change it via the admin endpoint; anyone else attempting to do so
+        // gets a 403, not a silent drop. Self-edit of email is impossible
+        // here too because PUT /users/{id} is already gated by assertNotSelf.
+        if (array_key_exists('email', $updateData)
+            && $targetUser->email !== $updateData['email']
+            && ! $this->authz->isSuperAdmin($context)
+        ) {
+            throw new AuthorizationException(lang('Iam.cannotModifyEmail'));
         }
 
         if ($hasFieldUpdates) {

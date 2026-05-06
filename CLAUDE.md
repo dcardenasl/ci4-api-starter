@@ -2,6 +2,20 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## ⚡ Workflow — read this first
+
+**Before touching any code, read `TASKS.md` in this directory.**
+
+1. Take the first task from `## 🟡 Próximo`
+2. Move it to `## 🔴 En progreso`
+3. Work exclusively on that task — if anything is unclear, ask before implementing
+4. When done: move it to `## ✅ Completadas` with one line of notes (what you did and why)
+5. Never work on tasks not defined in TASKS.md without explicit confirmation
+
+For cross-repo context (current milestone, blocked tasks), read `../TASKS.md`.
+
+---
+
 ## Essential Commands
 
 ### Development Server

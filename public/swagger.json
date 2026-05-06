@@ -2977,6 +2977,31 @@
                 },
                 "type": "object"
             },
+            "UpdateMeRequest": {
+                "title": "Update Me Request",
+                "description": "Fields the authenticated user may modify on their own profile",
+                "properties": {
+                    "first_name": {
+                        "description": "Updated first name",
+                        "type": "string",
+                        "example": "John",
+                        "nullable": true
+                    },
+                    "last_name": {
+                        "description": "Updated last name",
+                        "type": "string",
+                        "example": "Doe",
+                        "nullable": true
+                    },
+                    "avatar_url": {
+                        "description": "URL to user avatar image",
+                        "type": "string",
+                        "example": "https://example.com/avatar.jpg",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
             "ApplicationIndexRequest": {},
             "AttachPermissionsRequest": {
                 "required": [
@@ -3086,6 +3111,18 @@
                     "is_system": {
                         "description": "System role (cannot be deleted)",
                         "type": "boolean"
+                    },
+                    "permission_ids": {
+                        "description": "Optional list of permission ids to attach to the new role. Omit to create a role with no permissions.",
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "example": [
+                            1,
+                            2
+                        ],
+                        "nullable": true
                     }
                 },
                 "type": "object"
@@ -3116,6 +3153,18 @@
                     "is_system": {
                         "description": "System role (cannot be deleted)",
                         "type": "boolean",
+                        "nullable": true
+                    },
+                    "permission_ids": {
+                        "description": "Replace the role permission set with this list of permission ids. Omit to leave permissions unchanged. Empty list removes all permissions.",
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "example": [
+                            1,
+                            2
+                        ],
                         "nullable": true
                     }
                 },

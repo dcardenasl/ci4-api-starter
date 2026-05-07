@@ -2,6 +2,7 @@
 
 namespace Config;
 
+use App\Filters\AppKeyRequiredFilter;
 use App\Filters\AuthThrottleFilter;
 use App\Filters\CorsFilter;
 use App\Filters\FeatureToggleFilter;
@@ -61,6 +62,7 @@ class Filters extends BaseFilters
         'testauth'      => \App\Filters\TestAuthFilter::class,
         'throttle'      => ThrottleFilter::class,
         'authThrottle'  => AuthThrottleFilter::class,
+        'appKeyRequired' => AppKeyRequiredFilter::class,
         'permission'    => PermissionFilter::class,
         'requestLogging' => RequestLoggingFilter::class,
         'locale'        => LocaleFilter::class,

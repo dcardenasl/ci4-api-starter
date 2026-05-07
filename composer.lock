@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "b29fd3c4c845fd1afa5052fa63ceb3dd",
+    "content-hash": "b1a387541a3ef59362a093a1484aaa80",
     "packages": [
         {
             "name": "aws/aws-crt-php",
@@ -233,6 +233,89 @@
                 "source": "https://github.com/codeigniter4/CodeIgniter4"
             },
             "time": "2026-03-24T18:26:09+00:00"
+        },
+        {
+            "name": "dcardenasl/ci4-api-core",
+            "version": "dev-main",
+            "dist": {
+                "type": "path",
+                "url": "../ci4-api-core",
+                "reference": "fa9bbb00afc80770c5cca7a8739f144678b3f685"
+            },
+            "require": {
+                "codeigniter4/framework": "^4.5",
+                "php": "^8.2",
+                "zircote/swagger-php": "^4.10 || ^5.0 || ^6.0"
+            },
+            "require-dev": {
+                "phpstan/phpstan": "^1.10",
+                "phpunit/phpunit": "^10.5"
+            },
+            "bin": [
+                "bin/make-crud.sh",
+                "bin/validate-crud.sh"
+            ],
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-main": "0.1.x-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "dcardenasl\\Ci4ApiCore\\": "src/"
+                }
+            },
+            "autoload-dev": {
+                "psr-4": {
+                    "Tests\\": "tests/"
+                }
+            },
+            "scripts": {
+                "test": [
+                    "phpunit"
+                ],
+                "analyse": [
+                    "phpstan analyse"
+                ],
+                "cs-check": [
+                    "@php -r \"if (!file_exists('vendor/bin/php-cs-fixer')) { fwrite(STDERR, 'php-cs-fixer not installed. Run: composer require --dev friendsofphp/php-cs-fixer\\n'); exit(1); }\" && vendor/bin/php-cs-fixer fix --dry-run --diff --no-interaction"
+                ],
+                "cs-fix": [
+                    "@php -r \"if (!file_exists('vendor/bin/php-cs-fixer')) { fwrite(STDERR, 'php-cs-fixer not installed. Run: composer require --dev friendsofphp/php-cs-fixer\\n'); exit(1); }\" && vendor/bin/php-cs-fixer fix --no-interaction"
+                ],
+                "quality": [
+                    "@analyse",
+                    "@test"
+                ]
+            },
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "David Cárdenas L.",
+                    "email": "code.dcl@gmail.com"
+                }
+            ],
+            "description": "DTO-first API foundation for CodeIgniter 4: base classes + CRUD scaffolding engine. Powers ci4-api-starter and ci4-domain-starter.",
+            "homepage": "https://github.com/dcardenasl/ci4-api-core",
+            "keywords": [
+                "api",
+                "code-generation",
+                "codeigniter4",
+                "crud",
+                "dto",
+                "scaffolding"
+            ],
+            "support": {
+                "issues": "https://github.com/dcardenasl/ci4-api-core/issues",
+                "source": "https://github.com/dcardenasl/ci4-api-core"
+            },
+            "transport-options": {
+                "symlink": true,
+                "relative": true
+            }
         },
         {
             "name": "doctrine/lexer",
@@ -2475,16 +2558,16 @@
         },
         {
             "name": "symfony/deprecation-contracts",
-            "version": "v3.6.0",
+            "version": "v3.7.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/deprecation-contracts.git",
-                "reference": "63afe740e99a13ba87ec199bb07bbdee937a5b62"
+                "reference": "50f59d1f3ca46d41ac911f97a78626b6756af35b"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/deprecation-contracts/zipball/63afe740e99a13ba87ec199bb07bbdee937a5b62",
-                "reference": "63afe740e99a13ba87ec199bb07bbdee937a5b62",
+                "url": "https://api.github.com/repos/symfony/deprecation-contracts/zipball/50f59d1f3ca46d41ac911f97a78626b6756af35b",
+                "reference": "50f59d1f3ca46d41ac911f97a78626b6756af35b",
                 "shasum": ""
             },
             "require": {
@@ -2497,7 +2580,7 @@
                     "name": "symfony/contracts"
                 },
                 "branch-alias": {
-                    "dev-main": "3.6-dev"
+                    "dev-main": "3.7-dev"
                 }
             },
             "autoload": {
@@ -2522,7 +2605,7 @@
             "description": "A generic function and convention to trigger deprecation notices",
             "homepage": "https://symfony.com",
             "support": {
-                "source": "https://github.com/symfony/deprecation-contracts/tree/v3.6.0"
+                "source": "https://github.com/symfony/deprecation-contracts/tree/v3.7.0"
             },
             "funding": [
                 {
@@ -2534,11 +2617,15 @@
                     "type": "github"
                 },
                 {
+                    "url": "https://github.com/nicolas-grekas",
+                    "type": "github"
+                },
+                {
                     "url": "https://tidelift.com/funding/github/packagist/symfony/symfony",
                     "type": "tidelift"
                 }
             ],
-            "time": "2024-09-25T14:21:43+00:00"
+            "time": "2026-04-13T15:52:40+00:00"
         },
         {
             "name": "symfony/event-dispatcher",
@@ -3507,16 +3594,16 @@
         },
         {
             "name": "symfony/service-contracts",
-            "version": "v3.6.1",
+            "version": "v3.7.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/service-contracts.git",
-                "reference": "45112560a3ba2d715666a509a0bc9521d10b6c43"
+                "reference": "d25d82433a80eba6aa0e6c24b61d7370d99e444a"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/service-contracts/zipball/45112560a3ba2d715666a509a0bc9521d10b6c43",
-                "reference": "45112560a3ba2d715666a509a0bc9521d10b6c43",
+                "url": "https://api.github.com/repos/symfony/service-contracts/zipball/d25d82433a80eba6aa0e6c24b61d7370d99e444a",
+                "reference": "d25d82433a80eba6aa0e6c24b61d7370d99e444a",
                 "shasum": ""
             },
             "require": {
@@ -3534,7 +3621,7 @@
                     "name": "symfony/contracts"
                 },
                 "branch-alias": {
-                    "dev-main": "3.6-dev"
+                    "dev-main": "3.7-dev"
                 }
             },
             "autoload": {
@@ -3570,7 +3657,7 @@
                 "standards"
             ],
             "support": {
-                "source": "https://github.com/symfony/service-contracts/tree/v3.6.1"
+                "source": "https://github.com/symfony/service-contracts/tree/v3.7.0"
             },
             "funding": [
                 {
@@ -3590,7 +3677,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2025-07-15T11:30:57+00:00"
+            "time": "2026-03-28T09:44:51+00:00"
         },
         {
             "name": "symfony/string",
@@ -3768,16 +3855,16 @@
         },
         {
             "name": "symfony/yaml",
-            "version": "v7.4.8",
+            "version": "v7.4.10",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/yaml.git",
-                "reference": "c58fdf7b3d6c2995368264c49e4e8b05bcff2883"
+                "reference": "c660d6538545a3e8e65a5621ee3d7a6d352892c7"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/yaml/zipball/c58fdf7b3d6c2995368264c49e4e8b05bcff2883",
-                "reference": "c58fdf7b3d6c2995368264c49e4e8b05bcff2883",
+                "url": "https://api.github.com/repos/symfony/yaml/zipball/c660d6538545a3e8e65a5621ee3d7a6d352892c7",
+                "reference": "c660d6538545a3e8e65a5621ee3d7a6d352892c7",
                 "shasum": ""
             },
             "require": {
@@ -3820,7 +3907,7 @@
             "description": "Loads and dumps YAML files",
             "homepage": "https://symfony.com",
             "support": {
-                "source": "https://github.com/symfony/yaml/tree/v7.4.8"
+                "source": "https://github.com/symfony/yaml/tree/v7.4.10"
             },
             "funding": [
                 {
@@ -3840,7 +3927,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-03-24T13:12:05+00:00"
+            "time": "2026-05-05T08:01:55+00:00"
         },
         {
             "name": "zircote/swagger-php",
@@ -4219,82 +4306,6 @@
                 }
             ],
             "time": "2024-05-06T16:37:16+00:00"
-        },
-        {
-            "name": "dcardenasl/ci4-api-crud-maker",
-            "version": "dev-main",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/dcardenasl/ci4-api-crud-maker.git",
-                "reference": "79e5b0108a23966fd188d0e8ac52ecabe95e62d8"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/dcardenasl/ci4-api-crud-maker/zipball/79e5b0108a23966fd188d0e8ac52ecabe95e62d8",
-                "reference": "79e5b0108a23966fd188d0e8ac52ecabe95e62d8",
-                "shasum": ""
-            },
-            "require": {
-                "codeigniter4/framework": "^4.5",
-                "php": "^8.2"
-            },
-            "require-dev": {
-                "phpstan/phpstan": "^1.10",
-                "phpunit/phpunit": "^10.5"
-            },
-            "default-branch": true,
-            "bin": [
-                "bin/make-crud.sh",
-                "bin/validate-crud.sh"
-            ],
-            "type": "library",
-            "extra": {
-                "branch-alias": {
-                    "dev-main": "0.1.x-dev"
-                }
-            },
-            "autoload": {
-                "psr-4": {
-                    "dcardenasl\\CI4ApiCrudMaker\\": "src/"
-                }
-            },
-            "autoload-dev": {
-                "psr-4": {
-                    "Tests\\": "tests/"
-                }
-            },
-            "scripts": {
-                "test": [
-                    "phpunit"
-                ],
-                "analyse": [
-                    "phpstan analyse src --level=5"
-                ]
-            },
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "David Cárdenas L.",
-                    "email": "code.dcl@gmail.com"
-                }
-            ],
-            "description": "DTO-first CRUD scaffolding engine for CodeIgniter 4 APIs (extracted from ci4-api-starter)",
-            "homepage": "https://github.com/dcardenasl/ci4-api-crud-maker",
-            "keywords": [
-                "api",
-                "code-generation",
-                "codeigniter4",
-                "crud",
-                "dto",
-                "scaffolding"
-            ],
-            "support": {
-                "issues": "https://github.com/dcardenasl/ci4-api-crud-maker/issues",
-                "source": "https://github.com/dcardenasl/ci4-api-crud-maker"
-            },
-            "time": "2026-05-03T19:33:38+00:00"
         },
         {
             "name": "ergebnis/agent-detector",
@@ -7478,7 +7489,7 @@
     "aliases": [],
     "minimum-stability": "stable",
     "stability-flags": {
-        "dcardenasl/ci4-api-crud-maker": 20
+        "dcardenasl/ci4-api-core": 20
     },
     "prefer-stable": true,
     "prefer-lowest": false,

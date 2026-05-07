@@ -57,6 +57,30 @@ readonly class JwtService implements \App\Interfaces\Tokens\JwtServiceInterface
     }
 
     /**
+     * Generate a service (machine-to-machine) JWT.
+     *
+     * @param list<string> $permissions Effective permission codes for the application
+     */
+    public function encodeServiceToken(string $sub, array $permissions, int $ttl): string
+    {
+        $issuedAt       = time();
+        $expirationTime = $issuedAt + $ttl;
+        $jti            = bin2hex(random_bytes(16));
+
+        $payload = [
+            'iss'   => $this->issuer,
+            'iat'   => $issuedAt,
+            'nbf'   => $issuedAt,
+            'exp'   => $expirationTime,
+            'jti'   => $jti,
+            'sub'   => $sub,
+            'scope' => array_values($permissions),
+        ];
+
+        return JWT::encode($payload, $this->secretKey, $this->algorithm);
+    }
+
+    /**
      * Decode and validate a JWT token
      */
     public function decode(string $token): ?object

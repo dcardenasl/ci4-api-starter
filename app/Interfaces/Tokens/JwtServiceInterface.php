@@ -19,6 +19,20 @@ interface JwtServiceInterface
     public function encode(int $userId, array $permissions = []): string;
 
     /**
+     * Generate a service (machine-to-machine) JWT.
+     *
+     * The token has no associated user (`uid` is omitted) and uses `sub` to
+     * identify the calling application — e.g. `service:<app_code>`. The
+     * caller controls the TTL via the `$ttl` argument so a single
+     * JwtService instance can mint tokens with different lifetimes.
+     *
+     * @param string       $sub         Subject identifier, e.g. "service:mydomain"
+     * @param list<string> $permissions Effective permission codes for the application
+     * @param int          $ttl         Token lifetime in seconds
+     */
+    public function encodeServiceToken(string $sub, array $permissions, int $ttl): string;
+
+    /**
      * Decode and validate a JWT token
      *
      * @param string $token

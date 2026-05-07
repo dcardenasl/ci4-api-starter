@@ -10,6 +10,7 @@ use OpenApi\Attributes as OA;
     path: '/api/v1/auth/refresh',
     tags: ['Authentication'],
     summary: 'Refresh access token',
+    description: 'Issues a fresh access/refresh token pair and returns the canonical authenticated user (including effective permissions) so consumers can re-hydrate UI gating without an extra `/auth/me` call.',
     requestBody: new OA\RequestBody(
         required: true,
         content: new OA\JsonContent(

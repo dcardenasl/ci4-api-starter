@@ -89,6 +89,10 @@ readonly class RefreshTokenService implements \App\Interfaces\Tokens\RefreshToke
                 'access_token'  => $accessToken,
                 'refresh_token' => $newRefreshToken,
                 'expires_in'    => $this->accessTokenTtl,
+                'user'          => \App\DTO\Response\Auth\MeResponseDTO::fromUserData(
+                    $user->toArray(),
+                    $permissions
+                ),
             ]);
         });
     }

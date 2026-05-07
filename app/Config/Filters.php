@@ -70,6 +70,7 @@ class Filters extends BaseFilters
         'deprecationheaders' => \App\Filters\DeprecationHeadersFilter::class,
         'idempotency' => \App\Filters\IdempotencyFilter::class,
         'correlationid' => \App\Filters\CorrelationIdFilter::class,
+        'maintenance' => \App\Filters\MaintenanceFilter::class,
     ];
 
     /**
@@ -108,6 +109,7 @@ class Filters extends BaseFilters
      */
     public array $globals = [
         'before' => [
+            'maintenance', // 503 short-circuit when MAINTENANCE_MODE=true (audit B10.4); /health etc. bypass internally.
             'correlationid', // Resolve / generate X-Request-ID and stamp on RequestIdHolder (audit B10.1)
             'locale', // Set locale from Accept-Language header
             'cors', // Handle CORS preflight (OPTIONS) requests

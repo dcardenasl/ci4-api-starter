@@ -8,6 +8,12 @@ use App\DTO\Request\BaseRequestDTO;
 
 /**
  * Slow Requests Query Request DTO
+ *
+ * Uses `limit` (not `per_page`) on purpose: this endpoint returns the
+ * top-N slowest requests above a latency threshold. There is no concept
+ * of a "page 2" — the consumer asks for "the worst 10 in the window"
+ * and gets a capped list. Audit B7.5 (2026-05-06) clarified this
+ * distinction; see `docs/tech/pagination.md`.
  */
 readonly class SlowRequestsQueryRequestDTO extends BaseRequestDTO
 {

@@ -142,4 +142,16 @@ trait TokenSecurityServices
             static::requestDtoFactory()
         );
     }
+
+    public static function tokenIntrospectionService(bool $getShared = true): \App\Interfaces\Auth\TokenIntrospectionServiceInterface
+    {
+        if ($getShared) {
+            return static::getSharedInstance('tokenIntrospectionService');
+        }
+
+        return new \App\Services\Auth\TokenIntrospectionService(
+            static::jwtService(),
+            static::tokenRevocationService()
+        );
+    }
 }

@@ -9,4 +9,6 @@ return [
     'cannotActOnSuperAdmin'             => 'You cannot operate on a super administrator.',
     'cannotPerformSuperAdminOperation'  => 'This operation requires super administrator privileges.',
     'cannotModifyEmail'                 => 'Only a super administrator may modify a user email.',
+    'apiKeyHasNoApplication'            => 'The API key is not bound to an application and cannot issue service tokens.',
+    'applicationNotFound'               => 'The application bound to this API key no longer exists.',
 ];

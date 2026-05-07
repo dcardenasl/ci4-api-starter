@@ -9,4 +9,6 @@ return [
     'cannotActOnSuperAdmin'             => 'No puedes operar sobre un superadministrador.',
     'cannotPerformSuperAdminOperation'  => 'Esta operación requiere privilegios de superadministrador.',
     'cannotModifyEmail'                 => 'Solo un superadministrador puede modificar el correo electrónico de una cuenta.',
+    'apiKeyHasNoApplication'            => 'La API Key no está asociada a una aplicación y no puede emitir tokens de servicio.',
+    'applicationNotFound'               => 'La aplicación asociada a esta API Key ya no existe.',
 ];

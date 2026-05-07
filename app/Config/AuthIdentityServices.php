@@ -19,8 +19,8 @@ trait AuthIdentityServices
             static::registerUserAction($userRepository),
             static::googleLoginAction($userRepository),
             static::auditService(),
-            static::authUserMapper(),
             static::sessionManager(),
+            static::effectivePermissionsResolver(),
             static::userAccountGuard(),
             static::updateSelfProfileAction($userRepository),
             ENVIRONMENT === 'testing'
@@ -32,15 +32,6 @@ trait AuthIdentityServices
         return new \App\Services\Users\Actions\UpdateSelfProfileAction(
             $userRepository
         );
-    }
-
-    public static function authUserMapper(bool $getShared = true): \App\Services\Auth\Support\AuthUserMapper
-    {
-        if ($getShared) {
-            return static::getSharedInstance('authUserMapper');
-        }
-
-        return new \App\Services\Auth\Support\AuthUserMapper();
     }
 
     public static function sessionManager(bool $getShared = true): \App\Services\Auth\Support\SessionManager
@@ -85,7 +76,6 @@ trait AuthIdentityServices
             static::googleIdentityService(),
             static::googleAuthHandler($userRepository),
             static::sessionManager(),
-            static::authUserMapper(),
             static::userAccountGuard(),
             static::auditService(),
             static::emailService()

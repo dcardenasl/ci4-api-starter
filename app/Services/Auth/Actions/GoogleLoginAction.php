@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace App\Services\Auth\Actions;
 
 use App\DTO\Request\Auth\GoogleLoginRequestDTO;
+use App\DTO\Response\Auth\PendingRegistrationResponseDTO;
 use App\DTO\SecurityContext;
 use App\Entities\UserEntity;
 use App\Interfaces\Auth\GoogleIdentityServiceInterface;
 use App\Interfaces\System\AuditServiceInterface;
 use App\Interfaces\System\EmailServiceInterface;
 use App\Interfaces\Users\UserRepositoryInterface;
-use App\Services\Auth\Support\AuthUserMapper;
 use App\Services\Auth\Support\GoogleAuthHandler;
 use App\Services\Auth\Support\SessionManager;
 use App\Services\Users\UserAccountGuard;
@@ -24,7 +24,6 @@ class GoogleLoginAction
         protected GoogleIdentityServiceInterface $googleIdentityService,
         protected GoogleAuthHandler $googleHandler,
         protected SessionManager $sessionManager,
-        protected AuthUserMapper $userMapper,
         protected UserAccountGuard $userAccessPolicy,
         protected AuditServiceInterface $auditService,
         protected EmailServiceInterface $emailService
@@ -69,7 +68,7 @@ class GoogleLoginAction
             );
 
             return OperationResult::accepted(
-                ['user' => $this->userMapper->mapPending($pending)],
+                ['user' => PendingRegistrationResponseDTO::fromUser($pending)->toArray()],
                 lang('Auth.googleRegistrationPendingApproval')
             );
         }
@@ -79,7 +78,7 @@ class GoogleLoginAction
             $this->sendPendingApprovalEmail($user);
 
             return OperationResult::accepted(
-                ['user' => $this->userMapper->mapPending($user)],
+                ['user' => PendingRegistrationResponseDTO::fromUser($user)->toArray()],
                 lang('Auth.googleRegistrationPendingApproval')
             );
         }
@@ -132,7 +131,7 @@ class GoogleLoginAction
         );
 
         return OperationResult::success(
-            $this->sessionManager->generateSessionResponse($this->userMapper->mapAuthenticated($freshUser))
+            $this->sessionManager->generateSessionResponse($freshUser)
         );
     }
 

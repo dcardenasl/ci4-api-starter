@@ -7,6 +7,7 @@ namespace App\Services\Auth;
 use App\DTO\Request\Auth\GoogleLoginRequestDTO;
 use App\DTO\Request\Auth\LoginRequestDTO;
 use App\DTO\Request\Auth\RegisterRequestDTO;
+use App\DTO\Response\Auth\MeResponseDTO;
 use App\DTO\Response\Auth\RegisterResponseDTO;
 use App\DTO\SecurityContext;
 use App\Exceptions\AuthenticationException;
@@ -15,8 +16,8 @@ use App\Interfaces\System\AuditServiceInterface;
 use App\Interfaces\Users\UserRepositoryInterface;
 use App\Services\Auth\Actions\GoogleLoginAction;
 use App\Services\Auth\Actions\RegisterUserAction;
-use App\Services\Auth\Support\AuthUserMapper;
 use App\Services\Auth\Support\SessionManager;
+use App\Services\Iam\EffectivePermissionsResolver;
 use App\Services\Users\Actions\UpdateSelfProfileAction;
 use App\Services\Users\UserAccountGuard;
 use App\Support\OperationResult;
@@ -33,13 +34,15 @@ class AuthService implements \App\Interfaces\Auth\AuthServiceInterface
     protected RegisterUserAction $registerUserAction;
     protected GoogleLoginAction $googleLoginAction;
 
+    private const APPLICATION_ID = 1;
+
     public function __construct(
         protected UserRepositoryInterface $userRepository,
         RegisterUserAction $registerUserAction,
         GoogleLoginAction $googleLoginAction,
         protected AuditServiceInterface $auditService,
-        protected AuthUserMapper $userMapper,
         protected SessionManager $sessionManager,
+        protected EffectivePermissionsResolver $permissionsResolver,
         protected UserAccountGuard $userAccessPolicy,
         protected UpdateSelfProfileAction $updateSelfProfileAction,
         protected bool $allowTestPasswordBypass = false
@@ -88,7 +91,7 @@ class AuthService implements \App\Interfaces\Auth\AuthServiceInterface
 
         $this->userAccessPolicy->assertCanAuthenticate($user);
 
-        $session = $this->sessionManager->generateSessionResponse($this->userMapper->mapAuthenticated($user));
+        $session = $this->sessionManager->generateSessionResponse($user);
         return \App\DTO\Response\Auth\LoginResponseDTO::fromArray($session);
     }
 
@@ -114,7 +117,11 @@ class AuthService implements \App\Interfaces\Auth\AuthServiceInterface
         if (!$user) {
             throw new AuthenticationException(lang('Users.auth.notAuthenticated'));
         }
-        return \App\DTO\Response\Users\UserResponseDTO::fromArray($user->toArray());
+
+        return MeResponseDTO::fromUserData(
+            $user->toArray(),
+            $this->permissionsResolver->resolve($user_id, self::APPLICATION_ID)
+        );
     }
 
     /**
@@ -147,7 +154,11 @@ class AuthService implements \App\Interfaces\Auth\AuthServiceInterface
 
         return $this->wrapInTransaction(function () use ($userId, $request) {
             $updatedUser = $this->updateSelfProfileAction->execute($userId, $request);
-            return \App\DTO\Response\Users\UserResponseDTO::fromArray($updatedUser->toArray());
+
+            return MeResponseDTO::fromUserData(
+                $updatedUser->toArray(),
+                $this->permissionsResolver->resolve($userId, self::APPLICATION_ID)
+            );
         });
     }
 }

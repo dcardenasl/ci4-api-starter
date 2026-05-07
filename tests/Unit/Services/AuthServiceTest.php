@@ -17,9 +17,9 @@ use App\Interfaces\Users\UserRepositoryInterface;
 use App\Services\Auth\Actions\GoogleLoginAction;
 use App\Services\Auth\Actions\RegisterUserAction;
 use App\Services\Auth\AuthService;
-use App\Services\Auth\Support\AuthUserMapper;
 use App\Services\Auth\Support\GoogleAuthHandler;
 use App\Services\Auth\Support\SessionManager;
+use App\Services\Iam\EffectivePermissionsResolver;
 use App\Services\Users\UserAccountGuard;
 use CodeIgniter\Test\CIUnitTestCase;
 use Tests\Support\Traits\CustomAssertionsTrait;
@@ -63,8 +63,10 @@ class AuthServiceTest extends CIUnitTestCase
         $mockUserRepository->method('update')->willReturn(true);
         $mockUserRepository->method('restore')->willReturn(true);
 
-        $userMapper = new AuthUserMapper();
-        $sessionManager = new SessionManager($this->mockJwtService, $this->mockRefreshTokenService, $this->createMock(\App\Services\Iam\EffectivePermissionsResolver::class));
+        $permissionsResolver = $this->createMock(EffectivePermissionsResolver::class);
+        $permissionsResolver->method('resolve')->willReturn([]);
+
+        $sessionManager = new SessionManager($this->mockJwtService, $this->mockRefreshTokenService, $permissionsResolver);
         $userRoleAssignmentService = $this->createMock(\App\Services\Iam\UserRoleAssignmentService::class);
         $registerUserAction = new RegisterUserAction($mockUserRepository, $this->mockVerificationService, $this->mockEmailService, $userRoleAssignmentService);
         $googleLoginAction = new GoogleLoginAction(
@@ -72,7 +74,6 @@ class AuthServiceTest extends CIUnitTestCase
             $this->mockGoogleIdentityService,
             new GoogleAuthHandler($mockUserRepository, $this->mockRefreshTokenService, $userRoleAssignmentService),
             $sessionManager,
-            $userMapper,
             new UserAccountGuard(),
             $this->mockAuditService,
             $this->mockEmailService
@@ -85,8 +86,8 @@ class AuthServiceTest extends CIUnitTestCase
             $registerUserAction,
             $googleLoginAction,
             $this->mockAuditService,
-            $userMapper,
             $sessionManager,
+            $permissionsResolver,
             new UserAccountGuard(),
             $updateSelfProfileAction
         );
@@ -167,16 +168,17 @@ class AuthServiceTest extends CIUnitTestCase
             ->willReturn($user);
 
         $googleLoginAction = $this->createMock(GoogleLoginAction::class);
-        $userMapper = new AuthUserMapper();
-        $sessionManager = new SessionManager($this->mockJwtService, $this->mockRefreshTokenService, $this->createMock(\App\Services\Iam\EffectivePermissionsResolver::class));
+        $permissionsResolver = $this->createMock(EffectivePermissionsResolver::class);
+        $permissionsResolver->method('resolve')->willReturn([]);
+        $sessionManager = new SessionManager($this->mockJwtService, $this->mockRefreshTokenService, $permissionsResolver);
 
         $service = new AuthService(
             $mockUserRepository,
             $registerUserAction,
             $googleLoginAction,
             $this->mockAuditService,
-            $userMapper,
             $sessionManager,
+            $permissionsResolver,
             new UserAccountGuard(),
             new \App\Services\Users\Actions\UpdateSelfProfileAction($mockUserRepository)
         );

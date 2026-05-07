@@ -27,7 +27,7 @@ readonly class LoginResponseDTO implements DataTransferObjectInterface
         public string $refresh_token,
         #[OA\Property(property: 'expires_in', description: 'Token expiration time in seconds', example: 3600)]
         public int $expires_in,
-        #[OA\Property(description: 'Authenticated user data', ref: '#/components/schemas/UserResponse')]
+        #[OA\Property(description: 'Authenticated user data with effective permissions', ref: '#/components/schemas/MeResponse')]
         public array $user
     ) {
     }

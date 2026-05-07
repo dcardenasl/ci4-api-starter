@@ -53,6 +53,15 @@ class AuthMeUpdateTest extends ApiTestCase
 
         $result->assertStatus(200);
 
+        // Contract: PATCH /auth/me returns the canonical "me" shape with
+        // refreshed `permissions`. A regression here silently breaks UI
+        // gating on the consumer side (e.g. admin's session-user refresh
+        // after an avatar change). Lock the field.
+        $json = $this->getResponseJson($result);
+        $this->assertArrayHasKey('permissions', $json['data']);
+        $this->assertIsArray($json['data']['permissions']);
+        $this->assertArrayHasKey('roles', $json['data']);
+
         /** @var \App\Entities\UserEntity|null $reloaded */
         $reloaded = $this->userModel->find($this->currentUserId);
         $this->assertNotNull($reloaded);

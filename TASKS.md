@@ -14,31 +14,7 @@
 
 ## 🟡 Próximo (ordenado por prioridad)
 
-### [API-002] POST /api/v1/auth/service-token
-**Prioridad:** Alta — necesario para jobs background en ci4-domain-starter
-
-**Objetivo:** Permitir que una app de dominio se autentique sin usuario humano y obtenga un JWT de corta duración con scope limitado a los permisos de su aplicación.
-
-**Contexto:**
-- Las API Keys existen (`app/Database/Migrations/2026-02-18-000001_CreateApiKeysTable.php`) pero solo controlan rate limiting, no otorgan identidad
-- La tabla `api_keys` tiene `application_id` FK desde migración 2026-05-03 — verificar que esté wired en `ApiKeyService`
-- El JWT resultante usa `uid: null`, `sub: service:<app_code>`, scope limitado a los permisos de la aplicación registrada
-- TTL corto: 15 minutos. Sin refresh token (JWTs de servicio son descartables)
-- Requiere que la app esté registrada con `php spark apps:bootstrap <code>` antes de usar este endpoint
-
-**Criterios de aceptación:**
-- [ ] Ruta `POST /api/v1/auth/service-token` registrada, protegida con `throttle`
-- [ ] Acepta `X-App-Key` en header para identificar la app
-- [ ] Verifica que la API Key tenga `application_id` asociado y esté activa
-- [ ] Obtiene los permisos de la aplicación (no del usuario) desde el RBAC
-- [ ] Genera JWT con `sub: service:<app_code>`, `scope: [permisos de la app]`, `exp: now + 15min`
-- [ ] Devuelve 403 si la API Key no tiene `application_id` asociado
-- [ ] Devuelve 403 si la API Key está inactiva
-- [ ] Test Feature cubre: Key con app registrada, Key sin application_id, Key inactiva
-- [ ] `php spark swagger:generate` sin errores tras el cambio
-
-**Dependencia:** API-001 recomendado primero (misma sesión o anterior)
-**Rama sugerida:** `feature/service-auth`
+*(vacío — siguiente tarea por priorizar)*
 
 ---
 
@@ -54,6 +30,7 @@
 
 ## ✅ Completadas recientes
 
+- **[API-002] POST /api/v1/auth/service-token** (2026-05-06) — Endpoint nuevo `POST /api/v1/auth/service-token` (OAuth client_credentials-style: 200 con `access_token`/`token_type`/`expires_in`/`scope`) protegido por `appKeyRequired` + `throttle` (mismo grupo que introspect). Service `ServiceTokenService` re-resuelve la API Key por hash via `ApiKeyMaterialService`+`ApiKeyRepository`, valida `application_id` (403 `Iam.apiKeyHasNoApplication` si NULL), carga `applications.code`, y delega a `JwtService::encodeServiceToken()` (método nuevo: payload con `sub: service:<code>` + `scope`, sin `uid`, con `jti` para revocabilidad). Permisos resueltos por `ApplicationPermissionsResolver` nuevo (espejo de `EffectivePermissionsResolver`, query directa a `permissions WHERE application_id`). TTL configurable via `JWT_SERVICE_TOKEN_TTL` (default 900s). 6 feature tests verdes (éxito + decode JWT, sin app_id, key inactiva, X-App-Key faltante/inválida, revocable) + 5 integration tests del resolver; suite completa 614 tests verdes; PHPStan level 8 limpio; OpenAPI regenerado con `appKeyAuth` security scheme. Plan: `~/.claude/plans/lee-ci4-api-starter-claude-md-y-luego-squishy-cray.md`.
 - **[API-001] POST /api/v1/auth/introspect** (2026-05-06) — Endpoint nuevo `POST /api/v1/auth/introspect` (RFC 7662-style: siempre 200 con `valid: true|false`) que reusa `JwtService::decode()` + `TokenRevocationService::isRevoked()`. Filter nuevo `appKeyRequired` (alias) valida `X-App-Key`: 401 si falta, 403 si inválida/inactiva. Service `TokenIntrospectionService` puro (sin HTTP), wired en `TokenSecurityServices`. DTOs `IntrospectRequest/Response`, controller `IntrospectController`, doc OpenAPI con security scheme `appKeyAuth` (apiKey/header). 8 feature tests verdes (válido/expirado/revocado/malformado, X-App-Key faltante/inválida/inactiva, body sin token); suite completa 603 tests verdes; PHPStan level 8 limpio. Plan: `~/.claude/plans/lee-ci4-api-starter-claude-md-y-luego-parsed-flame.md`.
 - **[API-003] Reglas de modificación de usuarios** (2026-05-06) — Endpoint nuevo `PATCH /api/v1/auth/me` con DTO `UpdateMeRequestDTO` (allowlist `first_name`/`last_name`/`avatar_url`) y `UpdateSelfProfileAction`. `UpdateUserAction` rechaza cambios de email para actores no-superadmin (`Iam.cannotModifyEmail`). Lado admin (otro repo): Profile sin gate `users.write`, vista con email solo lectura, `UserUpdateRequest` filtra email salvo superadmin. Suite completa verde (595 API + 300 admin); OpenAPI regenerado. Plan: `~/.claude/plans/creo-que-nos-falta-kind-neumann.md`.
 

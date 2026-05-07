@@ -138,4 +138,15 @@ trait IamDomainServices
             static::securityAuditLogger()
         );
     }
+
+    public static function assignableRolesService(bool $getShared = true): \App\Services\Iam\AssignableRolesService
+    {
+        if ($getShared) {
+            return static::getSharedInstance('assignableRolesService');
+        }
+
+        return new \App\Services\Iam\AssignableRolesService(
+            \Config\Database::connect()
+        );
+    }
 }

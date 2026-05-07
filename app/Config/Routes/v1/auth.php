@@ -20,6 +20,7 @@ $routes->group('', ['filter' => 'authThrottle'], function ($routes) {
 // App-authenticated routes (X-App-Key, no JWT required)
 $routes->group('', ['filter' => ['appKeyRequired', 'throttle']], function ($routes) {
     $routes->post('auth/introspect', '\App\Controllers\Api\V1\Auth\IntrospectController::introspect');
+    $routes->post('auth/service-token', '\App\Controllers\Api\V1\Auth\ServiceTokenController::issue');
 });
 
 // Protected routes

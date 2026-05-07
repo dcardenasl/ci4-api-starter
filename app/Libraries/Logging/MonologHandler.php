@@ -30,6 +30,19 @@ class MonologHandler implements HandlerInterface
         // Create Monolog logger
         $this->logger = new MonologLogger('ci4-api');
 
+        // Audit B10.1 (2026-05-07): tag every log record with the current
+        // request's correlation ID so cross-service joins are trivial.
+        // The processor reads from RequestIdHolder, which the
+        // CorrelationIdFilter populates in `before()`.
+        $this->logger->pushProcessor(static function (\Monolog\LogRecord $record): \Monolog\LogRecord {
+            $requestId = \App\Libraries\RequestIdHolder::get();
+            if ($requestId === null) {
+                return $record;
+            }
+
+            return $record->with(extra: array_merge($record->extra, ['request_id' => $requestId]));
+        });
+
         // Determine log format
         $logFormat = env('LOG_FORMAT', 'json');
 

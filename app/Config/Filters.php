@@ -69,6 +69,7 @@ class Filters extends BaseFilters
         'featureToggle' => FeatureToggleFilter::class,
         'deprecationheaders' => \App\Filters\DeprecationHeadersFilter::class,
         'idempotency' => \App\Filters\IdempotencyFilter::class,
+        'correlationid' => \App\Filters\CorrelationIdFilter::class,
     ];
 
     /**
@@ -107,6 +108,7 @@ class Filters extends BaseFilters
      */
     public array $globals = [
         'before' => [
+            'correlationid', // Resolve / generate X-Request-ID and stamp on RequestIdHolder (audit B10.1)
             'locale', // Set locale from Accept-Language header
             'cors', // Handle CORS preflight (OPTIONS) requests
             'invalidchars', // Filter invalid/malicious characters from requests
@@ -118,6 +120,7 @@ class Filters extends BaseFilters
             // 'honeypot',
             'secureheaders', // Add security headers to all responses
             'deprecationheaders', // Emit Deprecation/Sunset/Link headers for deprecated API versions (audit B7.2)
+            'correlationid', // Echo X-Request-ID on every response (audit B10.1)
             'requestLogging' => ['except' => ['health', 'ping', 'ready', 'live']], // Skip noisy health probes
         ],
     ];

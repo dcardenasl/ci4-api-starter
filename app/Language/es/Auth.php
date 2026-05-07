@@ -9,6 +9,8 @@ return [
     'invalidFormat'           => 'Formato de encabezado de autorización inválido',
     'invalidToken'            => 'Token inválido o expirado',
     'tokenRevoked'            => 'El token ha sido revocado',
+    'appKeyMissing'           => 'Se requiere el encabezado X-App-Key',
+    'appKeyInvalid'           => 'X-App-Key inválida o inactiva',
     'emailNotVerified'        => 'El correo electrónico no está verificado',
     'accountPendingApproval'  => 'La cuenta está pendiente de aprobación por un administrador',
     'accountSetupRequired'    => 'La cuenta requiere configuración inicial. Revisa tu correo de invitación para definir tu contraseña.',

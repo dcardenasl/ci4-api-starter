@@ -9,6 +9,8 @@ return [
     'invalidFormat'           => 'Invalid authorization header format',
     'invalidToken'            => 'Invalid or expired token',
     'tokenRevoked'            => 'Token has been revoked',
+    'appKeyMissing'           => 'X-App-Key header is required',
+    'appKeyInvalid'           => 'X-App-Key is invalid or inactive',
     'emailNotVerified'        => 'Email not verified',
     'accountPendingApproval'  => 'Account pending admin approval',
     'accountSetupRequired'    => 'Account setup required. Please check your invitation email to set your password.',

@@ -21,12 +21,14 @@ class GenerateSwagger extends BaseCommand
             $outputPath = FCPATH . 'swagger.json';
 
             // Scan directories for OpenAPI annotations
+            $corePath = ROOTPATH . 'vendor/dcardenasl/ci4-api-core/src/';
             $openapi = (new \OpenApi\Generator())
                 ->generate([
                     $appPath . 'Config/OpenApi.php',
                     $appPath . 'Controllers/',
                     $appPath . 'Documentation/',
                     $appPath . 'DTO/',
+                    $corePath . 'Dto/',
                 ]);
 
             // Write to file

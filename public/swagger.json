@@ -3954,41 +3954,6 @@
                 },
                 "type": "object"
             },
-            "PaginatedResponse": {
-                "title": "Paginated Response",
-                "description": "Generic pagination payload",
-                "required": [
-                    "data",
-                    "total",
-                    "page",
-                    "per_page"
-                ],
-                "properties": {
-                    "data": {
-                        "description": "Result set",
-                        "type": "array",
-                        "items": {
-                            "type": "object"
-                        }
-                    },
-                    "total": {
-                        "description": "Total number of records",
-                        "type": "integer",
-                        "example": 120
-                    },
-                    "page": {
-                        "description": "Current page",
-                        "type": "integer",
-                        "example": 1
-                    },
-                    "per_page": {
-                        "description": "Items per page",
-                        "type": "integer",
-                        "example": 20
-                    }
-                },
-                "type": "object"
-            },
             "PayloadResponse": {
                 "title": "Payload Response",
                 "description": "Generic payload wrapper",
@@ -4521,6 +4486,41 @@
                             },
                             "type": "object"
                         }
+                    }
+                },
+                "type": "object"
+            },
+            "PaginatedResponse": {
+                "title": "Paginated Response",
+                "description": "Generic pagination payload",
+                "required": [
+                    "data",
+                    "total",
+                    "page",
+                    "per_page"
+                ],
+                "properties": {
+                    "data": {
+                        "description": "Result set",
+                        "type": "array",
+                        "items": {
+                            "type": "object"
+                        }
+                    },
+                    "total": {
+                        "description": "Total number of records",
+                        "type": "integer",
+                        "example": 120
+                    },
+                    "page": {
+                        "description": "Current page",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "per_page": {
+                        "description": "Items per page",
+                        "type": "integer",
+                        "example": 20
                     }
                 },
                 "type": "object"

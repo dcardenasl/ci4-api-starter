@@ -155,4 +155,19 @@ class CustomRules
 
         return true;
     }
+
+    /**
+     * Validate that a value is a sequential, 0-indexed array (a "list").
+     *
+     * @param mixed $value
+     */
+    public function is_list($value, ?string &$error = null): bool
+    {
+        if (!is_array($value) || !array_is_list($value)) {
+            $error = lang('Validation.is_list');
+            return false;
+        }
+
+        return true;
+    }
 }

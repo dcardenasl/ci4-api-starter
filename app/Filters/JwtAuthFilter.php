@@ -95,14 +95,20 @@ class JwtAuthFilter implements FilterInterface
             $permissions = array_values(array_map(static fn ($v) => (string) $v, $decoded->scope));
         }
 
+        // Service tokens (sub: service:<code>) have no `uid` claim — pass null so
+        // downstream consumers (PermissionFilter, audit context) can decide whether
+        // to allow the M2M caller. `setAuthContext` and `SecurityContext::user_id`
+        // are already nullable.
+        $contextUserId = $userId > 0 ? $userId : null;
+
         if ($request instanceof ApiRequest) {
-            $request->setAuthContext((int) $decoded->uid, $permissions);
+            $request->setAuthContext($contextUserId, $permissions);
         }
 
         // Also set global context for DTO enrichment
         ContextHolder::set($auditContextFactory->createContext(
             $request,
-            (int) $decoded->uid,
+            $contextUserId,
             [],
             $permissions
         ));

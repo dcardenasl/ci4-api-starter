@@ -43,7 +43,13 @@ class PermissionFilter implements FilterInterface
 
         $securityAuditLogger = Services::securityAuditLogger();
 
-        if ($actorId === null) {
+        // A populated SecurityContext means JwtAuthFilter (or TestAuthFilter) already
+        // authenticated the caller. Service tokens (sub: service:<code>) have no uid
+        // but carry a valid scope — they must reach the permission check below and
+        // receive 403 if the required code is missing, not 401.
+        $isAuthenticated = $context !== null || $actorId !== null;
+
+        if (! $isAuthenticated) {
             $securityAuditLogger->logAuthorizationDeniedFromRequest($request, $required, null, null);
 
             return Services::response()

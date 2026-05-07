@@ -3175,6 +3175,12 @@
                 },
                 "type": "object"
             },
+            "GalleryAttachRequest": {
+                "description": "Body for `POST /<resource>/<id>/images`. Attaches an existing file (already\nuploaded via the files endpoint) to a parent resource's gallery."
+            },
+            "GalleryReorderRequest": {
+                "description": "Body for `PUT /<resource>/<id>/images/reorder`.\n\nFormat: `{ \"items\": [{ \"id\": 12, \"sort_order\": 0 }, { \"id\": 13, \"sort_order\": 1 }, ...] }`.\nEach entry is a pivot row id paired with its new sort position. Entries\npointing at a different parent are silently ignored by the service."
+            },
             "ApplicationIndexRequest": {},
             "AttachPermissionsRequest": {
                 "required": [
@@ -3950,6 +3956,46 @@
                             "type": "string",
                             "example": "mydomain.access"
                         }
+                    }
+                },
+                "type": "object"
+            },
+            "GalleryImageResponse": {
+                "description": "Response payload for a single gallery item: the pivot record enriched with\nthe underlying file's metadata (original name, image flag, variants).",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 42
+                    },
+                    "parent_id": {
+                        "type": "integer",
+                        "example": 7
+                    },
+                    "file_id": {
+                        "type": "string",
+                        "example": "5"
+                    },
+                    "sort_order": {
+                        "type": "integer",
+                        "example": 0
+                    },
+                    "is_active": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "original_name": {
+                        "type": "string",
+                        "example": "photo.jpg",
+                        "nullable": true
+                    },
+                    "is_image": {
+                        "type": "boolean",
+                        "example": true,
+                        "nullable": true
+                    },
+                    "variants": {
+                        "type": "object",
+                        "nullable": true
                     }
                 },
                 "type": "object"

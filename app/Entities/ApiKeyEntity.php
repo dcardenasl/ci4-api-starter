@@ -32,6 +32,7 @@ class ApiKeyEntity extends Entity
      */
     protected $casts = [
         'id'                   => 'integer',
+        'application_id'       => '?integer',
         'is_active'            => 'boolean',
         'rate_limit_requests'  => 'integer',
         'rate_limit_window'    => 'integer',

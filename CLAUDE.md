@@ -167,14 +167,20 @@ style violations; the pre-commit hook also runs it on staged files.
 
 For architecture rules and onboarding, prefer:
 
-1. `docs/template/ARCHITECTURE_CONTRACT.md`
+1. `vendor/dcardenasl/ci4-api-core/docs/ARCHITECTURE_CONTRACT.md` (authoritative — ships with the package)
 2. `docs/template/MODULE_BOOTSTRAP_CHECKLIST.md`
 3. `docs/template/CRUD_FROM_ZERO.md`
 4. `docs/template/QUALITY_GATES.md`
 
+Base classes (`ApiController`, `BaseCrudService`, `BaseRequestDTO`, `BaseAuditableModel`,
+`ApiException` family, `ApiResponse`, `ApiResult`, `OperationResult`, `HandlesTransactions`,
+`Auditable`, `ContextHolder`, etc.) live in `dcardenasl/ci4-api-core` (namespace
+`dcardenasl\Ci4ApiCore\…`). They are not duplicated in `app/` — the starter only
+contains domain code.
+
 ## CRUD Scaffolding
 
-Scaffolding is provided by the `dcardenasl/ci4-api-crud-maker` package (installed as a Composer dev dependency from a VCS repo at github.com/dcardenasl/ci4-api-crud-maker; in this monorepo it is consumed via path repository pointing at `../ci4-api-crud-maker`). Consumer config lives in `app/Config/Scaffolding.php` (a one-liner returning `ScaffoldingConfig::defaults()`).
+Scaffolding is provided by the `dcardenasl/ci4-api-core` package (installed as a Composer runtime dependency; in this monorepo it is consumed via path repository pointing at `../ci4-api-core`). The same package ships the architectural base classes used by every module. Consumer config lives in `app/Config/Scaffolding.php` (a one-liner returning `ScaffoldingConfig::defaults()`).
 
 ### Quick Start
 ```bash

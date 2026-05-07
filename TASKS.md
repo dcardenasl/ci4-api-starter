@@ -26,7 +26,7 @@
 ## ⚪ Backlog
 
 - [API-010] `GET /iam/users/{id}/permissions?app=<code>` — permisos de un usuario filtrados por app de dominio (útil para domain apps que quieren verificar permisos sin introspect completo)
-- [API-011] Publicar `ci4-api-crud-maker` en Packagist (actualmente VCS/path repo) — bloqueado por B6 completo
+- [API-011] Publicar `ci4-api-core` en Packagist (actualmente VCS/path repo) — bloqueado por CORE v1.0
 - [API-012] Docker out-of-the-box — Dockerfile + docker-compose para dev (api-starter ya tiene Dockerfile; falta docker-compose unificado api+admin+mysql)
 - [API-013] CI/CD pipeline de ejemplo — GitHub Actions (api-starter ya tiene; documentar el patrón para derivados)
 - [API-014] Soporte multi-tenant nativo en el modelo de usuarios — fuera de alcance v1.x, ver ADR-011 cuando exista

@@ -153,6 +153,47 @@ class IntrospectControllerTest extends ApiTestCase
         $this->assertSame('error', $json['status']);
     }
 
+    public function testIntrospectReResolvesScopeAgainstCallerApplication(): void
+    {
+        // API-006: domain apps must receive their *own* permissions for the
+        // user, not the hub-bound `self` scope baked into the JWT.
+        $userId = $this->createUser('introspect-domain@example.com', 'ValidPass123!');
+
+        // Domain app + permissions + role assignment for this user
+        [$appId] = $this->createApplicationWithPermissions('mydomain', [
+            'mydomain.read',
+            'mydomain.write',
+        ]);
+        $roleId = $this->createDomainRoleWithPermissions('mydomain.editor', [
+            'mydomain.read',
+            'mydomain.write',
+        ]);
+        $this->attachRoleToUser($userId, $roleId);
+
+        // Active API key bound to the domain app — `appKeyId` will resolve
+        // to this app via ApiKeyRepository.
+        $rawKey = $this->createApiKeyForApplication($appId, 'mydomain-key');
+
+        // JWT minted by the hub for this user — its scope reflects `self`,
+        // not `mydomain`.
+        $token = Services::jwtService()->encode($userId, ['users.read']);
+
+        $result = $this->withHeaders(['X-App-Key' => $rawKey])
+            ->withBodyFormat('json')
+            ->post('/api/v1/auth/introspect', ['token' => $token]);
+
+        $result->assertStatus(200);
+        $json = $this->getResponseJson($result);
+
+        $this->assertTrue($json['data']['valid']);
+        $this->assertSame($userId, $json['data']['uid']);
+        $this->assertEqualsCanonicalizing(
+            ['mydomain.read', 'mydomain.write'],
+            $json['data']['permissions'],
+            'Introspect must resolve the scope against the caller application, not the JWT-baked self scope'
+        );
+    }
+
     public function testIntrospectMissingTokenInBodyReturns422(): void
     {
         $rawKey = $this->createActiveApiKey();
@@ -181,6 +222,105 @@ class IntrospectControllerTest extends ApiTestCase
                 'key_prefix'          => substr($rawKey, 0, 8),
                 'key_hash'            => $material->hash($rawKey),
                 'is_active'           => $isActive ? 1 : 0,
+                'rate_limit_requests' => 600,
+                'rate_limit_window'   => 60,
+                'user_rate_limit'     => 60,
+                'ip_rate_limit'       => 200,
+                'created_at'          => date('Y-m-d H:i:s'),
+            ]);
+
+        return $rawKey;
+    }
+
+    /**
+     * @param list<string> $permissionCodes
+     * @return array{0:int}
+     */
+    private function createApplicationWithPermissions(string $appCode, array $permissionCodes): array
+    {
+        $db = \Config\Database::connect();
+
+        $db->table('applications')->insert([
+            'code'       => $appCode,
+            'name'       => ucfirst($appCode),
+            'created_at' => date('Y-m-d H:i:s'),
+            'updated_at' => date('Y-m-d H:i:s'),
+        ]);
+        $appId = (int) $db->insertID();
+
+        foreach ($permissionCodes as $code) {
+            [$resource, $action] = explode('.', $code, 2) + [1 => 'access'];
+
+            $db->table('permissions')->insert([
+                'application_id' => $appId,
+                'code'           => $code,
+                'resource'       => $resource,
+                'action'         => $action,
+                'description'    => "Test permission {$code}",
+                'created_at'     => date('Y-m-d H:i:s'),
+                'updated_at'     => date('Y-m-d H:i:s'),
+            ]);
+        }
+
+        return [$appId];
+    }
+
+    /**
+     * @param list<string> $permissionCodes
+     */
+    private function createDomainRoleWithPermissions(string $roleCode, array $permissionCodes): int
+    {
+        $db = \Config\Database::connect();
+
+        $db->table('roles')->insert([
+            'code'        => $roleCode,
+            'name'        => ucfirst($roleCode),
+            'description' => "Test role {$roleCode}",
+            'created_at'  => date('Y-m-d H:i:s'),
+            'updated_at'  => date('Y-m-d H:i:s'),
+        ]);
+        $roleId = (int) $db->insertID();
+
+        foreach ($permissionCodes as $code) {
+            $perm = $db->table('permissions')->where('code', $code)->get()->getRowArray();
+            if ($perm === null) {
+                continue;
+            }
+
+            $db->table('role_permissions')->insert([
+                'role_id'       => $roleId,
+                'permission_id' => (int) $perm['id'],
+            ]);
+        }
+
+        return $roleId;
+    }
+
+    private function attachRoleToUser(int $userId, int $roleId): void
+    {
+        \Config\Database::connect()
+            ->table('user_roles')
+            ->insert([
+                'user_id'             => $userId,
+                'role_id'             => $roleId,
+                'assigned_at'         => date('Y-m-d H:i:s'),
+                'assigned_by_user_id' => null,
+            ]);
+    }
+
+    private function createApiKeyForApplication(int $applicationId, string $name): string
+    {
+        $material = Services::apiKeyMaterialService();
+        $rawKey   = $material->generateRawKey();
+
+        \Config\Database::connect()
+            ->table('api_keys')
+            ->insert([
+                'application_id'      => $applicationId,
+                'name'                => $name,
+                'key_prefix'          => substr($rawKey, 0, 8),
+                'key_hash'            => $material->hash($rawKey),
+                'is_active'           => 1,
                 'rate_limit_requests' => 600,
                 'rate_limit_window'   => 60,
                 'user_rate_limit'     => 60,

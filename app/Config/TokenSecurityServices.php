@@ -151,7 +151,8 @@ trait TokenSecurityServices
 
         return new \App\Services\Auth\TokenIntrospectionService(
             static::jwtService(),
-            static::tokenRevocationService()
+            static::tokenRevocationService(),
+            static::effectivePermissionsResolver()
         );
     }
 

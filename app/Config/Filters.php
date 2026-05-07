@@ -68,6 +68,7 @@ class Filters extends BaseFilters
         'locale'        => LocaleFilter::class,
         'featureToggle' => FeatureToggleFilter::class,
         'deprecationheaders' => \App\Filters\DeprecationHeadersFilter::class,
+        'idempotency' => \App\Filters\IdempotencyFilter::class,
     ];
 
     /**

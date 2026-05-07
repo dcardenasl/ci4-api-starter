@@ -226,6 +226,16 @@ Adding a new route file (`app/Config/Routes/v1/{domain}.php`) requires restartin
 pkill -f 'spark serve'; php spark serve --port 8080 &
 ```
 
+## Routing Conventions
+
+Route files in `app/Config/Routes/v1/*.php` are auto-discovered and grouped under `api/v1`. Use one file per consumer profile, not per CRUD resource:
+
+- **JWT-authenticated user routes** → their domain file (`auth.php`, `files.php`, `users.php`, `iam.php`, …). Filter chain typically `['jwtauth', 'throttle']` plus a `permission:<code>` where applicable.
+- **Public, app-key only routes** → `public.php`. Filter chain `['appKeyRequired', 'throttle']`. Use this for endpoints consumed by a public web/mobile frontend that has no logged-in user but must still authenticate the *application* via `X-App-Key`. The `appKeyRequired` filter returns 401 when the header is missing and 403 when the key is unknown or revoked (RFC 7235).
+- **Admin-only routes** → `admin.php`. JWT plus a role/permission gate.
+
+`AppKeyRequiredFilter` validates against the `api_keys` table and is throttled per-key by `ApiKeyThrottleHelpers`. Issue keys via the `apiKeys` admin endpoints; rotate by revoking and re-issuing.
+
 ## Troubleshooting
 
 ### Pre-commit hook fails on generated files (PHP CS Fixer)

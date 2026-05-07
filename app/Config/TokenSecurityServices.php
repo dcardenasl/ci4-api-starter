@@ -154,4 +154,22 @@ trait TokenSecurityServices
             static::tokenRevocationService()
         );
     }
+
+    public static function serviceTokenService(bool $getShared = true): \App\Interfaces\Auth\ServiceTokenServiceInterface
+    {
+        if ($getShared) {
+            return static::getSharedInstance('serviceTokenService');
+        }
+
+        $apiConfig = config('Api');
+
+        return new \App\Services\Auth\ServiceTokenService(
+            static::apiKeyRepository(),
+            static::apiKeyMaterialService(),
+            model(\App\Models\ApplicationModel::class),
+            static::applicationPermissionsResolver(),
+            static::jwtService(),
+            (int) $apiConfig->jwtServiceTokenTtl
+        );
+    }
 }

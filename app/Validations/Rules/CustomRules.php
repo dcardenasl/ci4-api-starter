@@ -170,4 +170,32 @@ class CustomRules
 
         return true;
     }
+
+    /**
+     * Validate boolean-like value.
+     *
+     * Accepts bool, 0/1 (int or string), and common truthy/falsy strings
+     * (true/false/yes/no/on/off, case-insensitive). Useful for booleans that
+     * arrive via query string or multipart form data, where CI4's StrictRules
+     * would otherwise reject them.
+     *
+     * @param mixed $value
+     */
+    public function boolean_like($value, ?string &$error = null): bool
+    {
+        if (is_bool($value)) {
+            return true;
+        }
+
+        if (is_int($value) && ($value === 0 || $value === 1)) {
+            return true;
+        }
+
+        if (is_string($value) && in_array(strtolower($value), ['0', '1', 'true', 'false', 'yes', 'no', 'on', 'off'], true)) {
+            return true;
+        }
+
+        $error = lang('Validation.boolean_like');
+        return false;
+    }
 }

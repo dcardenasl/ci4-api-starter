@@ -29,4 +29,7 @@ return [
 
     // Mensaje de regla de lista secuencial
     'is_list' => 'El campo {field} debe ser una lista secuencial de valores.',
+
+    // Mensaje de regla booleana flexible
+    'boolean_like' => 'El campo {field} debe ser un valor booleano (true/false, 1/0, yes/no, on/off).',
 ];

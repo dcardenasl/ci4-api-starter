@@ -67,6 +67,7 @@ class Filters extends BaseFilters
         'requestLogging' => RequestLoggingFilter::class,
         'locale'        => LocaleFilter::class,
         'featureToggle' => FeatureToggleFilter::class,
+        'deprecationheaders' => \App\Filters\DeprecationHeadersFilter::class,
     ];
 
     /**
@@ -115,6 +116,7 @@ class Filters extends BaseFilters
             'cors', // Add CORS headers to all responses
             // 'honeypot',
             'secureheaders', // Add security headers to all responses
+            'deprecationheaders', // Emit Deprecation/Sunset/Link headers for deprecated API versions (audit B7.2)
             'requestLogging' => ['except' => ['health', 'ping', 'ready', 'live']], // Skip noisy health probes
         ],
     ];

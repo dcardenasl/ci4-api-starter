@@ -67,6 +67,34 @@ class Api extends BaseConfig
         'api/v1/auth/resend-verification',
     ];
 
+    /**
+     * Supported API versions and their lifecycle metadata.
+     *
+     * Each entry is keyed by URL prefix segment (`v1`, `v2`, ...) and holds:
+     *   - `status`     : 'current' | 'deprecated' | 'sunset'
+     *   - `deprecated_at` : ISO 8601 date when the version entered deprecation, or null
+     *   - `sunset_at`     : ISO 8601 date when the version stops accepting traffic, or null
+     *   - `successor`     : the version that replaces this one ('v2', etc.), or null
+     *
+     * `DeprecationHeadersFilter` reads this map to inject the `Deprecation`
+     * and `Sunset` headers on responses (RFC 8594 / IETF draft) and the
+     * `Link: rel="successor-version"` header pointing at the replacement.
+     *
+     * Audit B7.2 (2026-05-06): formal versioning policy added; before this
+     * the `/api/v1/` URL prefix was the only contract signal and clients had
+     * no machine-readable way to discover deprecation timelines. See ADR-008.
+     *
+     * @var array<string, array{status: string, deprecated_at: ?string, sunset_at: ?string, successor: ?string}>
+     */
+    public array $apiVersions = [
+        'v1' => [
+            'status'        => 'current',
+            'deprecated_at' => null,
+            'sunset_at'     => null,
+            'successor'     => null,
+        ],
+    ];
+
     public function __construct()
     {
         parent::__construct();

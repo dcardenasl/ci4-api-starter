@@ -149,3 +149,14 @@ jobs:
 
       - name: Run tests
         run: composer quality
+
+      # Audit B9.4: enforce a coverage floor. Soft-fail until we have a
+      # confirmed baseline (running `composer test:coverage` once on CI
+      # gives us the actual number; flip `continue-on-error` to false
+      # then). The threshold (70%) is intentionally conservative and
+      # should ratchet upward over time.
+      - name: Coverage gate (>= 70% line coverage)
+        continue-on-error: true
+        run: |
+          composer test:coverage
+          composer coverage:check

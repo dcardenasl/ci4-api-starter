@@ -1182,6 +1182,54 @@
                 }
             }
         },
+        "/api/v1/auth/service-token": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Issue a service (machine-to-machine) JWT",
+                "description": "OAuth client_credentials-style endpoint. The calling domain application authenticates with `X-App-Key` and receives a short-lived JWT whose `sub` is `service:<app_code>` and whose `scope` is the application's permission set. No request body is required.",
+                "operationId": "c9b2e7c51cc4e03d7da2142b38a76f5e",
+                "responses": {
+                    "200": {
+                        "description": "Service token issued",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/ServiceTokenResponse"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "403": {
+                        "description": "X-App-Key invalid, inactive, or not bound to an application"
+                    },
+                    "404": {
+                        "description": "The application bound to the API key has been deleted"
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded"
+                    }
+                },
+                "security": [
+                    {
+                        "appKeyAuth": []
+                    }
+                ]
+            }
+        },
         "/api/v1/auth/refresh": {
             "post": {
                 "tags": [
@@ -3866,6 +3914,42 @@
                         "type": "string",
                         "example": "2026-02-26 12:00:00",
                         "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "ServiceTokenResponse": {
+                "title": "Service Token Response",
+                "description": "JWT issued to a domain application via X-App-Key",
+                "required": [
+                    "access_token",
+                    "token_type",
+                    "expires_in",
+                    "scope"
+                ],
+                "properties": {
+                    "access_token": {
+                        "description": "Signed JWT (HS256) carrying the application scope",
+                        "type": "string",
+                        "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                    },
+                    "token_type": {
+                        "description": "Always \"Bearer\"",
+                        "type": "string",
+                        "example": "Bearer"
+                    },
+                    "expires_in": {
+                        "description": "Token lifetime in seconds",
+                        "type": "integer",
+                        "example": 900
+                    },
+                    "scope": {
+                        "description": "Permission codes embedded in the token",
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "example": "mydomain.access"
+                        }
                     }
                 },
                 "type": "object"

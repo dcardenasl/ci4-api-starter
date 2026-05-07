@@ -20,6 +20,9 @@ class ServiceModelDependencyConventionsTest extends CIUnitTestCase
             'app/Services/Auth/PasswordResetService.php',
             'app/Services/Auth/ServiceTokenService.php',
             'app/Services/Auth/UserInvitationService.php',
+            // Generic gallery infrastructure: enriches pivot rows with `files`
+            // metadata in batch (whereIn), which is not in FileRepositoryInterface.
+            'app/Services/Core/GalleryService.php',
             'app/Services/System/MetricsService.php',
             'app/Services/Tokens/RefreshTokenService.php',
             'app/Services/Tokens/TokenRevocationService.php',

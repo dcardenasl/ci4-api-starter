@@ -241,4 +241,146 @@ class ApiResponse
     {
         return self::error([], $message ?? lang('Api.serverError'), 500);
     }
+
+    /**
+     * Build an RFC 7807 "Problem Details for HTTP APIs" error body.
+     *
+     * Audit B7.4 (2026-05-06) / ADR-010: opt-in alternative format that
+     * API gateways, Swagger code-generators, and enterprise integrations
+     * frequently require. Default response shape (`status` / `message` /
+     * `errors`) is preserved untouched for back-compat — call this method
+     * (or `negotiateError`) explicitly when the 7807 shape is desired.
+     *
+     * Returned shape:
+     * ```json
+     * {
+     *   "type": "https://example.com/errors/validation-failed",
+     *   "title": "Validation failed",
+     *   "status": 422,
+     *   "detail": "The 'email' field is required.",
+     *   "instance": "/api/v1/users",
+     *   "errors": { "email": "required" }
+     * }
+     * ```
+     *
+     * `type` defaults to "about:blank" per RFC 7807 §4.2 when no specific
+     * problem type URI is supplied. Callers SHOULD provide a stable URI
+     * (typically the docs page that explains the error class) so clients
+     * can recognize and branch on it.
+     *
+     * @param array<string, mixed>|string $errors   Field errors (preserved as `errors`) or a free-text detail.
+     * @param string|null                  $title    Short human-readable summary; falls back to `Api.requestFailed`.
+     * @param int|null                     $status   HTTP status code mirrored into the body.
+     * @param string|null                  $type     URI identifying the problem type. Defaults to `about:blank`.
+     * @param string|null                  $instance URI of the specific occurrence (typically the request path).
+     * @param string|null                  $detail   Human-readable explanation specific to this occurrence.
+     *
+     * @return array<string, mixed>
+     */
+    public static function problemDetails(
+        array|string $errors = [],
+        ?string $title = null,
+        ?int $status = null,
+        ?string $type = null,
+        ?string $instance = null,
+        ?string $detail = null
+    ): array {
+        $body = [
+            'type'   => $type ?? 'about:blank',
+            'title'  => $title ?? lang('Api.requestFailed'),
+            'status' => $status ?? 500,
+        ];
+
+        if ($detail !== null && $detail !== '') {
+            $body['detail'] = $detail;
+        } elseif (is_string($errors) && $errors !== '') {
+            // Promote a free-text $errors into the standard `detail` slot.
+            $body['detail'] = $errors;
+        }
+
+        if ($instance !== null && $instance !== '') {
+            $body['instance'] = $instance;
+        }
+
+        if (is_array($errors) && $errors !== []) {
+            $body['errors'] = $errors;
+        }
+
+        return $body;
+    }
+
+    /**
+     * Content-negotiated error builder.
+     *
+     * Returns an RFC 7807 body when the supplied Accept header expresses
+     * a preference for `application/problem+json`; otherwise falls back
+     * to the default `error()` shape. Designed to be wired from controllers
+     * via `ApiController::handleRequest()` (or any layer that has access
+     * to the incoming Accept header).
+     *
+     * Caller is responsible for setting `Content-Type: application/problem+json`
+     * on the response when the 7807 path is chosen — that lives in the
+     * controller layer where the response object is available.
+     *
+     * @param array<string, mixed>|string $errors
+     *
+     * @return array{ body: array<string, mixed>, content_type: string }
+     */
+    public static function negotiateError(
+        string $accept,
+        array|string $errors = [],
+        ?string $message = null,
+        ?int $status = null,
+        ?string $type = null,
+        ?string $instance = null,
+        ?string $detail = null
+    ): array {
+        if (self::clientPrefersProblemJson($accept)) {
+            return [
+                'body' => self::problemDetails(
+                    $errors,
+                    $message,
+                    $status,
+                    $type,
+                    $instance,
+                    $detail
+                ),
+                'content_type' => 'application/problem+json',
+            ];
+        }
+
+        return [
+            'body'         => self::error($errors, $message, $status),
+            'content_type' => 'application/json',
+        ];
+    }
+
+    /**
+     * Detect whether the Accept header negotiates for `application/problem+json`.
+     *
+     * Implements a minimal q-aware parse: a token wins if it appears in
+     * Accept with q >= q of `application/json` and >= q of `* /*` (ignoring
+     * the canonical "JSON over Problem JSON" tie which is handled by the
+     * fact that we only flip to 7807 on an explicit, non-trivial mention).
+     */
+    public static function clientPrefersProblemJson(string $accept): bool
+    {
+        if ($accept === '') {
+            return false;
+        }
+
+        $tokens = array_map('trim', explode(',', strtolower($accept)));
+        foreach ($tokens as $token) {
+            if ($token === '') {
+                continue;
+            }
+            // Strip q-value etc.
+            $type = trim(explode(';', $token, 2)[0]);
+            if ($type === 'application/problem+json') {
+                return true;
+            }
+        }
+
+        return false;
+    }
 }

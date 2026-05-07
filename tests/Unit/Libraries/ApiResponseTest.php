@@ -155,4 +155,94 @@ class ApiResponseTest extends CIUnitTestCase
         $this->assertEquals('error', $result['status']);
         $this->assertEquals(500, $result['code']);
     }
+
+    // =====================================================================
+    // RFC 7807 Problem Details (audit B7.4 / ADR-010)
+    // =====================================================================
+
+    public function testProblemDetailsDefaultsToAboutBlankWhenNoTypeProvided(): void
+    {
+        $result = ApiResponse::problemDetails([], 'Validation failed', 422);
+
+        $this->assertSame('about:blank', $result['type']);
+        $this->assertSame('Validation failed', $result['title']);
+        $this->assertSame(422, $result['status']);
+        $this->assertArrayNotHasKey('errors', $result, 'Empty error map must not be emitted.');
+        $this->assertArrayNotHasKey('detail', $result);
+    }
+
+    public function testProblemDetailsEmitsFullShapeWhenAllFieldsProvided(): void
+    {
+        $result = ApiResponse::problemDetails(
+            ['email' => 'required'],
+            'Validation failed',
+            422,
+            'https://api.example.com/errors/validation-failed',
+            '/api/v1/users',
+            "The 'email' field is required."
+        );
+
+        $this->assertSame('https://api.example.com/errors/validation-failed', $result['type']);
+        $this->assertSame('Validation failed', $result['title']);
+        $this->assertSame(422, $result['status']);
+        $this->assertSame("The 'email' field is required.", $result['detail']);
+        $this->assertSame('/api/v1/users', $result['instance']);
+        $this->assertSame(['email' => 'required'], $result['errors']);
+    }
+
+    public function testProblemDetailsPromotesStringErrorIntoDetailSlot(): void
+    {
+        $result = ApiResponse::problemDetails('Database unreachable', 'Service unavailable', 503);
+
+        $this->assertSame('Database unreachable', $result['detail']);
+        $this->assertArrayNotHasKey('errors', $result, 'String input has no field map to expose under errors.');
+    }
+
+    public function testNegotiateErrorReturnsLegacyShapeForJsonAccept(): void
+    {
+        $result = ApiResponse::negotiateError(
+            'application/json',
+            ['email' => 'required'],
+            'Validation failed',
+            422
+        );
+
+        $this->assertSame('application/json', $result['content_type']);
+        $this->assertSame('error', $result['body']['status']);
+        $this->assertSame('Validation failed', $result['body']['message']);
+        $this->assertSame(['email' => 'required'], $result['body']['errors']);
+    }
+
+    public function testNegotiateErrorReturnsProblemJsonForProblemAccept(): void
+    {
+        $result = ApiResponse::negotiateError(
+            'application/problem+json, application/json;q=0.9',
+            ['email' => 'required'],
+            'Validation failed',
+            422,
+            'https://example.com/errors/validation',
+            '/api/v1/users'
+        );
+
+        $this->assertSame('application/problem+json', $result['content_type']);
+        $this->assertSame('https://example.com/errors/validation', $result['body']['type']);
+        $this->assertSame('Validation failed', $result['body']['title']);
+        $this->assertSame(422, $result['body']['status']);
+        $this->assertSame('/api/v1/users', $result['body']['instance']);
+    }
+
+    public function testClientPrefersProblemJsonHandlesMixedAcceptHeaders(): void
+    {
+        // Explicit mention of application/problem+json — switch.
+        $this->assertTrue(ApiResponse::clientPrefersProblemJson('application/problem+json'));
+        $this->assertTrue(ApiResponse::clientPrefersProblemJson('application/json, application/problem+json'));
+        $this->assertTrue(ApiResponse::clientPrefersProblemJson('Application/Problem+JSON'));
+        $this->assertTrue(ApiResponse::clientPrefersProblemJson('text/html;q=0.5, application/problem+json;q=1.0'));
+
+        // No mention — stay on default JSON.
+        $this->assertFalse(ApiResponse::clientPrefersProblemJson(''));
+        $this->assertFalse(ApiResponse::clientPrefersProblemJson('application/json'));
+        $this->assertFalse(ApiResponse::clientPrefersProblemJson('*/*'));
+        $this->assertFalse(ApiResponse::clientPrefersProblemJson('application/xml'));
+    }
 }

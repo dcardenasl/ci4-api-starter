@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Services;
 
-use App\DTO\SecurityContext;
-use App\Exceptions\NotFoundException;
-use App\Interfaces\DataTransferObjectInterface;
-use App\Interfaces\Mappers\ResponseMapperInterface;
 use App\Interfaces\System\AuditRepositoryInterface;
 use App\Libraries\Queue\QueueManager;
 use App\Services\System\AuditService;
 use App\Services\System\AuditWriter;
 use CodeIgniter\Test\CIUnitTestCase;
+use dcardenasl\Ci4ApiCore\Dto\DataTransferObjectInterface;
+use dcardenasl\Ci4ApiCore\Dto\SecurityContext;
+use dcardenasl\Ci4ApiCore\Exceptions\NotFoundException;
+use dcardenasl\Ci4ApiCore\Mappers\ResponseMapperInterface;
 use Tests\Support\Traits\CustomAssertionsTrait;
 
 /**
@@ -484,7 +484,7 @@ class AuditServiceTest extends CIUnitTestCase
 
     public function testByEntityWithMissingParamsThrowsValidationException(): void
     {
-        $this->expectException(\App\Exceptions\ValidationException::class);
+        $this->expectException(\dcardenasl\Ci4ApiCore\Exceptions\ValidationException::class);
         new \App\DTO\Request\Audit\AuditByEntityRequestDTO(['entity_type' => 'users'], service('validation'));
     }
 

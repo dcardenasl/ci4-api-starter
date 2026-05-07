@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace App\Services\Tokens;
 
 use App\DTO\Request\Identity\RevokeAccessTokenRequestDTO;
-use App\DTO\SecurityContext;
 use App\Exceptions\AuthenticationException;
 use App\Interfaces\Tokens\RefreshTokenServiceInterface;
 use App\Interfaces\Tokens\TokenRevocationServiceInterface;
-use App\Support\OperationResult;
 use App\Support\RequestDtoFactory;
+use dcardenasl\Ci4ApiCore\Dto\SecurityContext;
+use dcardenasl\Ci4ApiCore\Support\OperationResult;
 
 /**
  * Modernized Auth Token Service
@@ -29,7 +29,7 @@ class AuthTokenService implements \App\Interfaces\Tokens\AuthTokenServiceInterfa
     /**
      * Refresh access token using refresh token
      */
-    public function refreshAccessToken(\App\DTO\Request\Identity\RefreshTokenRequestDTO $request, ?SecurityContext $context = null): \App\Interfaces\DataTransferObjectInterface
+    public function refreshAccessToken(\App\DTO\Request\Identity\RefreshTokenRequestDTO $request, ?SecurityContext $context = null): \dcardenasl\Ci4ApiCore\Dto\DataTransferObjectInterface
     {
         return $this->refreshTokenService->refreshAccessToken($request);
     }

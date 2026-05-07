@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace App\Services\Tokens\Actions;
 
 use App\DTO\Request\ApiKeys\ApiKeyCreateRequestDTO;
-use App\Exceptions\ValidationException;
 use App\Interfaces\Tokens\ApiKeyRepositoryInterface;
 use App\Services\Tokens\Support\ApiKeyMaterialService;
+use dcardenasl\Ci4ApiCore\Exceptions\ValidationException;
 
 class CreateApiKeyAction
 {

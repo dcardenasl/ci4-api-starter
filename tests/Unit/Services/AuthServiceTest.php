@@ -9,7 +9,6 @@ use App\Entities\UserEntity;
 use App\Exceptions\AuthenticationException;
 use App\Interfaces\Auth\GoogleIdentityServiceInterface;
 use App\Interfaces\Auth\VerificationServiceInterface;
-use App\Interfaces\System\AuditServiceInterface;
 use App\Interfaces\System\EmailServiceInterface;
 use App\Interfaces\Tokens\JwtServiceInterface;
 use App\Interfaces\Tokens\RefreshTokenServiceInterface;
@@ -22,6 +21,7 @@ use App\Services\Auth\Support\SessionManager;
 use App\Services\Iam\EffectivePermissionsResolver;
 use App\Services\Users\UserAccountGuard;
 use CodeIgniter\Test\CIUnitTestCase;
+use dcardenasl\Ci4ApiCore\Services\AuditServiceInterface;
 use Tests\Support\Traits\CustomAssertionsTrait;
 
 /**
@@ -115,7 +115,7 @@ class AuthServiceTest extends CIUnitTestCase
             'password' => 'ValidPass123!',
         ], service('validation')));
 
-        $this->assertInstanceOf(\App\Interfaces\DataTransferObjectInterface::class, $result);
+        $this->assertInstanceOf(\dcardenasl\Ci4ApiCore\Dto\DataTransferObjectInterface::class, $result);
         $data = $result->toArray();
         $this->assertEquals('jwt.access.token', $data['access_token']);
         $this->assertEquals(1, $data['user']['id']);
@@ -185,7 +185,7 @@ class AuthServiceTest extends CIUnitTestCase
 
         $result = $service->register($request);
 
-        $this->assertInstanceOf(\App\Interfaces\DataTransferObjectInterface::class, $result);
+        $this->assertInstanceOf(\dcardenasl\Ci4ApiCore\Dto\DataTransferObjectInterface::class, $result);
     }
 
     public function testMeReturnsUserProfile(): void
@@ -198,7 +198,7 @@ class AuthServiceTest extends CIUnitTestCase
         $service = $this->createServiceWithUserQuery($user);
 
         $result = $service->me(1);
-        $this->assertInstanceOf(\App\Interfaces\DataTransferObjectInterface::class, $result);
+        $this->assertInstanceOf(\dcardenasl\Ci4ApiCore\Dto\DataTransferObjectInterface::class, $result);
         $this->assertEquals('test@example.com', $result->toArray()['email']);
     }
 }

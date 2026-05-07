@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\DTO\Response\Auth;
 
 use App\DTO\Response\Users\UserResponseDTO;
-use App\Interfaces\DataTransferObjectInterface;
+use dcardenasl\Ci4ApiCore\Dto\DataTransferObjectInterface;
 use OpenApi\Attributes as OA;
 
 /**

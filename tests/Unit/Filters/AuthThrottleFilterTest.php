@@ -6,12 +6,12 @@ namespace Tests\Unit\Filters;
 
 use App\Entities\ApiKeyEntity;
 use App\Filters\AuthThrottleFilter;
-use App\HTTP\ApiRequest;
 use App\Models\ApiKeyModel;
 use CodeIgniter\Cache\CacheInterface;
 use CodeIgniter\HTTP\Response;
 use CodeIgniter\Test\CIUnitTestCase;
 use Config\Services;
+use dcardenasl\Ci4ApiCore\Http\ApiRequest;
 
 /**
  * AuthThrottleFilter Unit Tests

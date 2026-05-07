@@ -51,7 +51,7 @@ class RateLimitResponseTest extends ApiTestCase
         $this->setEnvVar('RATE_LIMIT_WINDOW', '60');
 
         $userId = $this->createUser('ratelimit_general_' . uniqid() . '@example.com', 'ValidPass123!', 'user', 'active', true);
-        \App\Libraries\ContextHolder::set(new \App\DTO\SecurityContext($userId));
+        \dcardenasl\Ci4ApiCore\Http\ContextHolder::set(new \dcardenasl\Ci4ApiCore\Dto\SecurityContext($userId));
         $this->setTestRequestHeaders([
             'X-Test-User-Id' => (string) $userId,
             'X-Test-User-Role' => 'user',

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Interfaces\Tokens;
 
-use App\DTO\SecurityContext;
+use dcardenasl\Ci4ApiCore\Dto\SecurityContext;
 
 /**
  * API Key Service Interface
@@ -16,22 +16,22 @@ interface ApiKeyServiceInterface
     /**
      * List all API keys with pagination and filtering
      */
-    public function index(\App\Interfaces\DataTransferObjectInterface $request, ?SecurityContext $context = null): \App\Interfaces\DataTransferObjectInterface;
+    public function index(\dcardenasl\Ci4ApiCore\Dto\DataTransferObjectInterface $request, ?SecurityContext $context = null): \dcardenasl\Ci4ApiCore\Dto\DataTransferObjectInterface;
 
     /**
      * Get a single API key by ID
      */
-    public function show(int $id, ?SecurityContext $context = null): \App\Interfaces\DataTransferObjectInterface;
+    public function show(int $id, ?SecurityContext $context = null): \dcardenasl\Ci4ApiCore\Dto\DataTransferObjectInterface;
 
     /**
      * Create a new API key
      */
-    public function store(\App\Interfaces\DataTransferObjectInterface $request, ?SecurityContext $context = null): \App\Interfaces\DataTransferObjectInterface;
+    public function store(\dcardenasl\Ci4ApiCore\Dto\DataTransferObjectInterface $request, ?SecurityContext $context = null): \dcardenasl\Ci4ApiCore\Dto\DataTransferObjectInterface;
 
     /**
      * Update an existing API key
      */
-    public function update(int $id, \App\Interfaces\DataTransferObjectInterface $request, ?SecurityContext $context = null): \App\Interfaces\DataTransferObjectInterface;
+    public function update(int $id, \dcardenasl\Ci4ApiCore\Dto\DataTransferObjectInterface $request, ?SecurityContext $context = null): \dcardenasl\Ci4ApiCore\Dto\DataTransferObjectInterface;
 
     /**
      * Delete an API key

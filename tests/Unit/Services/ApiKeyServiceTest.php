@@ -8,15 +8,15 @@ use App\DTO\Request\ApiKeys\ApiKeyCreateRequestDTO;
 use App\DTO\Request\ApiKeys\ApiKeyUpdateRequestDTO;
 use App\DTO\Response\ApiKeys\ApiKeyResponseDTO;
 use App\Entities\ApiKeyEntity;
-use App\Exceptions\BadRequestException;
-use App\Exceptions\NotFoundException;
-use App\Interfaces\DataTransferObjectInterface;
-use App\Interfaces\Mappers\ResponseMapperInterface;
 use App\Interfaces\Tokens\ApiKeyRepositoryInterface;
 use App\Services\Tokens\Actions\CreateApiKeyAction;
 use App\Services\Tokens\Actions\UpdateApiKeyAction;
 use App\Services\Tokens\ApiKeyService;
 use CodeIgniter\Test\CIUnitTestCase;
+use dcardenasl\Ci4ApiCore\Dto\DataTransferObjectInterface;
+use dcardenasl\Ci4ApiCore\Exceptions\BadRequestException;
+use dcardenasl\Ci4ApiCore\Exceptions\NotFoundException;
+use dcardenasl\Ci4ApiCore\Mappers\ResponseMapperInterface;
 use Tests\Support\Traits\CustomAssertionsTrait;
 
 class FakeApiKeyRepository implements ApiKeyRepositoryInterface

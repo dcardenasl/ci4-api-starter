@@ -6,16 +6,16 @@ namespace App\Services\Auth\Actions;
 
 use App\DTO\Request\Auth\GoogleLoginRequestDTO;
 use App\DTO\Response\Auth\PendingRegistrationResponseDTO;
-use App\DTO\SecurityContext;
 use App\Entities\UserEntity;
 use App\Interfaces\Auth\GoogleIdentityServiceInterface;
-use App\Interfaces\System\AuditServiceInterface;
 use App\Interfaces\System\EmailServiceInterface;
 use App\Interfaces\Users\UserRepositoryInterface;
 use App\Services\Auth\Support\GoogleAuthHandler;
 use App\Services\Auth\Support\SessionManager;
 use App\Services\Users\UserAccountGuard;
-use App\Support\OperationResult;
+use dcardenasl\Ci4ApiCore\Dto\SecurityContext;
+use dcardenasl\Ci4ApiCore\Services\AuditServiceInterface;
+use dcardenasl\Ci4ApiCore\Support\OperationResult;
 
 class GoogleLoginAction
 {

@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace Tests\Unit\Filters;
 
 use App\Filters\JwtAuthFilter;
-use App\HTTP\ApiRequest;
 use CodeIgniter\HTTP\URI;
 use CodeIgniter\Test\CIUnitTestCase;
 use Config\Api as ApiConfig;
 use Config\Services;
+use dcardenasl\Ci4ApiCore\Http\ApiRequest;
 use ReflectionClass;
 
 /**

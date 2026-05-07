@@ -87,7 +87,7 @@ trait TokenSecurityServices
         );
     }
 
-    public static function apiKeyResponseMapper(bool $getShared = true): \App\Interfaces\Mappers\ResponseMapperInterface
+    public static function apiKeyResponseMapper(bool $getShared = true): \dcardenasl\Ci4ApiCore\Mappers\ResponseMapperInterface
     {
         if ($getShared) {
             return static::getSharedInstance('apiKeyResponseMapper');

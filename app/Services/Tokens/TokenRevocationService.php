@@ -5,14 +5,14 @@ declare(strict_types=1);
 namespace App\Services\Tokens;
 
 use App\DTO\Request\Identity\RevokeAccessTokenRequestDTO;
-use App\DTO\SecurityContext;
 use App\Exceptions\AuthenticationException;
-use App\Exceptions\BadRequestException;
-use App\Interfaces\System\AuditServiceInterface;
 use App\Interfaces\Tokens\JwtServiceInterface;
 use App\Models\RefreshTokenModel;
 use App\Models\TokenBlacklistModel;
 use CodeIgniter\Cache\CacheInterface;
+use dcardenasl\Ci4ApiCore\Dto\SecurityContext;
+use dcardenasl\Ci4ApiCore\Exceptions\BadRequestException;
+use dcardenasl\Ci4ApiCore\Services\AuditServiceInterface;
 
 /**
  * Token Revocation Service

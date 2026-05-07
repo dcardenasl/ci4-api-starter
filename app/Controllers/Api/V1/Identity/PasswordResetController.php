@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace App\Controllers\Api\V1\Identity;
 
-use App\Controllers\ApiController;
 use App\DTO\Request\Identity\ForgotPasswordRequestDTO;
 use App\DTO\Request\Identity\PasswordResetTokenValidationDTO;
 use App\DTO\Request\Identity\ResetPasswordRequestDTO;
 use App\Interfaces\Auth\PasswordResetServiceInterface;
 use CodeIgniter\HTTP\ResponseInterface;
 use Config\Services;
+use dcardenasl\Ci4ApiCore\Http\ApiController;
 
 /**
  * Modernized Password Reset Controller

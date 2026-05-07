@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace App\Services\Users\Actions;
 
 use App\DTO\Request\Auth\UpdateMeRequestDTO;
-use App\Exceptions\NotFoundException;
-use App\Exceptions\ValidationException;
 use App\Interfaces\Users\UserRepositoryInterface;
+use dcardenasl\Ci4ApiCore\Exceptions\NotFoundException;
+use dcardenasl\Ci4ApiCore\Exceptions\ValidationException;
 
 /**
  * Self-profile update action.

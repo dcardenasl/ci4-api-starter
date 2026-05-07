@@ -6,14 +6,14 @@ namespace Tests\Unit\Services;
 
 use App\DTO\Response\Users\UserResponseDTO;
 use App\Entities\UserEntity;
-use App\Exceptions\NotFoundException;
-use App\Interfaces\Mappers\ResponseMapperInterface;
 use App\Interfaces\Users\UserRepositoryInterface;
 use App\Services\Users\Actions\ApproveUserAction;
 use App\Services\Users\Actions\CreateUserAction;
 use App\Services\Users\Actions\UpdateUserAction;
 use App\Services\Users\UserService;
 use CodeIgniter\Test\CIUnitTestCase;
+use dcardenasl\Ci4ApiCore\Exceptions\NotFoundException;
+use dcardenasl\Ci4ApiCore\Mappers\ResponseMapperInterface;
 use Tests\Support\Traits\CustomAssertionsTrait;
 
 /**
@@ -42,7 +42,7 @@ class UserServiceTest extends CIUnitTestCase
         $this->mockUpdateUserAction = $this->createMock(UpdateUserAction::class);
         $mockAuthz = $this->createMock(\App\Services\Iam\IamAuthorizationService::class);
         $this->responseMapper = new class () implements ResponseMapperInterface {
-            public function map(object $entity): \App\Interfaces\DataTransferObjectInterface
+            public function map(object $entity): \dcardenasl\Ci4ApiCore\Dto\DataTransferObjectInterface
             {
                 return UserResponseDTO::fromArray($entity->toArray());
             }
@@ -76,7 +76,7 @@ class UserServiceTest extends CIUnitTestCase
 
         $result = $this->service->show(1);
 
-        $this->assertInstanceOf(\App\Interfaces\DataTransferObjectInterface::class, $result);
+        $this->assertInstanceOf(\dcardenasl\Ci4ApiCore\Dto\DataTransferObjectInterface::class, $result);
         $this->assertEquals('test@example.com', $result->toArray()['email']);
     }
 
@@ -99,7 +99,7 @@ class UserServiceTest extends CIUnitTestCase
         $this->mockCreateUserAction->expects($this->once())->method('execute')->willReturn($expectedUser);
 
         $result = $this->service->store($request);
-        $this->assertInstanceOf(\App\Interfaces\DataTransferObjectInterface::class, $result);
+        $this->assertInstanceOf(\dcardenasl\Ci4ApiCore\Dto\DataTransferObjectInterface::class, $result);
     }
 
     // ==================== UPDATE TESTS ====================
@@ -114,13 +114,13 @@ class UserServiceTest extends CIUnitTestCase
         $this->mockUpdateUserAction->expects($this->once())->method('execute')->with($id, $request)->willReturn($user);
 
         $result = $this->service->update($id, $request);
-        $this->assertInstanceOf(\App\Interfaces\DataTransferObjectInterface::class, $result);
+        $this->assertInstanceOf(\dcardenasl\Ci4ApiCore\Dto\DataTransferObjectInterface::class, $result);
     }
 
     public function testApproveDelegatesToApproveUserAction(): void
     {
         $id = 1;
-        $context = new \App\DTO\SecurityContext(10);
+        $context = new \dcardenasl\Ci4ApiCore\Dto\SecurityContext(10);
         $approvedUser = $this->createUserEntity([
             'id' => $id,
             'email' => 'approved@example.com',
@@ -134,7 +134,7 @@ class UserServiceTest extends CIUnitTestCase
             ->willReturn($approvedUser);
 
         $result = $this->service->approve($id, $context, 'https://client.test');
-        $this->assertInstanceOf(\App\Interfaces\DataTransferObjectInterface::class, $result);
+        $this->assertInstanceOf(\dcardenasl\Ci4ApiCore\Dto\DataTransferObjectInterface::class, $result);
         $this->assertEquals('approved@example.com', $result->toArray()['email']);
     }
 

@@ -6,11 +6,11 @@ namespace App\Filters;
 
 use App\Filters\Concerns\ApiKeyThrottleHelpers;
 use App\Filters\Concerns\RateLimitResponseHelpers;
-use App\HTTP\ApiRequest;
 use CodeIgniter\Filters\FilterInterface;
 use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
 use Config\Services;
+use dcardenasl\Ci4ApiCore\Http\ApiRequest;
 
 /**
  * Authentication-specific Rate Limiting Filter

@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Services\Auth\Support;
 
-use App\Exceptions\ValidationException;
 use App\Interfaces\Tokens\RefreshTokenServiceInterface;
 use App\Interfaces\Users\UserRepositoryInterface;
 use App\Services\Iam\UserRoleAssignmentService;
+use dcardenasl\Ci4ApiCore\Exceptions\ValidationException;
 
 /**
  * Google Auth Handler
@@ -16,7 +16,7 @@ use App\Services\Iam\UserRoleAssignmentService;
  */
 class GoogleAuthHandler
 {
-    use \App\Traits\HandlesTransactions;
+    use \dcardenasl\Ci4ApiCore\Services\HandlesTransactions;
 
     public function __construct(
         protected UserRepositoryInterface $userRepository,

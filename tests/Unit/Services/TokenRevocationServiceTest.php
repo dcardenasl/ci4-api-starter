@@ -6,15 +6,15 @@ namespace Tests\Unit\Services;
 
 use App\DTO\Request\Identity\RevokeAccessTokenRequestDTO;
 use App\Exceptions\AuthenticationException;
-use App\Exceptions\BadRequestException;
-use App\Exceptions\ValidationException;
-use App\Interfaces\System\AuditServiceInterface;
 use App\Interfaces\Tokens\JwtServiceInterface;
 use App\Models\RefreshTokenModel;
 use App\Models\TokenBlacklistModel;
 use App\Services\Tokens\TokenRevocationService;
 use CodeIgniter\Cache\CacheInterface;
 use CodeIgniter\Test\CIUnitTestCase;
+use dcardenasl\Ci4ApiCore\Exceptions\BadRequestException;
+use dcardenasl\Ci4ApiCore\Exceptions\ValidationException;
+use dcardenasl\Ci4ApiCore\Services\AuditServiceInterface;
 use Tests\Support\Traits\CustomAssertionsTrait;
 
 /**

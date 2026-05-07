@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Services\Auth;
 
-use App\DTO\SecurityContext;
-use App\Exceptions\NotFoundException;
-use App\Interfaces\DataTransferObjectInterface;
-use App\Interfaces\System\AuditServiceInterface;
 use App\Interfaces\System\EmailServiceInterface;
 use App\Interfaces\Tokens\RefreshTokenServiceInterface;
 use App\Models\PasswordResetModel;
 use App\Traits\ResolvesWebAppLinks;
+use dcardenasl\Ci4ApiCore\Dto\DataTransferObjectInterface;
+use dcardenasl\Ci4ApiCore\Dto\SecurityContext;
+use dcardenasl\Ci4ApiCore\Exceptions\NotFoundException;
+use dcardenasl\Ci4ApiCore\Services\AuditServiceInterface;
 
 /**
  * Modernized Password Reset Service
@@ -19,7 +19,7 @@ use App\Traits\ResolvesWebAppLinks;
 class PasswordResetService implements \App\Interfaces\Auth\PasswordResetServiceInterface
 {
     use ResolvesWebAppLinks;
-    use \App\Traits\HandlesTransactions;
+    use \dcardenasl\Ci4ApiCore\Services\HandlesTransactions;
 
     public function __construct(
         protected \App\Interfaces\Users\UserRepositoryInterface $userRepository,

@@ -11,7 +11,7 @@ use App\Models\RefreshTokenModel;
 use App\Models\UserModel;
 use App\Services\Iam\EffectivePermissionsResolver;
 use App\Services\Users\UserAccountGuard;
-use App\Support\OperationResult;
+use dcardenasl\Ci4ApiCore\Support\OperationResult;
 
 /**
  * Refresh Token Service
@@ -20,7 +20,7 @@ use App\Support\OperationResult;
  */
 readonly class RefreshTokenService implements \App\Interfaces\Tokens\RefreshTokenServiceInterface
 {
-    use \App\Traits\HandlesTransactions;
+    use \dcardenasl\Ci4ApiCore\Services\HandlesTransactions;
 
     private const APPLICATION_ID = 1;
 
@@ -105,7 +105,7 @@ readonly class RefreshTokenService implements \App\Interfaces\Tokens\RefreshToke
         $revoked = $this->refreshTokenModel->revokeToken($request->refresh_token);
 
         if (!$revoked) {
-            throw new \App\Exceptions\NotFoundException(lang('Tokens.tokenNotFound'));
+            throw new \dcardenasl\Ci4ApiCore\Exceptions\NotFoundException(lang('Tokens.tokenNotFound'));
         }
 
         return OperationResult::success(null, lang('Tokens.refreshTokenRevoked'));

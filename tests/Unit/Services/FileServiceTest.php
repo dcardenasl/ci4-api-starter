@@ -6,15 +6,15 @@ namespace Tests\Unit\Services;
 
 use App\Entities\FileEntity;
 use App\Exceptions\AuthorizationException;
-use App\Exceptions\BadRequestException;
-use App\Exceptions\NotFoundException;
-use App\Exceptions\ValidationException;
 use App\Interfaces\Files\FileRepositoryInterface;
-use App\Interfaces\System\AuditServiceInterface;
 use App\Libraries\Storage\StorageManager;
 use App\Services\Files\FileService;
 use CodeIgniter\HTTP\Files\UploadedFile;
 use CodeIgniter\Test\CIUnitTestCase;
+use dcardenasl\Ci4ApiCore\Exceptions\BadRequestException;
+use dcardenasl\Ci4ApiCore\Exceptions\NotFoundException;
+use dcardenasl\Ci4ApiCore\Exceptions\ValidationException;
+use dcardenasl\Ci4ApiCore\Services\AuditServiceInterface;
 use Tests\Support\Traits\CustomAssertionsTrait;
 
 /**
@@ -301,7 +301,7 @@ class FileServiceTest extends CIUnitTestCase
         $result = $this->service->index($request);
         $payload = $result->toArray();
 
-        $this->assertInstanceOf(\App\DTO\Response\Common\PaginatedResponseDTO::class, $result);
+        $this->assertInstanceOf(\dcardenasl\Ci4ApiCore\Dto\PaginatedResponseDTO::class, $result);
         $this->assertArrayHasKey('data', $payload);
         $this->assertArrayHasKey('total', $payload);
         $this->assertCount(2, $payload['data']);
@@ -384,7 +384,7 @@ class FileServiceTest extends CIUnitTestCase
 
         $this->expectException(NotFoundException::class);
 
-        $this->service->destroy(999, new \App\DTO\SecurityContext(1));
+        $this->service->destroy(999, new \dcardenasl\Ci4ApiCore\Dto\SecurityContext(1));
     }
 
     public function testDestroyOtherUsersFileThrowsAuthorizationException(): void
@@ -400,7 +400,7 @@ class FileServiceTest extends CIUnitTestCase
 
         $this->expectException(AuthorizationException::class);
 
-        $this->service->destroy(1, new \App\DTO\SecurityContext(1));
+        $this->service->destroy(1, new \dcardenasl\Ci4ApiCore\Dto\SecurityContext(1));
     }
 
     public function testDestroyOwnFileReturnsSuccess(): void
@@ -427,7 +427,7 @@ class FileServiceTest extends CIUnitTestCase
             ->with(1)
             ->willReturn(true);
 
-        $result = $this->service->destroy(1, new \App\DTO\SecurityContext(1));
+        $result = $this->service->destroy(1, new \dcardenasl\Ci4ApiCore\Dto\SecurityContext(1));
 
         $this->assertTrue($result);
     }

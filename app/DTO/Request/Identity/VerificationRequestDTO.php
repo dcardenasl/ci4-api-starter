@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\DTO\Request\Identity;
 
-use App\DTO\Request\BaseRequestDTO;
-use App\Exceptions\ValidationException;
+use dcardenasl\Ci4ApiCore\Dto\BaseRequestDTO;
+use dcardenasl\Ci4ApiCore\Exceptions\ValidationException;
 
 /**
  * Verification Request DTO

@@ -70,7 +70,7 @@ final class PrivilegeEscalationTest extends ApiTestCase
         // survives.
         try {
             $this->delete("/api/v1/users/{$saUserId}");
-        } catch (\App\Exceptions\ApiException) {
+        } catch (\dcardenasl\Ci4ApiCore\Exceptions\ApiException) {
             // Expected blocked path.
         }
 
@@ -88,7 +88,7 @@ final class PrivilegeEscalationTest extends ApiTestCase
 
         try {
             $this->withBodyFormat('json')->post("/api/v1/users/{$saUserId}/approve");
-        } catch (\App\Exceptions\ApiException) {
+        } catch (\dcardenasl\Ci4ApiCore\Exceptions\ApiException) {
             // Expected blocked path.
         }
 

@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace App\Filters\Concerns;
 
 use App\Entities\ApiKeyEntity;
-use App\Libraries\ApiResponse;
 use CodeIgniter\Cache\CacheInterface;
 use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
 use Config\Services;
+use dcardenasl\Ci4ApiCore\Http\ApiResponse;
 
 trait ApiKeyThrottleHelpers
 {

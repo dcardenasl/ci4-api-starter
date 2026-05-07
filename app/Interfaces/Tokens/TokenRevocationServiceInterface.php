@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Interfaces\Tokens;
 
 use App\DTO\Request\Identity\RevokeAccessTokenRequestDTO;
-use App\DTO\SecurityContext;
+use dcardenasl\Ci4ApiCore\Dto\SecurityContext;
 
 /**
  * Token Revocation Service Interface

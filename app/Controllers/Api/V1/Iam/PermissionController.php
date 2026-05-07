@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace App\Controllers\Api\V1\Iam;
 
-use App\Controllers\ApiController;
 use App\DTO\Request\Iam\PermissionCreateRequestDTO;
 use App\DTO\Request\Iam\PermissionIndexRequestDTO;
 use App\DTO\Request\Iam\PermissionUpdateRequestDTO;
 use App\Interfaces\Iam\PermissionServiceInterface;
 use CodeIgniter\HTTP\ResponseInterface;
 use Config\Services;
+use dcardenasl\Ci4ApiCore\Http\ApiController;
 
 class PermissionController extends ApiController
 {

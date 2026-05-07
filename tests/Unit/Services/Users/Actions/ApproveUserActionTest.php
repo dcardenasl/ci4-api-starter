@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Services\Users\Actions;
 
-use App\DTO\SecurityContext;
 use App\Entities\UserEntity;
 use App\Exceptions\ConflictException;
-use App\Exceptions\NotFoundException;
-use App\Interfaces\System\AuditServiceInterface;
 use App\Interfaces\System\EmailServiceInterface;
 use App\Interfaces\Users\UserRepositoryInterface;
 use App\Services\Users\Actions\ApproveUserAction;
 use CodeIgniter\Test\CIUnitTestCase;
+use dcardenasl\Ci4ApiCore\Dto\SecurityContext;
+use dcardenasl\Ci4ApiCore\Exceptions\NotFoundException;
+use dcardenasl\Ci4ApiCore\Services\AuditServiceInterface;
 
 class ApproveUserActionTest extends CIUnitTestCase
 {

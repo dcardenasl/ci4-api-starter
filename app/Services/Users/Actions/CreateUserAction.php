@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace App\Services\Users\Actions;
 
 use App\DTO\Request\Users\UserCreateRequestDTO;
-use App\DTO\SecurityContext;
-use App\Exceptions\ValidationException;
 use App\Interfaces\Users\UserRepositoryInterface;
 use App\Services\Iam\UserRoleAssignmentService;
 use CodeIgniter\Events\Events;
+use dcardenasl\Ci4ApiCore\Dto\SecurityContext;
+use dcardenasl\Ci4ApiCore\Exceptions\ValidationException;
 
 class CreateUserAction
 {

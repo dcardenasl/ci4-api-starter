@@ -4,17 +4,17 @@ declare(strict_types=1);
 
 namespace App\Services\Users;
 
-use App\DTO\SecurityContext;
-use App\Exceptions\NotFoundException;
-use App\Interfaces\Mappers\ResponseMapperInterface;
 use App\Interfaces\Users\UserRepositoryInterface;
 use App\Interfaces\Users\UserServiceInterface;
-use App\Libraries\ContextHolder;
-use App\Services\Core\BaseCrudService;
 use App\Services\Iam\IamAuthorizationService;
 use App\Services\Users\Actions\ApproveUserAction;
 use App\Services\Users\Actions\CreateUserAction;
 use App\Services\Users\Actions\UpdateUserAction;
+use dcardenasl\Ci4ApiCore\Dto\SecurityContext;
+use dcardenasl\Ci4ApiCore\Exceptions\NotFoundException;
+use dcardenasl\Ci4ApiCore\Http\ContextHolder;
+use dcardenasl\Ci4ApiCore\Mappers\ResponseMapperInterface;
+use dcardenasl\Ci4ApiCore\Services\BaseCrudService;
 
 /**
  * User Service
@@ -39,7 +39,7 @@ class UserService extends BaseCrudService implements UserServiceInterface
     /**
      * Create a new user
      */
-    public function store(\App\Interfaces\DataTransferObjectInterface $request, ?SecurityContext $context = null): \App\Interfaces\DataTransferObjectInterface
+    public function store(\dcardenasl\Ci4ApiCore\Dto\DataTransferObjectInterface $request, ?SecurityContext $context = null): \dcardenasl\Ci4ApiCore\Dto\DataTransferObjectInterface
     {
         /** @var \App\DTO\Request\Users\UserCreateRequestDTO $request */
         $context ??= SecurityContext::anonymous();
@@ -54,7 +54,7 @@ class UserService extends BaseCrudService implements UserServiceInterface
     /**
      * Update an existing user
      */
-    public function update(int $id, \App\Interfaces\DataTransferObjectInterface $request, ?SecurityContext $context = null): \App\Interfaces\DataTransferObjectInterface
+    public function update(int $id, \dcardenasl\Ci4ApiCore\Dto\DataTransferObjectInterface $request, ?SecurityContext $context = null): \dcardenasl\Ci4ApiCore\Dto\DataTransferObjectInterface
     {
         /** @var \App\DTO\Request\Users\UserUpdateRequestDTO $request */
         $this->authz->assertCanModifySubject($context, $id);
@@ -69,7 +69,7 @@ class UserService extends BaseCrudService implements UserServiceInterface
     /**
      * Approve a pending user
      */
-    public function approve(int $id, ?SecurityContext $context = null, ?string $clientBaseUrl = null): \App\Interfaces\DataTransferObjectInterface
+    public function approve(int $id, ?SecurityContext $context = null, ?string $clientBaseUrl = null): \dcardenasl\Ci4ApiCore\Dto\DataTransferObjectInterface
     {
         $this->authz->assertCanModifySubject($context, $id);
 
@@ -83,7 +83,7 @@ class UserService extends BaseCrudService implements UserServiceInterface
     /**
      * Get user profile with authorization
      */
-    public function show(int $id, ?SecurityContext $context = null): \App\Interfaces\DataTransferObjectInterface
+    public function show(int $id, ?SecurityContext $context = null): \dcardenasl\Ci4ApiCore\Dto\DataTransferObjectInterface
     {
         if ($context !== null && ! $context->hasPermission('users.read') && ! $context->isUser($id)) {
             throw new \App\Exceptions\AuthorizationException(lang('Auth.insufficientPermissions'));

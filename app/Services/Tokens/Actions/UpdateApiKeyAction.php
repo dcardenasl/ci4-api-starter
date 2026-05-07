@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace App\Services\Tokens\Actions;
 
 use App\DTO\Request\ApiKeys\ApiKeyUpdateRequestDTO;
-use App\Exceptions\BadRequestException;
-use App\Exceptions\NotFoundException;
-use App\Exceptions\ValidationException;
 use App\Interfaces\Tokens\ApiKeyRepositoryInterface;
+use dcardenasl\Ci4ApiCore\Exceptions\BadRequestException;
+use dcardenasl\Ci4ApiCore\Exceptions\NotFoundException;
+use dcardenasl\Ci4ApiCore\Exceptions\ValidationException;
 
 class UpdateApiKeyAction
 {

@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Services\Iam;
 
-use App\Interfaces\Core\RepositoryInterface;
 use App\Interfaces\Iam\ApplicationServiceInterface;
-use App\Interfaces\Mappers\ResponseMapperInterface;
-use App\Services\Core\BaseCrudService;
+use dcardenasl\Ci4ApiCore\Mappers\ResponseMapperInterface;
+use dcardenasl\Ci4ApiCore\Repositories\RepositoryInterface;
+use dcardenasl\Ci4ApiCore\Services\BaseCrudService;
 
 class ApplicationService extends BaseCrudService implements ApplicationServiceInterface
 {

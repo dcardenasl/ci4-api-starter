@@ -6,8 +6,8 @@ namespace App\Interfaces\Iam;
 
 use App\DTO\Request\Iam\AttachPermissionsRequestDTO;
 use App\DTO\Response\Iam\PermissionResponseDTO;
-use App\DTO\SecurityContext;
-use App\Interfaces\Core\CrudServiceContract;
+use dcardenasl\Ci4ApiCore\Dto\SecurityContext;
+use dcardenasl\Ci4ApiCore\Services\CrudServiceContract;
 
 interface RoleServiceInterface extends CrudServiceContract
 {

@@ -112,7 +112,7 @@ trait AuthIdentityServices
         );
     }
 
-    public static function userResponseMapper(bool $getShared = true): \App\Interfaces\Mappers\ResponseMapperInterface
+    public static function userResponseMapper(bool $getShared = true): \dcardenasl\Ci4ApiCore\Mappers\ResponseMapperInterface
     {
         if ($getShared) {
             return static::getSharedInstance('userResponseMapper');

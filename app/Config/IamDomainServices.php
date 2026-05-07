@@ -6,7 +6,7 @@ namespace Config;
 
 trait IamDomainServices
 {
-    public static function roleResponseMapper(bool $getShared = true): \App\Interfaces\Mappers\ResponseMapperInterface
+    public static function roleResponseMapper(bool $getShared = true): \dcardenasl\Ci4ApiCore\Mappers\ResponseMapperInterface
     {
         if ($getShared) {
             return static::getSharedInstance('roleResponseMapper');
@@ -44,7 +44,7 @@ trait IamDomainServices
         );
     }
 
-    public static function permissionResponseMapper(bool $getShared = true): \App\Interfaces\Mappers\ResponseMapperInterface
+    public static function permissionResponseMapper(bool $getShared = true): \dcardenasl\Ci4ApiCore\Mappers\ResponseMapperInterface
     {
         if ($getShared) {
             return static::getSharedInstance('permissionResponseMapper');
@@ -68,7 +68,7 @@ trait IamDomainServices
         );
     }
 
-    public static function applicationResponseMapper(bool $getShared = true): \App\Interfaces\Mappers\ResponseMapperInterface
+    public static function applicationResponseMapper(bool $getShared = true): \dcardenasl\Ci4ApiCore\Mappers\ResponseMapperInterface
     {
         if ($getShared) {
             return static::getSharedInstance('applicationResponseMapper');

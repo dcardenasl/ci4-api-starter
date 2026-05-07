@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace App\Services\Auth\Actions;
 
 use App\DTO\Request\Auth\RegisterRequestDTO;
-use App\DTO\SecurityContext;
-use App\Exceptions\ValidationException;
 use App\Interfaces\Auth\VerificationServiceInterface;
 use App\Interfaces\System\EmailServiceInterface;
 use App\Interfaces\Users\UserRepositoryInterface;
 use App\Services\Iam\UserRoleAssignmentService;
 use App\Traits\ResolvesWebAppLinks;
+use dcardenasl\Ci4ApiCore\Dto\SecurityContext;
+use dcardenasl\Ci4ApiCore\Exceptions\ValidationException;
 
 class RegisterUserAction
 {

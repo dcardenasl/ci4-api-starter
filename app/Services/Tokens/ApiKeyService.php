@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace App\Services\Tokens;
 
 use App\DTO\Response\ApiKeys\ApiKeyResponseDTO;
-use App\DTO\SecurityContext;
-use App\Interfaces\Mappers\ResponseMapperInterface;
 use App\Interfaces\Tokens\ApiKeyRepositoryInterface;
 use App\Interfaces\Tokens\ApiKeyServiceInterface;
-use App\Services\Core\BaseCrudService;
 use App\Services\Tokens\Actions\CreateApiKeyAction;
 use App\Services\Tokens\Actions\UpdateApiKeyAction;
+use dcardenasl\Ci4ApiCore\Dto\SecurityContext;
+use dcardenasl\Ci4ApiCore\Mappers\ResponseMapperInterface;
+use dcardenasl\Ci4ApiCore\Services\BaseCrudService;
 
 class ApiKeyService extends BaseCrudService implements ApiKeyServiceInterface
 {
@@ -27,7 +27,7 @@ class ApiKeyService extends BaseCrudService implements ApiKeyServiceInterface
     /**
      * Create a new API key
      */
-    public function store(\App\Interfaces\DataTransferObjectInterface $request, ?SecurityContext $context = null): \App\Interfaces\DataTransferObjectInterface
+    public function store(\dcardenasl\Ci4ApiCore\Dto\DataTransferObjectInterface $request, ?SecurityContext $context = null): \dcardenasl\Ci4ApiCore\Dto\DataTransferObjectInterface
     {
         /** @var \App\DTO\Request\ApiKeys\ApiKeyCreateRequestDTO $request */
         return $this->wrapInTransaction(function () use ($request) {
@@ -43,7 +43,7 @@ class ApiKeyService extends BaseCrudService implements ApiKeyServiceInterface
     /**
      * Update an API key
      */
-    public function update(int $id, \App\Interfaces\DataTransferObjectInterface $request, ?SecurityContext $context = null): \App\Interfaces\DataTransferObjectInterface
+    public function update(int $id, \dcardenasl\Ci4ApiCore\Dto\DataTransferObjectInterface $request, ?SecurityContext $context = null): \dcardenasl\Ci4ApiCore\Dto\DataTransferObjectInterface
     {
         /** @var \App\DTO\Request\ApiKeys\ApiKeyUpdateRequestDTO $request */
         return $this->wrapInTransaction(function () use ($id, $request) {

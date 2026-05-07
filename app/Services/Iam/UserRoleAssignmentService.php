@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Services\Iam;
 
 use App\Exceptions\AuthorizationException;
-use App\Exceptions\NotFoundException;
 use CodeIgniter\Database\ConnectionInterface;
+use dcardenasl\Ci4ApiCore\Exceptions\NotFoundException;
 
 /**
  * Assigns and removes global roles for users via the user_roles table.

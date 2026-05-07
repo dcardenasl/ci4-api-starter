@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Libraries\Files;
 
-use App\Exceptions\ValidationException;
 use App\Libraries\Files\Base64Processor;
 use CodeIgniter\Test\CIUnitTestCase;
+use dcardenasl\Ci4ApiCore\Exceptions\ValidationException;
 
 /**
  * @internal

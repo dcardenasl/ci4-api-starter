@@ -21,7 +21,7 @@ class AuditControllerTest extends ApiTestCase
         $this->actAs('admin');
 
         // Ensure static context is set for background model operations (Auditable trait)
-        \App\Libraries\ContextHolder::set(new \App\DTO\SecurityContext($this->currentUserId, [], \App\Support\TestPermissionResolver::permissionsForRole((string) $this->currentUserRole)));
+        \dcardenasl\Ci4ApiCore\Http\ContextHolder::set(new \dcardenasl\Ci4ApiCore\Dto\SecurityContext($this->currentUserId, [], \App\Support\TestPermissionResolver::permissionsForRole((string) $this->currentUserRole)));
     }
 
     public function testAuditRequiresAdmin(): void

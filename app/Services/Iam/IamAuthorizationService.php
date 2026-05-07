@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Services\Iam;
 
-use App\DTO\SecurityContext;
 use App\Exceptions\AuthorizationException;
 use App\Services\System\SecurityAuditLogger;
 use Config\Database;
+use dcardenasl\Ci4ApiCore\Dto\SecurityContext;
 
 /**
  * Hierarchical authorization rules for IAM operations.

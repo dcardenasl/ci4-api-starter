@@ -28,7 +28,7 @@ trait FileDomainServices
         );
     }
 
-    public static function fileResponseMapper(bool $getShared = true): \App\Interfaces\Mappers\ResponseMapperInterface
+    public static function fileResponseMapper(bool $getShared = true): \dcardenasl\Ci4ApiCore\Mappers\ResponseMapperInterface
     {
         if ($getShared) {
             return static::getSharedInstance('fileResponseMapper');

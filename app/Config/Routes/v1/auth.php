@@ -17,6 +17,11 @@ $routes->group('', ['filter' => 'authThrottle'], function ($routes) {
     $routes->post('auth/verify-email', '\App\Controllers\Api\V1\Identity\VerificationController::verify');
 });
 
+// App-authenticated routes (X-App-Key, no JWT required)
+$routes->group('', ['filter' => ['appKeyRequired', 'throttle']], function ($routes) {
+    $routes->post('auth/introspect', '\App\Controllers\Api\V1\Auth\IntrospectController::introspect');
+});
+
 // Protected routes
 $routes->group('', ['filter' => ['jwtauth', 'throttle']], function ($routes) {
     $routes->get('auth/me', '\App\Controllers\Api\V1\Auth\AuthController::me');

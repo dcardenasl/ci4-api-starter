@@ -30,11 +30,20 @@ class FileModel extends BaseAuditableModel
         'original_name',
         'stored_name',
         'mime_type',
+        'category',
         'size',
         'storage_driver',
         'path',
         'url',
+        'alt_text',
+        'caption',
+        'credit',
+        'width',
+        'height',
+        'duration_seconds',
+        'page_count',
         'metadata',
+        'variants',
         'uploaded_at',
     ];
 
@@ -74,10 +83,10 @@ class FileModel extends BaseAuditableModel
 
     // Query capabilities
     /** @var array<int, string> */
-    protected array $searchableFields = ['original_name', 'mime_type'];
+    protected array $searchableFields = ['original_name', 'mime_type', 'alt_text', 'caption', 'credit'];
     /** @var array<int, string> */
-    protected array $filterableFields = ['user_id', 'mime_type', 'size', 'uploaded_at', 'storage_driver'];
+    protected array $filterableFields = ['user_id', 'mime_type', 'category', 'size', 'uploaded_at', 'storage_driver'];
     /** @var array<int, string> */
-    protected array $sortableFields = ['id', 'user_id', 'original_name', 'size', 'uploaded_at', 'mime_type'];
+    protected array $sortableFields = ['id', 'user_id', 'original_name', 'size', 'uploaded_at', 'mime_type', 'category'];
 
 }

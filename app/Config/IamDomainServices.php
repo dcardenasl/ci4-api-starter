@@ -103,6 +103,18 @@ trait IamDomainServices
         );
     }
 
+    public static function applicationPermissionsResolver(bool $getShared = true): \App\Interfaces\Iam\ApplicationPermissionsResolverInterface
+    {
+        if ($getShared) {
+            return static::getSharedInstance('applicationPermissionsResolver');
+        }
+
+        return new \App\Services\Iam\ApplicationPermissionsResolver(
+            \Config\Database::connect(),
+            static::cache()
+        );
+    }
+
     public static function userRoleAssignmentService(bool $getShared = true): \App\Services\Iam\UserRoleAssignmentService
     {
         if ($getShared) {

@@ -934,6 +934,64 @@
                 ]
             }
         },
+        "/api/v1/auth/introspect": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Introspect a JWT issued by this server",
+                "description": "Validates a JWT (signature, expiration, revocation) and returns its claims. Authenticated by X-App-Key — domain apps can verify user tokens without sharing the JWT secret. Always responds 200 with `valid: true|false` unless the calling app itself is unauthorized.",
+                "operationId": "5e0116c223b4e2208df9f9438069ba7c",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/IntrospectRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Introspection result (check `valid` for the verdict)",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/IntrospectResponse"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "403": {
+                        "description": "X-App-Key is invalid or inactive"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationErrorResponse"
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded"
+                    }
+                },
+                "security": [
+                    {
+                        "appKeyAuth": []
+                    }
+                ]
+            }
+        },
         "/api/v1/auth/forgot-password": {
             "post": {
                 "tags": [
@@ -2973,6 +3031,21 @@
                 },
                 "type": "object"
             },
+            "IntrospectRequest": {
+                "title": "Introspect Request",
+                "description": "JWT to validate via the introspection endpoint",
+                "required": [
+                    "token"
+                ],
+                "properties": {
+                    "token": {
+                        "description": "JWT access token to introspect",
+                        "type": "string",
+                        "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                    }
+                },
+                "type": "object"
+            },
             "LoginRequest": {
                 "title": "Login Request",
                 "description": "User credentials for authentication",
@@ -3555,6 +3628,48 @@
                         "description": "Log timestamp",
                         "type": "string",
                         "example": "2026-02-26 12:00:00"
+                    }
+                },
+                "type": "object"
+            },
+            "IntrospectResponse": {
+                "title": "Introspect Response",
+                "description": "Token introspection result",
+                "required": [
+                    "valid",
+                    "permissions"
+                ],
+                "properties": {
+                    "valid": {
+                        "description": "True if the token is valid, not expired and not revoked",
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "uid": {
+                        "description": "User ID from the token (null when invalid)",
+                        "type": "integer",
+                        "example": 1,
+                        "nullable": true
+                    },
+                    "permissions": {
+                        "description": "Effective permission codes carried by the token",
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "example": "users.read"
+                        }
+                    },
+                    "exp": {
+                        "description": "Token expiration timestamp (Unix seconds)",
+                        "type": "integer",
+                        "example": 1735689600,
+                        "nullable": true
+                    },
+                    "error": {
+                        "description": "Reason when valid=false: invalid_or_expired | revoked",
+                        "type": "string",
+                        "example": null,
+                        "nullable": true
                     }
                 },
                 "type": "object"
@@ -4581,6 +4696,12 @@
                 "description": "Enter your JWT token in the format: Bearer {token}",
                 "bearerFormat": "JWT",
                 "scheme": "bearer"
+            },
+            "appKeyAuth": {
+                "type": "apiKey",
+                "description": "Per-application API key issued by this server, used to authenticate the calling app (no user JWT required).",
+                "name": "X-App-Key",
+                "in": "header"
             }
         }
     },

@@ -21,6 +21,7 @@ class Api extends BaseConfig
     public int $jwtAccessTokenTtl = 3600;
     public int $jwtRefreshTokenTtl = 604800;
     public int $jwtRevocationCacheTtl = 60;
+    public int $jwtServiceTokenTtl = 900;
     public string $googleClientId = '';
 
     // Rate Limiting
@@ -77,6 +78,7 @@ class Api extends BaseConfig
         $this->jwtAccessTokenTtl = (int) $this->envValue('JWT_ACCESS_TOKEN_TTL', 3600);
         $this->jwtRefreshTokenTtl = (int) $this->envValue('JWT_REFRESH_TOKEN_TTL', 604800);
         $this->jwtRevocationCacheTtl = (int) $this->envValue('JWT_REVOCATION_CACHE_TTL', 60);
+        $this->jwtServiceTokenTtl = (int) $this->envValue('JWT_SERVICE_TOKEN_TTL', 900);
         $this->googleClientId = trim((string) $this->envValue('GOOGLE_CLIENT_ID', ''));
 
         $this->rateLimitWindow = (int) $this->envValue('RATE_LIMIT_WINDOW', 60);

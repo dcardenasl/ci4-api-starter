@@ -6,7 +6,6 @@ namespace Tests\Unit\Services;
 
 use App\DTO\Request\Auth\LoginRequestDTO;
 use App\Entities\UserEntity;
-use App\Exceptions\AuthenticationException;
 use App\Interfaces\Auth\GoogleIdentityServiceInterface;
 use App\Interfaces\Auth\VerificationServiceInterface;
 use App\Interfaces\System\EmailServiceInterface;
@@ -21,6 +20,7 @@ use App\Services\Auth\Support\SessionManager;
 use App\Services\Iam\EffectivePermissionsResolver;
 use App\Services\Users\UserAccountGuard;
 use CodeIgniter\Test\CIUnitTestCase;
+use dcardenasl\Ci4ApiCore\Exceptions\AuthenticationException;
 use dcardenasl\Ci4ApiCore\Services\AuditServiceInterface;
 use Tests\Support\Traits\CustomAssertionsTrait;
 

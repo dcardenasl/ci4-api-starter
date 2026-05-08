@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace App\Services\Tokens;
 
 use App\DTO\Request\Identity\RefreshTokenRequestDTO;
-use App\Exceptions\AuthenticationException;
 use App\Interfaces\Tokens\JwtServiceInterface;
 use App\Models\RefreshTokenModel;
 use App\Models\UserModel;
 use App\Services\Iam\EffectivePermissionsResolver;
 use App\Services\Users\UserAccountGuard;
+use dcardenasl\Ci4ApiCore\Exceptions\AuthenticationException;
 use dcardenasl\Ci4ApiCore\Support\OperationResult;
 
 /**

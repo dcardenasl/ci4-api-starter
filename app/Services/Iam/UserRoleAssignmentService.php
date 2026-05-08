@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Services\Iam;
 
-use App\Exceptions\AuthorizationException;
 use CodeIgniter\Database\ConnectionInterface;
+use dcardenasl\Ci4ApiCore\Exceptions\AuthorizationException;
 use dcardenasl\Ci4ApiCore\Exceptions\NotFoundException;
 
 /**

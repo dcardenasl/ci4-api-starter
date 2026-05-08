@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace App\Services\Users\Actions;
 
 use App\DTO\Request\Users\UserUpdateRequestDTO;
-use App\Exceptions\AuthorizationException;
 use App\Interfaces\Users\UserRepositoryInterface;
 use App\Services\Iam\IamAuthorizationService;
 use App\Services\Iam\UserRoleAssignmentService;
 use dcardenasl\Ci4ApiCore\Dto\SecurityContext;
+use dcardenasl\Ci4ApiCore\Exceptions\AuthorizationException;
 use dcardenasl\Ci4ApiCore\Exceptions\NotFoundException;
 use dcardenasl\Ci4ApiCore\Exceptions\ValidationException;
 

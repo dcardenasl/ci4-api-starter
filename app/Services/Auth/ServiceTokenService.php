@@ -7,13 +7,13 @@ namespace App\Services\Auth;
 use App\DTO\Response\Auth\ServiceTokenResponseDTO;
 use App\Entities\ApiKeyEntity;
 use App\Entities\ApplicationEntity;
-use App\Exceptions\AuthorizationException;
 use App\Interfaces\Auth\ServiceTokenServiceInterface;
 use App\Interfaces\Iam\ApplicationPermissionsResolverInterface;
 use App\Interfaces\Tokens\ApiKeyRepositoryInterface;
 use App\Interfaces\Tokens\JwtServiceInterface;
 use App\Models\ApplicationModel;
 use App\Services\Tokens\Support\ApiKeyMaterialService;
+use dcardenasl\Ci4ApiCore\Exceptions\AuthorizationException;
 use dcardenasl\Ci4ApiCore\Exceptions\NotFoundException;
 
 /**

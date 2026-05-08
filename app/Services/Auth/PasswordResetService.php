@@ -7,11 +7,11 @@ namespace App\Services\Auth;
 use App\Interfaces\System\EmailServiceInterface;
 use App\Interfaces\Tokens\RefreshTokenServiceInterface;
 use App\Models\PasswordResetModel;
-use App\Traits\ResolvesWebAppLinks;
 use dcardenasl\Ci4ApiCore\Dto\DataTransferObjectInterface;
 use dcardenasl\Ci4ApiCore\Dto\SecurityContext;
 use dcardenasl\Ci4ApiCore\Exceptions\NotFoundException;
 use dcardenasl\Ci4ApiCore\Services\AuditServiceInterface;
+use dcardenasl\Ci4ApiCore\Support\ResolvesWebAppLinks;
 
 /**
  * Modernized Password Reset Service

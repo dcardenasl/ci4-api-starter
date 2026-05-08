@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Services\Users;
 
-use App\Exceptions\AuthenticationException;
-use App\Exceptions\AuthorizationException;
+use dcardenasl\Ci4ApiCore\Exceptions\AuthenticationException;
+use dcardenasl\Ci4ApiCore\Exceptions\AuthorizationException;
 
 /**
  * Centralized policy checks for user authentication access.

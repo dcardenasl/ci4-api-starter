@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Services\Users;
 
-use App\Exceptions\AuthenticationException;
-use App\Exceptions\AuthorizationException;
 use App\Services\Users\UserAccountGuard;
 use CodeIgniter\Test\CIUnitTestCase;
+use dcardenasl\Ci4ApiCore\Exceptions\AuthenticationException;
+use dcardenasl\Ci4ApiCore\Exceptions\AuthorizationException;
 use stdClass;
 
 /**

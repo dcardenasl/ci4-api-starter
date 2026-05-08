@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Services\Auth;
 
-use App\Exceptions\AuthenticationException;
-use App\Exceptions\ServiceUnavailableException;
+use dcardenasl\Ci4ApiCore\Exceptions\AuthenticationException;
+use dcardenasl\Ci4ApiCore\Exceptions\ServiceUnavailableException;
 
 class GoogleIdentityService implements \App\Interfaces\Auth\GoogleIdentityServiceInterface
 {

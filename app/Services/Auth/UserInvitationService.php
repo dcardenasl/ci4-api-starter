@@ -7,7 +7,7 @@ namespace App\Services\Auth;
 use App\Entities\UserEntity;
 use App\Interfaces\System\EmailServiceInterface;
 use App\Models\PasswordResetModel;
-use App\Traits\ResolvesWebAppLinks;
+use dcardenasl\Ci4ApiCore\Support\ResolvesWebAppLinks;
 
 /**
  * User Invitation Service

@@ -6,12 +6,12 @@ namespace Tests\Integration\Services;
 
 use App\DTO\Request\Users\UserCreateRequestDTO;
 use App\DTO\Request\Users\UserUpdateRequestDTO;
-use App\Exceptions\ConflictException;
 use App\Models\UserModel;
 use App\Services\Users\UserService;
 use CodeIgniter\Test\CIUnitTestCase;
 use CodeIgniter\Test\DatabaseTestTrait;
 use dcardenasl\Ci4ApiCore\Dto\SecurityContext;
+use dcardenasl\Ci4ApiCore\Exceptions\ConflictException;
 use Tests\Support\Traits\CustomAssertionsTrait;
 
 /**

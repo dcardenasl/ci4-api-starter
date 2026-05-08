@@ -9,7 +9,6 @@ use App\DTO\Request\Auth\LoginRequestDTO;
 use App\DTO\Request\Auth\RegisterRequestDTO;
 use App\DTO\Response\Auth\MeResponseDTO;
 use App\DTO\Response\Auth\RegisterResponseDTO;
-use App\Exceptions\AuthenticationException;
 use App\Interfaces\Users\UserRepositoryInterface;
 use App\Services\Auth\Actions\GoogleLoginAction;
 use App\Services\Auth\Actions\RegisterUserAction;
@@ -19,6 +18,7 @@ use App\Services\Users\Actions\UpdateSelfProfileAction;
 use App\Services\Users\UserAccountGuard;
 use dcardenasl\Ci4ApiCore\Dto\DataTransferObjectInterface;
 use dcardenasl\Ci4ApiCore\Dto\SecurityContext;
+use dcardenasl\Ci4ApiCore\Exceptions\AuthenticationException;
 use dcardenasl\Ci4ApiCore\Services\AuditServiceInterface;
 use dcardenasl\Ci4ApiCore\Support\OperationResult;
 

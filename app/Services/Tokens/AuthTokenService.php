@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace App\Services\Tokens;
 
 use App\DTO\Request\Identity\RevokeAccessTokenRequestDTO;
-use App\Exceptions\AuthenticationException;
 use App\Interfaces\Tokens\RefreshTokenServiceInterface;
 use App\Interfaces\Tokens\TokenRevocationServiceInterface;
-use App\Support\RequestDtoFactory;
 use dcardenasl\Ci4ApiCore\Dto\SecurityContext;
+use dcardenasl\Ci4ApiCore\Exceptions\AuthenticationException;
 use dcardenasl\Ci4ApiCore\Support\OperationResult;
+use dcardenasl\Ci4ApiCore\Support\RequestDtoFactory;
 
 /**
  * Modernized Auth Token Service

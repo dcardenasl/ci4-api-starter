@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace App\Services\Auth;
 
-use App\Exceptions\ConflictException;
 use App\Interfaces\System\EmailServiceInterface;
 use App\Interfaces\Users\UserRepositoryInterface;
-use App\Traits\ResolvesWebAppLinks;
 use CodeIgniter\I18n\Time;
 use dcardenasl\Ci4ApiCore\Dto\DataTransferObjectInterface;
 use dcardenasl\Ci4ApiCore\Dto\SecurityContext;
 use dcardenasl\Ci4ApiCore\Exceptions\BadRequestException;
+use dcardenasl\Ci4ApiCore\Exceptions\ConflictException;
 use dcardenasl\Ci4ApiCore\Exceptions\NotFoundException;
 use dcardenasl\Ci4ApiCore\Services\AuditServiceInterface;
+use dcardenasl\Ci4ApiCore\Support\ResolvesWebAppLinks;
 
 /**
  * Modernized Verification Service

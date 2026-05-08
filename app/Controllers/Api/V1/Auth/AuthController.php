@@ -65,7 +65,7 @@ class AuthController extends ApiController
         return $this->handleRequest(function () {
             $userId = $this->getUserId();
             if ($userId === null) {
-                throw new \App\Exceptions\AuthenticationException(lang('Auth.authRequired'));
+                throw new \dcardenasl\Ci4ApiCore\Exceptions\AuthenticationException(lang('Auth.authRequired'));
             }
             return $this->authService->me($userId);
         });

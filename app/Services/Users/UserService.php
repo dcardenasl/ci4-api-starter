@@ -86,7 +86,7 @@ class UserService extends BaseCrudService implements UserServiceInterface
     public function show(int $id, ?SecurityContext $context = null): \dcardenasl\Ci4ApiCore\Dto\DataTransferObjectInterface
     {
         if ($context !== null && ! $context->hasPermission('users.read') && ! $context->isUser($id)) {
-            throw new \App\Exceptions\AuthorizationException(lang('Auth.insufficientPermissions'));
+            throw new \dcardenasl\Ci4ApiCore\Exceptions\AuthorizationException(lang('Auth.insufficientPermissions'));
         }
 
         if ($context !== null && ! $context->isUser($id)) {

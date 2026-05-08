@@ -147,9 +147,9 @@ class JwtAuthFilter implements FilterInterface
         try {
             $policy->assertCanAuthenticate($user);
             return null;
-        } catch (\App\Exceptions\AuthorizationException $e) {
+        } catch (\dcardenasl\Ci4ApiCore\Exceptions\AuthorizationException $e) {
             return $this->forbidden($this->resolveExceptionMessage($e));
-        } catch (\App\Exceptions\AuthenticationException $e) {
+        } catch (\dcardenasl\Ci4ApiCore\Exceptions\AuthenticationException $e) {
             return $this->unauthorized($this->resolveExceptionMessage($e));
         }
     }

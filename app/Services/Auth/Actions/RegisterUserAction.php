@@ -9,9 +9,9 @@ use App\Interfaces\Auth\VerificationServiceInterface;
 use App\Interfaces\System\EmailServiceInterface;
 use App\Interfaces\Users\UserRepositoryInterface;
 use App\Services\Iam\UserRoleAssignmentService;
-use App\Traits\ResolvesWebAppLinks;
 use dcardenasl\Ci4ApiCore\Dto\SecurityContext;
 use dcardenasl\Ci4ApiCore\Exceptions\ValidationException;
+use dcardenasl\Ci4ApiCore\Support\ResolvesWebAppLinks;
 
 class RegisterUserAction
 {

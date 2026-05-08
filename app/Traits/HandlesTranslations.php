@@ -79,6 +79,26 @@ trait HandlesTranslations
     }
 
     /**
+     * After delete hook — cascades to the polymorphic translations table.
+     *
+     * `BaseCrudService::destroy()` opens its own transaction and invokes this
+     * hook AFTER `repository->delete()`, so the cascade is part of the same
+     * atomic unit. Translations are removed unconditionally regardless of
+     * whether the parent uses soft- or hard-delete: the join is by
+     * (translatable_type, translatable_id) and a future row reusing that id
+     * (unlikely with autoincrement, impossible with soft-delete) would
+     * otherwise inherit stale strings.
+     */
+    protected function afterDelete(object $entity, ?SecurityContext $context): void
+    {
+        parent::afterDelete($entity, $context);
+        model(TranslationModel::class)->deleteForEntity(
+            $this->getTranslatableType(),
+            (int) $entity->id
+        );
+    }
+
+    /**
      * Override mapToResponse to inject translations into every response DTO.
      */
     protected function mapToResponse(object $entity): DataTransferObjectInterface

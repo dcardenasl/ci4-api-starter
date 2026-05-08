@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Repositories\Common;
 
-use App\Repositories\BaseRepository;
 use CodeIgniter\Model;
+use dcardenasl\Ci4ApiCore\Repositories\BaseRepository;
 use dcardenasl\Ci4ApiCore\Repositories\PivotRepositoryInterface;
 
 /**

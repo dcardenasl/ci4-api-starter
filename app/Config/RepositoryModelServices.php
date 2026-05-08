@@ -15,7 +15,7 @@ trait RepositoryModelServices
         return new \App\Repositories\Users\UserRepository(static::userModel());
     }
 
-    public static function auditRepository(bool $getShared = true): \App\Interfaces\System\AuditRepositoryInterface
+    public static function auditRepository(bool $getShared = true): \dcardenasl\Ci4ApiCore\Repositories\AuditRepositoryInterface
     {
         if ($getShared) {
             return static::getSharedInstance('auditRepository');

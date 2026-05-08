@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Repositories\Files;
 
 use App\Interfaces\Files\FileRepositoryInterface;
-use App\Repositories\BaseRepository;
+use dcardenasl\Ci4ApiCore\Repositories\BaseRepository;
 
 /**
  * File Repository (Implementation)

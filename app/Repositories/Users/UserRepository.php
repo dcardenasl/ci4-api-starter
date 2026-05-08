@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Repositories\Users;
 
 use App\Interfaces\Users\UserRepositoryInterface;
-use App\Repositories\BaseRepository;
+use dcardenasl\Ci4ApiCore\Repositories\BaseRepository;
 
 /**
  * User Repository (Implementation)

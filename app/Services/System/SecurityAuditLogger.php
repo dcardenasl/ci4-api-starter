@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace App\Services\System;
 
 use App\Entities\ApiKeyEntity;
-use App\Support\RequestAuditContextFactory;
 use CodeIgniter\HTTP\RequestInterface;
 use dcardenasl\Ci4ApiCore\Dto\SecurityContext;
 use dcardenasl\Ci4ApiCore\Services\AuditServiceInterface;
+use dcardenasl\Ci4ApiCore\Support\RequestAuditContextFactory;
 
 /**
  * Centralized, non-blocking audit logger for cross-cutting security events.

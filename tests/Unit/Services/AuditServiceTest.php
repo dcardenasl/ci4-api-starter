@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Services;
 
-use App\Interfaces\System\AuditRepositoryInterface;
-use App\Libraries\Queue\QueueManager;
-use App\Services\System\AuditService;
-use App\Services\System\AuditWriter;
 use CodeIgniter\Test\CIUnitTestCase;
 use dcardenasl\Ci4ApiCore\Dto\DataTransferObjectInterface;
 use dcardenasl\Ci4ApiCore\Dto\SecurityContext;
 use dcardenasl\Ci4ApiCore\Exceptions\NotFoundException;
 use dcardenasl\Ci4ApiCore\Mappers\ResponseMapperInterface;
+use dcardenasl\Ci4ApiCore\Queue\QueueManager;
+use dcardenasl\Ci4ApiCore\Repositories\AuditRepositoryInterface;
+use dcardenasl\Ci4ApiCore\Services\Audit\AuditService;
+use dcardenasl\Ci4ApiCore\Services\Audit\AuditWriter;
 use Tests\Support\Traits\CustomAssertionsTrait;
 
 /**
@@ -32,7 +32,7 @@ class AuditServiceTest extends CIUnitTestCase
     {
         parent::setUp();
 
-        \App\Services\System\AuditService::$forceEnabledInTests = true;
+        \dcardenasl\Ci4ApiCore\Services\Audit\AuditService::$forceEnabledInTests = true;
 
         $this->mockAuditRepository = $this->createMock(AuditRepositoryInterface::class);
 
@@ -57,7 +57,7 @@ class AuditServiceTest extends CIUnitTestCase
 
     protected function tearDown(): void
     {
-        \App\Services\System\AuditService::$forceEnabledInTests = false;
+        \dcardenasl\Ci4ApiCore\Services\Audit\AuditService::$forceEnabledInTests = false;
         parent::tearDown();
     }
 
@@ -208,7 +208,7 @@ class AuditServiceTest extends CIUnitTestCase
         $queueManager->expects($this->once())
             ->method('push')
             ->with(
-                \App\Libraries\Queue\Jobs\WriteAuditLogJob::class,
+                \dcardenasl\Ci4ApiCore\Queue\Jobs\WriteAuditLogJob::class,
                 $this->callback(static function (array $data): bool {
                     return isset($data['audit']) && is_array($data['audit']);
                 }),
@@ -463,7 +463,7 @@ class AuditServiceTest extends CIUnitTestCase
         ], service('validation')));
         $payload = $result->toArray();
 
-        $this->assertInstanceOf(\App\DTO\Response\Common\PayloadResponseDTO::class, $result);
+        $this->assertInstanceOf(\dcardenasl\Ci4ApiCore\Dto\Common\PayloadResponseDTO::class, $result);
         $this->assertCount(2, $payload);
         $this->assertIsArray($payload[0]);
         $this->assertSame('create', $payload[0]['action'] ?? null);

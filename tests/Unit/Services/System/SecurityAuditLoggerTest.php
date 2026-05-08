@@ -6,11 +6,11 @@ namespace Tests\Unit\Services\System;
 
 use App\Entities\ApiKeyEntity;
 use App\Services\System\SecurityAuditLogger;
-use App\Support\RequestAuditContextFactory;
 use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\Test\CIUnitTestCase;
 use dcardenasl\Ci4ApiCore\Dto\SecurityContext;
 use dcardenasl\Ci4ApiCore\Services\AuditServiceInterface;
+use dcardenasl\Ci4ApiCore\Support\RequestAuditContextFactory;
 
 final class SecurityAuditLoggerTest extends CIUnitTestCase
 {

@@ -12,7 +12,7 @@ trait IamDomainServices
             return static::getSharedInstance('roleResponseMapper');
         }
 
-        return new \App\Services\Core\Mappers\DtoResponseMapper(
+        return new \dcardenasl\Ci4ApiCore\Mappers\DtoResponseMapper(
             \App\DTO\Response\Iam\RoleResponseDTO::class
         );
     }
@@ -24,7 +24,7 @@ trait IamDomainServices
         }
 
         return new \App\Services\Iam\RoleService(
-            new \App\Repositories\GenericRepository(model(\App\Models\RoleModel::class)),
+            new \dcardenasl\Ci4ApiCore\Repositories\GenericRepository(model(\App\Models\RoleModel::class)),
             static::roleResponseMapper(),
             static::iamAuthorizationService(),
             static::rolePermissionAssignmentService()
@@ -50,7 +50,7 @@ trait IamDomainServices
             return static::getSharedInstance('permissionResponseMapper');
         }
 
-        return new \App\Services\Core\Mappers\DtoResponseMapper(
+        return new \dcardenasl\Ci4ApiCore\Mappers\DtoResponseMapper(
             \App\DTO\Response\Iam\PermissionResponseDTO::class
         );
     }
@@ -62,7 +62,7 @@ trait IamDomainServices
         }
 
         return new \App\Services\Iam\PermissionService(
-            new \App\Repositories\GenericRepository(model(\App\Models\PermissionModel::class)),
+            new \dcardenasl\Ci4ApiCore\Repositories\GenericRepository(model(\App\Models\PermissionModel::class)),
             static::permissionResponseMapper(),
             static::iamAuthorizationService()
         );
@@ -74,7 +74,7 @@ trait IamDomainServices
             return static::getSharedInstance('applicationResponseMapper');
         }
 
-        return new \App\Services\Core\Mappers\DtoResponseMapper(
+        return new \dcardenasl\Ci4ApiCore\Mappers\DtoResponseMapper(
             \App\DTO\Response\Iam\ApplicationResponseDTO::class
         );
     }
@@ -86,7 +86,7 @@ trait IamDomainServices
         }
 
         return new \App\Services\Iam\ApplicationService(
-            new \App\Repositories\GenericRepository(model(\App\Models\ApplicationModel::class)),
+            new \dcardenasl\Ci4ApiCore\Repositories\GenericRepository(model(\App\Models\ApplicationModel::class)),
             static::applicationResponseMapper()
         );
     }

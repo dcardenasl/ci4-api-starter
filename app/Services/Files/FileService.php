@@ -6,7 +6,6 @@ namespace App\Services\Files;
 
 use App\DTO\Response\Files\FileDownloadResponseDTO;
 use App\DTO\Response\Files\FileResponseDTO;
-use App\Exceptions\AuthorizationException;
 use App\Interfaces\Files\FileRepositoryInterface;
 use App\Interfaces\Files\FileServiceInterface;
 use App\Interfaces\Files\VirusScannerServiceInterface;
@@ -15,12 +14,13 @@ use App\Libraries\Files\FilenameGenerator;
 use App\Libraries\Files\MultipartProcessor;
 use App\Libraries\Storage\StorageManager;
 use App\Support\Files\ProcessedFile;
-use App\Traits\AppliesQueryOptions;
 use dcardenasl\Ci4ApiCore\Dto\PaginatedResponseDTO;
 use dcardenasl\Ci4ApiCore\Dto\SecurityContext;
+use dcardenasl\Ci4ApiCore\Exceptions\AuthorizationException;
 use dcardenasl\Ci4ApiCore\Exceptions\BadRequestException;
 use dcardenasl\Ci4ApiCore\Exceptions\NotFoundException;
 use dcardenasl\Ci4ApiCore\Exceptions\ValidationException;
+use dcardenasl\Ci4ApiCore\Models\Traits\AppliesQueryOptions;
 use dcardenasl\Ci4ApiCore\Services\AuditServiceInterface;
 
 /**

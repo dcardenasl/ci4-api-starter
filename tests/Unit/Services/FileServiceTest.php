@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace Tests\Unit\Services;
 
 use App\Entities\FileEntity;
-use App\Exceptions\AuthorizationException;
 use App\Interfaces\Files\FileRepositoryInterface;
 use App\Libraries\Storage\StorageManager;
 use App\Services\Files\FileService;
 use CodeIgniter\HTTP\Files\UploadedFile;
 use CodeIgniter\Test\CIUnitTestCase;
+use dcardenasl\Ci4ApiCore\Exceptions\AuthorizationException;
 use dcardenasl\Ci4ApiCore\Exceptions\BadRequestException;
 use dcardenasl\Ci4ApiCore\Exceptions\NotFoundException;
 use dcardenasl\Ci4ApiCore\Exceptions\ValidationException;
@@ -43,7 +43,7 @@ class FileServiceTest extends CIUnitTestCase
         $this->mockAuditService = $this->createMock(AuditServiceInterface::class);
 
         // Inject real processors and generator as they are mostly stateless and hard to mock without overhead
-        $responseMapper = new \App\Services\Core\Mappers\DtoResponseMapper(
+        $responseMapper = new \dcardenasl\Ci4ApiCore\Mappers\DtoResponseMapper(
             \App\DTO\Response\Files\FileResponseDTO::class
         );
 
@@ -71,7 +71,7 @@ class FileServiceTest extends CIUnitTestCase
     {
         $mockFile = $this->createMockUploadedFile();
 
-        $this->expectException(\App\Exceptions\AuthenticationException::class);
+        $this->expectException(\dcardenasl\Ci4ApiCore\Exceptions\AuthenticationException::class);
 
         new \App\DTO\Request\Files\FileUploadRequestDTO(['file' => $mockFile], service('validation'));
     }
@@ -267,7 +267,7 @@ class FileServiceTest extends CIUnitTestCase
 
     public function testIndexWithoutUserIdThrowsException(): void
     {
-        $this->expectException(\App\Exceptions\AuthenticationException::class);
+        $this->expectException(\dcardenasl\Ci4ApiCore\Exceptions\AuthenticationException::class);
         new \App\DTO\Request\Files\FileIndexRequestDTO([], service('validation'));
     }
 
@@ -317,7 +317,7 @@ class FileServiceTest extends CIUnitTestCase
 
     public function testDownloadWithoutUserIdThrowsException(): void
     {
-        $this->expectException(\App\Exceptions\AuthenticationException::class);
+        $this->expectException(\dcardenasl\Ci4ApiCore\Exceptions\AuthenticationException::class);
         new \App\DTO\Request\Files\FileGetRequestDTO(['id' => 1], service('validation'));
     }
 

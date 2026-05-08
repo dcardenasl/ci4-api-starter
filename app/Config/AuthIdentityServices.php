@@ -118,7 +118,7 @@ trait AuthIdentityServices
             return static::getSharedInstance('userResponseMapper');
         }
 
-        return new \App\Services\Core\Mappers\DtoResponseMapper(
+        return new \dcardenasl\Ci4ApiCore\Mappers\DtoResponseMapper(
             \App\DTO\Response\Users\UserResponseDTO::class
         );
     }

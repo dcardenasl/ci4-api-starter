@@ -93,7 +93,7 @@ trait TokenSecurityServices
             return static::getSharedInstance('apiKeyResponseMapper');
         }
 
-        return new \App\Services\Core\Mappers\DtoResponseMapper(
+        return new \dcardenasl\Ci4ApiCore\Mappers\DtoResponseMapper(
             \App\DTO\Response\ApiKeys\ApiKeyResponseDTO::class
         );
     }

@@ -2,21 +2,23 @@
 
 > Fuente de verdad para trabajo en este repo.
 > Gestionado desde Cowork/VentureOS. Ejecutado desde Claude Code.
-> Última actualización: 2026-05-07
+> Última actualización: 2026-05-07 (API-015/016/017 abiertos tras code review post-port teatromuseo)
 
 ---
 
 ## 🔴 En progreso
 
-*(vacío — API-005 y API-006 cerrados; bloque B7 completo. Próximas tareas son B9.2 / B10.1 / B11.1.)*
+*(vacío — API-005 y API-006 cerrados; bloque B7 completo. Próximas tareas son API-015/016/017 — deudas post-port — y luego B9.2 / B10.1 / B11.1.)*
 
 ---
 
 ## 🟡 Próximo (ordenado por prioridad)
 
-> Forman parte del milestone "Enterprise hardening B5–B11" activo en `../TASKS.md`.
+> API-015/016/017 cierran deudas surgidas en code review del port teatromuseo (commits `89beb2e..2a01646`). B9.2/B10.1/B11.1 forman parte del milestone "Enterprise hardening B5–B11" activo en `../TASKS.md`.
 
-
+- **[API-015]** `HandlesTranslations` cascade delete + integration test. El trait expone `afterStore`/`afterUpdate` pero no `afterDelete` — al borrar el padre las traducciones quedan huérfanas en la tabla `translations`. Implementar `afterDelete()` que llame `TranslationModel::deleteForEntity()` (método ya existe) dentro de la transacción abierta por `BaseCrudService::destroy`. Agregar test de integración end-to-end en `tests/Integration/Traits/HandlesTranslationsTest.php` con fixture service + parent table: store con translations → asserts persistidos, update → upsert merge, delete → asserts cascade. Cierra deuda #2 + parte de deuda #3 del review.
+- **[API-016]** `GalleryService` → `PivotRepositoryInterface` (depende de CORE-008). Hoy `GalleryService` recibe `\CodeIgniter\Model $pivotModel` directamente y vive en el whitelist de `ServiceModelDependencyConventionsTest` (8va entrada con comentario "whereIn no está en FileRepositoryInterface"). Crear `app/Repositories/Common/PivotRepository` abstract (implementa `PivotRepositoryInterface`), agregar `findByIds` a `FileRepositoryInterface` + `FileRepository`, refactor `GalleryService::__construct(PivotRepositoryInterface, FileRepositoryInterface)`. Eliminar `rowToArray`/`rowParentId` (vivirán en `PivotRepository`). Quitar entrada del whitelist (queda en 7). Integration test en `tests/Integration/Services/Core/GalleryServiceTest.php` con fixture pivot table cubre attach/list/reorder/detach. Documentar el patrón "agregar galería a un dominio" en `CLAUDE.md`. Cierra deuda #1 + parte de deuda #3 del review.
+- **[API-017]** Borrar `app/DTO/DataBag.php` (depende de CORE-009). Era workaround para que `ResponseMapperInterface::map(object)` recibiera datos enriquecidos como objeto con `toArray()`. Tras CORE-009 el mapper acepta `object|array`; `HandlesTranslations::mapToResponse` pasa el array directo, `DataBag` se elimina. Actualizar firma de `DtoResponseMapper::map` y mocks de tests que implementen `ResponseMapperInterface`. Cierra deuda #4 del review.
 - **[B9.2]** Feature tests faltantes: `FileUploadTest` (multipart + base64 + invalid MIME), `RbacEscalationTest`, `SoftDeleteOAuthTest`.
 - **[B10.1]** `CorrelationIdFilter`: lee `X-Request-ID` o genera UUID; emite en respuesta y en cada log line via Monolog processor.
 - **[B11.1]** ADRs faltantes 008–012 (versioning, idempotency, problem-details, multi-tenancy out-of-scope, config runtime mutability).

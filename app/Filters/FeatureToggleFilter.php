@@ -4,49 +4,32 @@ declare(strict_types=1);
 
 namespace App\Filters;
 
-use CodeIgniter\Filters\FilterInterface;
-use CodeIgniter\HTTP\RequestInterface;
-use CodeIgniter\HTTP\ResponseInterface;
-use Config\FeatureFlags;
 use Config\Services;
-use dcardenasl\Ci4ApiCore\Http\ApiResponse;
+use dcardenasl\Ci4ApiCore\Http\Filters\FeatureToggleFilter as BaseFeatureToggleFilter;
+use Throwable;
 
-class FeatureToggleFilter implements FilterInterface
+/**
+ * App-side FeatureToggleFilter — overrides the core filter with metrics
+ * recording. The hub starter ships a `MetricsService` that observes
+ * feature evaluations; consumer projects without metrics use the core
+ * filter directly (no override).
+ */
+class FeatureToggleFilter extends BaseFeatureToggleFilter
 {
-    public function before(RequestInterface $request, $arguments = null)
+    protected function recordToggle(string $flag, bool $enabled): void
     {
-        $flag = is_array($arguments) && isset($arguments[0]) ? (string) $arguments[0] : '';
-        if ($flag === '') {
-            return $request;
-        }
-
-        /** @var FeatureFlags $flags */
-        $flags = config(FeatureFlags::class, false);
-        $enabled = $flags->isEnabled($flag);
         try {
             Services::metricsService()->recordFeatureToggle($flag, $enabled);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             // Feature evaluation must not fail because observability is unavailable.
             log_message('warning', '[FeatureToggleFilter] Failed to record feature metric: ' . $e->getMessage());
         }
-
-        if ($enabled) {
-            return $request;
-        }
-
-        $message = match ($flag) {
-            'metrics' => lang('Metrics.disabled'),
-            'monitoring' => lang('Health.monitoringDisabled'),
-            default => lang('Api.requestFailed'),
-        };
-
-        return Services::response()
-            ->setJSON(ApiResponse::error([], $message, 503))
-            ->setStatusCode(503);
     }
 
-    public function after(RequestInterface $request, ResponseInterface $response, $arguments = null)
+    protected function disabledMessage(string $flag): string
     {
-        return $response;
+        return $flag === 'metrics'
+            ? lang('Metrics.disabled')
+            : parent::disabledMessage($flag);
     }
 }

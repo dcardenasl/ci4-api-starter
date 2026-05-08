@@ -4000,18 +4000,6 @@
                 },
                 "type": "object"
             },
-            "PayloadResponse": {
-                "title": "Payload Response",
-                "description": "Generic payload wrapper",
-                "properties": {
-                    "payload": {
-                        "description": "Payload data",
-                        "type": "object",
-                        "additionalProperties": true
-                    }
-                },
-                "type": "object"
-            },
             "FileDownloadResponse": {
                 "title": "File Download Response",
                 "description": "File metadata for downloads and external storage",
@@ -4532,6 +4520,18 @@
                             },
                             "type": "object"
                         }
+                    }
+                },
+                "type": "object"
+            },
+            "PayloadResponse": {
+                "title": "Payload Response",
+                "description": "Generic payload wrapper",
+                "properties": {
+                    "payload": {
+                        "description": "Payload data",
+                        "type": "object",
+                        "additionalProperties": true
                     }
                 },
                 "type": "object"

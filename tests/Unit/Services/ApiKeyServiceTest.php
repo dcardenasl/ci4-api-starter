@@ -51,6 +51,11 @@ class FakeApiKeyRepository implements ApiKeyRepositoryInterface
         return [];
     }
 
+    public function findByIds(array $ids): array
+    {
+        return [];
+    }
+
     public function insert(array|object $data, bool $returnID = true): int|string|bool
     {
         return $this->insertReturn;

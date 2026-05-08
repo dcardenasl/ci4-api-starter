@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Traits;
 
-use App\DTO\DataBag;
 use App\Models\TranslationModel;
 use dcardenasl\Ci4ApiCore\Dto\DataTransferObjectInterface;
 use dcardenasl\Ci4ApiCore\Dto\SecurityContext;
@@ -111,7 +110,7 @@ trait HandlesTranslations
         $data                 = method_exists($entity, 'toArray') ? $entity->toArray() : (array) $entity;
         $data['translations'] = $translations !== [] ? $translations : null;
 
-        return $this->responseMapper->map(new DataBag($data));
+        return $this->responseMapper->map($data);
     }
 
     /**

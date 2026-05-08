@@ -113,9 +113,10 @@ class ApiKeyServiceTest extends CIUnitTestCase
         $this->mockCreateApiKeyAction = $this->createMock(CreateApiKeyAction::class);
         $this->mockUpdateApiKeyAction = $this->createMock(UpdateApiKeyAction::class);
         $this->responseMapper = new class () implements ResponseMapperInterface {
-            public function map(object $entity): DataTransferObjectInterface
+            public function map(object|array $source): DataTransferObjectInterface
             {
-                return ApiKeyResponseDTO::fromArray($entity->toArray());
+                $data = is_array($source) ? $source : $source->toArray();
+                return ApiKeyResponseDTO::fromArray($data);
             }
         };
 

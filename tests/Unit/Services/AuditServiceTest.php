@@ -42,9 +42,12 @@ class AuditServiceTest extends CIUnitTestCase
         \CodeIgniter\Config\Factories::injectMock('models', \App\Models\UserModel::class, $mockUserModel);
 
         $this->responseMapper = new class () implements ResponseMapperInterface {
-            public function map(object $entity): DataTransferObjectInterface
+            public function map(object|array $source): DataTransferObjectInterface
             {
-                $data = method_exists($entity, 'toArray') ? $entity->toArray() : (array) $entity;
+                if (is_array($source)) {
+                    return \App\DTO\Response\Audit\AuditResponseDTO::fromArray($source);
+                }
+                $data = method_exists($source, 'toArray') ? $source->toArray() : (array) $source;
                 return \App\DTO\Response\Audit\AuditResponseDTO::fromArray($data);
             }
         };

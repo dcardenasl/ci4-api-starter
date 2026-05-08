@@ -42,9 +42,10 @@ class UserServiceTest extends CIUnitTestCase
         $this->mockUpdateUserAction = $this->createMock(UpdateUserAction::class);
         $mockAuthz = $this->createMock(\App\Services\Iam\IamAuthorizationService::class);
         $this->responseMapper = new class () implements ResponseMapperInterface {
-            public function map(object $entity): \dcardenasl\Ci4ApiCore\Dto\DataTransferObjectInterface
+            public function map(object|array $source): \dcardenasl\Ci4ApiCore\Dto\DataTransferObjectInterface
             {
-                return UserResponseDTO::fromArray($entity->toArray());
+                $data = is_array($source) ? $source : $source->toArray();
+                return UserResponseDTO::fromArray($data);
             }
         };
 

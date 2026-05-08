@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace Tests\Integration\Traits;
 
 use App\Models\TranslationModel;
-use App\Repositories\GenericRepository;
-use App\Services\Core\Mappers\DtoResponseMapper;
 use CodeIgniter\Test\CIUnitTestCase;
 use CodeIgniter\Test\DatabaseTestTrait;
 use Config\Database;
+use dcardenasl\Ci4ApiCore\Mappers\DtoResponseMapper;
+use dcardenasl\Ci4ApiCore\Repositories\GenericRepository;
 use Tests\Support\Fixtures\Translations\TranslationFixtureModel;
 use Tests\Support\Fixtures\Translations\TranslationFixtureRequestDTO;
 use Tests\Support\Fixtures\Translations\TranslationFixtureResponseDTO;

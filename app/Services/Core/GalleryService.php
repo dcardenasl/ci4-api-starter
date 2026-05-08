@@ -7,30 +7,30 @@ namespace App\Services\Core;
 use App\DTO\Request\Common\GalleryAttachRequestDTO;
 use App\DTO\Request\Common\GalleryReorderRequestDTO;
 use App\DTO\Response\Common\GalleryImageResponseDTO;
-use App\Models\FileModel;
-use CodeIgniter\Model;
+use App\Interfaces\Files\FileRepositoryInterface;
 use dcardenasl\Ci4ApiCore\Exceptions\NotFoundException;
 use dcardenasl\Ci4ApiCore\Exceptions\ValidationException;
+use dcardenasl\Ci4ApiCore\Repositories\PivotRepositoryInterface;
 use dcardenasl\Ci4ApiCore\Services\HandlesTransactions;
 
 /**
- * Reusable gallery service for pivot tables between a parent resource (e.g.
- * Show, Course, Exhibition) and the shared `files` table.
+ * Reusable gallery service for pivot tables between a parent resource (Show,
+ * Course, Exhibition, …) and the shared `files` table.
  *
- * Instantiated per-domain with the pivot Model and the FK column that points
- * back to the parent (e.g. 'show_id', 'course_id'). The pivot table must have
- * at least: `id`, `<parent>_id`, `file_id`, `sort_order`, `is_active`.
- *
- * Combine with `HasGalleryActions` on the parent controller to expose the
- * standard endpoints (`images`, `attachImage`, `detachImage`, `reorderImages`).
+ * The service is fully decoupled from `\CodeIgniter\Model`: it talks to the
+ * pivot via `PivotRepositoryInterface` (which knows the parent FK and how to
+ * order rows) and to the underlying files via `FileRepositoryInterface`
+ * (which exposes `findByIds` for batch enrichment). Combine with
+ * `HasGalleryActions` on the parent controller to expose the standard
+ * endpoints (`images`, `attachImage`, `detachImage`, `reorderImages`).
  */
 class GalleryService
 {
     use HandlesTransactions;
 
     public function __construct(
-        private readonly Model $pivotModel,
-        private readonly string $parentKey,
+        private readonly PivotRepositoryInterface $pivot,
+        private readonly FileRepositoryInterface $files,
     ) {
     }
 
@@ -39,11 +39,7 @@ class GalleryService
      */
     public function listFor(int $parentId): array
     {
-        $rows = $this->pivotModel
-            ->where($this->parentKey, $parentId)
-            ->orderBy('sort_order', 'ASC')
-            ->orderBy('id', 'ASC')
-            ->findAll();
+        $rows = $this->pivot->findByParent($parentId);
 
         if ($rows === []) {
             return [];
@@ -51,38 +47,38 @@ class GalleryService
 
         $fileData = $this->fetchFileMetadata($rows);
 
-        return array_map(fn ($row) => $this->toResponse($row, $fileData), $rows);
+        return array_map(fn ($row) => $this->toResponse($row, $parentId, $fileData), $rows);
     }
 
     public function attach(int $parentId, GalleryAttachRequestDTO $request): GalleryImageResponseDTO
     {
         return $this->wrapInTransaction(function () use ($parentId, $request) {
             $data = [
-                $this->parentKey => $parentId,
-                'file_id'        => $request->file_id,
-                'sort_order'     => $request->sort_order ?? $this->nextSortOrder($parentId),
-                'is_active'      => ($request->is_active ?? true) ? 1 : 0,
+                $this->pivot->getParentKey() => $parentId,
+                'file_id'                    => $request->file_id,
+                'sort_order'                 => $request->sort_order ?? ($this->pivot->maxSortOrder($parentId) + 1),
+                'is_active'                  => ($request->is_active ?? true) ? 1 : 0,
             ];
 
-            $id = $this->pivotModel->insert($data);
-            if ($id === false || $id === 0 || $id === '') {
-                throw new ValidationException(lang('Api.validationFailed'), $this->pivotModel->errors());
+            $id = $this->pivot->insert($data);
+            if ($id === false || $id === 0 || $id === '' || $id === true) {
+                throw new ValidationException(lang('Api.validationFailed'), $this->pivot->errors());
             }
 
-            $row = $this->pivotModel->find($id);
+            $row = $this->pivot->find($id);
             if (! $row) {
                 throw new NotFoundException(lang('Api.resourceNotFound'));
             }
 
             $fileData = $this->fetchFileMetadata([$row]);
 
-            return $this->toResponse($row, $fileData);
+            return $this->toResponse($row, $parentId, $fileData);
         });
     }
 
     public function detach(int $parentId, int $pivotId): bool
     {
-        $row = $this->pivotModel->find($pivotId);
+        $row = $this->pivot->find($pivotId);
         if (! $row) {
             throw new NotFoundException(lang('Api.resourceNotFound'));
         }
@@ -91,7 +87,7 @@ class GalleryService
             throw new NotFoundException(lang('Api.resourceNotFound'));
         }
 
-        return (bool) $this->pivotModel->delete($pivotId);
+        return $this->pivot->delete($pivotId);
     }
 
     /**
@@ -104,43 +100,24 @@ class GalleryService
     {
         return $this->wrapInTransaction(function () use ($parentId, $request) {
             foreach ($request->items as $item) {
-                $row = $this->pivotModel->find($item['id']);
+                $row = $this->pivot->find($item['id']);
                 if (! $row) {
                     continue;
                 }
                 if ($this->rowParentId($row) !== $parentId) {
                     continue;
                 }
-                $this->pivotModel->update($item['id'], ['sort_order' => $item['sort_order']]);
+                $this->pivot->update($item['id'], ['sort_order' => $item['sort_order']]);
             }
 
             return $this->listFor($parentId);
         });
     }
 
-    private function nextSortOrder(int $parentId): int
-    {
-        $row = $this->pivotModel
-            ->selectMax('sort_order', 'max_order')
-            ->where($this->parentKey, $parentId)
-            ->first();
-
-        $current = 0;
-        if ($row !== null) {
-            $data = $this->rowToArray($row);
-            $raw  = $data['max_order'] ?? 0;
-            if (is_numeric($raw)) {
-                $current = (int) $raw;
-            }
-        }
-
-        return $current + 1;
-    }
-
     private function rowParentId(mixed $row): int
     {
         $data = $this->rowToArray($row);
-        $raw  = $data[$this->parentKey] ?? 0;
+        $raw  = $data[$this->pivot->getParentKey()] ?? 0;
 
         return is_numeric($raw) ? (int) $raw : 0;
     }
@@ -164,17 +141,16 @@ class GalleryService
     /**
      * @param array<string, array<string, mixed>> $fileData  keyed by file id (string)
      */
-    private function toResponse(mixed $row, array $fileData = []): GalleryImageResponseDTO
+    private function toResponse(mixed $row, int $parentId, array $fileData = []): GalleryImageResponseDTO
     {
         $data   = $this->rowToArray($row);
         $fileId = (string) ($data['file_id'] ?? '');
         $meta   = $fileData[$fileId] ?? [];
-        $parent = $data[$this->parentKey] ?? 0;
         $sort   = $data['sort_order'] ?? 0;
 
         return GalleryImageResponseDTO::fromArray([
             'id'            => is_numeric($data['id'] ?? null) ? (int) $data['id'] : 0,
-            'parent_id'     => is_numeric($parent) ? (int) $parent : 0,
+            'parent_id'     => $parentId,
             'file_id'       => $fileId,
             'sort_order'    => is_numeric($sort) ? (int) $sort : 0,
             'is_active'     => (bool) ($data['is_active'] ?? true),
@@ -201,14 +177,12 @@ class GalleryService
             }
         }
 
-        $fileIds = array_unique($fileIds);
+        $fileIds = array_values(array_unique($fileIds));
         if ($fileIds === []) {
             return [];
         }
 
-        /** @var FileModel $fileModel */
-        $fileModel = model(FileModel::class);
-        $files     = $fileModel->whereIn('id', array_values($fileIds))->findAll();
+        $files = $this->files->findByIds($fileIds);
 
         $result = [];
         foreach ($files as $file) {

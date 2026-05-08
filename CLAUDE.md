@@ -226,6 +226,41 @@ Adding a new route file (`app/Config/Routes/v1/{domain}.php`) requires restartin
 pkill -f 'spark serve'; php spark serve --port 8080 &
 ```
 
+## Adding a Gallery to a Domain
+
+`GalleryService` (`app/Services/Core/GalleryService.php`) is reusable across any
+domain that needs an N:M pivot table between a parent (Show, Course,
+Exhibition, Page, …) and the shared `files` table. To wire it for a new domain:
+
+1. **Migration:** create `<entity>_galleries` (or whatever name fits) with at
+   minimum `id`, `<entity>_id`, `file_id`, `sort_order`, `is_active`,
+   `created_at`, `updated_at`.
+2. **Model:** a thin CI4 `Model` pointing at that table with
+   `$returnType = 'object'` and the relevant `$allowedFields`.
+3. **Pivot repository:** extend `App\Repositories\Common\PivotRepository` and
+   declare the FK column name:
+   ```php
+   class ShowsGalleryRepository extends PivotRepository {
+       public function getParentKey(): string { return 'show_id'; }
+   }
+   ```
+4. **Wire in `Config\Services`:** the gallery service receives the pivot
+   repository plus `FileRepositoryInterface` (already registered):
+   ```php
+   public function showsGalleryService(bool $getShared = true): GalleryService {
+       if ($getShared) return static::getSharedInstance('showsGalleryService');
+       return new GalleryService(
+           new ShowsGalleryRepository(model(ShowsGalleryModel::class)),
+           service('fileRepository'),
+       );
+   }
+   ```
+5. **Controller:** add `use HasGalleryActions;` (`app/Traits/Controllers/`) and
+   `protected function galleryService(): GalleryService { return service('showsGalleryService'); }`. Routes follow the convention in the trait's docblock.
+
+The service is fully decoupled from `\CodeIgniter\Model` — it talks to the
+pivot via `PivotRepositoryInterface` and to files via `FileRepositoryInterface`.
+
 ## Routing Conventions
 
 Route files in `app/Config/Routes/v1/*.php` are auto-discovered and grouped under `api/v1`. Use one file per consumer profile, not per CRUD resource:

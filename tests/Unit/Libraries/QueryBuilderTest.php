@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Libraries;
 
-use App\Libraries\Query\QueryBuilder;
 use CodeIgniter\Model;
 use CodeIgniter\Test\CIUnitTestCase;
+use dcardenasl\Ci4ApiCore\Filters\QueryBuilder;
 
 class QueryBuilderTest extends CIUnitTestCase
 {

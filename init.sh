@@ -123,6 +123,9 @@ if [ "$SKIP_DB" = false ]; then
   ci4_seed_rbac
 fi
 
+print_header "Validating ci4-api-core service wiring"
+php spark core:check || { print_error "Service wiring incomplete. Fix app/Config/Services.php before continuing."; exit 1; }
+
 ci4_generate_swagger
 
 # ---------------------------------------------------------------------------

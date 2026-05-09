@@ -6,14 +6,19 @@ namespace App\Services\System;
 
 use App\Entities\ApiKeyEntity;
 use CodeIgniter\HTTP\RequestInterface;
+use dcardenasl\Ci4ApiCore\Contracts\SecurityAuditLoggerInterface;
 use dcardenasl\Ci4ApiCore\Dto\SecurityContext;
 use dcardenasl\Ci4ApiCore\Services\AuditServiceInterface;
 use dcardenasl\Ci4ApiCore\Support\RequestAuditContextFactory;
 
 /**
  * Centralized, non-blocking audit logger for cross-cutting security events.
+ *
+ * Implements the core contract (used by `AbstractPermissionFilter`,
+ * `AbstractJwtAuthFilter`, and the IAM authorization service) and
+ * extends it with starter-specific hooks for `api_keys` events.
  */
-class SecurityAuditLogger
+class SecurityAuditLogger implements SecurityAuditLoggerInterface
 {
     public function __construct(
         private readonly AuditServiceInterface $auditService,

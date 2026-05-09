@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Interfaces\Iam;
 
-interface ApplicationPermissionsResolverInterface
+use dcardenasl\Ci4ApiCore\Contracts\Iam\ApplicationPermissionResolverInterface;
+
+interface ApplicationPermissionsResolverInterface extends ApplicationPermissionResolverInterface
 {
     /**
      * Return all permission codes scoped to the given application.

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Commands;
 
-use App\Commands\EnvCheck;
 use CodeIgniter\Test\CIUnitTestCase;
+use dcardenasl\Ci4ApiCore\Commands\EnvCheck;
 
 class EnvCheckTest extends CIUnitTestCase
 {

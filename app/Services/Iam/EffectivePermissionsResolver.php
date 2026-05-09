@@ -6,6 +6,7 @@ namespace App\Services\Iam;
 
 use CodeIgniter\Cache\CacheInterface;
 use CodeIgniter\Database\ConnectionInterface;
+use dcardenasl\Ci4ApiCore\Contracts\Iam\PermissionResolverInterface;
 
 /**
  * Resolves the set of effective permission codes a user has within an
@@ -20,7 +21,7 @@ use CodeIgniter\Database\ConnectionInterface;
  * a specific user's roles; invalidateAll() when role/permission mappings
  * change globally (covers the cross-app cache fan-out cheaply).
  */
-class EffectivePermissionsResolver
+class EffectivePermissionsResolver implements PermissionResolverInterface
 {
     private const CACHE_TTL = 60;
 

@@ -76,7 +76,16 @@ TEST_DB_NAME="ci4_api_test"
 # Use detected Docker port as default if available
 [ -n "$DETECTED_DOCKER_PORT" ] && DB_PORT="$DETECTED_DOCKER_PORT"
 
-if [ "$SKIP_DB" = false ]; then
+# Override defaults from env vars (non-interactive / CI mode).
+# When CI4_DB_HOST is exported (e.g. by new-project.sh), all DB prompts are skipped.
+if [ -n "${CI4_DB_HOST:-}" ]; then
+  DB_HOST="${CI4_DB_HOST}"
+  DB_PORT="${CI4_DB_PORT:-$DB_PORT}"
+  DB_USER="${CI4_DB_USER:-$DB_USER}"
+  DB_PASS="${CI4_DB_PASS:-}"
+  DB_NAME="${CI4_DB_NAME:-$DB_NAME}"
+  TEST_DB_NAME="${CI4_TEST_DB_NAME:-$TEST_DB_NAME}"
+elif [ "$SKIP_DB" = false ]; then
   print_header "Database configuration"
   DB_HOST="$(ask_with_default "MySQL host" "$DB_HOST")"
   DB_PORT="$(ask_with_default "MySQL port" "$DB_PORT")"
@@ -99,9 +108,13 @@ fi
 
 print_header "Environment configuration"
 if [ -f ".env" ]; then
-  print_warn ".env already exists."
-  read -r -p "Overwrite? (y/N): " OVERWRITE_ENV
-  OVERWRITE_ENV="$(trim "$OVERWRITE_ENV")"
+  if [ -n "${CI4_OVERWRITE_ENV:-}" ]; then
+    OVERWRITE_ENV="$(trim "${CI4_OVERWRITE_ENV}")"
+  else
+    print_warn ".env already exists."
+    read -r -p "Overwrite? (y/N): " OVERWRITE_ENV
+    OVERWRITE_ENV="$(trim "$OVERWRITE_ENV")"
+  fi
   case "$OVERWRITE_ENV" in
     [Yy]) ci4_configure_env ;;
     *)    print_warn "Keeping existing .env — skipping key generation." ;;
@@ -132,27 +145,37 @@ ci4_generate_swagger
 # Superadmin (optional)
 # ---------------------------------------------------------------------------
 
-read -r -p "Bootstrap a superadmin account? (y/N): " BOOTSTRAP_SA
-BOOTSTRAP_SA="$(trim "$BOOTSTRAP_SA")"
-case "$BOOTSTRAP_SA" in
-  [Yy])
-    print_header "Superadmin"
-    SA_EMAIL="$(ask_with_default "Email" "superadmin@example.com")"
-    SA_PASSWORD="$(ask_hidden "Password (min 8 chars)")"
-    while [ "${#SA_PASSWORD}" -lt 8 ]; do
-      print_warn "Password must be at least 8 characters. Try again." >&2
+if [ -n "${CI4_SA_EMAIL:-}" ]; then
+  print_header "Superadmin"
+  php spark users:bootstrap-superadmin \
+    --email "${CI4_SA_EMAIL}" \
+    --password "${CI4_SA_PASSWORD:-}" \
+    --first-name "${CI4_SA_FIRST_NAME:-Super}" \
+    --last-name "${CI4_SA_LAST_NAME:-Admin}"
+  print_ok "Superadmin created/updated"
+else
+  read -r -p "Bootstrap a superadmin account? (y/N): " BOOTSTRAP_SA
+  BOOTSTRAP_SA="$(trim "$BOOTSTRAP_SA")"
+  case "$BOOTSTRAP_SA" in
+    [Yy])
+      print_header "Superadmin"
+      SA_EMAIL="$(ask_with_default "Email" "superadmin@example.com")"
       SA_PASSWORD="$(ask_hidden "Password (min 8 chars)")"
-    done
-    SA_FIRST_NAME="$(ask_with_default "First name" "Super")"
-    SA_LAST_NAME="$(ask_with_default "Last name" "Admin")"
-    php spark users:bootstrap-superadmin \
-      --email "$SA_EMAIL" \
-      --password "$SA_PASSWORD" \
-      --first-name "$SA_FIRST_NAME" \
-      --last-name "$SA_LAST_NAME"
-    print_ok "Superadmin created/updated"
-    ;;
-esac
+      while [ "${#SA_PASSWORD}" -lt 8 ]; do
+        print_warn "Password must be at least 8 characters. Try again." >&2
+        SA_PASSWORD="$(ask_hidden "Password (min 8 chars)")"
+      done
+      SA_FIRST_NAME="$(ask_with_default "First name" "Super")"
+      SA_LAST_NAME="$(ask_with_default "Last name" "Admin")"
+      php spark users:bootstrap-superadmin \
+        --email "$SA_EMAIL" \
+        --password "$SA_PASSWORD" \
+        --first-name "$SA_FIRST_NAME" \
+        --last-name "$SA_LAST_NAME"
+      print_ok "Superadmin created/updated"
+      ;;
+  esac
+fi
 
 # ---------------------------------------------------------------------------
 # Done
@@ -162,8 +185,12 @@ print_header "Done"
 printf "Project ready at: %s\n" "$(pwd)"
 
 if [ "$SKIP_SERVER" = false ]; then
-  read -r -p "Start development server now? (y/N): " START_SERVER
-  START_SERVER="$(trim "$START_SERVER")"
+  if [ -n "${CI4_START_SERVER:-}" ]; then
+    START_SERVER="$(trim "${CI4_START_SERVER}")"
+  else
+    read -r -p "Start development server now? (y/N): " START_SERVER
+    START_SERVER="$(trim "$START_SERVER")"
+  fi
   case "$START_SERVER" in
     [Yy])
       print_header "Starting development server"

@@ -12,12 +12,10 @@ use CodeIgniter\Test\CIUnitTestCase;
 use dcardenasl\Ci4ApiCore\Dto\SecurityContext;
 use dcardenasl\Ci4ApiCore\Exceptions\ConflictException;
 use dcardenasl\Ci4ApiCore\Exceptions\NotFoundException;
-use dcardenasl\Ci4ApiCore\Services\AuditServiceInterface;
 
 class ApproveUserActionTest extends CIUnitTestCase
 {
     protected UserRepositoryInterface $mockUserRepository;
-    protected AuditServiceInterface $auditService;
     protected EmailServiceInterface $emailService;
     protected ApproveUserAction $action;
 
@@ -26,9 +24,9 @@ class ApproveUserActionTest extends CIUnitTestCase
         parent::setUp();
 
         $this->mockUserRepository = $this->createMock(UserRepositoryInterface::class);
-        $this->auditService = $this->createMock(AuditServiceInterface::class);
+        $this->mockUserRepository->method('withAuditAction')->willReturnSelf();
         $this->emailService = $this->createMock(EmailServiceInterface::class);
-        $this->action = new ApproveUserAction($this->mockUserRepository, $this->auditService, $this->emailService);
+        $this->action = new ApproveUserAction($this->mockUserRepository, $this->emailService);
     }
 
     public function testExecuteThrowsNotFoundWhenUserDoesNotExist(): void
@@ -93,16 +91,17 @@ class ApproveUserActionTest extends CIUnitTestCase
             ->willReturnOnConsecutiveCalls($pendingUser, $approvedUser);
 
         $this->mockUserRepository->expects($this->once())
+            ->method('withAuditAction')
+            ->with('user_approved')
+            ->willReturnSelf();
+
+        $this->mockUserRepository->expects($this->once())
             ->method('update')
             ->with(7, $this->callback(function (array $data): bool {
                 return $data['status'] === 'active'
                     && isset($data['approved_at'])
                     && $data['approved_by'] === 99;
             }));
-
-        $this->auditService->expects($this->once())
-            ->method('log')
-            ->with('user_approved', 'users', 7, ['status' => 'pending_approval'], ['status' => 'active'], $context);
 
         $this->emailService->expects($this->once())
             ->method('queueTemplate')

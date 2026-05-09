@@ -120,7 +120,7 @@ class PasswordResetService implements \App\Interfaces\Auth\PasswordResetServiceI
             throw new NotFoundException(lang('PasswordReset.userNotFound'));
         }
 
-        $this->wrapInTransaction(function () use ($user, $request, $context) {
+        $this->wrapInTransaction(function () use ($user, $request) {
             $updateData = ['password' => password_hash($request->password, PASSWORD_BCRYPT)];
 
             $wasInvited = ($user->status ?? null) === 'invited' || ($user->invited_at ?? null) !== null;
@@ -131,11 +131,7 @@ class PasswordResetService implements \App\Interfaces\Auth\PasswordResetServiceI
                 $updateData['status'] = 'active';
             }
 
-            $this->userRepository->update($user->id, $updateData);
-
-            // Elevate context on success
-            $userContext = new SecurityContext((int) $user->id, $context !== null ? $context->metadata : []);
-            $this->auditService->log('password_reset_success', 'users', (int) $user->id, [], ['email' => $user->email], $userContext);
+            $this->userRepository->withAuditAction('password_reset_success')->update($user->id, $updateData);
 
             $tokenHash = Hasher::token($request->token);
             $this->passwordResetModel->where('email', $request->email)->where('token', $tokenHash)->delete();

@@ -54,12 +54,10 @@ class VerificationService implements \App\Interfaces\Auth\VerificationServiceInt
         $finalTimestamp = is_int($timestamp) ? $timestamp : (time() + 86400);
         $expiresAt = date('Y-m-d H:i:s', $finalTimestamp);
 
-        $this->userRepository->update($userId, [
+        $this->userRepository->withAuditAction('verification_email_sent')->update($userId, [
             'email_verification_token' => $tokenHash,
             'verification_token_expires' => $expiresAt,
         ]);
-
-        $this->auditService->log('verification_email_sent', 'users', (int) $user->id, [], ['email' => $user->email], $context);
 
         $verificationLink = $this->buildVerificationUrl($token);
 
@@ -122,14 +120,12 @@ class VerificationService implements \App\Interfaces\Auth\VerificationServiceInt
 
         $now = date('Y-m-d H:i:s');
 
-        $this->wrapInTransaction(function () use ($user, $now, $context) {
-            $this->userRepository->update($user->id, [
+        $this->wrapInTransaction(function () use ($user, $now) {
+            $this->userRepository->withAuditAction('email_verified')->update($user->id, [
                 'email_verified_at' => $now,
                 'email_verification_token' => null,
                 'verification_token_expires' => null,
             ]);
-
-            $this->auditService->log('email_verified', 'users', (int) $user->id, [], ['email' => $user->email], $context);
         });
 
         return true;

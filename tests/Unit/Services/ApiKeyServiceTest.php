@@ -76,6 +76,11 @@ class FakeApiKeyRepository implements ApiKeyRepositoryInterface
         return true;
     }
 
+    public function withAuditAction(string $action): static
+    {
+        return $this;
+    }
+
     public function getModel(): \CodeIgniter\Model
     {
         throw new \RuntimeException('Not used in test');

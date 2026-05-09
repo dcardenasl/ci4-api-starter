@@ -53,6 +53,8 @@ class VerificationServiceTest extends CIUnitTestCase
         $mockUserRepository->method('find')->willReturn($user);
         $mockUserRepository->method('findByVerificationToken')->willReturn($user);
 
+        $mockUserRepository->method('withAuditAction')->willReturnSelf();
+
         $mockUserRepository->method('update')->willReturnCallback(function ($id, $row) use ($user, $allowUpdate) {
             if (!$allowUpdate) {
                 return false;

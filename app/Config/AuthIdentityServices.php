@@ -135,7 +135,6 @@ trait AuthIdentityServices
     {
         return new \App\Services\Users\Actions\ApproveUserAction(
             $userRepository,
-            static::auditService(),
             static::emailService()
         );
     }

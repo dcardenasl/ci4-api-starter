@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "b1a387541a3ef59362a093a1484aaa80",
+    "content-hash": "6374b4468d721354a20dc20ab3bc8483",
     "packages": [
         {
             "name": "aws/aws-crt-php",
@@ -240,26 +240,28 @@
             "dist": {
                 "type": "path",
                 "url": "../ci4-api-core",
-                "reference": "3447a8081cffc0d36bfc4ef5e70aed08105e2aa8"
+                "reference": "d3a9310f232533ceed1405bfc0ef18392e2c7e30"
             },
             "require": {
                 "codeigniter4/framework": "^4.5",
-                "monolog/monolog": "^3.5",
-                "php": "^8.2",
-                "zircote/swagger-php": "^4.10 || ^5.0 || ^6.0"
+                "php": "^8.2"
             },
             "require-dev": {
+                "friendsofphp/php-cs-fixer": "^3.95",
+                "monolog/monolog": "^3.5",
                 "phpstan/phpstan": "^2.0",
-                "phpunit/phpunit": "^10.5"
+                "phpunit/phpunit": "^10.5",
+                "spatie/phpunit-snapshot-assertions": "^5.0",
+                "zircote/swagger-php": "^4.10 || ^5.0 || ^6.0"
             },
-            "bin": [
-                "bin/make-crud.sh",
-                "bin/validate-crud.sh"
-            ],
+            "suggest": {
+                "monolog/monolog": "Required for JSON structured logging via JsonFormatter / MonologHandler (^3.5)",
+                "zircote/swagger-php": "Required to auto-generate OpenAPI specs from DTO/Controller annotations (^4.10 || ^5.0 || ^6.0)"
+            },
             "type": "library",
             "extra": {
                 "branch-alias": {
-                    "dev-main": "0.1.x-dev"
+                    "dev-main": "0.3.x-dev"
                 }
             },
             "autoload": {
@@ -267,9 +269,7 @@
                     "dcardenasl\\Ci4ApiCore\\": "src/"
                 },
                 "files": [
-                    "src/Helpers/date.php",
-                    "src/Helpers/request.php",
-                    "src/Helpers/security.php"
+                    "src/Helpers/date.php"
                 ]
             },
             "autoload-dev": {
@@ -282,16 +282,21 @@
                     "phpunit"
                 ],
                 "analyse": [
-                    "phpstan analyse"
+                    "phpstan analyse --level=8 --memory-limit=1G"
                 ],
                 "cs-check": [
-                    "@php -r \"if (!file_exists('vendor/bin/php-cs-fixer')) { fwrite(STDERR, 'php-cs-fixer not installed. Run: composer require --dev friendsofphp/php-cs-fixer\\n'); exit(1); }\" && vendor/bin/php-cs-fixer fix --dry-run --diff --no-interaction"
+                    "vendor/bin/php-cs-fixer fix --dry-run --diff --no-interaction"
                 ],
                 "cs-fix": [
-                    "@php -r \"if (!file_exists('vendor/bin/php-cs-fixer')) { fwrite(STDERR, 'php-cs-fixer not installed. Run: composer require --dev friendsofphp/php-cs-fixer\\n'); exit(1); }\" && vendor/bin/php-cs-fixer fix --no-interaction"
+                    "vendor/bin/php-cs-fixer fix --no-interaction"
+                ],
+                "security": [
+                    "composer audit --no-dev --locked"
                 ],
                 "quality": [
                     "@analyse",
+                    "@cs-check",
+                    "@security",
                     "@test"
                 ]
             },
@@ -304,15 +309,15 @@
                     "email": "code.dcl@gmail.com"
                 }
             ],
-            "description": "DTO-first API foundation for CodeIgniter 4: base classes + CRUD scaffolding engine. Powers ci4-api-starter and ci4-domain-starter.",
+            "description": "DTO-first API runtime foundation for CodeIgniter 4: base classes, HTTP layer, services, repositories, filters, audit chain, and queue. Powers ci4-api-starter and ci4-domain-starter. Pair with dcardenasl/ci4-api-scaffolding for CRUD generation.",
             "homepage": "https://github.com/dcardenasl/ci4-api-core",
             "keywords": [
                 "api",
-                "code-generation",
+                "base-classes",
                 "codeigniter4",
-                "crud",
                 "dto",
-                "scaffolding"
+                "foundation",
+                "rest"
             ],
             "support": {
                 "issues": "https://github.com/dcardenasl/ci4-api-core/issues",
@@ -4314,6 +4319,103 @@
             "time": "2024-05-06T16:37:16+00:00"
         },
         {
+            "name": "dcardenasl/ci4-api-scaffolding",
+            "version": "dev-main",
+            "dist": {
+                "type": "path",
+                "url": "../ci4-api-scaffolding",
+                "reference": "b0459a4e3edaa9e228032a816a21a2bc19b4e1bf"
+            },
+            "require": {
+                "codeigniter4/framework": "^4.5",
+                "dcardenasl/ci4-api-core": "^0.3",
+                "nikic/php-parser": "^5.0",
+                "php": "^8.2"
+            },
+            "require-dev": {
+                "friendsofphp/php-cs-fixer": "^3.95",
+                "phpstan/phpstan": "^2.0",
+                "phpunit/phpunit": "^10.5",
+                "spatie/phpunit-snapshot-assertions": "^5.0"
+            },
+            "bin": [
+                "bin/make-crud.sh",
+                "bin/validate-crud.sh"
+            ],
+            "type": "library",
+            "extra": {
+                "codeigniter4": {
+                    "commands": [
+                        "dcardenasl\\Ci4ApiScaffolding\\Commands\\MakeCrud",
+                        "dcardenasl\\Ci4ApiScaffolding\\Commands\\MakeCrudRemove",
+                        "dcardenasl\\Ci4ApiScaffolding\\Commands\\ModuleCheck"
+                    ]
+                },
+                "branch-alias": {
+                    "dev-main": "0.1.x-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "dcardenasl\\Ci4ApiScaffolding\\": "src/"
+                }
+            },
+            "autoload-dev": {
+                "psr-4": {
+                    "Tests\\": "tests/"
+                }
+            },
+            "scripts": {
+                "test": [
+                    "phpunit"
+                ],
+                "analyse": [
+                    "phpstan analyse --level=8 --memory-limit=1G"
+                ],
+                "cs-check": [
+                    "vendor/bin/php-cs-fixer fix --dry-run --diff --no-interaction"
+                ],
+                "cs-fix": [
+                    "vendor/bin/php-cs-fixer fix --no-interaction"
+                ],
+                "security": [
+                    "composer audit --no-dev --locked"
+                ],
+                "quality": [
+                    "@analyse",
+                    "@cs-check",
+                    "@security",
+                    "@test"
+                ]
+            },
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "David Cárdenas L.",
+                    "email": "code.dcl@gmail.com"
+                }
+            ],
+            "description": "CRUD scaffolding engine for CodeIgniter 4 APIs built on dcardenasl/ci4-api-core. Generates DTOs, services, controllers, migrations, routes, tests and OpenAPI docs via spark commands.",
+            "homepage": "https://github.com/dcardenasl/ci4-api-scaffolding",
+            "keywords": [
+                "code-generation",
+                "codeigniter4",
+                "crud",
+                "generator",
+                "scaffolding"
+            ],
+            "support": {
+                "issues": "https://github.com/dcardenasl/ci4-api-scaffolding/issues",
+                "source": "https://github.com/dcardenasl/ci4-api-scaffolding"
+            },
+            "transport-options": {
+                "symlink": true,
+                "relative": true
+            }
+        },
+        {
             "name": "ergebnis/agent-detector",
             "version": "1.1.1",
             "source": {
@@ -7495,7 +7597,8 @@
     "aliases": [],
     "minimum-stability": "stable",
     "stability-flags": {
-        "dcardenasl/ci4-api-core": 20
+        "dcardenasl/ci4-api-core": 20,
+        "dcardenasl/ci4-api-scaffolding": 20
     },
     "prefer-stable": true,
     "prefer-lowest": false,

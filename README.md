@@ -1,6 +1,6 @@
 # CodeIgniter 4 API Starter Kit 🚀
 
-A production-ready REST API starter template with an advanced **Automated Scaffolding Engine**, strict DTO-first architecture, and comprehensive quality guardrails.
+An opinionated REST API starter template with an **Automated Scaffolding Engine**, strict DTO-first architecture, and comprehensive quality guardrails. Built for personal and small-team projects — not a framework, not a product, just a well-structured starting point.
 
 ## Architecture at a glance
 

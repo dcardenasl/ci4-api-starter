@@ -11,6 +11,7 @@ use App\Interfaces\Users\UserRepositoryInterface;
 use App\Services\Iam\UserRoleAssignmentService;
 use dcardenasl\Ci4ApiCore\Dto\SecurityContext;
 use dcardenasl\Ci4ApiCore\Exceptions\ValidationException;
+use dcardenasl\Ci4ApiCore\Security\Hasher;
 use dcardenasl\Ci4ApiCore\Support\ResolvesWebAppLinks;
 
 class RegisterUserAction
@@ -27,7 +28,7 @@ class RegisterUserAction
 
     public function execute(RegisterRequestDTO $request, ?SecurityContext $context = null): \App\Entities\UserEntity
     {
-        $requiresVerification = is_email_verification_required();
+        $requiresVerification = Hasher::isEmailVerificationRequired();
         $status = $requiresVerification ? 'pending_approval' : 'active';
         $now = date('Y-m-d H:i:s');
 

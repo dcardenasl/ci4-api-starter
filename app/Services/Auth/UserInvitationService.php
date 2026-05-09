@@ -7,6 +7,7 @@ namespace App\Services\Auth;
 use App\Entities\UserEntity;
 use App\Interfaces\System\EmailServiceInterface;
 use App\Models\PasswordResetModel;
+use dcardenasl\Ci4ApiCore\Security\Token;
 use dcardenasl\Ci4ApiCore\Support\ResolvesWebAppLinks;
 
 /**
@@ -34,7 +35,7 @@ class UserInvitationService
             return;
         }
 
-        $token = generate_token();
+        $token = Token::generate();
 
         // Standardize the password reset invitation flow
         $this->passwordResetModel->where('email', $email)->delete();

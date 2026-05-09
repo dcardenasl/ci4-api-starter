@@ -19,6 +19,7 @@ use App\Services\Users\UserAccountGuard;
 use dcardenasl\Ci4ApiCore\Dto\DataTransferObjectInterface;
 use dcardenasl\Ci4ApiCore\Dto\SecurityContext;
 use dcardenasl\Ci4ApiCore\Exceptions\AuthenticationException;
+use dcardenasl\Ci4ApiCore\Security\Token;
 use dcardenasl\Ci4ApiCore\Services\AuditServiceInterface;
 use dcardenasl\Ci4ApiCore\Support\OperationResult;
 
@@ -70,7 +71,7 @@ class AuthService implements \App\Interfaces\Auth\AuthServiceInterface
             if (ENVIRONMENT === 'testing') {
                 // High-entropy test secret to prevent accidental use
                 $testSecret = 'SKIP_VERIFY_99_ae_7b_21_42_8c';
-                $passwordValid = constant_time_compare($testSecret, $request->password);
+                $passwordValid = Token::constantTimeCompare($testSecret, $request->password);
             } else {
                 log_message('critical', '[AuthService] TEST PASSWORD BYPASS ATTEMPTED OUTSIDE TESTING ENVIRONMENT. IP: ' . (string)($_SERVER['REMOTE_ADDR'] ?? 'unknown'));
             }

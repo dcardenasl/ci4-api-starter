@@ -6,6 +6,7 @@ namespace App\Repositories\Users;
 
 use App\Interfaces\Users\UserRepositoryInterface;
 use dcardenasl\Ci4ApiCore\Repositories\BaseRepository;
+use dcardenasl\Ci4ApiCore\Security\Hasher;
 
 /**
  * User Repository (Implementation)
@@ -24,7 +25,7 @@ class UserRepository extends BaseRepository implements UserRepositoryInterface
 
     public function findByVerificationToken(string $token): ?object
     {
-        $tokenHash = \hash_token($token);
+        $tokenHash = Hasher::token($token);
         return $this->model->where('email_verification_token', $tokenHash)->first();
     }
 }

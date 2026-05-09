@@ -12,6 +12,7 @@ use dcardenasl\Ci4ApiCore\Dto\SecurityContext;
 use dcardenasl\Ci4ApiCore\Exceptions\BadRequestException;
 use dcardenasl\Ci4ApiCore\Exceptions\ConflictException;
 use dcardenasl\Ci4ApiCore\Exceptions\NotFoundException;
+use dcardenasl\Ci4ApiCore\Security\Hasher;
 use dcardenasl\Ci4ApiCore\Services\AuditServiceInterface;
 use dcardenasl\Ci4ApiCore\Support\ResolvesWebAppLinks;
 
@@ -46,7 +47,7 @@ class VerificationService implements \App\Interfaces\Auth\VerificationServiceInt
         }
 
         $token = bin2hex(random_bytes(32));
-        $tokenHash = \hash_token($token);
+        $tokenHash = Hasher::token($token);
         $timestamp = strtotime('+24 hours');
 
         // Ensure $timestamp is int for date()

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use CodeIgniter\Model;
+use dcardenasl\Ci4ApiCore\Security\Hasher;
 
 /**
  * Refresh Token Model
@@ -49,7 +50,7 @@ class RefreshTokenModel extends Model
      */
     public function getActiveToken(string $token): ?object
     {
-        $tokenHash = \hash_token($token);
+        $tokenHash = Hasher::token($token);
         /** @var object|null */
         return $this->where('token', $tokenHash)
             ->where('expires_at >', date('Y-m-d H:i:s'))
@@ -65,7 +66,7 @@ class RefreshTokenModel extends Model
      */
     public function revokeToken(string $token): bool
     {
-        $tokenHash = \hash_token($token);
+        $tokenHash = Hasher::token($token);
         // Check if token exists first
         $tokenExists = $this->where('token', $tokenHash)->countAllResults(false) > 0;
 
@@ -103,7 +104,7 @@ class RefreshTokenModel extends Model
      */
     public function findActiveForUpdate(string $token): ?object
     {
-        $tokenHash = \hash_token($token);
+        $tokenHash = Hasher::token($token);
         $sql = $this->where('token', $tokenHash)
             ->where('expires_at >', date('Y-m-d H:i:s'))
             ->where('revoked_at', null)

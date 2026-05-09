@@ -1,6 +1,26 @@
 # CodeIgniter 4 API Starter Kit 🚀
 
-A production-ready REST API starter template with an advanced **Automated Scaffolding Engine**, strict DTO-first architecture, and comprehensive quality guardrails.
+An opinionated REST API starter template with an **Automated Scaffolding Engine**, strict DTO-first architecture, and comprehensive quality guardrails. Built for personal and small-team projects — not a framework, not a product, just a well-structured starting point.
+
+## Architecture at a glance
+
+```mermaid
+flowchart LR
+    Client["Client<br/>(SPA / Admin / Domain)"]
+    Filters["Filters<br/>jwtauth · permission · throttle ·<br/>idempotency · correlation · cors"]
+    Controller["ApiController<br/>handleRequest()"]
+    RequestDTO["[ RequestDTO ]<br/>auto-validates"]
+    Service["Service<br/>(BaseCrudService,<br/>HandlesTransactions)"]
+    Model["Model + Repository"]
+    DB[("MySQL<br/>users · roles ·<br/>permissions · audit_logs")]
+    ResponseDTO["[ ResponseDTO ]"]
+    ApiResponse["ApiResponse envelope<br/>(or RFC 7807 problem+json)"]
+
+    Client -->|"REST + JWT"| Filters --> Controller --> RequestDTO --> Service --> Model --> DB
+    Service --> ResponseDTO --> ApiResponse --> Client
+```
+
+The DTO-first contract is enforced by `make:crud` scaffolding — generated code never bypasses the layers. JWT validation, permission gating, rate limiting, and observability are all filter-level concerns; controllers stay thin.
 
 ## Key Features
 

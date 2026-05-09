@@ -6,7 +6,7 @@ namespace App\Interfaces\Tokens;
 
 use App\DTO\Request\Identity\RefreshTokenRequestDTO;
 use App\DTO\Response\Identity\TokenResponseDTO;
-use App\Support\OperationResult;
+use dcardenasl\Ci4ApiCore\Support\OperationResult;
 
 /**
  * Refresh Token Service Interface

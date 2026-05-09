@@ -6,16 +6,16 @@ namespace App\Services\Auth\Actions;
 
 use App\DTO\Request\Auth\GoogleLoginRequestDTO;
 use App\DTO\Response\Auth\PendingRegistrationResponseDTO;
-use App\DTO\SecurityContext;
 use App\Entities\UserEntity;
 use App\Interfaces\Auth\GoogleIdentityServiceInterface;
-use App\Interfaces\System\AuditServiceInterface;
 use App\Interfaces\System\EmailServiceInterface;
 use App\Interfaces\Users\UserRepositoryInterface;
 use App\Services\Auth\Support\GoogleAuthHandler;
 use App\Services\Auth\Support\SessionManager;
 use App\Services\Users\UserAccountGuard;
-use App\Support\OperationResult;
+use dcardenasl\Ci4ApiCore\Dto\SecurityContext;
+use dcardenasl\Ci4ApiCore\Services\AuditServiceInterface;
+use dcardenasl\Ci4ApiCore\Support\OperationResult;
 
 class GoogleLoginAction
 {
@@ -83,8 +83,9 @@ class GoogleLoginAction
             );
         }
 
+        $updateData = [];
+
         if (($user->status ?? null) === 'active') {
-            $updateData = [];
 
             if (($user->oauth_provider ?? null) === null) {
                 $updateData['oauth_provider'] = 'google';
@@ -101,7 +102,7 @@ class GoogleLoginAction
             }
 
             if ($updateData !== []) {
-                $this->userRepository->update((int) $user->id, $updateData);
+                $this->userRepository->withAuditAction('google_login_success')->update((int) $user->id, $updateData);
                 /** @var UserEntity|null $refreshed */
                 $refreshed = $this->userRepository->find((int) $user->id);
                 if ($refreshed === null) {
@@ -120,15 +121,16 @@ class GoogleLoginAction
             throw new \RuntimeException(lang('Auth.googleUserMissing'));
         }
 
-        $userContext = new SecurityContext((int) $freshUser->id, $context->metadata);
-        $this->auditService->log(
-            'google_login_success',
-            'users',
-            (int) $freshUser->id,
-            [],
-            ['email' => $email, 'provider' => 'google'],
-            $userContext
-        );
+        if ($updateData === []) {
+            $this->auditService->log(
+                'google_login_success',
+                'users',
+                (int) $freshUser->id,
+                [],
+                ['email' => $email, 'provider' => 'google'],
+                $context
+            );
+        }
 
         return OperationResult::success(
             $this->sessionManager->generateSessionResponse($freshUser)

@@ -30,7 +30,7 @@ class AuthMeUpdateTest extends ApiTestCase
 
     public function testUpdateMeRequiresAuth(): void
     {
-        \App\Libraries\ContextHolder::flush();
+        \dcardenasl\Ci4ApiCore\Http\ContextHolder::flush();
         $this->clearTestRequestHeaders();
 
         $result = $this->withBodyFormat('json')->patch('/api/v1/auth/me', [

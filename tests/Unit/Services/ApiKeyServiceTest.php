@@ -8,15 +8,15 @@ use App\DTO\Request\ApiKeys\ApiKeyCreateRequestDTO;
 use App\DTO\Request\ApiKeys\ApiKeyUpdateRequestDTO;
 use App\DTO\Response\ApiKeys\ApiKeyResponseDTO;
 use App\Entities\ApiKeyEntity;
-use App\Exceptions\BadRequestException;
-use App\Exceptions\NotFoundException;
-use App\Interfaces\DataTransferObjectInterface;
-use App\Interfaces\Mappers\ResponseMapperInterface;
 use App\Interfaces\Tokens\ApiKeyRepositoryInterface;
 use App\Services\Tokens\Actions\CreateApiKeyAction;
 use App\Services\Tokens\Actions\UpdateApiKeyAction;
 use App\Services\Tokens\ApiKeyService;
 use CodeIgniter\Test\CIUnitTestCase;
+use dcardenasl\Ci4ApiCore\Dto\DataTransferObjectInterface;
+use dcardenasl\Ci4ApiCore\Exceptions\BadRequestException;
+use dcardenasl\Ci4ApiCore\Exceptions\NotFoundException;
+use dcardenasl\Ci4ApiCore\Mappers\ResponseMapperInterface;
 use Tests\Support\Traits\CustomAssertionsTrait;
 
 class FakeApiKeyRepository implements ApiKeyRepositoryInterface
@@ -51,6 +51,11 @@ class FakeApiKeyRepository implements ApiKeyRepositoryInterface
         return [];
     }
 
+    public function findByIds(array $ids): array
+    {
+        return [];
+    }
+
     public function insert(array|object $data, bool $returnID = true): int|string|bool
     {
         return $this->insertReturn;
@@ -69,6 +74,11 @@ class FakeApiKeyRepository implements ApiKeyRepositoryInterface
     public function restore(int|string $id, array $data = []): bool
     {
         return true;
+    }
+
+    public function withAuditAction(string $action): static
+    {
+        return $this;
     }
 
     public function getModel(): \CodeIgniter\Model
@@ -108,9 +118,10 @@ class ApiKeyServiceTest extends CIUnitTestCase
         $this->mockCreateApiKeyAction = $this->createMock(CreateApiKeyAction::class);
         $this->mockUpdateApiKeyAction = $this->createMock(UpdateApiKeyAction::class);
         $this->responseMapper = new class () implements ResponseMapperInterface {
-            public function map(object $entity): DataTransferObjectInterface
+            public function map(object|array $source): DataTransferObjectInterface
             {
-                return ApiKeyResponseDTO::fromArray($entity->toArray());
+                $data = is_array($source) ? $source : $source->toArray();
+                return ApiKeyResponseDTO::fromArray($data);
             }
         };
 

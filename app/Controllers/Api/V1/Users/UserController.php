@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Controllers\Api\V1\Users;
 
-use App\Controllers\ApiController;
 use App\DTO\Request\Users\UserCreateRequestDTO;
 use App\DTO\Request\Users\UserIndexRequestDTO;
 use App\DTO\Request\Users\UserUpdateRequestDTO;
 use App\Interfaces\Users\UserServiceInterface;
-use App\Libraries\ApiResponse;
 use CodeIgniter\HTTP\ResponseInterface;
 use Config\Services;
+use dcardenasl\Ci4ApiCore\Http\ApiController;
+use dcardenasl\Ci4ApiCore\Http\ApiResponse;
 
 /**
  * Modernized User Controller

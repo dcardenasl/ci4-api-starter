@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\DTO\Request\Files;
 
-use App\DTO\Request\BaseRequestDTO;
-use App\Exceptions\AuthenticationException;
+use dcardenasl\Ci4ApiCore\Dto\BaseRequestDTO;
+use dcardenasl\Ci4ApiCore\Exceptions\AuthenticationException;
 
 /**
  * File Get Request DTO

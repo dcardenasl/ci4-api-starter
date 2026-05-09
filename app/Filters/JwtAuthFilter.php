@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Filters;
 
-use App\HTTP\ApiRequest;
-use App\Libraries\ApiResponse;
-use App\Libraries\ContextHolder;
 use App\Services\Users\UserAccountGuard;
 use CodeIgniter\Filters\FilterInterface;
 use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
 use Config\Services;
+use dcardenasl\Ci4ApiCore\Http\ApiRequest;
+use dcardenasl\Ci4ApiCore\Http\ApiResponse;
+use dcardenasl\Ci4ApiCore\Http\ContextHolder;
 
 class JwtAuthFilter implements FilterInterface
 {
@@ -147,14 +147,14 @@ class JwtAuthFilter implements FilterInterface
         try {
             $policy->assertCanAuthenticate($user);
             return null;
-        } catch (\App\Exceptions\AuthorizationException $e) {
+        } catch (\dcardenasl\Ci4ApiCore\Exceptions\AuthorizationException $e) {
             return $this->forbidden($this->resolveExceptionMessage($e));
-        } catch (\App\Exceptions\AuthenticationException $e) {
+        } catch (\dcardenasl\Ci4ApiCore\Exceptions\AuthenticationException $e) {
             return $this->unauthorized($this->resolveExceptionMessage($e));
         }
     }
 
-    private function resolveExceptionMessage(\App\Exceptions\ApiException $e): string
+    private function resolveExceptionMessage(\dcardenasl\Ci4ApiCore\Exceptions\ApiException $e): string
     {
         $errors = $e->getErrors();
         $firstError = reset($errors);

@@ -3175,6 +3175,12 @@
                 },
                 "type": "object"
             },
+            "GalleryAttachRequest": {
+                "description": "Body for `POST /<resource>/<id>/images`. Attaches an existing file (already\nuploaded via the files endpoint) to a parent resource's gallery."
+            },
+            "GalleryReorderRequest": {
+                "description": "Body for `PUT /<resource>/<id>/images/reorder`.\n\nFormat: `{ \"items\": [{ \"id\": 12, \"sort_order\": 0 }, { \"id\": 13, \"sort_order\": 1 }, ...] }`.\nEach entry is a pivot row id paired with its new sort position. Entries\npointing at a different parent are silently ignored by the service."
+            },
             "ApplicationIndexRequest": {},
             "AttachPermissionsRequest": {
                 "required": [
@@ -3954,49 +3960,42 @@
                 },
                 "type": "object"
             },
-            "PaginatedResponse": {
-                "title": "Paginated Response",
-                "description": "Generic pagination payload",
-                "required": [
-                    "data",
-                    "total",
-                    "page",
-                    "per_page"
-                ],
+            "GalleryImageResponse": {
+                "description": "Response payload for a single gallery item: the pivot record enriched with\nthe underlying file's metadata (original name, image flag, variants).",
                 "properties": {
-                    "data": {
-                        "description": "Result set",
-                        "type": "array",
-                        "items": {
-                            "type": "object"
-                        }
-                    },
-                    "total": {
-                        "description": "Total number of records",
+                    "id": {
                         "type": "integer",
-                        "example": 120
+                        "example": 42
                     },
-                    "page": {
-                        "description": "Current page",
+                    "parent_id": {
                         "type": "integer",
-                        "example": 1
+                        "example": 7
                     },
-                    "per_page": {
-                        "description": "Items per page",
+                    "file_id": {
+                        "type": "string",
+                        "example": "5"
+                    },
+                    "sort_order": {
                         "type": "integer",
-                        "example": 20
-                    }
-                },
-                "type": "object"
-            },
-            "PayloadResponse": {
-                "title": "Payload Response",
-                "description": "Generic payload wrapper",
-                "properties": {
-                    "payload": {
-                        "description": "Payload data",
+                        "example": 0
+                    },
+                    "is_active": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "original_name": {
+                        "type": "string",
+                        "example": "photo.jpg",
+                        "nullable": true
+                    },
+                    "is_image": {
+                        "type": "boolean",
+                        "example": true,
+                        "nullable": true
+                    },
+                    "variants": {
                         "type": "object",
-                        "additionalProperties": true
+                        "nullable": true
                     }
                 },
                 "type": "object"
@@ -4521,6 +4520,53 @@
                             },
                             "type": "object"
                         }
+                    }
+                },
+                "type": "object"
+            },
+            "PayloadResponse": {
+                "title": "Payload Response",
+                "description": "Generic payload wrapper",
+                "properties": {
+                    "payload": {
+                        "description": "Payload data",
+                        "type": "object",
+                        "additionalProperties": true
+                    }
+                },
+                "type": "object"
+            },
+            "PaginatedResponse": {
+                "title": "Paginated Response",
+                "description": "Generic pagination payload",
+                "required": [
+                    "data",
+                    "total",
+                    "page",
+                    "per_page"
+                ],
+                "properties": {
+                    "data": {
+                        "description": "Result set",
+                        "type": "array",
+                        "items": {
+                            "type": "object"
+                        }
+                    },
+                    "total": {
+                        "description": "Total number of records",
+                        "type": "integer",
+                        "example": 120
+                    },
+                    "page": {
+                        "description": "Current page",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "per_page": {
+                        "description": "Items per page",
+                        "type": "integer",
+                        "example": 20
                     }
                 },
                 "type": "object"

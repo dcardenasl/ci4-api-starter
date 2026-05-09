@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\DTO\Request\Metrics;
 
-use App\DTO\Request\BaseRequestDTO;
+use dcardenasl\Ci4ApiCore\Dto\BaseRequestDTO;
 
 /**
  * Slow Requests Query Request DTO

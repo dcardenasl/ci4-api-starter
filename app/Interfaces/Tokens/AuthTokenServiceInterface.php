@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Interfaces\Tokens;
 
 use App\DTO\Request\Identity\RefreshTokenRequestDTO;
-use App\DTO\SecurityContext;
-use App\Support\OperationResult;
+use dcardenasl\Ci4ApiCore\Dto\SecurityContext;
+use dcardenasl\Ci4ApiCore\Support\OperationResult;
 
 /**
  * Modernized Auth Token Service Interface
@@ -16,7 +16,7 @@ interface AuthTokenServiceInterface
     /**
      * Refresh access token using refresh token.
      */
-    public function refreshAccessToken(RefreshTokenRequestDTO $request, ?SecurityContext $context = null): \App\Interfaces\DataTransferObjectInterface;
+    public function refreshAccessToken(RefreshTokenRequestDTO $request, ?SecurityContext $context = null): \dcardenasl\Ci4ApiCore\Dto\DataTransferObjectInterface;
 
     /**
      * Revoke current access token from authorization header.

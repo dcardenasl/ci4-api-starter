@@ -5,14 +5,14 @@ declare(strict_types=1);
 namespace Tests\Unit\Services;
 
 use App\Entities\UserEntity;
-use App\Exceptions\BadRequestException;
-use App\Exceptions\ConflictException;
-use App\Exceptions\NotFoundException;
-use App\Interfaces\System\AuditServiceInterface;
 use App\Interfaces\System\EmailServiceInterface;
 use App\Interfaces\Users\UserRepositoryInterface;
 use App\Services\Auth\VerificationService;
 use CodeIgniter\Test\CIUnitTestCase;
+use dcardenasl\Ci4ApiCore\Exceptions\BadRequestException;
+use dcardenasl\Ci4ApiCore\Exceptions\ConflictException;
+use dcardenasl\Ci4ApiCore\Exceptions\NotFoundException;
+use dcardenasl\Ci4ApiCore\Services\AuditServiceInterface;
 use Tests\Support\Traits\CustomAssertionsTrait;
 
 /**
@@ -52,6 +52,8 @@ class VerificationServiceTest extends CIUnitTestCase
         $mockUserRepository = $this->createMock(UserRepositoryInterface::class);
         $mockUserRepository->method('find')->willReturn($user);
         $mockUserRepository->method('findByVerificationToken')->willReturn($user);
+
+        $mockUserRepository->method('withAuditAction')->willReturnSelf();
 
         $mockUserRepository->method('update')->willReturnCallback(function ($id, $row) use ($user, $allowUpdate) {
             if (!$allowUpdate) {
@@ -143,7 +145,7 @@ class VerificationServiceTest extends CIUnitTestCase
             );
 
         // SecurityContext is now the second parameter
-        $service->sendVerificationEmail(1, new \App\DTO\SecurityContext(1));
+        $service->sendVerificationEmail(1, new \dcardenasl\Ci4ApiCore\Dto\SecurityContext(1));
     }
 
     public function testSendVerificationEmailThrowsForAlreadyVerified(): void
@@ -230,7 +232,7 @@ class VerificationServiceTest extends CIUnitTestCase
     public function testVerifyEmailThrowsForEmptyToken(): void
     {
         // Validation now happens in DTO constructor
-        $this->expectException(\App\Exceptions\ValidationException::class);
+        $this->expectException(\dcardenasl\Ci4ApiCore\Exceptions\ValidationException::class);
 
         new \App\DTO\Request\Identity\VerificationRequestDTO(['token' => ''], service('validation'));
     }

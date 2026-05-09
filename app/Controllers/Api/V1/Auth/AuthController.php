@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Controllers\Api\V1\Auth;
 
-use App\Controllers\ApiController;
 use App\DTO\Request\Auth\GoogleLoginRequestDTO;
 use App\DTO\Request\Auth\LoginRequestDTO;
 use App\DTO\Request\Auth\RegisterRequestDTO;
@@ -12,6 +11,7 @@ use App\DTO\Request\Auth\UpdateMeRequestDTO;
 use App\Interfaces\Auth\AuthServiceInterface;
 use CodeIgniter\HTTP\ResponseInterface;
 use Config\Services;
+use dcardenasl\Ci4ApiCore\Http\ApiController;
 
 /**
  * Modernized Authentication Controller
@@ -65,7 +65,7 @@ class AuthController extends ApiController
         return $this->handleRequest(function () {
             $userId = $this->getUserId();
             if ($userId === null) {
-                throw new \App\Exceptions\AuthenticationException(lang('Auth.authRequired'));
+                throw new \dcardenasl\Ci4ApiCore\Exceptions\AuthenticationException(lang('Auth.authRequired'));
             }
             return $this->authService->me($userId);
         });

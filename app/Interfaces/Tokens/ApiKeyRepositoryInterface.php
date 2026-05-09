@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Interfaces\Tokens;
 
 use App\Entities\ApiKeyEntity;
-use App\Interfaces\Core\RepositoryInterface;
+use dcardenasl\Ci4ApiCore\Repositories\RepositoryInterface;
 
 interface ApiKeyRepositoryInterface extends RepositoryInterface
 {

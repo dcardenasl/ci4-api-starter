@@ -2,8 +2,8 @@
 
 namespace App\Libraries\Queue\Jobs;
 
-use App\Libraries\Queue\Job;
 use Config\Services;
+use dcardenasl\Ci4ApiCore\Queue\Job;
 
 class SendTemplateEmailJob extends Job
 {

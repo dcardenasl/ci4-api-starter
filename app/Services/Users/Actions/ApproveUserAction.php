@@ -4,14 +4,13 @@ declare(strict_types=1);
 
 namespace App\Services\Users\Actions;
 
-use App\DTO\SecurityContext;
 use App\Entities\UserEntity;
-use App\Exceptions\ConflictException;
-use App\Exceptions\NotFoundException;
-use App\Interfaces\System\AuditServiceInterface;
 use App\Interfaces\System\EmailServiceInterface;
 use App\Interfaces\Users\UserRepositoryInterface;
-use App\Traits\ResolvesWebAppLinks;
+use dcardenasl\Ci4ApiCore\Dto\SecurityContext;
+use dcardenasl\Ci4ApiCore\Exceptions\ConflictException;
+use dcardenasl\Ci4ApiCore\Exceptions\NotFoundException;
+use dcardenasl\Ci4ApiCore\Support\ResolvesWebAppLinks;
 
 class ApproveUserAction
 {
@@ -19,7 +18,6 @@ class ApproveUserAction
 
     public function __construct(
         protected UserRepositoryInterface $userRepository,
-        protected AuditServiceInterface $auditService,
         protected EmailServiceInterface $emailService
     ) {
     }
@@ -43,13 +41,11 @@ class ApproveUserAction
             throw new ConflictException(lang('Users.invalidApprovalState'));
         }
 
-        $this->userRepository->update($id, [
+        $this->userRepository->withAuditAction('user_approved')->update($id, [
             'status' => 'active',
             'approved_at' => date('Y-m-d H:i:s'),
             'approved_by' => $context?->user_id,
         ]);
-
-        $this->auditService->log('user_approved', 'users', $id, ['status' => $status], ['status' => 'active'], $context);
 
         $this->emailService->queueTemplate('account-approved', (string) $user->email, [
             'subject' => lang('Email.accountApproved.subject'),

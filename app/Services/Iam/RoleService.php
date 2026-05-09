@@ -8,15 +8,15 @@ use App\DTO\Request\Iam\AttachPermissionsRequestDTO;
 use App\DTO\Request\Iam\RoleCreateRequestDTO;
 use App\DTO\Request\Iam\RoleUpdateRequestDTO;
 use App\DTO\Response\Iam\PermissionResponseDTO;
-use App\DTO\SecurityContext;
-use App\Exceptions\NotFoundException;
-use App\Interfaces\Core\RepositoryInterface;
-use App\Interfaces\DataTransferObjectInterface;
 use App\Interfaces\Iam\RoleServiceInterface;
-use App\Interfaces\Mappers\ResponseMapperInterface;
-use App\Services\Core\BaseCrudService;
-use App\Services\Core\Support\RelationLabelLoader;
 use Config\Database;
+use dcardenasl\Ci4ApiCore\Dto\DataTransferObjectInterface;
+use dcardenasl\Ci4ApiCore\Dto\SecurityContext;
+use dcardenasl\Ci4ApiCore\Exceptions\NotFoundException;
+use dcardenasl\Ci4ApiCore\Mappers\ResponseMapperInterface;
+use dcardenasl\Ci4ApiCore\Repositories\RepositoryInterface;
+use dcardenasl\Ci4ApiCore\Services\BaseCrudService;
+use dcardenasl\Ci4ApiCore\Support\RelationLabelLoader;
 
 class RoleService extends BaseCrudService implements RoleServiceInterface
 {
@@ -70,7 +70,7 @@ class RoleService extends BaseCrudService implements RoleServiceInterface
             $hasPermissionUpdates  = $request->permission_ids !== null;
 
             if (! $hasFieldUpdates && ! $hasPermissionUpdates) {
-                throw new \App\Exceptions\BadRequestException(lang('Api.noFieldsToUpdate'));
+                throw new \dcardenasl\Ci4ApiCore\Exceptions\BadRequestException(lang('Api.noFieldsToUpdate'));
             }
 
             if ($hasFieldUpdates) {

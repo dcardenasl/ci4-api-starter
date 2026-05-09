@@ -39,7 +39,7 @@ trait AuthTestTrait
 
         // Inject identity into static holder for direct service access in tests
         $permissions = \App\Support\TestPermissionResolver::permissionsForRole($role);
-        \App\Libraries\ContextHolder::set(new \App\DTO\SecurityContext(
+        \dcardenasl\Ci4ApiCore\Http\ContextHolder::set(new \dcardenasl\Ci4ApiCore\Dto\SecurityContext(
             (int) $this->currentUserId,
             [],
             $permissions
@@ -65,7 +65,7 @@ trait AuthTestTrait
      */
     protected function enableAudit(): void
     {
-        \App\Services\System\AuditService::$forceEnabledInTests = true;
+        \dcardenasl\Ci4ApiCore\Services\Audit\AuditService::$forceEnabledInTests = true;
     }
 
     /**
@@ -73,7 +73,7 @@ trait AuthTestTrait
      */
     protected function disableAudit(): void
     {
-        \App\Services\System\AuditService::$forceEnabledInTests = false;
+        \dcardenasl\Ci4ApiCore\Services\Audit\AuditService::$forceEnabledInTests = false;
     }    protected function createUser(
         string $email,
         string $password,

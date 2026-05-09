@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Controllers\Api\V1\Admin;
 
-use App\Controllers\ApiController;
 use App\DTO\Request\Metrics\CustomMetricQueryRequestDTO;
 use App\DTO\Request\Metrics\MetricsQueryRequestDTO;
 use App\DTO\Request\Metrics\RecordMetricRequestDTO;
@@ -12,6 +11,7 @@ use App\DTO\Request\Metrics\SlowRequestsQueryRequestDTO;
 use App\Interfaces\System\MetricsServiceInterface;
 use CodeIgniter\HTTP\ResponseInterface;
 use Config\Services;
+use dcardenasl\Ci4ApiCore\Http\ApiController;
 
 /**
  * Modernized Metrics Controller

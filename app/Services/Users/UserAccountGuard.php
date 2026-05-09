@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace App\Services\Users;
 
-use App\Exceptions\AuthenticationException;
-use App\Exceptions\AuthorizationException;
+use dcardenasl\Ci4ApiCore\Exceptions\AuthenticationException;
+use dcardenasl\Ci4ApiCore\Exceptions\AuthorizationException;
+use dcardenasl\Ci4ApiCore\Security\Hasher;
 
 /**
  * Centralized policy checks for user authentication access.
@@ -37,7 +38,7 @@ class UserAccountGuard
         $isGoogleOAuth = ($user->oauth_provider ?? null) === 'google';
 
         if (
-            is_email_verification_required()
+            Hasher::isEmailVerificationRequired()
             && $user->email_verified_at === null
             && ! $isGoogleOAuth
         ) {

@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Services\Iam;
 
-use App\DTO\SecurityContext;
-use App\Exceptions\NotFoundException;
 use CodeIgniter\Database\ConnectionInterface;
+use dcardenasl\Ci4ApiCore\Dto\SecurityContext;
+use dcardenasl\Ci4ApiCore\Exceptions\NotFoundException;
 
 /**
  * Replaces a role's permission set atomically (delete missing + insert new),

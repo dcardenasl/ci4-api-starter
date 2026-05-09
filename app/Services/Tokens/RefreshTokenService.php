@@ -5,13 +5,15 @@ declare(strict_types=1);
 namespace App\Services\Tokens;
 
 use App\DTO\Request\Identity\RefreshTokenRequestDTO;
-use App\Exceptions\AuthenticationException;
 use App\Interfaces\Tokens\JwtServiceInterface;
 use App\Models\RefreshTokenModel;
 use App\Models\UserModel;
 use App\Services\Iam\EffectivePermissionsResolver;
 use App\Services\Users\UserAccountGuard;
-use App\Support\OperationResult;
+use dcardenasl\Ci4ApiCore\Exceptions\AuthenticationException;
+use dcardenasl\Ci4ApiCore\Security\Hasher;
+use dcardenasl\Ci4ApiCore\Security\Token;
+use dcardenasl\Ci4ApiCore\Support\OperationResult;
 
 /**
  * Refresh Token Service
@@ -20,7 +22,7 @@ use App\Support\OperationResult;
  */
 readonly class RefreshTokenService implements \App\Interfaces\Tokens\RefreshTokenServiceInterface
 {
-    use \App\Traits\HandlesTransactions;
+    use \dcardenasl\Ci4ApiCore\Services\HandlesTransactions;
 
     private const APPLICATION_ID = 1;
 
@@ -40,8 +42,8 @@ readonly class RefreshTokenService implements \App\Interfaces\Tokens\RefreshToke
      */
     public function issueRefreshToken(int $userId): string
     {
-        $token = \generate_token();
-        $tokenHash = \hash_token($token);
+        $token = Token::generate();
+        $tokenHash = Hasher::token($token);
 
         $expiresAt = date('Y-m-d H:i:s', time() + $this->refreshTokenTtl);
 
@@ -105,7 +107,7 @@ readonly class RefreshTokenService implements \App\Interfaces\Tokens\RefreshToke
         $revoked = $this->refreshTokenModel->revokeToken($request->refresh_token);
 
         if (!$revoked) {
-            throw new \App\Exceptions\NotFoundException(lang('Tokens.tokenNotFound'));
+            throw new \dcardenasl\Ci4ApiCore\Exceptions\NotFoundException(lang('Tokens.tokenNotFound'));
         }
 
         return OperationResult::success(null, lang('Tokens.refreshTokenRevoked'));

@@ -167,14 +167,20 @@ style violations; the pre-commit hook also runs it on staged files.
 
 For architecture rules and onboarding, prefer:
 
-1. `docs/template/ARCHITECTURE_CONTRACT.md`
+1. `vendor/dcardenasl/ci4-api-core/docs/ARCHITECTURE_CONTRACT.md` (authoritative — ships with the package)
 2. `docs/template/MODULE_BOOTSTRAP_CHECKLIST.md`
 3. `docs/template/CRUD_FROM_ZERO.md`
 4. `docs/template/QUALITY_GATES.md`
 
+Base classes (`ApiController`, `BaseCrudService`, `BaseRequestDTO`, `BaseAuditableModel`,
+`ApiException` family, `ApiResponse`, `ApiResult`, `OperationResult`, `HandlesTransactions`,
+`Auditable`, `ContextHolder`, etc.) live in `dcardenasl/ci4-api-core` (namespace
+`dcardenasl\Ci4ApiCore\…`). They are not duplicated in `app/` — the starter only
+contains domain code.
+
 ## CRUD Scaffolding
 
-Scaffolding is provided by the `dcardenasl/ci4-api-crud-maker` package (installed as a Composer dev dependency from a VCS repo at github.com/dcardenasl/ci4-api-crud-maker; in this monorepo it is consumed via path repository pointing at `../ci4-api-crud-maker`). Consumer config lives in `app/Config/Scaffolding.php` (a one-liner returning `ScaffoldingConfig::defaults()`).
+Scaffolding is provided by the `dcardenasl/ci4-api-core` package (installed as a Composer runtime dependency; in this monorepo it is consumed via path repository pointing at `../ci4-api-core`). The same package ships the architectural base classes used by every module. Consumer config lives in `app/Config/Scaffolding.php` (a one-liner returning `ScaffoldingConfig::defaults()`).
 
 ### Quick Start
 ```bash
@@ -219,6 +225,51 @@ Adding a new route file (`app/Config/Routes/v1/{domain}.php`) requires restartin
 ```bash
 pkill -f 'spark serve'; php spark serve --port 8080 &
 ```
+
+## Adding a Gallery to a Domain
+
+`GalleryService` (`app/Services/Core/GalleryService.php`) is reusable across any
+domain that needs an N:M pivot table between a parent (Show, Course,
+Exhibition, Page, …) and the shared `files` table. To wire it for a new domain:
+
+1. **Migration:** create `<entity>_galleries` (or whatever name fits) with at
+   minimum `id`, `<entity>_id`, `file_id`, `sort_order`, `is_active`,
+   `created_at`, `updated_at`.
+2. **Model:** a thin CI4 `Model` pointing at that table with
+   `$returnType = 'object'` and the relevant `$allowedFields`.
+3. **Pivot repository:** extend `App\Repositories\Common\PivotRepository` and
+   declare the FK column name:
+   ```php
+   class ShowsGalleryRepository extends PivotRepository {
+       public function getParentKey(): string { return 'show_id'; }
+   }
+   ```
+4. **Wire in `Config\Services`:** the gallery service receives the pivot
+   repository plus `FileRepositoryInterface` (already registered):
+   ```php
+   public function showsGalleryService(bool $getShared = true): GalleryService {
+       if ($getShared) return static::getSharedInstance('showsGalleryService');
+       return new GalleryService(
+           new ShowsGalleryRepository(model(ShowsGalleryModel::class)),
+           service('fileRepository'),
+       );
+   }
+   ```
+5. **Controller:** add `use HasGalleryActions;` (`app/Traits/Controllers/`) and
+   `protected function galleryService(): GalleryService { return service('showsGalleryService'); }`. Routes follow the convention in the trait's docblock.
+
+The service is fully decoupled from `\CodeIgniter\Model` — it talks to the
+pivot via `PivotRepositoryInterface` and to files via `FileRepositoryInterface`.
+
+## Routing Conventions
+
+Route files in `app/Config/Routes/v1/*.php` are auto-discovered and grouped under `api/v1`. Use one file per consumer profile, not per CRUD resource:
+
+- **JWT-authenticated user routes** → their domain file (`auth.php`, `files.php`, `users.php`, `iam.php`, …). Filter chain typically `['jwtauth', 'throttle']` plus a `permission:<code>` where applicable.
+- **Public, app-key only routes** → `public.php`. Filter chain `['appKeyRequired', 'throttle']`. Use this for endpoints consumed by a public web/mobile frontend that has no logged-in user but must still authenticate the *application* via `X-App-Key`. The `appKeyRequired` filter returns 401 when the header is missing and 403 when the key is unknown or revoked (RFC 7235).
+- **Admin-only routes** → `admin.php`. JWT plus a role/permission gate.
+
+`AppKeyRequiredFilter` validates against the `api_keys` table and is throttled per-key by `ApiKeyThrottleHelpers`. Issue keys via the `apiKeys` admin endpoints; rotate by revoking and re-issuing.
 
 ## Troubleshooting
 

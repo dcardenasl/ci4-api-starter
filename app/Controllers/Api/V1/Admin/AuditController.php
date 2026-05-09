@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Controllers\Api\V1\Admin;
 
-use App\Controllers\ApiController;
 use App\DTO\Request\Audit\AuditByEntityRequestDTO;
 use App\DTO\Request\Audit\AuditIndexRequestDTO;
-use App\Interfaces\System\AuditServiceInterface;
 use CodeIgniter\HTTP\ResponseInterface;
 use Config\Services;
+use dcardenasl\Ci4ApiCore\Http\ApiController;
+use dcardenasl\Ci4ApiCore\Services\AuditServiceInterface;
 
 /**
  * Modernized Audit Controller

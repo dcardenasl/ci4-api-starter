@@ -21,12 +21,12 @@ class UserControllerTest extends ApiTestCase
         $this->actAs('admin');
 
         // Ensure static context is set for background model operations (Auditable trait)
-        \App\Libraries\ContextHolder::set(new \App\DTO\SecurityContext($this->currentUserId, [], \App\Support\TestPermissionResolver::permissionsForRole((string) $this->currentUserRole)));
+        \dcardenasl\Ci4ApiCore\Http\ContextHolder::set(new \dcardenasl\Ci4ApiCore\Dto\SecurityContext($this->currentUserId, [], \App\Support\TestPermissionResolver::permissionsForRole((string) $this->currentUserRole)));
     }
 
     public function testListUsersRequiresAuth(): void
     {
-        \App\Libraries\ContextHolder::flush();
+        \dcardenasl\Ci4ApiCore\Http\ContextHolder::flush();
         $this->clearTestRequestHeaders();
         $result = $this->get('/api/v1/users');
 
@@ -98,7 +98,7 @@ class UserControllerTest extends ApiTestCase
     public function testSuperadminCanManageAdminUsers(): void
     {
         $this->actAs('superadmin');
-        \App\Libraries\ContextHolder::set(new \App\DTO\SecurityContext($this->currentUserId, [], \App\Support\TestPermissionResolver::permissionsForRole((string) $this->currentUserRole)));
+        \dcardenasl\Ci4ApiCore\Http\ContextHolder::set(new \dcardenasl\Ci4ApiCore\Dto\SecurityContext($this->currentUserId, [], \App\Support\TestPermissionResolver::permissionsForRole((string) $this->currentUserRole)));
 
         $createResult = $this->withBodyFormat('json')->post('/api/v1/users', [
             'email' => 'managed-admin@example.com',
@@ -212,7 +212,7 @@ class UserControllerTest extends ApiTestCase
     public function testSuperadminCanChangeAnotherUserEmail(): void
     {
         $this->actAs('superadmin');
-        \App\Libraries\ContextHolder::set(new \App\DTO\SecurityContext($this->currentUserId, [], \App\Support\TestPermissionResolver::permissionsForRole((string) $this->currentUserRole)));
+        \dcardenasl\Ci4ApiCore\Http\ContextHolder::set(new \dcardenasl\Ci4ApiCore\Dto\SecurityContext($this->currentUserId, [], \App\Support\TestPermissionResolver::permissionsForRole((string) $this->currentUserRole)));
 
         $targetId = $this->createUser('to-rename@example.com', 'ValidPass123!', 'user');
         $this->resetRequest();

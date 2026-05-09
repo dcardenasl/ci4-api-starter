@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Controllers\Api\V1\Iam;
 
-use App\Controllers\ApiController;
 use App\DTO\Request\Iam\AttachPermissionsRequestDTO;
 use App\DTO\Request\Iam\RoleCreateRequestDTO;
 use App\DTO\Request\Iam\RoleIndexRequestDTO;
@@ -12,6 +11,7 @@ use App\DTO\Request\Iam\RoleUpdateRequestDTO;
 use App\Interfaces\Iam\RoleServiceInterface;
 use CodeIgniter\HTTP\ResponseInterface;
 use Config\Services;
+use dcardenasl\Ci4ApiCore\Http\ApiController;
 
 class RoleController extends ApiController
 {

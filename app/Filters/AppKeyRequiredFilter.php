@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace App\Filters;
 
 use App\Filters\Concerns\ApiKeyThrottleHelpers;
-use App\HTTP\ApiRequest;
-use App\Libraries\ApiResponse;
 use CodeIgniter\Filters\FilterInterface;
 use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
 use Config\Services;
+use dcardenasl\Ci4ApiCore\Http\ApiRequest;
+use dcardenasl\Ci4ApiCore\Http\ApiResponse;
 
 /**
  * Requires a valid X-App-Key header to access the route.

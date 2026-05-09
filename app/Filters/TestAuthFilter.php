@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Filters;
 
-use App\HTTP\ApiRequest;
-use App\Libraries\ApiResponse;
 use CodeIgniter\Filters\FilterInterface;
 use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
 use Config\Services;
+use dcardenasl\Ci4ApiCore\Http\ApiRequest;
+use dcardenasl\Ci4ApiCore\Http\ApiResponse;
 
 /**
  * Test Auth Filter
@@ -25,7 +25,7 @@ class TestAuthFilter implements FilterInterface
             return $request;
         }
 
-        $context = \App\Libraries\ContextHolder::get();
+        $context = \dcardenasl\Ci4ApiCore\Http\ContextHolder::get();
 
         // If test established context, populate request and allow
         if ($context !== null && $context->user_id !== null) {
@@ -36,7 +36,7 @@ class TestAuthFilter implements FilterInterface
             if ($permissions === [] && $roleHint !== '') {
                 $permissions = \App\Support\TestPermissionResolver::permissionsForRole($roleHint);
                 if ($permissions !== []) {
-                    \App\Libraries\ContextHolder::set(new \App\DTO\SecurityContext(
+                    \dcardenasl\Ci4ApiCore\Http\ContextHolder::set(new \dcardenasl\Ci4ApiCore\Dto\SecurityContext(
                         $context->user_id,
                         $context->metadata,
                         $permissions
@@ -54,7 +54,7 @@ class TestAuthFilter implements FilterInterface
         if ($testUserId !== '') {
             $testUserRole = $request->getHeaderLine('X-Test-User-Role') ?: 'user';
             $permissions = \App\Support\TestPermissionResolver::permissionsForRole($testUserRole);
-            \App\Libraries\ContextHolder::set(new \App\DTO\SecurityContext(
+            \dcardenasl\Ci4ApiCore\Http\ContextHolder::set(new \dcardenasl\Ci4ApiCore\Dto\SecurityContext(
                 (int) $testUserId,
                 [],
                 $permissions

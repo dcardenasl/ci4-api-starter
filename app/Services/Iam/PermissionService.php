@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Services\Iam;
 
-use App\DTO\SecurityContext;
-use App\Interfaces\Core\RepositoryInterface;
 use App\Interfaces\Iam\PermissionServiceInterface;
-use App\Interfaces\Mappers\ResponseMapperInterface;
-use App\Services\Core\BaseCrudService;
-use App\Services\Core\Support\RelationLabelLoader;
+use dcardenasl\Ci4ApiCore\Dto\SecurityContext;
+use dcardenasl\Ci4ApiCore\Mappers\ResponseMapperInterface;
+use dcardenasl\Ci4ApiCore\Repositories\RepositoryInterface;
+use dcardenasl\Ci4ApiCore\Services\BaseCrudService;
+use dcardenasl\Ci4ApiCore\Support\RelationLabelLoader;
 
 class PermissionService extends BaseCrudService implements PermissionServiceInterface
 {

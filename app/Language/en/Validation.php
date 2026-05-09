@@ -29,4 +29,7 @@ return [
 
     // Sequential list rule message
     'is_list' => 'The {field} must be a sequential list of values.',
+
+    // Boolean-like rule message
+    'boolean_like' => 'The {field} must be a boolean value (true/false, 1/0, yes/no, on/off).',
 ];

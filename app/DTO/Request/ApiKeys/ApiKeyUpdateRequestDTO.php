@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\DTO\Request\ApiKeys;
 
-use App\DTO\Request\BaseRequestDTO;
+use dcardenasl\Ci4ApiCore\Dto\BaseRequestDTO;
 
 /**
  * Api Key Update Request DTO

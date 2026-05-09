@@ -5,15 +5,15 @@ declare(strict_types=1);
 namespace Tests\Unit\Services;
 
 use App\Entities\UserEntity;
-use App\Exceptions\NotFoundException;
-use App\Exceptions\ValidationException;
-use App\Interfaces\System\AuditServiceInterface;
 use App\Interfaces\System\EmailServiceInterface;
 use App\Interfaces\Tokens\RefreshTokenServiceInterface;
 use App\Interfaces\Users\UserRepositoryInterface;
 use App\Models\PasswordResetModel;
 use App\Services\Auth\PasswordResetService;
 use CodeIgniter\Test\CIUnitTestCase;
+use dcardenasl\Ci4ApiCore\Exceptions\NotFoundException;
+use dcardenasl\Ci4ApiCore\Exceptions\ValidationException;
+use dcardenasl\Ci4ApiCore\Services\AuditServiceInterface;
 use Tests\Support\Traits\CustomAssertionsTrait;
 
 /**
@@ -241,7 +241,7 @@ class PasswordResetServiceTest extends CIUnitTestCase
 
         $service = $this->createServiceWithUser($user);
 
-        $this->expectException(\App\Exceptions\ValidationException::class);
+        $this->expectException(\dcardenasl\Ci4ApiCore\Exceptions\ValidationException::class);
 
         new \App\DTO\Request\Identity\ResetPasswordRequestDTO([
             'email' => 'test@example.com',

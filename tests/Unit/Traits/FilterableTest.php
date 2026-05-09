@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Traits;
 
-use App\Traits\Filterable;
 use CodeIgniter\Model;
 use CodeIgniter\Test\CIUnitTestCase;
 use CodeIgniter\Test\DatabaseTestTrait;
+use dcardenasl\Ci4ApiCore\Models\Traits\Filterable;
 
 /**
  * Filterable Trait Tests

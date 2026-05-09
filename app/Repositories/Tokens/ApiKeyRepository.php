@@ -7,7 +7,7 @@ namespace App\Repositories\Tokens;
 use App\Entities\ApiKeyEntity;
 use App\Interfaces\Tokens\ApiKeyRepositoryInterface;
 use App\Models\ApiKeyModel;
-use App\Repositories\BaseRepository;
+use dcardenasl\Ci4ApiCore\Repositories\BaseRepository;
 
 class ApiKeyRepository extends BaseRepository implements ApiKeyRepositoryInterface
 {

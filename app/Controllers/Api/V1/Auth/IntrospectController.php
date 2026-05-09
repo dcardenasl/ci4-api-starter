@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Controllers\Api\V1\Auth;
 
-use App\Controllers\ApiController;
 use App\DTO\Request\Auth\IntrospectRequestDTO;
 use App\Interfaces\Auth\TokenIntrospectionServiceInterface;
 use CodeIgniter\HTTP\ResponseInterface;
 use Config\Services;
+use dcardenasl\Ci4ApiCore\Http\ApiController;
 
 /**
  * Token Introspection Controller

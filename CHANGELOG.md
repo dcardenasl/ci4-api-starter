@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **API-007 · `apps:bootstrap --create-api-key`** (2026-05-07) — extends the existing `apps:bootstrap` command with two flags:
+  - `--create-api-key` generates an active API key bound to `applications.id` and emits `API_KEY=apk_...` + `APP_ID=N` lines on stdout, ready for `awk -F=` parsing from orchestrator scripts (kickstart consumes this in KICK-001).
+  - `--api-key-name="..."` overrides the default key name (`<code>-app-key`).
+  - **Idempotency** is anchored to "no duplicate active key per application": a second `--create-api-key` call against the same code refuses to insert (raw key is unrecoverable, so we don't pretend to re-issue it), prints `API_KEY_EXISTS=<prefix>...`, exits non-zero. Application + permission rows remain idempotent (reused on re-run).
+  - Reuses `ApiKeyMaterialService` for raw-key generation + SHA-256 hashing. Direct `$db->table()->insert()` (consistent with the existing `BootstrapApplication` pattern of bypassing the model layer for setup-time writes).
+  - 4 integration tests in `tests/Integration/Commands/BootstrapApplicationTest.php` covering: bound `application_id`, custom name override, no-flag baseline, and the duplicate-key refusal.
 - **Documentación / Gobernanza — Bloque B11** (2026-05-07):
   - **ADR-011 — Multi-tenancy out-of-scope for v1.x** (audit B11.1, EN+ES) — formalizes that the kit is single-tenant, lists the surface that would have to change for a fork to add tenancy, and explicitly rejects retrofitted half-tenancy. Closes audit finding F31.
   - **ADR-012 — Config values resolve at boot, not runtime** (audit B11.1, EN+ES) — pins the `Config\Api` constructor pattern as the contract: env values are read once at boot and treated as immutable for the request lifetime. `getenv()` vs `env()` is documented as a CLI/HTTP bootstrap-order detail. Closes audit finding F32.

@@ -37,8 +37,8 @@ abstract class ApiTestCase extends CIUnitTestCase
     protected function setUp(): void
     {
         parent::setUp();
-        \App\Services\System\AuditService::$forceEnabledInTests = false;
-        \App\Libraries\ContextHolder::flush();
+        \dcardenasl\Ci4ApiCore\Services\Audit\AuditService::$forceEnabledInTests = false;
+        \dcardenasl\Ci4ApiCore\Http\ContextHolder::flush();
         $this->resetCacheState();
         $this->resetState();
     }
@@ -48,8 +48,8 @@ abstract class ApiTestCase extends CIUnitTestCase
      */
     protected function tearDown(): void
     {
-        \App\Services\System\AuditService::$forceEnabledInTests = false;
-        \App\Libraries\ContextHolder::flush();
+        \dcardenasl\Ci4ApiCore\Services\Audit\AuditService::$forceEnabledInTests = false;
+        \dcardenasl\Ci4ApiCore\Http\ContextHolder::flush();
         $this->resetCacheState();
         $this->resetState();
         parent::tearDown();

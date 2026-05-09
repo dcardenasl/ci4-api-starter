@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Commands;
 
+use App\Services\Tokens\Support\ApiKeyMaterialService;
 use CodeIgniter\CLI\BaseCommand;
 use CodeIgniter\CLI\CLI;
 
@@ -21,13 +22,15 @@ class BootstrapApplication extends BaseCommand
     protected $group       = 'IAM';
     protected $name        = 'apps:bootstrap';
     protected $description = 'Create a new application, its <code>.access permission, and optionally grant it to the user role.';
-    protected $usage       = 'apps:bootstrap <code> [--name="..."] [--no-grant-user]';
+    protected $usage       = 'apps:bootstrap <code> [--name="..."] [--no-grant-user] [--create-api-key] [--api-key-name="..."]';
     protected $arguments   = [
         'code' => 'The application code (slug). Used as the prefix for permissions, e.g. blog → blog.access.',
     ];
     protected $options     = [
         '--name'           => 'Display name for the application. Defaults to the code (capitalized).',
         '--no-grant-user'  => 'Skip granting <code>.access to the user role (no interactive prompt).',
+        '--create-api-key' => 'Generate an active API key bound to the application. Emits API_KEY=apk_... and APP_ID=N to stdout.',
+        '--api-key-name'   => 'Name for the generated API key. Defaults to "<code>-app-key".',
     ];
 
     public function run(array $params)
@@ -40,6 +43,8 @@ class BootstrapApplication extends BaseCommand
 
         $name = (string) (CLI::getOption('name') ?: ucfirst($code));
         $skipGrant = (bool) CLI::getOption('no-grant-user');
+        $createApiKey = (bool) CLI::getOption('create-api-key');
+        $apiKeyName = (string) (CLI::getOption('api-key-name') ?: "{$code}-app-key");
 
         $db  = \Config\Database::connect();
         $now = date('Y-m-d H:i:s');
@@ -67,6 +72,26 @@ class BootstrapApplication extends BaseCommand
             CLI::write("✓ '{$code}.access' attached to the 'user' role.", 'green');
         } else {
             CLI::write("• Skipped granting '{$code}.access' to the 'user' role.", 'yellow');
+        }
+
+        if ($createApiKey) {
+            $existing = $this->findActiveApiKeyForApplication($db, $appId);
+            if ($existing !== null) {
+                CLI::error("An active API key already exists for application '{$code}' (id={$existing['id']}, prefix={$existing['key_prefix']}).");
+                CLI::error('The raw key is unrecoverable. Revoke it via the IAM UI and re-run, or pass a fresh --code.');
+                CLI::write("API_KEY_EXISTS={$existing['key_prefix']}");
+                CLI::write("APP_ID={$appId}");
+
+                return EXIT_ERROR;
+            }
+
+            $rawKey = $this->createApiKey($db, $appId, $apiKeyName, $now);
+            CLI::write("✓ API key '{$apiKeyName}' created and bound to application id={$appId}.", 'green');
+            CLI::newLine();
+            CLI::write('--- machine-readable output ---', 'yellow');
+            CLI::write("API_KEY={$rawKey}");
+            CLI::write("APP_ID={$appId}");
+            CLI::write('--- end ---', 'yellow');
         }
 
         CLI::newLine();
@@ -148,5 +173,56 @@ class BootstrapApplication extends BaseCommand
                 'permission_id' => $permissionId,
             ]);
         }
+    }
+
+    /**
+     * @param \CodeIgniter\Database\BaseConnection $db
+     * @return array{id:int,key_prefix:string}|null
+     */
+    private function findActiveApiKeyForApplication($db, int $appId): ?array
+    {
+        $row = $db->table('api_keys')
+            ->select('id, key_prefix')
+            ->where('application_id', $appId)
+            ->where('is_active', 1)
+            ->limit(1)
+            ->get()
+            ?->getRowArray();
+
+        return $row !== null ? ['id' => (int) $row['id'], 'key_prefix' => (string) $row['key_prefix']] : null;
+    }
+
+    /**
+     * @param \CodeIgniter\Database\BaseConnection $db
+     */
+    private function createApiKey($db, int $appId, string $name, string $now): string
+    {
+        $material = new ApiKeyMaterialService();
+        $rawKey   = $material->generateRawKey();
+        $hash     = $material->hash($rawKey);
+
+        $ok = $db->table('api_keys')->insert([
+            'application_id'      => $appId,
+            'name'                => $name,
+            'key_prefix'          => substr($rawKey, 0, 12),
+            'key_hash'            => $hash,
+            'is_active'           => 1,
+            'rate_limit_requests' => 600,
+            'rate_limit_window'   => 60,
+            'user_rate_limit'     => 60,
+            'ip_rate_limit'       => 200,
+            'created_at'          => $now,
+        ]);
+
+        if ($ok === false) {
+            $error = $db->error();
+            throw new \RuntimeException(sprintf(
+                'Failed to insert api_key for application_id=%d: %s',
+                $appId,
+                is_array($error) ? json_encode($error) : (string) $error
+            ));
+        }
+
+        return $rawKey;
     }
 }

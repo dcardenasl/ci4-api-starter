@@ -29,14 +29,14 @@ class ApiKeyControllerTest extends ApiTestCase
         $this->actAs('superadmin');
 
         // Ensure static context is set for background model operations (Auditable trait)
-        \App\Libraries\ContextHolder::set(new \App\DTO\SecurityContext($this->currentUserId, [], \App\Support\TestPermissionResolver::permissionsForRole((string) $this->currentUserRole)));
+        \dcardenasl\Ci4ApiCore\Http\ContextHolder::set(new \dcardenasl\Ci4ApiCore\Dto\SecurityContext($this->currentUserId, [], \App\Support\TestPermissionResolver::permissionsForRole((string) $this->currentUserRole)));
     }
 
     // ==================== AUTH GUARD TESTS ====================
 
     public function testListApiKeysRequiresAuth(): void
     {
-        \App\Libraries\ContextHolder::flush();
+        \dcardenasl\Ci4ApiCore\Http\ContextHolder::flush();
         $this->clearTestRequestHeaders();
         $result = $this->get('/api/v1/api-keys');
 

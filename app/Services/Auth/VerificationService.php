@@ -4,16 +4,17 @@ declare(strict_types=1);
 
 namespace App\Services\Auth;
 
-use App\DTO\SecurityContext;
-use App\Exceptions\BadRequestException;
-use App\Exceptions\ConflictException;
-use App\Exceptions\NotFoundException;
-use App\Interfaces\DataTransferObjectInterface;
-use App\Interfaces\System\AuditServiceInterface;
 use App\Interfaces\System\EmailServiceInterface;
 use App\Interfaces\Users\UserRepositoryInterface;
-use App\Traits\ResolvesWebAppLinks;
 use CodeIgniter\I18n\Time;
+use dcardenasl\Ci4ApiCore\Dto\DataTransferObjectInterface;
+use dcardenasl\Ci4ApiCore\Dto\SecurityContext;
+use dcardenasl\Ci4ApiCore\Exceptions\BadRequestException;
+use dcardenasl\Ci4ApiCore\Exceptions\ConflictException;
+use dcardenasl\Ci4ApiCore\Exceptions\NotFoundException;
+use dcardenasl\Ci4ApiCore\Security\Hasher;
+use dcardenasl\Ci4ApiCore\Services\AuditServiceInterface;
+use dcardenasl\Ci4ApiCore\Support\ResolvesWebAppLinks;
 
 /**
  * Modernized Verification Service
@@ -21,7 +22,7 @@ use CodeIgniter\I18n\Time;
 class VerificationService implements \App\Interfaces\Auth\VerificationServiceInterface
 {
     use ResolvesWebAppLinks;
-    use \App\Traits\HandlesTransactions;
+    use \dcardenasl\Ci4ApiCore\Services\HandlesTransactions;
 
     public function __construct(
         protected UserRepositoryInterface $userRepository,
@@ -46,19 +47,17 @@ class VerificationService implements \App\Interfaces\Auth\VerificationServiceInt
         }
 
         $token = bin2hex(random_bytes(32));
-        $tokenHash = \hash_token($token);
+        $tokenHash = Hasher::token($token);
         $timestamp = strtotime('+24 hours');
 
         // Ensure $timestamp is int for date()
         $finalTimestamp = is_int($timestamp) ? $timestamp : (time() + 86400);
         $expiresAt = date('Y-m-d H:i:s', $finalTimestamp);
 
-        $this->userRepository->update($userId, [
+        $this->userRepository->withAuditAction('verification_email_sent')->update($userId, [
             'email_verification_token' => $tokenHash,
             'verification_token_expires' => $expiresAt,
         ]);
-
-        $this->auditService->log('verification_email_sent', 'users', (int) $user->id, [], ['email' => $user->email], $context);
 
         $verificationLink = $this->buildVerificationUrl($token);
 
@@ -121,14 +120,12 @@ class VerificationService implements \App\Interfaces\Auth\VerificationServiceInt
 
         $now = date('Y-m-d H:i:s');
 
-        $this->wrapInTransaction(function () use ($user, $now, $context) {
-            $this->userRepository->update($user->id, [
+        $this->wrapInTransaction(function () use ($user, $now) {
+            $this->userRepository->withAuditAction('email_verified')->update($user->id, [
                 'email_verified_at' => $now,
                 'email_verification_token' => null,
                 'verification_token_expires' => null,
             ]);
-
-            $this->auditService->log('email_verified', 'users', (int) $user->id, [], ['email' => $user->email], $context);
         });
 
         return true;

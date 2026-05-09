@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace App\Services\Auth\Support;
 
-use App\Exceptions\ValidationException;
 use App\Interfaces\Tokens\RefreshTokenServiceInterface;
 use App\Interfaces\Users\UserRepositoryInterface;
 use App\Services\Iam\UserRoleAssignmentService;
+use dcardenasl\Ci4ApiCore\Exceptions\ValidationException;
+use dcardenasl\Ci4ApiCore\Security\Hasher;
 
 /**
  * Google Auth Handler
@@ -16,7 +17,7 @@ use App\Services\Iam\UserRoleAssignmentService;
  */
 class GoogleAuthHandler
 {
-    use \App\Traits\HandlesTransactions;
+    use \dcardenasl\Ci4ApiCore\Services\HandlesTransactions;
 
     public function __construct(
         protected UserRepositoryInterface $userRepository,
@@ -30,7 +31,7 @@ class GoogleAuthHandler
      */
     public function createPendingUser(array $identity): \App\Entities\UserEntity
     {
-        $requiresVerification = is_email_verification_required();
+        $requiresVerification = Hasher::isEmailVerificationRequired();
         $status = $requiresVerification ? 'pending_approval' : 'active';
         $now = date('Y-m-d H:i:s');
 
@@ -65,7 +66,7 @@ class GoogleAuthHandler
     public function reactivateDeletedUser(object $user, array $identity): \App\Entities\UserEntity
     {
         return $this->wrapInTransaction(function () use ($user, $identity) {
-            $requiresVerification = is_email_verification_required();
+            $requiresVerification = Hasher::isEmailVerificationRequired();
             $status = $requiresVerification ? 'pending_approval' : 'active';
             $now = date('Y-m-d H:i:s');
 

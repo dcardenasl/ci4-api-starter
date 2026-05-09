@@ -6,11 +6,11 @@ namespace Tests\Unit\Filters;
 
 use App\Entities\ApiKeyEntity;
 use App\Filters\ThrottleFilter;
-use App\HTTP\ApiRequest;
 use CodeIgniter\Cache\CacheInterface;
 use CodeIgniter\HTTP\Response;
 use CodeIgniter\Test\CIUnitTestCase;
 use Config\Services;
+use dcardenasl\Ci4ApiCore\Http\ApiRequest;
 
 /**
  * ThrottleFilter Unit Tests

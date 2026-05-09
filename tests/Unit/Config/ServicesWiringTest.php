@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace Tests\Unit\Config;
 
 use App\Interfaces\Files\FileServiceInterface;
-use App\Interfaces\Mappers\ResponseMapperInterface;
 use CodeIgniter\Test\CIUnitTestCase;
 use Config\Email;
 use Config\Services;
+use dcardenasl\Ci4ApiCore\Mappers\ResponseMapperInterface;
 use Symfony\Component\Mailer\MailerInterface;
 
 final class ServicesWiringTest extends CIUnitTestCase

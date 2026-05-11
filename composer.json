@@ -3,6 +3,27 @@
     "description": "CodeIgniter 4 API Starter Kit with Layered Architecture",
     "type": "project",
     "license": "MIT",
+    "keywords": [
+        "codeigniter4",
+        "codeigniter",
+        "ci4",
+        "starter-kit",
+        "starter",
+        "template",
+        "rest-api",
+        "api-starter",
+        "jwt",
+        "rbac",
+        "iam",
+        "dto",
+        "scaffolding",
+        "boilerplate"
+    ],
+    "homepage": "https://github.com/dcardenasl/ci4-api-starter",
+    "support": {
+        "issues": "https://github.com/dcardenasl/ci4-api-starter/issues",
+        "source": "https://github.com/dcardenasl/ci4-api-starter"
+    },
     "require": {
         "php": "^8.2",
         "aws/aws-sdk-php": "^3.369",

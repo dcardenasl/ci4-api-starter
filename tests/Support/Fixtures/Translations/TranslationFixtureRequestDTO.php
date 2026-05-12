@@ -21,10 +21,7 @@ readonly class TranslationFixtureRequestDTO extends BaseRequestDTO
 
     public function rules(): array
     {
-        return [
-            'name'         => 'required|string|max_length[120]',
-            'translations' => 'permit_empty',
-        ];
+        return [];
     }
 
     protected function map(array $data): void

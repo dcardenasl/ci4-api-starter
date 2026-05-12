@@ -85,7 +85,7 @@ final class GalleryServiceTest extends CIUnitTestCase
         $dto = $this->service->attach(7, new GalleryAttachRequestDTO([
             'file_id'    => (string) $this->seededFileIds[0],
             'sort_order' => 99,
-        ]));
+        ], service('validation')));
 
         $this->assertSame(99, $dto->sort_order);
     }
@@ -95,11 +95,11 @@ final class GalleryServiceTest extends CIUnitTestCase
         $this->service->attach(7, new GalleryAttachRequestDTO([
             'file_id'    => (string) $this->seededFileIds[0],
             'sort_order' => 2,
-        ]));
+        ], service('validation')));
         $this->service->attach(7, new GalleryAttachRequestDTO([
             'file_id'    => (string) $this->seededFileIds[1],
             'sort_order' => 1,
-        ]));
+        ], service('validation')));
 
         $list = $this->service->listFor(7);
 
@@ -120,7 +120,7 @@ final class GalleryServiceTest extends CIUnitTestCase
                 ['id' => $a->id, 'sort_order' => 10],
                 ['id' => $b->id, 'sort_order' => 5],
             ],
-        ]));
+        ], service('validation')));
 
         $list = $this->service->listFor(7);
         $this->assertSame((string) $this->seededFileIds[1], $list[0]->file_id);
@@ -138,7 +138,7 @@ final class GalleryServiceTest extends CIUnitTestCase
                 ['id' => $mine->id,    'sort_order' => 99],
                 ['id' => $foreign->id, 'sort_order' => 99], // belongs to parent 99 — must be skipped
             ],
-        ]));
+        ], service('validation')));
 
         $foreignRow = (new GalleryFixtureModel())->find($foreign->id);
         $this->assertNotNull($foreignRow);
@@ -165,7 +165,7 @@ final class GalleryServiceTest extends CIUnitTestCase
 
     private function attachRequest(int $fileId): GalleryAttachRequestDTO
     {
-        return new GalleryAttachRequestDTO(['file_id' => (string) $fileId]);
+        return new GalleryAttachRequestDTO(['file_id' => (string) $fileId], service('validation'));
     }
 
     private function ensureOwnerExists(): void

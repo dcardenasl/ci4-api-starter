@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "6374b4468d721354a20dc20ab3bc8483",
+    "content-hash": "58f43d4c3dbc28f383530aacd4f69261",
     "packages": [
         {
             "name": "aws/aws-crt-php",
@@ -236,18 +236,25 @@
         },
         {
             "name": "dcardenasl/ci4-api-core",
-            "version": "dev-main",
+            "version": "v0.4.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/dcardenasl/ci4-api-core.git",
+                "reference": "5cae68d6263f848fe4a7b5b715b41c7ddecccc27"
+            },
             "dist": {
-                "type": "path",
-                "url": "../ci4-api-core",
-                "reference": "d3a9310f232533ceed1405bfc0ef18392e2c7e30"
+                "type": "zip",
+                "url": "https://api.github.com/repos/dcardenasl/ci4-api-core/zipball/5cae68d6263f848fe4a7b5b715b41c7ddecccc27",
+                "reference": "5cae68d6263f848fe4a7b5b715b41c7ddecccc27",
+                "shasum": ""
             },
             "require": {
-                "codeigniter4/framework": "^4.5",
+                "codeigniter4/framework": "^4.6",
                 "php": "^8.2"
             },
             "require-dev": {
                 "friendsofphp/php-cs-fixer": "^3.95",
+                "infection/infection": "^0.29",
                 "monolog/monolog": "^3.5",
                 "phpstan/phpstan": "^2.0",
                 "phpunit/phpunit": "^10.5",
@@ -255,51 +262,33 @@
                 "zircote/swagger-php": "^4.10 || ^5.0 || ^6.0"
             },
             "suggest": {
+                "ext-redis": "Required to use RedisQueueManager as an alternative to the DB-backed QueueManager",
                 "monolog/monolog": "Required for JSON structured logging via JsonFormatter / MonologHandler (^3.5)",
                 "zircote/swagger-php": "Required to auto-generate OpenAPI specs from DTO/Controller annotations (^4.10 || ^5.0 || ^6.0)"
             },
             "type": "library",
             "extra": {
                 "branch-alias": {
-                    "dev-main": "0.3.x-dev"
+                    "dev-main": "0.4.x-dev"
+                },
+                "codeigniter4": {
+                    "commands": [
+                        "dcardenasl\\Ci4ApiCore\\Commands\\CoreCheck",
+                        "dcardenasl\\Ci4ApiCore\\Commands\\CoreInstall",
+                        "dcardenasl\\Ci4ApiCore\\Commands\\EnvCheck",
+                        "dcardenasl\\Ci4ApiCore\\Commands\\QueueWork"
+                    ]
                 }
             },
             "autoload": {
-                "psr-4": {
-                    "dcardenasl\\Ci4ApiCore\\": "src/"
-                },
                 "files": [
                     "src/Helpers/date.php"
-                ]
-            },
-            "autoload-dev": {
+                ],
                 "psr-4": {
-                    "Tests\\": "tests/"
+                    "dcardenasl\\Ci4ApiCore\\": "src/"
                 }
             },
-            "scripts": {
-                "test": [
-                    "phpunit"
-                ],
-                "analyse": [
-                    "phpstan analyse --level=8 --memory-limit=1G"
-                ],
-                "cs-check": [
-                    "vendor/bin/php-cs-fixer fix --dry-run --diff --no-interaction"
-                ],
-                "cs-fix": [
-                    "vendor/bin/php-cs-fixer fix --no-interaction"
-                ],
-                "security": [
-                    "composer audit --no-dev --locked"
-                ],
-                "quality": [
-                    "@analyse",
-                    "@cs-check",
-                    "@security",
-                    "@test"
-                ]
-            },
+            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
             ],
@@ -323,10 +312,7 @@
                 "issues": "https://github.com/dcardenasl/ci4-api-core/issues",
                 "source": "https://github.com/dcardenasl/ci4-api-core"
             },
-            "transport-options": {
-                "symlink": true,
-                "relative": true
-            }
+            "time": "2026-05-10T07:26:34+00:00"
         },
         {
             "name": "doctrine/lexer",
@@ -4320,15 +4306,21 @@
         },
         {
             "name": "dcardenasl/ci4-api-scaffolding",
-            "version": "dev-main",
+            "version": "v0.3.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/dcardenasl/ci4-api-scaffolding.git",
+                "reference": "d6e4c60988b168d4d3ba794ab86febd482368262"
+            },
             "dist": {
-                "type": "path",
-                "url": "../ci4-api-scaffolding",
-                "reference": "b0459a4e3edaa9e228032a816a21a2bc19b4e1bf"
+                "type": "zip",
+                "url": "https://api.github.com/repos/dcardenasl/ci4-api-scaffolding/zipball/d6e4c60988b168d4d3ba794ab86febd482368262",
+                "reference": "d6e4c60988b168d4d3ba794ab86febd482368262",
+                "shasum": ""
             },
             "require": {
-                "codeigniter4/framework": "^4.5",
-                "dcardenasl/ci4-api-core": "^0.3",
+                "codeigniter4/framework": "^4.6",
+                "dcardenasl/ci4-api-core": "^0.4.1",
                 "nikic/php-parser": "^5.0",
                 "php": "^8.2"
             },
@@ -4336,7 +4328,11 @@
                 "friendsofphp/php-cs-fixer": "^3.95",
                 "phpstan/phpstan": "^2.0",
                 "phpunit/phpunit": "^10.5",
-                "spatie/phpunit-snapshot-assertions": "^5.0"
+                "spatie/phpunit-snapshot-assertions": "^5.0",
+                "zircote/swagger-php": "^4.10 || ^5.0 || ^6.0"
+            },
+            "suggest": {
+                "zircote/swagger-php": "Required by `swagger:generate` command (^4.10 || ^5 || ^6)"
             },
             "bin": [
                 "bin/make-crud.sh",
@@ -4344,15 +4340,17 @@
             ],
             "type": "library",
             "extra": {
+                "branch-alias": {
+                    "dev-main": "0.3.x-dev"
+                },
                 "codeigniter4": {
                     "commands": [
                         "dcardenasl\\Ci4ApiScaffolding\\Commands\\MakeCrud",
                         "dcardenasl\\Ci4ApiScaffolding\\Commands\\MakeCrudRemove",
-                        "dcardenasl\\Ci4ApiScaffolding\\Commands\\ModuleCheck"
+                        "dcardenasl\\Ci4ApiScaffolding\\Commands\\ModuleCheck",
+                        "dcardenasl\\Ci4ApiScaffolding\\Commands\\ScaffoldCheck",
+                        "dcardenasl\\Ci4ApiScaffolding\\Commands\\SwaggerGenerate"
                     ]
-                },
-                "branch-alias": {
-                    "dev-main": "0.1.x-dev"
                 }
             },
             "autoload": {
@@ -4360,34 +4358,7 @@
                     "dcardenasl\\Ci4ApiScaffolding\\": "src/"
                 }
             },
-            "autoload-dev": {
-                "psr-4": {
-                    "Tests\\": "tests/"
-                }
-            },
-            "scripts": {
-                "test": [
-                    "phpunit"
-                ],
-                "analyse": [
-                    "phpstan analyse --level=8 --memory-limit=1G"
-                ],
-                "cs-check": [
-                    "vendor/bin/php-cs-fixer fix --dry-run --diff --no-interaction"
-                ],
-                "cs-fix": [
-                    "vendor/bin/php-cs-fixer fix --no-interaction"
-                ],
-                "security": [
-                    "composer audit --no-dev --locked"
-                ],
-                "quality": [
-                    "@analyse",
-                    "@cs-check",
-                    "@security",
-                    "@test"
-                ]
-            },
+            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
             ],
@@ -4410,10 +4381,7 @@
                 "issues": "https://github.com/dcardenasl/ci4-api-scaffolding/issues",
                 "source": "https://github.com/dcardenasl/ci4-api-scaffolding"
             },
-            "transport-options": {
-                "symlink": true,
-                "relative": true
-            }
+            "time": "2026-05-10T07:32:04+00:00"
         },
         {
             "name": "ergebnis/agent-detector",
@@ -7596,10 +7564,7 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {
-        "dcardenasl/ci4-api-core": 20,
-        "dcardenasl/ci4-api-scaffolding": 20
-    },
+    "stability-flags": {},
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {

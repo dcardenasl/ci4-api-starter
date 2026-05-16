@@ -12,8 +12,9 @@ jobs:
     runs-on: ubuntu-latest
 
     strategy:
+      fail-fast: false
       matrix:
-        php-version: ['8.2', '8.3']
+        php-version: ['8.2', '8.3', '8.4']
 
     services:
       mysql:
@@ -160,3 +161,47 @@ jobs:
         run: |
           composer test:coverage
           composer coverage:check
+
+  ci4-compatibility:
+    name: CI4 ${{ matrix.ci4-version }} / PHP ${{ matrix.php-version }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php-version: ['8.2', '8.3']
+        ci4-version: ['4.6.*', '4.7.*']
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-version }}
+          extensions: mysqli, mbstring, intl, json
+          coverage: none
+
+      - name: Install dependencies with pinned CI4 version
+        run: |
+          composer remove codeigniter4/framework --no-update
+          composer require "codeigniter4/framework:${{ matrix.ci4-version }}" --no-update
+          composer update --prefer-dist --no-interaction --no-progress
+
+      - name: Prepare writable directories
+        run: |
+          mkdir -p writable/cache writable/logs writable/session writable/uploads writable/debugbar
+          chmod -R 777 writable
+
+      - name: Create minimal .env
+        run: |
+          cp .env.example .env
+          echo 'CI_ENVIRONMENT = testing' >> .env
+          echo 'app.baseURL = "http://localhost/"' >> .env
+          JWT_KEY=$(openssl rand -base64 64 | tr -d '\n')
+          echo "JWT_SECRET_KEY = \"${JWT_KEY}\"" >> .env
+          ENC_KEY=$(php spark key:generate --show | sed 's/.*: //')
+          echo "encryption.key = \"${ENC_KEY}\"" >> .env
+
+      - name: Run Unit tests (no DB required)
+        run: vendor/bin/phpunit --testsuite=Unit --no-coverage

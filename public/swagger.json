@@ -2184,6 +2184,69 @@
                 }
             }
         },
+        "/api/v1/iam/users/{user_id}/permissions": {
+            "get": {
+                "tags": [
+                    "Iam"
+                ],
+                "summary": "List a user's effective permissions for a specific application (by code)",
+                "operationId": "5a3841f7f8f5d306c7265164d5d6c3b6",
+                "parameters": [
+                    {
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 42
+                        }
+                    },
+                    {
+                        "name": "app",
+                        "in": "query",
+                        "description": "Application code (e.g. self, blog, shop)",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "self"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Effective permissions retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/UserPermissionsResponse"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication required"
+                    },
+                    "403": {
+                        "description": "Caller lacks iam.superadmin-access"
+                    },
+                    "404": {
+                        "description": "User or application not found"
+                    },
+                    "422": {
+                        "description": "Missing or invalid app code"
+                    }
+                }
+            }
+        },
         "/api/v1/metrics": {
             "get": {
                 "tags": [
@@ -3211,6 +3274,12 @@
                     }
                 },
                 "type": "object"
+            },
+            "ListUserPermissionsRequest": {
+                "title": "List User Permissions Request",
+                "required": [
+                    "app"
+                ]
             },
             "PermissionCreateRequest": {
                 "properties": {
@@ -4240,6 +4309,53 @@
                         "type": "string",
                         "example": "2026-02-26 12:00:00",
                         "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "UserPermissionsResponse": {
+                "title": "User Permissions Response",
+                "required": [
+                    "user_id",
+                    "application",
+                    "permissions"
+                ],
+                "properties": {
+                    "user_id": {
+                        "description": "User identifier",
+                        "type": "integer",
+                        "example": 42
+                    },
+                    "application": {
+                        "description": "Summary of the application the permissions are scoped to",
+                        "required": [
+                            "id",
+                            "code",
+                            "name"
+                        ],
+                        "properties": {
+                            "id": {
+                                "type": "integer",
+                                "example": 1
+                            },
+                            "code": {
+                                "type": "string",
+                                "example": "self"
+                            },
+                            "name": {
+                                "type": "string",
+                                "example": "Self"
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "permissions": {
+                        "description": "Sorted, deduplicated effective permission codes for the user within the application",
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "example": "users.read"
+                        }
                     }
                 },
                 "type": "object"

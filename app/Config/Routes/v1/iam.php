@@ -31,6 +31,9 @@ $routes->group('iam', ['namespace' => '\App\Controllers\Api\V1\Iam'], function (
         $routes->post('roles/(:num)/permissions/attach', 'RoleController::attachPermissions/$1');
         $routes->delete('roles/(:num)/permissions/(:num)', 'RoleController::detachPermission/$1/$2');
 
+        // User effective permissions scoped to an application (by code)
+        $routes->get('users/(:num)/permissions', 'UserPermissionsController::index/$1');
+
         // Resource routes will be injected here
     });
 });

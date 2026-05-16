@@ -149,4 +149,16 @@ trait IamDomainServices
             \Config\Database::connect()
         );
     }
+
+    public static function userPermissionsService(bool $getShared = true): \App\Services\Iam\UserPermissionsService
+    {
+        if ($getShared) {
+            return static::getSharedInstance('userPermissionsService');
+        }
+
+        return new \App\Services\Iam\UserPermissionsService(
+            static::effectivePermissionsResolver(),
+            \Config\Database::connect()
+        );
+    }
 }

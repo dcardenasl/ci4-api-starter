@@ -3,7 +3,7 @@
 > Fuente de verdad para trabajo en este repo.
 > Historial de completadas: ver `TASKS_ARCHIVE.md`.
 > Cross-repo: ver `../TASKS.md`.
-> Última actualización: 2026-05-07 (API-015/016/017 cerradas, consumo ci4-api-core v0.2.0 completo)
+> Última actualización: 2026-05-15 (API-011 archivado por CORE-006, API-014 movido a "Fuera de alcance")
 
 ---
 
@@ -15,17 +15,21 @@
 
 ## 🟡 Próximo
 
-*(vacío — backlog abajo, siguiente paso cross-repo es CORE-006)*
+*(vacío — backlog abajo)*
 
 ---
 
 ## ⚪ Backlog
 
 - [API-010] `GET /iam/users/{id}/permissions?app=<code>` — permisos de usuario filtrados por app de dominio
-- [API-011] Publicar `ci4-api-core` en Packagist (actualmente path repo) — bloqueado por CORE-006
-- [API-012] Docker out-of-the-box — Dockerfile + docker-compose api+admin+mysql
-- [API-013] CI/CD pipeline de ejemplo — GitHub Actions
-- [API-014] Soporte multi-tenant nativo — fuera de alcance v1.x, ver ADR-011
+- [API-012] Docker out-of-the-box — Dockerfile + docker-compose api+mysql (cross-repo orchestration vive en `ci4-kickstart`)
+- [API-013] CI/CD pipeline de ejemplo — completar matrix (PHP 8.4 + CI4 4.6/4.7) en GitHub Actions
+
+---
+
+## ⚠️ Fuera de alcance / señales
+
+- [API-014] Soporte multi-tenant nativo — decisión registrada en `docs/adr/ADR-011-multi-tenancy-out-of-scope.md`. Reactivar solo si aparece una señal real (tenant con SLA propio, aislamiento físico requerido, etc.).
 
 ---
 

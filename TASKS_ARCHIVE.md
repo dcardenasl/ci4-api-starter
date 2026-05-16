@@ -1,7 +1,15 @@
 # TASKS_ARCHIVE — ci4-api-starter
 
 > Historial de tareas completadas. Movido desde TASKS.md para mantener el tracker activo liviano.
-> Última actualización: 2026-05-07
+> Última actualización: 2026-05-15
+
+---
+
+## ✅ CORE v1.0 milestone — paquete consumido desde Packagist (2026-05-09)
+
+| ID | Descripción | Estado |
+|---|---|---|
+| API-011 | Publicar `ci4-api-core` en Packagist + migrar de path repo a constraint Packagist. Cerrado por CORE-006 cross-repo: `dcardenasl/ci4-api-core` v0.4.0 publicado 2026-05-09, `composer.json` del api-starter ya consume desde Packagist. | ✅ |
 
 ---
 

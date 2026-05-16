@@ -3,7 +3,7 @@
 > Fuente de verdad para trabajo en este repo.
 > Historial de completadas: ver `TASKS_ARCHIVE.md`.
 > Cross-repo: ver `../TASKS.md`.
-> Última actualización: 2026-05-15 (API-011 archivado por CORE-006, API-014 movido a "Fuera de alcance")
+> Última actualización: 2026-05-16 (API-010 ✅, API-013 ✅, API-012 partial — Docker entrypoint listo)
 
 ---
 
@@ -19,11 +19,16 @@
 
 ---
 
+## ✅ Completados recientemente (mover a TASKS_ARCHIVE.md en el próximo corte)
+
+- [API-010] ✅ 2026-05-15 — `GET /iam/users/{id}/permissions?app=<code>` implementado. `UserPermissionsController`, `ListUserPermissionsRequestDTO`, `UserPermissionsResponseDTO`, `ApplicationSummary`, `UserPermissionsService`, OpenAPI annotations + feature + unit tests.
+- [API-013] ✅ 2026-05-15 — CI matrix extendida a PHP 8.4 + CI4 4.6/4.7 en `.github/workflows/ci.yml`.
+
+---
+
 ## ⚪ Backlog
 
-- [API-010] `GET /iam/users/{id}/permissions?app=<code>` — permisos de usuario filtrados por app de dominio
-- [API-012] Docker out-of-the-box — Dockerfile + docker-compose api+mysql (cross-repo orchestration vive en `ci4-kickstart`)
-- [API-013] CI/CD pipeline de ejemplo — completar matrix (PHP 8.4 + CI4 4.6/4.7) en GitHub Actions
+- [API-012] Docker out-of-the-box — `docker/entrypoint.sh` idempotente ✅ (2026-05-15). Pendiente: orquestación cross-repo en `ci4-kickstart` (coordinada con kickstart v1.1.0+).
 
 ---
 

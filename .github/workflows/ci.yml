@@ -92,7 +92,7 @@ jobs:
           echo "JWT_SECRET_KEY = \"${JWT_KEY}\"" >> .env
 
           # Generate encryption key (properly quoted)
-          ENC_KEY=$(php spark key:generate --show | sed 's/.*: //')
+          ENC_KEY="hex2bin:$(openssl rand -hex 32)"
           echo "encryption.key = \"${ENC_KEY}\"" >> .env
 
           # Email configuration for testing (override .env.example)
@@ -206,7 +206,7 @@ jobs:
           echo 'app.baseURL = "http://localhost/"' >> .env
           JWT_KEY=$(openssl rand -base64 64 | tr -d '\n')
           echo "JWT_SECRET_KEY = \"${JWT_KEY}\"" >> .env
-          ENC_KEY=$(php spark key:generate --show | sed 's/.*: //')
+          ENC_KEY="hex2bin:$(openssl rand -hex 32)"
           echo "encryption.key = \"${ENC_KEY}\"" >> .env
 
       - name: Run Unit tests (no DB required)

@@ -62,8 +62,8 @@ php spark migrate
 php spark users:bootstrap-superadmin --email superadmin@example.com --password 'StrongPass123!' --first-name Super --last-name Admin
 ```
 
-> For Docker workflows: run `./init.sh --skip-server`, then copy `.env.docker.example` to `.env.docker`, set the Docker-specific secrets, and start `docker compose up -d`.
-> `init.sh` is the supported setup entrypoint for an already-cloned repository.
+> For Docker workflows: `docker compose up -d` is enough — the entrypoint generates secrets, runs migrations, and seeds RBAC on first start. Then `docker compose exec app php spark users:bootstrap-superadmin --email <e> --password <p>` to create the first user. See `GETTING_STARTED.md` for details.
+> `init.sh` is the supported setup entrypoint for a host-mode setup (no Docker).
 
 ## Development Workflow
 

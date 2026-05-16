@@ -31,6 +31,7 @@ RUN apt-get update \
         curl \
         zip \
         unzip \
+        openssl \
         libicu-dev \
         libzip-dev \
         libpng-dev \
@@ -70,6 +71,10 @@ RUN chown -R www-data:www-data /var/www/html \
 RUN mkdir -p writable/cache writable/logs writable/session writable/uploads writable/debugbar \
     && chown -R www-data:www-data writable
 
+# First-run bootstrap (idempotent): ensures .env, generates secrets,
+# runs migrations + seeder. See docker/entrypoint.sh for details.
+COPY --chmod=755 docker/entrypoint.sh /usr/local/bin/ci4-entrypoint
+
 # Health check — uses /ping (lightweight, no DB dependency)
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
     CMD curl -f http://localhost/ping || exit 1
@@ -77,8 +82,7 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
 # Expose port 80
 EXPOSE 80
 
-# Switch to www-data user
-USER www-data
-
-# Start Apache
+# Apache runs as www-data internally; entrypoint must run as root to write
+# .env and execute migrations, then hand off to apache (which drops privileges).
+ENTRYPOINT ["ci4-entrypoint"]
 CMD ["apache2-foreground"]

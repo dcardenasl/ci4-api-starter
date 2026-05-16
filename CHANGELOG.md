@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [2.0.0] — 2026-05-13
+## [2.0.0] — 2026-05-15
 
 This release replaces the legacy single-role authorization model with a granular RBAC/IAM system, externalises the runtime foundation and the CRUD scaffolding engine into two Composer packages (`dcardenasl/ci4-api-core` and `dcardenasl/ci4-api-scaffolding`), and adds production-grade operational concerns: API versioning policy, idempotency keys, RFC 7807 Problem Details, correlation IDs, a maintenance-mode short-circuit, environment validation, and a tag-driven GitHub Release workflow.
 
@@ -35,7 +35,7 @@ This release replaces the legacy single-role authorization model with a granular
 - **`permission:<code>` route filter** for fine-grained authorization.
 - **`permissions: string[]` field** on the `user` object of login/refresh responses, sourced from the resolver.
 - **`scope: string[]` JWT claim** carrying the same effective permission codes.
-- **IAM REST endpoints** under `/api/v1/iam/` (all gated by `permission:iam.admin-access`): `roles` CRUD + `roles/{id}/permissions`, `permissions` CRUD, `users/{user_id}/permissions?application_id=N`. Role assignment to users is performed via the existing `Users` resource (`role_ids[]` payload).
+- **IAM REST endpoints** under `/api/v1/iam/` (all gated by `permission:iam.admin-access`): `roles` CRUD + `roles/{id}/permissions`, `permissions` CRUD, `users/{user_id}/permissions?app=<code>` (effective permissions scoped to an application — `UserPermissionsController` resolves the application by code, returns `{user_id, application:{id,code,name}, permissions:string[]}`). Role assignment to users is performed via the existing `Users` resource (`role_ids[]` payload).
 - **`iam:smoke-test`** Spark command for IAM end-to-end verification.
 - **IAM-specific OpenAPI documentation** under `app/Documentation/Iam/`.
 - **`AssignableRolesService`** — extracts the anti-escalation logic from `UserController::assignableRoles()`. A role is assignable iff every permission code attached to that role is already in the actor's effective set.
@@ -56,6 +56,7 @@ This release replaces the legacy single-role authorization model with a granular
 - **`apps:bootstrap --create-api-key` / `--api-key-name`** — generates an active API key bound to `applications.id` and emits `API_KEY=apk_...` + `APP_ID=N` lines on stdout (ready for `awk -F=` parsing from orchestrator scripts). Idempotency anchored to "no duplicate active key per application": a second `--create-api-key` against the same code refuses to insert (raw key is unrecoverable), prints `API_KEY_EXISTS=<prefix>...`, exits non-zero.
 - **Coverage gate scaffolding** — `scripts/check-coverage.php` parses clover XML and exits non-zero below the supplied threshold (default 70%). New composer aliases `test:coverage` and `coverage:check`. Wired into `ci.yml` as a soft-fail step until a confirmed baseline lets us flip it to a hard gate.
 - **Migration `2026-05-04-070829_AddMissingIndexesAuditMay2026`** — idempotent indexes on filterable / sortable columns: `users.status`, `users.email_verified_at`, `users.created_at`, `users.(oauth_provider, oauth_id)`, `files.uploaded_at`, `files.mime_type`, `files.storage_driver`, `api_keys.is_active`, `api_keys.created_at`, `password_resets.expires_at`. Cross-driver index existence check lets the migration safely re-run.
+- **Single-command Docker bootstrap** — `docker compose up -d` now works without copying any env file. An idempotent `docker/entrypoint.sh` (runs as root, then drops to www-data via Apache) seeds `.env` from `.env.example`, generates `JWT_SECRET_KEY` and `encryption.key` on first boot, runs `php spark migrate` and `php spark db:seed RbacBootstrapSeeder`. Secrets persist across `docker compose down` in the named volume `ci4-api-env`; `down -v` resets. `docker-compose.yml` attaches to the shared external bridge network `ci4-platform`, lets host ports be overridden via `API_HOST_PORT` / `DB_HOST_PORT` / `PHPMYADMIN_HOST_PORT`, and ships phpMyAdmin under the `tools` profile (`docker compose --profile tools up -d phpmyadmin`).
 
 #### Documentation / runbooks
 - **`docs/runbooks/`** (all bilingual):
@@ -71,6 +72,10 @@ This release replaces the legacy single-role authorization model with a granular
 - **`UserAccountGuard` regression suite** — locks in the contract that `JwtAuthFilter` delegates account-policy enforcement (status, email-verification, OAuth bypass) to a single class.
 - **`JwtAuthFilterAccessPolicyBypassTest`** — verifies the bypass list is read from config dynamically.
 - **`AssignableRolesServiceTest`** — 7 integration tests covering the actor-permissions-subset contract.
+- **`UserPermissionsEndpointTest`** + **`UserPermissionsServiceTest`** — feature and unit coverage for the `GET /iam/users/{id}/permissions?app=<code>` endpoint (happy path, missing `app` parameter, unknown application code, unknown user, authorization gate).
+- **CI matrix expanded** in `.github/workflows/ci.yml`:
+  - Primary test job now runs PHP `8.2` / `8.3` / `8.4` with `fail-fast: false`.
+  - New `ci4-compatibility` job matrix-pins `codeigniter4/framework` to `4.6.*` and `4.7.*` against PHP `8.2` / `8.3`, executing the Unit suite (DB-less) so regressions in the framework floor and ceiling surface in PRs.
 
 ### Changed
 

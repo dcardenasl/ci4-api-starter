@@ -42,6 +42,9 @@ jobs:
           extensions: mysqli, mbstring, intl, json
           coverage: none
 
+      - name: Strip local path repositories (CI resolves from Packagist)
+        run: php scripts/ci-strip-local-repos.php
+
       - name: Validate composer.json
         run: composer validate --strict
 
@@ -181,6 +184,9 @@ jobs:
           php-version: ${{ matrix.php-version }}
           extensions: mysqli, mbstring, intl, json
           coverage: none
+
+      - name: Strip local path repositories (CI resolves from Packagist)
+        run: php scripts/ci-strip-local-repos.php
 
       - name: Install dependencies with pinned CI4 version
         run: |

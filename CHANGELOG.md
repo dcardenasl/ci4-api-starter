@@ -7,6 +7,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.1.0] — 2026-05-17
+
+Adds a complete trash lifecycle to the files API (soft delete, restore, force delete, bulk variants) so the admin's existing trash UI is no longer hitting 404s. Documentation pass on validation, scaffolding package references, and the file-storage guide.
+
+### Added
+
+- **Files soft-delete + trash lifecycle.**
+  - Migration `2026-05-17-045115_AddSoftDeleteToFilesTable` adds `files.deleted_at DATETIME NULL` + `files.deleted_by_user_id INT UNSIGNED NULL` (no FK — SQLite, used by the test harness, does not support adding FKs to existing tables; integrity is enforced at the service layer) plus an index on `deleted_at` (MySQL only).
+  - `FileModel::$useSoftDeletes = true`. `deleted_at` is filterable and sortable.
+  - `FileIndexRequestDTO` accepts `trashed=without|only|with` (default `without`).
+  - `FileService` gains `restore()`, `forceDestroy()`, `bulkDestroy()`, `bulkRestore()`, `bulkForceDestroy()`. Bulk variants return per-item outcomes `{id, ok, error?}` so partial successes are reportable.
+  - `FileRepository` gains `findIncludingTrashed()` and `purge()`; `restore()` clears both `deleted_at` and `deleted_by_user_id`.
+- **5 new HTTP endpoints**, gated by `jwtauth` + `throttle`:
+  - `POST /api/v1/files/{id}/restore` — un-trash a file.
+  - `DELETE /api/v1/files/{id}/force` — permanently delete (storage + DB row). Refuses with `400` if the file is not currently trashed.
+  - `POST /api/v1/files/bulk-delete` — bulk soft-delete.
+  - `POST /api/v1/files/bulk-restore` — bulk restore.
+  - `POST /api/v1/files/bulk-force-delete` — bulk permanent delete.
+- **OpenAPI documentation** for the 6 new paths (5 endpoints + new `trashed` query param on `GET /files`).
+- **Authorization audit codes** `unauthorized_file_restore` and `unauthorized_file_force_delete` for the new lifecycle paths.
+
+### Changed
+
+- **`DELETE /api/v1/files/{id}` is now a soft delete.** Sets `deleted_at` and `deleted_by_user_id` and keeps the storage object on disk. Use `DELETE /api/v1/files/{id}/force` after to purge permanently. The HTTP contract is unchanged (still `200` on success); a second `DELETE` on an already-trashed file returns `404` because the file is invisible to default queries, which matches REST semantics.
+- **`docs/architecture/VALIDATION.md`** (and `.es.md`) rewritten end-to-end. The previous text described `InputValidationService` (removed in v2.0.0) and a `validateOrFail($data, 'auth', 'register')` global helper that does not exist. Current contents document the actual `BaseRequestDTO::rules()` + `map()` pattern, custom messages via `lang()`, the `ValidationException` i18n architecture test, and an explicit "what this project does NOT use" section so stale refs don't confuse readers.
+- **`docs/tech/file-storage.md`** gains a "Soft Delete & Trash" section: lifecycle table, `trashed` filter semantics, bulk response shape, authorization model, and the `InvalidChars` filter gotcha.
+- **`CLAUDE.md`** and `docs/template/{ARCHITECTURE_CONTRACT,CRUD_FROM_ZERO}.md` updated to reference `dcardenasl/ci4-api-scaffolding` instead of the renamed `ci4-api-crud-maker`, and the pointer files now use the GitHub URL since Composer's dist tarball strips `vendor/dcardenasl/*/docs/`.
+
+### Notes
+
+- **CI4 `InvalidChars` global filter and JSON integers.** `mb_check_encoding()` throws `TypeError` when it recurses into a JSON body containing raw integers. The new bulk endpoints expect `ids` as strings; `FileBulkActionRequestDTO` casts back to `int` internally. Documented in `docs/tech/file-storage.md` and tracked as `SEÑAL-API-001` in `TASKS.md`. The matching workaround on the admin side ships in `ci4-admin-starter@v2.0.0`.
+
+### Internal
+
+- **`FileServiceTest`**: `testDestroyOwnFileReturnsSuccess` replaced by `testDestroyOwnFileSoftDeletesAndPreservesStorage`; 4 new tests cover `forceDestroy()` (purge and refusal paths) and `restore()` (clear and refusal paths). Suite now 26 tests / 56 assertions in this file alone.
+- **`FileControllerTest`** gains 9 feature tests covering the full lifecycle and the `?trashed=only` listing.
+- **Full suite**: 617 tests / 1625 assertions / 0 failures. PHPStan level 8 clean. `composer quality` passes end-to-end.
+
 ## [2.0.0] — 2026-05-15
 
 This release replaces the legacy single-role authorization model with a granular RBAC/IAM system, externalises the runtime foundation and the CRUD scaffolding engine into two Composer packages (`dcardenasl/ci4-api-core` and `dcardenasl/ci4-api-scaffolding`), and adds production-grade operational concerns: API versioning policy, idempotency keys, RFC 7807 Problem Details, correlation IDs, a maintenance-mode short-circuit, environment validation, and a tag-driven GitHub Release workflow.

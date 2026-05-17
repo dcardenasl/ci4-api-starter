@@ -403,8 +403,12 @@ class FileServiceTest extends CIUnitTestCase
         $this->service->destroy(1, new \dcardenasl\Ci4ApiCore\Dto\SecurityContext(1));
     }
 
-    public function testDestroyOwnFileReturnsSuccess(): void
+    public function testDestroyOwnFileSoftDeletesAndPreservesStorage(): void
     {
+        // Post-API-015: destroy() is soft-delete. It must record the actor in
+        // `deleted_by_user_id` and call the repo's `delete()` (which the model
+        // turns into a soft-delete because `$useSoftDeletes=true`). Crucially
+        // it must NOT touch storage — bytes are preserved for restore().
         $file = $this->createFileEntity([
             'id' => 1,
             'user_id' => 1,
@@ -416,9 +420,13 @@ class FileServiceTest extends CIUnitTestCase
             ->willReturn($file);
 
         $this->mockStorage
+            ->expects($this->never())
+            ->method('delete');
+
+        $this->mockFileRepository
             ->expects($this->once())
-            ->method('delete')
-            ->with('2024/01/01/file.jpg')
+            ->method('update')
+            ->with(1, ['deleted_by_user_id' => 1])
             ->willReturn(true);
 
         $this->mockFileRepository
@@ -430,6 +438,103 @@ class FileServiceTest extends CIUnitTestCase
         $result = $this->service->destroy(1, new \dcardenasl\Ci4ApiCore\Dto\SecurityContext(1));
 
         $this->assertTrue($result);
+    }
+
+    public function testForceDestroyPurgesTrashedFile(): void
+    {
+        // Pre-condition: file must be in the trash (`deleted_at` set). Service
+        // calls `findIncludingTrashed()` to bypass soft-delete filter, then
+        // removes both storage bytes and the DB row via `purge()`.
+        $file = $this->createFileEntity([
+            'id' => 1,
+            'user_id' => 1,
+            'path' => '2024/01/01/file.jpg',
+            'deleted_at' => '2026-05-17 12:00:00',
+        ]);
+
+        $this->mockFileRepository
+            ->method('findIncludingTrashed')
+            ->willReturn($file);
+
+        $this->mockStorage
+            ->expects($this->once())
+            ->method('delete')
+            ->with('2024/01/01/file.jpg')
+            ->willReturn(true);
+
+        $this->mockFileRepository
+            ->expects($this->once())
+            ->method('purge')
+            ->with(1)
+            ->willReturn(true);
+
+        $result = $this->service->forceDestroy(1, new \dcardenasl\Ci4ApiCore\Dto\SecurityContext(1));
+
+        $this->assertTrue($result);
+    }
+
+    public function testForceDestroyRefusesNonTrashedFile(): void
+    {
+        $file = $this->createFileEntity([
+            'id' => 1,
+            'user_id' => 1,
+            'path' => '2024/01/01/file.jpg',
+            'deleted_at' => null,
+        ]);
+
+        $this->mockFileRepository
+            ->method('findIncludingTrashed')
+            ->willReturn($file);
+
+        $this->mockStorage->expects($this->never())->method('delete');
+        $this->mockFileRepository->expects($this->never())->method('purge');
+
+        $this->expectException(BadRequestException::class);
+
+        $this->service->forceDestroy(1, new \dcardenasl\Ci4ApiCore\Dto\SecurityContext(1));
+    }
+
+    public function testRestoreClearsTrashedRow(): void
+    {
+        $file = $this->createFileEntity([
+            'id' => 1,
+            'user_id' => 1,
+            'deleted_at' => '2026-05-17 12:00:00',
+            'deleted_by_user_id' => 1,
+        ]);
+
+        $this->mockFileRepository
+            ->method('findIncludingTrashed')
+            ->willReturn($file);
+
+        $this->mockFileRepository
+            ->expects($this->once())
+            ->method('restore')
+            ->with(1)
+            ->willReturn(true);
+
+        $result = $this->service->restore(1, new \dcardenasl\Ci4ApiCore\Dto\SecurityContext(1));
+
+        $this->assertTrue($result);
+    }
+
+    public function testRestoreRefusesNonTrashedFile(): void
+    {
+        $file = $this->createFileEntity([
+            'id' => 1,
+            'user_id' => 1,
+            'deleted_at' => null,
+        ]);
+
+        $this->mockFileRepository
+            ->method('findIncludingTrashed')
+            ->willReturn($file);
+
+        $this->mockFileRepository->expects($this->never())->method('restore');
+
+        $this->expectException(BadRequestException::class);
+
+        $this->service->restore(1, new \dcardenasl\Ci4ApiCore\Dto\SecurityContext(1));
     }
 
     public function testUploadWithDuplicateFilenameGeneratesNumericSeries(): void

@@ -139,9 +139,26 @@ class FileService implements FileServiceInterface
         /** @var \App\DTO\Request\Files\FileIndexRequestDTO $request */
         $userId = $this->resolveUserId($request, $context);
 
-        $baseCriteria = $this->userScopedFiles
-            ? fn ($model) => $model->where('user_id', $userId)
+        $trashedMode = $request->trashed;
+        // `BaseRepository::paginateCriteria` wraps the same Model instance that
+        // `$this->fileRepository->getModel()` returns. Toggling soft-delete
+        // mode on the model here propagates to the wrapped QueryBuilder.
+        $fileModel = $this->fileRepository instanceof \dcardenasl\Ci4ApiCore\Repositories\BaseRepository
+            ? $this->fileRepository->getModel()
             : null;
+        $baseCriteria = function (\dcardenasl\Ci4ApiCore\Filters\QueryBuilder $builder) use ($userId, $trashedMode, $fileModel): void {
+            if ($this->userScopedFiles) {
+                $builder->where('user_id', $userId);
+            }
+            if ($fileModel === null) {
+                return;
+            }
+            if ($trashedMode === \App\DTO\Request\Files\FileIndexRequestDTO::TRASHED_ONLY) {
+                $fileModel->onlyDeleted();
+            } elseif ($trashedMode === \App\DTO\Request\Files\FileIndexRequestDTO::TRASHED_WITH) {
+                $fileModel->withDeleted();
+            }
+        };
 
         $result = $this->fileRepository->paginateCriteria(
             $request->toArray(),
@@ -187,7 +204,9 @@ class FileService implements FileServiceInterface
     }
 
     /**
-     * Delete a file by identifier.
+     * Soft-delete a file. Sets `deleted_at` + `deleted_by_user_id`. Storage
+     * bytes are intentionally preserved so the file can be restored or
+     * downloaded from the trash UI.
      */
     public function destroy(int $id, ?SecurityContext $context = null): bool
     {
@@ -197,10 +216,96 @@ class FileService implements FileServiceInterface
 
         $file = $this->findFileAndAuthorize($id, $context->user_id, 'delete', $context->hasPermission('files.read'), $context);
 
-        return $this->wrapInTransaction(function () use ($file) {
-            $this->storage->delete($file->path);
+        if ($file->isTrashed()) {
+            throw new BadRequestException(lang('Files.already_trashed'));
+        }
+
+        return $this->wrapInTransaction(function () use ($file, $context) {
+            $this->fileRepository->update($file->id, ['deleted_by_user_id' => $context->user_id]);
             return $this->fileRepository->delete($file->id);
         });
+    }
+
+    /**
+     * Restore a trashed file.
+     */
+    public function restore(int $id, ?SecurityContext $context = null): bool
+    {
+        if ($context?->user_id === null) {
+            throw new AuthorizationException(lang('Api.unauthorized'));
+        }
+
+        $file = $this->findTrashedFileAndAuthorize($id, $context->user_id, 'restore', $context->hasPermission('files.read'), $context);
+        if (!$file->isTrashed()) {
+            throw new BadRequestException(lang('Files.not_trashed'));
+        }
+
+        return $this->fileRepository->restore($file->id);
+    }
+
+    /**
+     * Permanently delete a trashed file: removes the storage object then the
+     * DB row. Refuses if the file is not currently trashed (force-delete is a
+     * trash-only operation).
+     */
+    public function forceDestroy(int $id, ?SecurityContext $context = null): bool
+    {
+        if ($context?->user_id === null) {
+            throw new AuthorizationException(lang('Api.unauthorized'));
+        }
+
+        $file = $this->findTrashedFileAndAuthorize($id, $context->user_id, 'force-delete', $context->hasPermission('files.read'), $context);
+        if (!$file->isTrashed()) {
+            throw new BadRequestException(lang('Files.not_trashed'));
+        }
+
+        return $this->wrapInTransaction(function () use ($file) {
+            $this->storage->delete($file->path);
+            return $this->fileRepository->purge((int) $file->id);
+        });
+    }
+
+    public function bulkDestroy(array $ids, ?SecurityContext $context = null): array
+    {
+        return $this->runBulk($ids, fn (int $id) => $this->destroy($id, $context));
+    }
+
+    public function bulkRestore(array $ids, ?SecurityContext $context = null): array
+    {
+        return $this->runBulk($ids, fn (int $id) => $this->restore($id, $context));
+    }
+
+    public function bulkForceDestroy(array $ids, ?SecurityContext $context = null): array
+    {
+        return $this->runBulk($ids, fn (int $id) => $this->forceDestroy($id, $context));
+    }
+
+    /**
+     * @param list<int>            $ids
+     * @param callable(int): bool  $operation
+     * @return list<array{id:int, ok:bool, error?:string}>
+     */
+    protected function runBulk(array $ids, callable $operation): array
+    {
+        $results = [];
+        foreach ($ids as $id) {
+            $id = (int) $id;
+            try {
+                $ok = (bool) $operation($id);
+                $entry = ['id' => $id, 'ok' => $ok];
+                if (!$ok) {
+                    $entry['error'] = lang('Files.bulk_item_failed');
+                }
+                $results[] = $entry;
+            } catch (\Throwable $e) {
+                $results[] = [
+                    'id'    => $id,
+                    'ok'    => false,
+                    'error' => $e->getMessage(),
+                ];
+            }
+        }
+        return $results;
     }
 
     protected function resolveUserId(object|array $request, ?SecurityContext $context): int
@@ -221,8 +326,35 @@ class FileService implements FileServiceInterface
         bool $bypassOwnership = false,
         ?SecurityContext $context = null
     ): \App\Entities\FileEntity {
+        return $this->locateAndAuthorize($id, $userId, $action, $bypassOwnership, $context, false);
+    }
+
+    /**
+     * Same as findFileAndAuthorize but includes trashed rows. Use for
+     * restore/force-delete paths.
+     */
+    protected function findTrashedFileAndAuthorize(
+        int $id,
+        int $userId,
+        string $action,
+        bool $bypassOwnership = false,
+        ?SecurityContext $context = null
+    ): \App\Entities\FileEntity {
+        return $this->locateAndAuthorize($id, $userId, $action, $bypassOwnership, $context, true);
+    }
+
+    protected function locateAndAuthorize(
+        int $id,
+        int $userId,
+        string $action,
+        bool $bypassOwnership,
+        ?SecurityContext $context,
+        bool $includeTrashed
+    ): \App\Entities\FileEntity {
         /** @var \App\Entities\FileEntity|null $file */
-        $file = $this->fileRepository->find($id);
+        $file = $includeTrashed
+            ? $this->fileRepository->findIncludingTrashed($id)
+            : $this->fileRepository->find($id);
         if (!$file) {
             throw new NotFoundException(lang('Files.file_not_found'));
         }
@@ -232,9 +364,11 @@ class FileService implements FileServiceInterface
 
         if (!$effectiveBypass && (int) $file->user_id !== $userId) {
             $deniedAction = match ($action) {
-                'download' => 'unauthorized_file_download',
-                'delete'   => 'unauthorized_file_delete',
-                default    => 'unauthorized_file_access',
+                'download'     => 'unauthorized_file_download',
+                'delete'       => 'unauthorized_file_delete',
+                'restore'      => 'unauthorized_file_restore',
+                'force-delete' => 'unauthorized_file_force_delete',
+                default        => 'unauthorized_file_access',
             };
             $this->auditService->log(
                 $deniedAction,

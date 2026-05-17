@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controllers\Api\V1\Files;
 
+use App\DTO\Request\Files\FileBulkActionRequestDTO;
 use App\DTO\Request\Files\FileGetRequestDTO;
 use App\DTO\Request\Files\FileIndexRequestDTO;
 use App\DTO\Request\Files\FileUploadRequestDTO;
@@ -93,11 +94,50 @@ class FileController extends ApiController
     }
 
     /**
-     * Delete a file
+     * Soft-delete a file (moves it to the trash).
      */
     public function delete(int $id): ResponseInterface
     {
         return $this->handleRequest(fn ($dto, $context) => $this->fileService->destroy($id, $context));
     }
 
+    /**
+     * Restore a trashed file.
+     */
+    public function restore(int $id): ResponseInterface
+    {
+        return $this->handleRequest(fn ($dto, $context) => $this->fileService->restore($id, $context));
+    }
+
+    /**
+     * Permanently delete a trashed file (storage + DB).
+     */
+    public function forceDelete(int $id): ResponseInterface
+    {
+        return $this->handleRequest(fn ($dto, $context) => $this->fileService->forceDestroy($id, $context));
+    }
+
+    public function bulkDelete(): ResponseInterface
+    {
+        return $this->handleRequest(
+            fn ($dto, $context) => $this->fileService->bulkDestroy($dto->ids, $context),
+            FileBulkActionRequestDTO::class
+        );
+    }
+
+    public function bulkRestore(): ResponseInterface
+    {
+        return $this->handleRequest(
+            fn ($dto, $context) => $this->fileService->bulkRestore($dto->ids, $context),
+            FileBulkActionRequestDTO::class
+        );
+    }
+
+    public function bulkForceDelete(): ResponseInterface
+    {
+        return $this->handleRequest(
+            fn ($dto, $context) => $this->fileService->bulkForceDestroy($dto->ids, $context),
+            FileBulkActionRequestDTO::class
+        );
+    }
 }

@@ -7,6 +7,8 @@ return [
     // Success messages
     'upload_success'      => 'File uploaded successfully',
     'delete_success'      => 'File deleted successfully',
+    'restore_success'     => 'File restored successfully',
+    'force_delete_success' => 'File permanently deleted',
 
     // Error messages
     'file_required'       => 'File is required',
@@ -31,4 +33,10 @@ return [
     'upload' => [
         'noFile' => 'No file was uploaded or file is invalid',
     ],
+
+    // Trash / soft-delete
+    'already_trashed'  => 'File is already in the trash',
+    'not_trashed'      => 'File is not in the trash',
+    'bulk_ids_required' => 'A non-empty list of file ids is required',
+    'bulk_item_failed' => 'Operation failed for this file',
 ];

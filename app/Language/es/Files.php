@@ -7,6 +7,8 @@ return [
     // Mensajes de éxito
     'upload_success'      => 'Archivo subido exitosamente',
     'delete_success'      => 'Archivo eliminado exitosamente',
+    'restore_success'     => 'Archivo restaurado exitosamente',
+    'force_delete_success' => 'Archivo eliminado de forma permanente',
 
     // Mensajes de error
     'file_required'       => 'El archivo es requerido',
@@ -31,4 +33,10 @@ return [
     'upload' => [
         'noFile' => 'No se subió ningún archivo o el archivo no es válido',
     ],
+
+    // Papelera / soft-delete
+    'already_trashed'  => 'El archivo ya está en la papelera',
+    'not_trashed'      => 'El archivo no está en la papelera',
+    'bulk_ids_required' => 'Se requiere una lista no vacía de IDs de archivos',
+    'bulk_item_failed' => 'La operación falló para este archivo',
 ];

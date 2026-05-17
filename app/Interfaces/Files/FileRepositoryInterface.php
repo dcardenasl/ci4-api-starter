@@ -20,4 +20,15 @@ interface FileRepositoryInterface extends RepositoryInterface
      * Count files by user
      */
     public function countByUser(int $userId): int;
+
+    /**
+     * Find a file by id including soft-deleted rows. Returns null only when
+     * the id does not exist at all.
+     */
+    public function findIncludingTrashed(int $id): ?object;
+
+    /**
+     * Hard-delete a file row (bypassing soft-delete) by id.
+     */
+    public function purge(int $id): bool;
 }

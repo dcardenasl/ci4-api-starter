@@ -11,14 +11,20 @@ use CodeIgniter\Entity\Entity;
  */
 class FileEntity extends Entity
 {
-    protected $dates = ['uploaded_at'];
+    protected $dates = ['uploaded_at', 'deleted_at'];
 
     protected $casts = [
         'id' => 'integer',
         'user_id' => 'integer',
         'size' => 'integer',
         'metadata' => 'json-array',
+        'deleted_by_user_id' => '?integer',
     ];
+
+    public function isTrashed(): bool
+    {
+        return $this->deleted_at !== null;
+    }
 
     /**
      * Get human-readable file size

@@ -98,7 +98,7 @@ Role assignment to users happens directly through the **Users** module (`/api/v1
 - `PATCH /api/v1/auth/me` — self-update endpoint. Authenticated user only. Allowlist: `first_name`, `last_name`, `avatar_url`. Email/password/role assignments are not part of the DTO and are silently ignored if sent. Subject id comes from the JWT, never the body.
 - `PUT /api/v1/users/{id}` — admin endpoint. Gated by `permission:users.write`. Still rejects self-edit (`assertNotSelf`) and operating on superadmins by non-superadmins (`assertCanActOnSubject`). **Email change requires superadmin** — anything else gets `403 Iam.cannotModifyEmail` (enforced in `UpdateUserAction::execute`).
 
-When scaffolding new modules, `vendor/bin/make-crud.sh` (via `dcardenasl/ci4-api-crud-maker` package) emits the protected route filters configured in `app/Config/Scaffolding.php` (defaults to `['jwtauth', 'permission:iam.admin-access', 'throttle']`). **Note:** the default `iam.admin-access` permission was deprecated by `RbacBootstrapSeeder` and is no longer seeded — adjust `protectedRouteFilters` in your scaffolding config to match your project's actual IAM model.
+When scaffolding new modules, `vendor/bin/make-crud.sh` (via `dcardenasl/ci4-api-scaffolding` package) emits the protected route filters configured in `app/Config/Scaffolding.php` (defaults to `['jwtauth', 'permission:iam.admin-access', 'throttle']`). **Note:** the default `iam.admin-access` permission was deprecated by `RbacBootstrapSeeder` and is no longer seeded — adjust `protectedRouteFilters` in your scaffolding config to match your project's actual IAM model.
 
 ### Key Design Principles
 
@@ -180,7 +180,7 @@ contains domain code.
 
 ## CRUD Scaffolding
 
-Scaffolding is provided by the `dcardenasl/ci4-api-core` package (installed as a Composer runtime dependency; in this monorepo it is consumed via path repository pointing at `../ci4-api-core`). The same package ships the architectural base classes used by every module. Consumer config lives in `app/Config/Scaffolding.php` (a one-liner returning `ScaffoldingConfig::defaults()`).
+Scaffolding is provided by the `dcardenasl/ci4-api-scaffolding` package (installed as a Composer **dev** dependency; in this monorepo it is consumed via path repository pointing at `../ci4-api-scaffolding`). The runtime base classes used by every module live in the separate `dcardenasl/ci4-api-core` package. Consumer config lives in `app/Config/Scaffolding.php` (a one-liner returning `ScaffoldingConfig::defaults()`).
 
 ### Quick Start
 ```bash

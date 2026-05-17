@@ -1,6 +1,6 @@
 # CRUD From Zero (Template Playbook)
 
-> **Authoritative version:** `vendor/dcardenasl/ci4-api-crud-maker/docs/CRUD_FROM_ZERO.md`. This copy is kept as a local reference; when the package and this file diverge, the package version is correct.
+> **Authoritative version:** https://github.com/dcardenasl/ci4-api-scaffolding/blob/main/docs/CRUD_FROM_ZERO.md (in this monorepo: `../ci4-api-scaffolding/docs/CRUD_FROM_ZERO.md`). The package's `docs/` is stripped from the Composer dist tarball, so it is **not** vendored under `vendor/`. This copy is a local reference; when the package and this file diverge, the package version is correct.
 
 Canonical guide for creating a new CRUD resource in this project.
 

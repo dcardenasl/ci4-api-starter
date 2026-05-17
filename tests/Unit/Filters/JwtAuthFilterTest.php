@@ -6,13 +6,13 @@ namespace Tests\Unit\Filters;
 
 use App\Entities\UserEntity;
 use App\Filters\JwtAuthFilter;
-use App\HTTP\ApiRequest;
 use App\Interfaces\Tokens\JwtServiceInterface;
 use App\Interfaces\Tokens\TokenRevocationServiceInterface;
 use App\Models\UserModel;
 use CodeIgniter\HTTP\Response;
 use CodeIgniter\Test\CIUnitTestCase;
 use Config\Services;
+use dcardenasl\Ci4ApiCore\Http\ApiRequest;
 use stdClass;
 
 /**

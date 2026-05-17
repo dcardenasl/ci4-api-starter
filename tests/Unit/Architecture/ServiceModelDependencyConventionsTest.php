@@ -18,6 +18,7 @@ class ServiceModelDependencyConventionsTest extends CIUnitTestCase
 
         $allowed = [
             'app/Services/Auth/PasswordResetService.php',
+            'app/Services/Auth/ServiceTokenService.php',
             'app/Services/Auth/UserInvitationService.php',
             'app/Services/System/MetricsService.php',
             'app/Services/Tokens/RefreshTokenService.php',

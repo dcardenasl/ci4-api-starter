@@ -21,12 +21,12 @@ class UserControllerTest extends ApiTestCase
         $this->actAs('admin');
 
         // Ensure static context is set for background model operations (Auditable trait)
-        \App\Libraries\ContextHolder::set(new \App\DTO\SecurityContext($this->currentUserId, $this->currentUserRole));
+        \dcardenasl\Ci4ApiCore\Http\ContextHolder::set(new \dcardenasl\Ci4ApiCore\Dto\SecurityContext($this->currentUserId, [], \App\Support\TestPermissionResolver::permissionsForRole((string) $this->currentUserRole)));
     }
 
     public function testListUsersRequiresAuth(): void
     {
-        \App\Libraries\ContextHolder::flush();
+        \dcardenasl\Ci4ApiCore\Http\ContextHolder::flush();
         $this->clearTestRequestHeaders();
         $result = $this->get('/api/v1/users');
 
@@ -47,7 +47,6 @@ class UserControllerTest extends ApiTestCase
     {
         $createResult = $this->withBodyFormat('json')->post('/api/v1/users', [
             'email' => 'created@example.com',
-            'role' => 'user',
         ]);
 
         $createResult->assertStatus(201);
@@ -75,7 +74,6 @@ class UserControllerTest extends ApiTestCase
 
         $createResult = $this->withBodyFormat('json')->post('/api/v1/users', [
             'email' => 'audit-created@example.com',
-            'role' => 'user',
         ]);
 
         $createResult->assertStatus(201);
@@ -92,79 +90,18 @@ class UserControllerTest extends ApiTestCase
         $this->assertGreaterThan(0, $auditCount);
     }
 
-    public function testAdminCannotCreateAdminUser(): void
-    {
-        $result = $this->withBodyFormat('json')->post('/api/v1/users', [
-            'email' => 'new-admin@example.com',
-            'role' => 'admin',
-        ]);
-
-        $result->assertStatus(403);
-    }
-
-    public function testAdminCannotCreateSuperadminUser(): void
-    {
-        $result = $this->withBodyFormat('json')->post('/api/v1/users', [
-            'email' => 'new-superadmin@example.com',
-            'role' => 'superadmin',
-        ]);
-
-        $result->assertStatus(403);
-    }
-
-    public function testAdminCannotUpdateAnotherAdmin(): void
-    {
-        $targetAdminId = $this->createUser('target-admin@example.com', 'ValidPass123!', 'admin');
-
-        $result = $this->withBodyFormat('json')->put("/api/v1/users/{$targetAdminId}", [
-            'first_name' => 'Blocked',
-        ]);
-
-        $result->assertStatus(403);
-    }
-
-    public function testAdminCannotDeleteAnotherAdmin(): void
-    {
-        $targetAdminId = $this->createUser('target-delete-admin@example.com', 'ValidPass123!', 'admin');
-
-        $result = $this->delete("/api/v1/users/{$targetAdminId}");
-
-        $result->assertStatus(403);
-    }
-
-    public function testAdminCannotDeleteSuperadmin(): void
-    {
-        $superadminId = $this->createUser('target-superadmin@example.com', 'ValidPass123!', 'superadmin');
-
-        $result = $this->delete("/api/v1/users/{$superadminId}");
-
-        $result->assertStatus(403);
-    }
-
-    public function testListUsersDoesNotIncludeSuperadmin(): void
-    {
-        $this->createUser('hidden-superadmin@example.com', 'ValidPass123!', 'superadmin');
-
-        $result = $this->get('/api/v1/users');
-
-        $result->assertStatus(200);
-        $json = $this->getResponseJson($result);
-        $roles = array_map(
-            static fn ($item) => $item['role'] ?? null,
-            $json['data'] ?? []
-        );
-
-        $this->assertNotContains('superadmin', $roles);
-    }
+    // Legacy role-hierarchy tests removed in Sprint 3.5 (RBAC). Authorization is
+    // now enforced at the route level via `permission:users.write`; finer-grained
+    // restrictions (e.g. "admin cannot promote to superadmin") are now expressed
+    // by which permissions are attached to which role in the IAM model.
 
     public function testSuperadminCanManageAdminUsers(): void
     {
         $this->actAs('superadmin');
-        \App\Libraries\ContextHolder::set(new \App\DTO\SecurityContext($this->currentUserId, $this->currentUserRole));
+        \dcardenasl\Ci4ApiCore\Http\ContextHolder::set(new \dcardenasl\Ci4ApiCore\Dto\SecurityContext($this->currentUserId, [], \App\Support\TestPermissionResolver::permissionsForRole((string) $this->currentUserRole)));
 
         $createResult = $this->withBodyFormat('json')->post('/api/v1/users', [
             'email' => 'managed-admin@example.com',
-            'role' => 'admin',
         ]);
 
         $createResult->assertStatus(201);
@@ -189,7 +126,6 @@ class UserControllerTest extends ApiTestCase
 
         $result = $this->withBodyFormat('json')->post('/api/v1/users', [
             'email' => 'blocked@example.com',
-            'role' => 'user',
         ]);
 
         $result->assertStatus(403);
@@ -200,7 +136,6 @@ class UserControllerTest extends ApiTestCase
         $result = $this->withBodyFormat('json')->post('/api/v1/users', [
             'email' => 'blocked-password@example.com',
             'password' => 'ValidPass123!',
-            'role' => 'user',
         ]);
 
         $result->assertStatus(422);
@@ -214,7 +149,6 @@ class UserControllerTest extends ApiTestCase
     {
         $createResult = $this->withBodyFormat('json')->post('/api/v1/users', [
             'email' => 'already-invited@example.com',
-            'role' => 'user',
         ]);
 
         $createResult->assertStatus(201);
@@ -255,5 +189,43 @@ class UserControllerTest extends ApiTestCase
 
         $approveResult = $this->post("/api/v1/users/{$activeUserId}/approve");
         $approveResult->assertStatus(409);
+    }
+
+    public function testAdminCannotChangeAnotherUserEmail(): void
+    {
+        // Default actAs('admin') in setUp() — admin has users.write but not iam.superadmin-access.
+        $targetId = $this->createUser('email-target@example.com', 'ValidPass123!', 'user');
+        $this->resetRequest();
+
+        $result = $this->withBodyFormat('json')->put("/api/v1/users/{$targetId}", [
+            'email' => 'hijacked@example.com',
+        ]);
+
+        $result->assertStatus(403);
+
+        /** @var \App\Entities\UserEntity|null $unchanged */
+        $unchanged = $this->userModel->find($targetId);
+        $this->assertNotNull($unchanged);
+        $this->assertSame('email-target@example.com', strtolower((string) $unchanged->email));
+    }
+
+    public function testSuperadminCanChangeAnotherUserEmail(): void
+    {
+        $this->actAs('superadmin');
+        \dcardenasl\Ci4ApiCore\Http\ContextHolder::set(new \dcardenasl\Ci4ApiCore\Dto\SecurityContext($this->currentUserId, [], \App\Support\TestPermissionResolver::permissionsForRole((string) $this->currentUserRole)));
+
+        $targetId = $this->createUser('to-rename@example.com', 'ValidPass123!', 'user');
+        $this->resetRequest();
+
+        $result = $this->withBodyFormat('json')->put("/api/v1/users/{$targetId}", [
+            'email' => 'renamed@example.com',
+        ]);
+
+        $result->assertStatus(200);
+
+        /** @var \App\Entities\UserEntity|null $renamed */
+        $renamed = $this->userModel->find($targetId);
+        $this->assertNotNull($renamed);
+        $this->assertSame('renamed@example.com', strtolower((string) $renamed->email));
     }
 }

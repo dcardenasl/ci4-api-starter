@@ -26,7 +26,7 @@ class FileControllerTest extends ApiTestCase
     public function testListFilesRequiresAuth(): void
     {
         $this->resetState(); // Ensure clean state
-        \App\Libraries\ContextHolder::flush();
+        \dcardenasl\Ci4ApiCore\Http\ContextHolder::flush();
         $this->clearTestRequestHeaders();
         $result = $this->get('/api/v1/files');
 
@@ -35,7 +35,7 @@ class FileControllerTest extends ApiTestCase
 
     public function testListFilesReturnsSuccess(): void
     {
-        \App\Libraries\ContextHolder::set(new \App\DTO\SecurityContext($this->currentUserId, $this->currentUserRole));
+        \dcardenasl\Ci4ApiCore\Http\ContextHolder::set(new \dcardenasl\Ci4ApiCore\Dto\SecurityContext($this->currentUserId, [], \App\Support\TestPermissionResolver::permissionsForRole((string) $this->currentUserRole)));
         $this->createFile($this->currentUserId);
 
         $result = $this->withHeaders(['Authorization' => "Bearer {$this->token}"])
@@ -46,7 +46,7 @@ class FileControllerTest extends ApiTestCase
 
     public function testGetFileReturnsSuccess(): void
     {
-        \App\Libraries\ContextHolder::set(new \App\DTO\SecurityContext($this->currentUserId, $this->currentUserRole));
+        \dcardenasl\Ci4ApiCore\Http\ContextHolder::set(new \dcardenasl\Ci4ApiCore\Dto\SecurityContext($this->currentUserId, [], \App\Support\TestPermissionResolver::permissionsForRole((string) $this->currentUserRole)));
         $fileId = $this->createFile($this->currentUserId);
 
         $result = $this->withHeaders(['Authorization' => "Bearer {$this->token}"])
@@ -57,7 +57,7 @@ class FileControllerTest extends ApiTestCase
 
     public function testDeleteFileReturnsSuccess(): void
     {
-        \App\Libraries\ContextHolder::set(new \App\DTO\SecurityContext($this->currentUserId, $this->currentUserRole));
+        \dcardenasl\Ci4ApiCore\Http\ContextHolder::set(new \dcardenasl\Ci4ApiCore\Dto\SecurityContext($this->currentUserId, [], \App\Support\TestPermissionResolver::permissionsForRole((string) $this->currentUserRole)));
         $fileId = $this->createFile($this->currentUserId);
 
         $result = $this->withHeaders(['Authorization' => "Bearer {$this->token}"])

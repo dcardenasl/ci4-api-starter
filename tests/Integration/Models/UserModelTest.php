@@ -40,7 +40,6 @@ class UserModelTest extends CIUnitTestCase
             'first_name' => 'Test',
             'last_name' => 'User',
             'password' => password_hash('ValidPass123!', PASSWORD_BCRYPT),
-            'role' => 'user',
         ];
 
         $userId = $this->userModel->insert($userData);
@@ -56,7 +55,6 @@ class UserModelTest extends CIUnitTestCase
             'first_name' => 'Find',
             'last_name' => 'Test',
             'password' => password_hash('ValidPass123!', PASSWORD_BCRYPT),
-            'role' => 'user',
         ]);
 
         $user = $this->userModel->find($userId);
@@ -71,7 +69,6 @@ class UserModelTest extends CIUnitTestCase
             'email' => 'update@example.com',
             'first_name' => 'Update',
             'password' => password_hash('ValidPass123!', PASSWORD_BCRYPT),
-            'role' => 'user',
         ]);
 
         $result = $this->userModel->update($userId, ['first_name' => 'Updated']);
@@ -87,7 +84,6 @@ class UserModelTest extends CIUnitTestCase
         $userId = $this->userModel->insert([
             'email' => 'delete@example.com',
             'password' => password_hash('ValidPass123!', PASSWORD_BCRYPT),
-            'role' => 'user',
         ]);
 
         $this->userModel->delete($userId);
@@ -119,13 +115,11 @@ class UserModelTest extends CIUnitTestCase
         $this->userModel->insert([
             'email' => 'duplicate@example.com',
             'password' => password_hash('ValidPass123!', PASSWORD_BCRYPT),
-            'role' => 'user',
         ]);
 
         $result = $this->userModel->insert([
             'email' => 'duplicate@example.com',
             'password' => password_hash('ValidPass123!', PASSWORD_BCRYPT),
-            'role' => 'user',
         ]);
 
         $this->assertFalse($result);
@@ -137,22 +131,22 @@ class UserModelTest extends CIUnitTestCase
     public function testFilterableTraitFiltersResults(): void
     {
         $this->userModel->insert([
-            'email' => 'admin1@example.com',
+            'email' => 'active1@example.com',
             'password' => password_hash('ValidPass123!', PASSWORD_BCRYPT),
-            'role' => 'admin',
+            'status' => 'active',
         ]);
 
         $this->userModel->insert([
-            'email' => 'user1@example.com',
+            'email' => 'invited1@example.com',
             'password' => password_hash('ValidPass123!', PASSWORD_BCRYPT),
-            'role' => 'user',
+            'status' => 'invited',
         ]);
 
         // Use applyFilters() method from Filterable trait
-        $admins = $this->userModel->applyFilters(['role' => ['eq' => 'admin']])->findAll();
+        $active = $this->userModel->applyFilters(['status' => ['eq' => 'active']])->findAll();
 
-        $this->assertCount(1, $admins);
-        $this->assertEquals('admin', $admins[0]->role);
+        $this->assertCount(1, $active);
+        $this->assertEquals('active', $active[0]->status);
     }
 
     public function testSearchableTraitMethodExists(): void

@@ -23,6 +23,8 @@
         <report>
             <html outputDirectory="tests/coverage/html"/>
             <text outputFile="tests/coverage/coverage.txt"/>
+            <!-- Audit B9.4: clover XML feeds scripts/check-coverage.php in CI. -->
+            <clover outputFile="tests/coverage/clover.xml"/>
         </report>
     </coverage>
 

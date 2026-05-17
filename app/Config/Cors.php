@@ -127,6 +127,17 @@ class Cors extends BaseConfig
             }
         }
 
+        // Defense-in-depth: in production, refuse to boot if CORS would default
+        // to an empty origin list. An empty allowedOrigins is closed-by-default
+        // in CI4, but the resulting silent 4xx storm is worse than failing loudly.
+        // env:check enforces this earlier; this is the runtime backstop.
+        if (ENVIRONMENT === 'production' && $origins === []) {
+            throw new \RuntimeException(
+                'CORS misconfigured for production: set CORS_ALLOWED_ORIGINS '
+                . '(comma-separated list) or app.baseURL in .env. Both are empty.'
+            );
+        }
+
         if ($allowedMethods !== []) {
             $this->default['allowedMethods'] = $allowedMethods;
         }

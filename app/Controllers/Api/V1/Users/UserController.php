@@ -4,13 +4,14 @@ declare(strict_types=1);
 
 namespace App\Controllers\Api\V1\Users;
 
-use App\Controllers\ApiController;
 use App\DTO\Request\Users\UserCreateRequestDTO;
 use App\DTO\Request\Users\UserIndexRequestDTO;
 use App\DTO\Request\Users\UserUpdateRequestDTO;
 use App\Interfaces\Users\UserServiceInterface;
 use CodeIgniter\HTTP\ResponseInterface;
 use Config\Services;
+use dcardenasl\Ci4ApiCore\Http\ApiController;
+use dcardenasl\Ci4ApiCore\Http\ApiResponse;
 
 /**
  * Modernized User Controller
@@ -88,4 +89,18 @@ class UserController extends ApiController
         return $this->handleRequest(fn ($dto, $context) => $this->userService->destroy($id, $context));
     }
 
+    /**
+     * Lists the global roles the current actor is allowed to assign to other
+     * users. Anti-escalation: a role appears only if all its permissions are
+     * a subset of the actor's effective permissions in the current application.
+     */
+    public function assignableRoles(): ResponseInterface
+    {
+        return $this->handleRequest(function ($dto, $context) {
+            $perms = $context !== null ? $context->permissions : [];
+            $assignable = Services::assignableRolesService()->listAssignable($perms);
+
+            return $this->response->setJSON(ApiResponse::success($assignable));
+        });
+    }
 }

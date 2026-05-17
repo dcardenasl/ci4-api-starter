@@ -2,14 +2,11 @@
 
 namespace Config;
 
+use App\Filters\AppKeyRequiredFilter;
 use App\Filters\AuthThrottleFilter;
-use App\Filters\CorsFilter;
 use App\Filters\FeatureToggleFilter;
 use App\Filters\JwtAuthFilter;
-use App\Filters\LocaleFilter;
-use App\Filters\RequestLoggingFilter;
-use App\Filters\RoleAuthorizationFilter;
-use App\Filters\SecurityHeadersFilter;
+use App\Filters\PermissionFilter;
 use App\Filters\ThrottleFilter;
 use CodeIgniter\Config\Filters as BaseFilters;
 use CodeIgniter\Filters\Cors;
@@ -20,6 +17,10 @@ use CodeIgniter\Filters\Honeypot;
 use CodeIgniter\Filters\InvalidChars;
 use CodeIgniter\Filters\PageCache;
 use CodeIgniter\Filters\PerformanceMetrics;
+use dcardenasl\Ci4ApiCore\Http\Filters\CorsFilter;
+use dcardenasl\Ci4ApiCore\Http\Filters\LocaleFilter;
+use dcardenasl\Ci4ApiCore\Http\Filters\RequestLoggingFilter;
+use dcardenasl\Ci4ApiCore\Http\Filters\SecurityHeadersFilter;
 
 class Filters extends BaseFilters
 {
@@ -61,10 +62,15 @@ class Filters extends BaseFilters
         'testauth'      => \App\Filters\TestAuthFilter::class,
         'throttle'      => ThrottleFilter::class,
         'authThrottle'  => AuthThrottleFilter::class,
-        'roleauth'      => RoleAuthorizationFilter::class,
+        'appKeyRequired' => AppKeyRequiredFilter::class,
+        'permission'    => PermissionFilter::class,
         'requestLogging' => RequestLoggingFilter::class,
         'locale'        => LocaleFilter::class,
         'featureToggle' => FeatureToggleFilter::class,
+        'deprecationheaders' => \dcardenasl\Ci4ApiCore\Http\Filters\DeprecationHeadersFilter::class,
+        'idempotency' => \dcardenasl\Ci4ApiCore\Http\Filters\IdempotencyFilter::class,
+        'correlationid' => \dcardenasl\Ci4ApiCore\Http\Filters\CorrelationIdFilter::class,
+        'maintenance' => \dcardenasl\Ci4ApiCore\Http\Filters\MaintenanceFilter::class,
     ];
 
     /**
@@ -103,6 +109,8 @@ class Filters extends BaseFilters
      */
     public array $globals = [
         'before' => [
+            'maintenance', // 503 short-circuit when MAINTENANCE_MODE=true (audit B10.4); /health etc. bypass internally.
+            'correlationid', // Resolve / generate X-Request-ID and stamp on RequestIdHolder (audit B10.1)
             'locale', // Set locale from Accept-Language header
             'cors', // Handle CORS preflight (OPTIONS) requests
             'invalidchars', // Filter invalid/malicious characters from requests
@@ -113,6 +121,8 @@ class Filters extends BaseFilters
             'cors', // Add CORS headers to all responses
             // 'honeypot',
             'secureheaders', // Add security headers to all responses
+            'deprecationheaders', // Emit Deprecation/Sunset/Link headers for deprecated API versions (audit B7.2)
+            'correlationid', // Echo X-Request-ID on every response (audit B10.1)
             'requestLogging' => ['except' => ['health', 'ping', 'ready', 'live']], // Skip noisy health probes
         ],
     ];

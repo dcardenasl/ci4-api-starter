@@ -26,4 +26,10 @@ return [
     'valid_token'        => 'The {field} must be a valid token.',
     'valid_token_format' => 'The {field} must contain only hexadecimal characters.',
     'valid_token_length' => 'The {field} must be exactly {0} characters.',
+
+    // Sequential list rule message
+    'is_list' => 'The {field} must be a sequential list of values.',
+
+    // Boolean-like rule message
+    'boolean_like' => 'The {field} must be a boolean value (true/false, 1/0, yes/no, on/off).',
 ];

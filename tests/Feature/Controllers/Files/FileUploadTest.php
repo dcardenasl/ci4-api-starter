@@ -38,7 +38,7 @@ class FileUploadTest extends ApiTestCase
 
     public function testUploadBase64TooLarge(): void
     {
-        \App\Libraries\ContextHolder::set(new \App\DTO\SecurityContext($this->currentUserId, $this->currentUserRole));
+        \dcardenasl\Ci4ApiCore\Http\ContextHolder::set(new \dcardenasl\Ci4ApiCore\Dto\SecurityContext($this->currentUserId, [], \App\Support\TestPermissionResolver::permissionsForRole((string) $this->currentUserRole)));
         $largeData = base64_encode(str_repeat('A', 2048)); // 2KB encoded > 1KB limit (decoded is ~1.5KB)
 
         $result = $this->withHeaders(['Authorization' => "Bearer {$this->token}"])
@@ -54,7 +54,7 @@ class FileUploadTest extends ApiTestCase
 
     public function testUploadBase64Success(): void
     {
-        \App\Libraries\ContextHolder::set(new \App\DTO\SecurityContext($this->currentUserId, $this->currentUserRole));
+        \dcardenasl\Ci4ApiCore\Http\ContextHolder::set(new \dcardenasl\Ci4ApiCore\Dto\SecurityContext($this->currentUserId, [], \App\Support\TestPermissionResolver::permissionsForRole((string) $this->currentUserRole)));
         // Standard 1x1 transparent pixel PNG
         $base64Data = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==';
 

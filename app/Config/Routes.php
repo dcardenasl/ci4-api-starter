@@ -56,6 +56,32 @@ $routes->get('/', static function () {
 });
 
 /**
+ * Public version discovery endpoint (audit B7.2 / ADR-008).
+ *
+ * Lets clients machine-read the supported API versions and their lifecycle
+ * status (current / deprecated / sunset). Pairs with `DeprecationHeadersFilter`
+ * which annotates per-request responses; this endpoint is the bulk catalog.
+ */
+$routes->get('/api/versions', static function () {
+    /** @var \Config\Api $apiConfig */
+    $apiConfig = config('Api');
+    $current = null;
+    $versions = [];
+
+    foreach ($apiConfig->apiVersions as $key => $entry) {
+        $versions[] = array_merge(['version' => $key], $entry);
+        if (($entry['status'] ?? null) === 'current') {
+            $current = $key;
+        }
+    }
+
+    return response()->setJSON([
+        'current'  => $current,
+        'versions' => $versions,
+    ])->setStatusCode(200);
+});
+
+/**
  * --------------------------------------------------------------------
  * Modular Route Loader
  * --------------------------------------------------------------------

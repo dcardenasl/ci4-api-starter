@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Libraries;
 
-use App\Libraries\Query\QueryBuilder;
 use CodeIgniter\Model;
 use CodeIgniter\Test\CIUnitTestCase;
+use dcardenasl\Ci4ApiCore\Filters\QueryBuilder;
 
 class QueryBuilderTest extends CIUnitTestCase
 {
@@ -123,18 +123,18 @@ class QueryBuilderTest extends CIUnitTestCase
 
     public function testFilterMixedFieldsOnlyAppliesAllowed(): void
     {
-        $model = $this->createMockModel(['role', 'status', 'email']);
+        $model = $this->createMockModel(['status', 'email']);
         $builder = new QueryBuilder($model);
 
         $builder->filter([
-            'role'                     => 'admin',
+            'status'                   => 'active',
             'password'                 => ['like' => '$2y$'],
             'email'                    => ['like' => 'test'],
             'email_verification_token' => ['eq' => 'secret'],
         ]);
 
         $this->assertCount(2, $model->appliedFilters);
-        $this->assertEquals(['where', 'role', 'admin'], $model->appliedFilters[0]);
+        $this->assertEquals(['where', 'status', 'active'], $model->appliedFilters[0]);
         $this->assertEquals(['like', 'email', 'test'], $model->appliedFilters[1]);
     }
 

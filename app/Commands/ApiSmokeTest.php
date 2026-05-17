@@ -57,16 +57,23 @@ class ApiSmokeTest extends BaseCommand
     private function getSuperAdminToken(): ?string
     {
         /** @var \App\Models\UserModel $userModel */
-        $userModel = model(\App\Models\UserModel::class);
-        $admin = $userModel->where('role', 'superadmin')->first();
+        $db = \Config\Database::connect();
+        $row = $db->table('user_roles ur')
+            ->select('ur.user_id')
+            ->join('roles r', 'r.id = ur.role_id')
+            ->where('r.code', 'superadmin')
+            ->limit(1)
+            ->get()?->getRowArray();
 
-        if (!$admin) {
-            CLI::error('No SuperAdmin found in database. Run "php spark db:seed InitialSeeder" first.');
+        if ($row === null) {
+            CLI::error('No superadmin found. Run "php spark users:bootstrap-superadmin" first.');
             return null;
         }
 
+        $userId = (int) $row['user_id'];
         $jwtService = Services::jwtService();
-        return $jwtService->encode((int)$admin->id, 'superadmin');
+        $permissions = Services::effectivePermissionsResolver()->resolve($userId, 1);
+        return $jwtService->encode($userId, $permissions);
     }
 
     private function inspectEndpoint(string $method, string $path, string $label, string $token)

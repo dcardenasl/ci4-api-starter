@@ -5,8 +5,9 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Entities\ApiKeyEntity;
-use App\Traits\Filterable;
-use App\Traits\Searchable;
+use dcardenasl\Ci4ApiCore\Models\BaseAuditableModel;
+use dcardenasl\Ci4ApiCore\Models\Traits\Filterable;
+use dcardenasl\Ci4ApiCore\Models\Traits\Searchable;
 
 class ApiKeyModel extends BaseAuditableModel
 {

@@ -4,42 +4,74 @@ declare(strict_types=1);
 
 namespace App\Services\Auth\Support;
 
+use App\DTO\Response\Auth\MeResponseDTO;
 use App\Interfaces\Tokens\JwtServiceInterface;
 use App\Interfaces\Tokens\RefreshTokenServiceInterface;
+use App\Services\Iam\EffectivePermissionsResolver;
 
 /**
  * Session Manager
  *
- * Orchestrates the issuance of Access Tokens (JWT) and Refresh Tokens
- * to establish a user session.
+ * Issues access (JWT) + refresh tokens and assembles the canonical
+ * session response. The `user` field is always a `MeResponseDTO`
+ * (id, email, first/last name, status, avatar, timestamps, roles,
+ * permissions) — the same shape returned by `/auth/me` and `PATCH
+ * /auth/me`, so consumers can persist it as-is from any of the four
+ * endpoints without losing fields.
  */
 class SessionManager
 {
+    private const APPLICATION_ID = 1;
+
     public function __construct(
         protected JwtServiceInterface $jwtService,
         protected RefreshTokenServiceInterface $refreshTokenService,
+        protected EffectivePermissionsResolver $permissionsResolver,
         protected int $accessTokenTtl = 3600
     ) {
     }
 
     /**
-     * Generate a complete session response (Access + Refresh tokens)
+     * Build a session response (access + refresh tokens + canonical user).
      *
-     * @param array $userData Pre-mapped user data from AuthUserMapper
+     * @param object $user The authenticated user entity.
+     * @return array{access_token:string, refresh_token:string, expires_in:int, user:array<string,mixed>}
      */
-    public function generateSessionResponse(array $userData): array
+    public function generateSessionResponse(object $user): array
     {
-        $userId = (int) ($userData['id'] ?? 0);
-        $role = (string) ($userData['role'] ?? 'user');
+        $userId = (int) ($user->id ?? 0);
+        $permissions = $userId > 0
+            ? $this->permissionsResolver->resolve($userId, self::APPLICATION_ID)
+            : [];
 
-        $accessToken = $this->jwtService->encode($userId, $role);
+        $accessToken = $this->jwtService->encode($userId, $permissions);
         $refreshToken = $this->refreshTokenService->issueRefreshToken($userId);
 
+        $userPayload = MeResponseDTO::fromUserData(
+            $this->normalizeUser($user),
+            $permissions
+        )->toArray();
+
         return [
-            'access_token' => $accessToken,
+            'access_token'  => $accessToken,
             'refresh_token' => $refreshToken,
-            'expires_in' => $this->accessTokenTtl,
-            'user' => $userData,
+            'expires_in'    => $this->accessTokenTtl,
+            'user'          => $userPayload,
         ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function normalizeUser(object $user): array
+    {
+        if (method_exists($user, 'toArray')) {
+            $array = $user->toArray();
+            if (is_array($array)) {
+                return $array;
+            }
+        }
+
+        return get_object_vars($user);
     }
 }

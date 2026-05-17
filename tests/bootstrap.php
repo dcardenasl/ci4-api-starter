@@ -12,6 +12,22 @@ use CodeIgniter\CLI\CLI;
 use CodeIgniter\Database\Exceptions\DatabaseException;
 use Config\Database;
 
+// Skip the DB preflight when phpunit is invoked exclusively for the Unit
+// suite — Unit tests are DB-free by project convention, and CI's
+// `ci4-compatibility` job (Unit-only) runs without a MySQL service.
+$requestedSuites = [];
+foreach ($_SERVER['argv'] ?? [] as $i => $arg) {
+    if ($arg === '--testsuite' && isset($_SERVER['argv'][$i + 1])) {
+        $requestedSuites = array_merge($requestedSuites, explode(',', $_SERVER['argv'][$i + 1]));
+    } elseif (is_string($arg) && str_starts_with($arg, '--testsuite=')) {
+        $requestedSuites = array_merge($requestedSuites, explode(',', substr($arg, 12)));
+    }
+}
+
+if ($requestedSuites !== [] && array_diff($requestedSuites, ['Unit']) === []) {
+    return;
+}
+
 try {
     $db = Database::connect('tests');
     $db->initialize();

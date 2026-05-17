@@ -343,34 +343,32 @@ Raw spec: `http://localhost:8080/swagger.json`
 
 ### Docker Setup
 
+Single command. The entrypoint copies `.env.example` → `.env`, generates
+`JWT_SECRET_KEY` and `encryption.key`, runs migrations, and seeds the RBAC
+bootstrap on first start. Secrets persist in the `ci4-api-env` named volume
+across `docker compose down` (use `down -v` to reset).
+
 ```bash
-# 1. Generate the local app environment
-./init.sh --skip-server
-
-# 2. Create the Docker environment file
-cp .env.docker.example .env.docker
-
-# 3. Set Docker secrets in .env.docker before continuing
-# MYSQL_ROOT_PASSWORD=...
-# MYSQL_PASSWORD=...
-# JWT_SECRET_KEY=...
-# encryption.key='hex:...'
-
-# 4. Start services (API :8080, MySQL :3306, phpMyAdmin :8081)
+# Start API :8080 and MySQL :3307 (host port).
 docker compose up -d
 
-# 5. Run migrations inside the app container
-docker compose exec app php spark migrate
-
-# 6. Bootstrap the superadmin (run once)
+# Create the first superadmin (only manual step; needs your email + password).
 docker compose exec app php spark users:bootstrap-superadmin \
   --email admin@example.com \
   --password 'StrongPass123!' \
   --first-name Admin \
   --last-name User
+
+# Optional: enable phpMyAdmin on :8081
+docker compose --profile tools up -d phpmyadmin
 ```
 
-Your API is now running at `http://localhost:8080`
+For production deployments, override the defaults via environment variables
+or a `.env` file in the project root — e.g. `MYSQL_ROOT_PASSWORD`,
+`MYSQL_PASSWORD`, `API_HOST_PORT`. `.env.docker.example` documents the full
+set of variables `docker-compose.yml` consumes.
+
+Your API is now running at `http://localhost:8080`.
 
 ### 🚀 Production Deployment
 

@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Services\System;
 
-use App\DTO\SecurityContext;
 use App\Entities\ApiKeyEntity;
-use App\Interfaces\System\AuditServiceInterface;
 use App\Services\System\SecurityAuditLogger;
-use App\Support\RequestAuditContextFactory;
 use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\Test\CIUnitTestCase;
+use dcardenasl\Ci4ApiCore\Dto\SecurityContext;
+use dcardenasl\Ci4ApiCore\Services\AuditServiceInterface;
+use dcardenasl\Ci4ApiCore\Support\RequestAuditContextFactory;
 
 final class SecurityAuditLoggerTest extends CIUnitTestCase
 {
@@ -48,7 +48,7 @@ final class SecurityAuditLoggerTest extends CIUnitTestCase
     {
         $mockAudit = $this->createMock(AuditServiceInterface::class);
         $logger = new SecurityAuditLogger($mockAudit, new RequestAuditContextFactory());
-        $context = new SecurityContext(10, 'admin', ['request_id' => 'req-123']);
+        $context = new SecurityContext(10, ['request_id' => 'req-123']);
 
         $mockAudit->expects($this->once())
             ->method('log')

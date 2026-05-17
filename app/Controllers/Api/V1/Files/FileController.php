@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace App\Controllers\Api\V1\Files;
 
-use App\Controllers\ApiController;
 use App\DTO\Request\Files\FileGetRequestDTO;
 use App\DTO\Request\Files\FileIndexRequestDTO;
 use App\DTO\Request\Files\FileUploadRequestDTO;
 use App\DTO\Response\Files\FileDownloadResponseDTO;
 use App\Interfaces\Files\FileServiceInterface;
-use App\Libraries\ApiResponse;
 use CodeIgniter\HTTP\ResponseInterface;
 use Config\Services;
+use dcardenasl\Ci4ApiCore\Http\ApiController;
+use dcardenasl\Ci4ApiCore\Http\ApiResponse;
 
 /**
  * File Controller
@@ -70,7 +70,10 @@ class FileController extends ApiController
                 $filePath = FCPATH . config('Api')->fileUploadPath . $result->path;
 
                 if (file_exists($filePath)) {
-                    return $this->response->download($filePath, null)->setFileName($result->original_name);
+                    $download = $this->response->download($filePath, null);
+                    if ($download !== null) {
+                        return $download->setFileName($result->original_name);
+                    }
                 }
             }
 

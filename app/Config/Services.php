@@ -7,6 +7,7 @@ namespace Config;
 use CodeIgniter\Config\BaseService;
 
 require_once __DIR__ . '/AuthIdentityServices.php';
+require_once __DIR__ . '/IamDomainServices.php';
 require_once __DIR__ . '/TokenSecurityServices.php';
 require_once __DIR__ . '/FileDomainServices.php';
 require_once __DIR__ . '/ApiCoreServices.php';
@@ -24,6 +25,7 @@ class Services extends BaseService
     use AuthIdentityServices;
     use TokenSecurityServices;
     use FileDomainServices;
+    use IamDomainServices;
     use ApiCoreServices;
     use SystemMonitoringServices;
     use RepositoryModelServices;
@@ -33,7 +35,7 @@ class Services extends BaseService
      *
      * @param \Config\App|bool $getShared
      */
-    public static function request($getShared = true): \App\HTTP\ApiRequest
+    public static function request($getShared = true): \dcardenasl\Ci4ApiCore\Http\ApiRequest
     {
         if (is_bool($getShared) && $getShared) {
             return static::getSharedInstance('request');
@@ -41,7 +43,7 @@ class Services extends BaseService
 
         $config = $getShared instanceof \Config\App ? $getShared : config('App');
 
-        return new \App\HTTP\ApiRequest(
+        return new \dcardenasl\Ci4ApiCore\Http\ApiRequest(
             $config,
             static::uri(),
             'php://input',

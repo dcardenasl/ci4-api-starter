@@ -28,6 +28,8 @@ class RefreshTokenServiceTest extends CIUnitTestCase
     protected RefreshTokenModel $mockRefreshTokenModel;
     protected JwtServiceInterface $mockJwtService;
     protected UserModel $mockUserModel;
+    protected \App\Services\Users\UserAccountGuard $mockUserAccountGuard;
+    protected \App\Services\Iam\EffectivePermissionsResolver $mockPermissionsResolver;
 
     protected function setUp(): void
     {
@@ -40,12 +42,14 @@ class RefreshTokenServiceTest extends CIUnitTestCase
         $this->mockUserModel = $this->createMock(UserModel::class);
 
         $this->mockUserAccountGuard = $this->createMock(\App\Services\Users\UserAccountGuard::class);
+        $this->mockPermissionsResolver = $this->createMock(\App\Services\Iam\EffectivePermissionsResolver::class);
 
         $this->service = new RefreshTokenService(
             $this->mockRefreshTokenModel,
             $this->mockJwtService,
             $this->mockUserModel,
-            $this->mockUserAccountGuard
+            $this->mockUserAccountGuard,
+            $this->mockPermissionsResolver
         );
     }
 
@@ -103,7 +107,7 @@ class RefreshTokenServiceTest extends CIUnitTestCase
             'refresh_token' => self::VALID_REFRESH_TOKEN,
         ], service('validation')));
 
-        $this->assertSame(\App\Support\OperationResult::SUCCESS, $result->state);
+        $this->assertSame(\dcardenasl\Ci4ApiCore\Support\OperationState::SUCCESS, $result->state);
     }
 
     public function testRevokeWithNonExistentTokenThrowsNotFoundException(): void
@@ -112,7 +116,7 @@ class RefreshTokenServiceTest extends CIUnitTestCase
             ->method('revokeToken')
             ->willReturn(false);
 
-        $this->expectException(\App\Exceptions\NotFoundException::class);
+        $this->expectException(\dcardenasl\Ci4ApiCore\Exceptions\NotFoundException::class);
 
         $this->service->revoke(new RefreshTokenRequestDTO([
             'refresh_token' => self::UNKNOWN_REFRESH_TOKEN,
@@ -130,6 +134,6 @@ class RefreshTokenServiceTest extends CIUnitTestCase
 
         $result = $this->service->revokeAllUserTokens(1);
 
-        $this->assertSame(\App\Support\OperationResult::SUCCESS, $result->state);
+        $this->assertSame(\dcardenasl\Ci4ApiCore\Support\OperationState::SUCCESS, $result->state);
     }
 }

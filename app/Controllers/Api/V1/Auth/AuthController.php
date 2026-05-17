@@ -4,13 +4,14 @@ declare(strict_types=1);
 
 namespace App\Controllers\Api\V1\Auth;
 
-use App\Controllers\ApiController;
 use App\DTO\Request\Auth\GoogleLoginRequestDTO;
 use App\DTO\Request\Auth\LoginRequestDTO;
 use App\DTO\Request\Auth\RegisterRequestDTO;
+use App\DTO\Request\Auth\UpdateMeRequestDTO;
 use App\Interfaces\Auth\AuthServiceInterface;
 use CodeIgniter\HTTP\ResponseInterface;
 use Config\Services;
+use dcardenasl\Ci4ApiCore\Http\ApiController;
 
 /**
  * Modernized Authentication Controller
@@ -62,7 +63,22 @@ class AuthController extends ApiController
     public function me(): ResponseInterface
     {
         return $this->handleRequest(function () {
-            return $this->authService->me($this->getUserId());
+            $userId = $this->getUserId();
+            if ($userId === null) {
+                throw new \dcardenasl\Ci4ApiCore\Exceptions\AuthenticationException(lang('Auth.authRequired'));
+            }
+            return $this->authService->me($userId);
         });
+    }
+
+    /**
+     * Update the authenticated user's own profile.
+     *
+     * Allowlist enforced by UpdateMeRequestDTO: first_name, last_name, avatar_url.
+     * Email, password and roles are intentionally not modifiable via self-update.
+     */
+    public function updateMe(): ResponseInterface
+    {
+        return $this->handleRequest('updateMe', UpdateMeRequestDTO::class);
     }
 }

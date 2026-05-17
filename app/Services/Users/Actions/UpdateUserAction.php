@@ -5,17 +5,20 @@ declare(strict_types=1);
 namespace App\Services\Users\Actions;
 
 use App\DTO\Request\Users\UserUpdateRequestDTO;
-use App\DTO\SecurityContext;
-use App\Exceptions\NotFoundException;
-use App\Exceptions\ValidationException;
 use App\Interfaces\Users\UserRepositoryInterface;
-use App\Libraries\Security\UserRoleGuard;
+use App\Services\Iam\IamAuthorizationService;
+use App\Services\Iam\UserRoleAssignmentService;
+use dcardenasl\Ci4ApiCore\Dto\SecurityContext;
+use dcardenasl\Ci4ApiCore\Exceptions\AuthorizationException;
+use dcardenasl\Ci4ApiCore\Exceptions\NotFoundException;
+use dcardenasl\Ci4ApiCore\Exceptions\ValidationException;
 
 class UpdateUserAction
 {
     public function __construct(
         protected UserRepositoryInterface $userRepository,
-        protected UserRoleGuard $roleGuard
+        protected UserRoleAssignmentService $userRoleAssignmentService,
+        protected IamAuthorizationService $authz
     ) {
     }
 
@@ -27,26 +30,36 @@ class UpdateUserAction
             throw new NotFoundException(lang('Users.notFound'));
         }
 
-        $context ??= SecurityContext::anonymous();
-        $actorRole = $context->user_role ?? 'user';
-        $actorId = $context->user_id;
-
-        $this->roleGuard->assertCanManageTarget($actorRole, $actorId, $userId, (string) $targetUser->role);
-
-        if ($request->role !== null) {
-            $this->roleGuard->assertCanChangeRole(
-                $actorRole,
-                (string) $targetUser->role,
-                (string) $request->role
-            );
-        }
-
         $updateData = $this->buildUpdateData($request);
-        if ($updateData === []) {
+        $hasFieldUpdates = $updateData !== [];
+        $hasRoleUpdates = $request->role_ids !== null;
+
+        if (! $hasFieldUpdates && ! $hasRoleUpdates) {
             throw new ValidationException(lang('Api.validationFailed'), ['update' => lang('Api.noFieldsToUpdate')]);
         }
 
-        $this->userRepository->update($userId, $updateData);
+        // Email is the security anchor of the account. Only superadmin may
+        // change it via the admin endpoint; anyone else attempting to do so
+        // gets a 403, not a silent drop. Self-edit of email is impossible
+        // here too because PUT /users/{id} is already gated by assertNotSelf.
+        if (array_key_exists('email', $updateData)
+            && $targetUser->email !== $updateData['email']
+            && ! $this->authz->isSuperAdmin($context)
+        ) {
+            throw new AuthorizationException(lang('Iam.cannotModifyEmail'));
+        }
+
+        if ($hasFieldUpdates) {
+            $this->userRepository->update($userId, $updateData);
+        }
+
+        if ($hasRoleUpdates) {
+            $this->userRoleAssignmentService->syncRoles(
+                $userId,
+                $request->role_ids ?? [],
+                $context?->user_id
+            );
+        }
 
         /** @var \App\Entities\UserEntity|null $updatedUser */
         $updatedUser = $this->userRepository->find($userId);
@@ -72,9 +85,6 @@ class UpdateUserAction
         }
         if ($request->password !== null) {
             $data['password'] = password_hash($request->password, PASSWORD_BCRYPT);
-        }
-        if ($request->role !== null) {
-            $data['role'] = $request->role;
         }
         if ($request->avatar_url !== null) {
             $data['avatar_url'] = $request->avatar_url;

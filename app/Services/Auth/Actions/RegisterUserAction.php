@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace App\Services\Auth\Actions;
 
 use App\DTO\Request\Auth\RegisterRequestDTO;
-use App\DTO\SecurityContext;
-use App\Exceptions\ValidationException;
 use App\Interfaces\Auth\VerificationServiceInterface;
 use App\Interfaces\System\EmailServiceInterface;
 use App\Interfaces\Users\UserRepositoryInterface;
-use App\Traits\ResolvesWebAppLinks;
+use App\Services\Iam\UserRoleAssignmentService;
+use dcardenasl\Ci4ApiCore\Dto\SecurityContext;
+use dcardenasl\Ci4ApiCore\Exceptions\ValidationException;
+use dcardenasl\Ci4ApiCore\Security\Hasher;
+use dcardenasl\Ci4ApiCore\Support\ResolvesWebAppLinks;
 
 class RegisterUserAction
 {
@@ -19,13 +21,14 @@ class RegisterUserAction
     public function __construct(
         protected UserRepositoryInterface $userRepository,
         protected VerificationServiceInterface $verificationService,
-        protected EmailServiceInterface $emailService
+        protected EmailServiceInterface $emailService,
+        protected UserRoleAssignmentService $userRoleAssignmentService
     ) {
     }
 
     public function execute(RegisterRequestDTO $request, ?SecurityContext $context = null): \App\Entities\UserEntity
     {
-        $requiresVerification = is_email_verification_required();
+        $requiresVerification = Hasher::isEmailVerificationRequired();
         $status = $requiresVerification ? 'pending_approval' : 'active';
         $now = date('Y-m-d H:i:s');
 
@@ -48,6 +51,8 @@ class RegisterUserAction
         if ($user === null) {
             throw new ValidationException(lang('Api.validationFailed'), ['user' => lang('Api.resourceNotFound')]);
         }
+
+        $this->userRoleAssignmentService->assignRoleByCode((int) $userId, 'user');
 
         if ($requiresVerification) {
             try {

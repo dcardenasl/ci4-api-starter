@@ -6,6 +6,7 @@ namespace App\Commands;
 
 use CodeIgniter\CLI\BaseCommand;
 use CodeIgniter\CLI\CLI;
+use Config\Services;
 
 class BootstrapSuperadmin extends BaseCommand
 {
@@ -37,13 +38,32 @@ class BootstrapSuperadmin extends BaseCommand
             return EXIT_ERROR;
         }
 
-        /** @var \App\Models\UserModel $userModel */
-        $userModel = model(\App\Models\UserModel::class);
-        $existingSuperadmin = $userModel->where('role', 'superadmin')->first();
+        $db = \Config\Database::connect();
+
+        $superadminRole = $db->table('roles')
+            ->where('code', 'superadmin')
+            ->get()?->getRowArray();
+
+        if ($superadminRole === null) {
+            CLI::error('Superadmin role not found. Run "php spark db:seed RbacBootstrapSeeder" first.');
+            return EXIT_ERROR;
+        }
+
+        $superadminRoleId = (int) $superadminRole['id'];
+
+        // Refuse to run if any user already has the superadmin role
+        $existingSuperadmin = $db->table('user_roles')
+            ->where('role_id', $superadminRoleId)
+            ->limit(1)
+            ->get()?->getRowArray();
+
         if ($existingSuperadmin !== null) {
             CLI::error('A superadmin already exists. Bootstrap can only run once.');
             return EXIT_ERROR;
         }
+
+        /** @var \App\Models\UserModel $userModel */
+        $userModel = model(\App\Models\UserModel::class);
 
         $existingUser = $userModel
             ->withDeleted()
@@ -56,7 +76,6 @@ class BootstrapSuperadmin extends BaseCommand
             }
 
             $updateData = [
-                'role' => 'superadmin',
                 'status' => 'active',
                 'password' => password_hash($password, PASSWORD_BCRYPT),
             ];
@@ -76,6 +95,7 @@ class BootstrapSuperadmin extends BaseCommand
                 return EXIT_ERROR;
             }
 
+            Services::userRoleAssignmentService()->assignRole((int) $existingUser->id, $superadminRoleId);
             CLI::write('Existing user promoted to superadmin.', 'green');
             CLI::write('User ID: ' . (int) $existingUser->id, 'green');
             return EXIT_SUCCESS;
@@ -86,7 +106,6 @@ class BootstrapSuperadmin extends BaseCommand
             'first_name' => $firstName,
             'last_name' => $lastName,
             'password' => password_hash($password, PASSWORD_BCRYPT),
-            'role' => 'superadmin',
             'status' => 'active',
             'email_verified_at' => date('Y-m-d H:i:s'),
         ]);
@@ -96,6 +115,7 @@ class BootstrapSuperadmin extends BaseCommand
             return EXIT_ERROR;
         }
 
+        Services::userRoleAssignmentService()->assignRole((int) $userId, $superadminRoleId);
         CLI::write('Superadmin user created successfully.', 'green');
         CLI::write('User ID: ' . (int) $userId, 'green');
         return EXIT_SUCCESS;

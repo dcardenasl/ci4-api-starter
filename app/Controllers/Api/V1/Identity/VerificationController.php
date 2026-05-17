@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Controllers\Api\V1\Identity;
 
-use App\Controllers\ApiController;
 use App\DTO\Request\Identity\VerificationRequestDTO;
 use App\Interfaces\Auth\VerificationServiceInterface;
 use CodeIgniter\HTTP\ResponseInterface;
 use Config\Services;
+use dcardenasl\Ci4ApiCore\Http\ApiController;
 
 /**
  * Modernized Verification Controller

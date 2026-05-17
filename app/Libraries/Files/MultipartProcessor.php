@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Libraries\Files;
 
-use App\Exceptions\BadRequestException;
-use App\Exceptions\ValidationException;
 use App\Support\Files\ProcessedFile;
 use CodeIgniter\HTTP\Files\UploadedFile;
+use dcardenasl\Ci4ApiCore\Exceptions\BadRequestException;
+use dcardenasl\Ci4ApiCore\Exceptions\ValidationException;
 
 class MultipartProcessor implements FileProcessorInterface
 {

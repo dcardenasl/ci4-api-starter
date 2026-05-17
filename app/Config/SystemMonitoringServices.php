@@ -37,13 +37,13 @@ trait SystemMonitoringServices
         );
     }
 
-    public static function auditService(bool $getShared = true): \App\Interfaces\System\AuditServiceInterface
+    public static function auditService(bool $getShared = true): \dcardenasl\Ci4ApiCore\Services\AuditServiceInterface
     {
         if ($getShared) {
             return static::getSharedInstance('auditService');
         }
 
-        return new \App\Services\System\AuditService(
+        return new \dcardenasl\Ci4ApiCore\Services\Audit\AuditService(
             static::auditRepository(),
             static::auditResponseMapper(),
             static::auditWriter(),
@@ -56,33 +56,33 @@ trait SystemMonitoringServices
         );
     }
 
-    public static function auditWriter(bool $getShared = true): \App\Services\System\AuditWriter
+    public static function auditWriter(bool $getShared = true): \dcardenasl\Ci4ApiCore\Services\Audit\AuditWriter
     {
         if ($getShared) {
             return static::getSharedInstance('auditWriter');
         }
 
-        return new \App\Services\System\AuditWriter(
+        return new \dcardenasl\Ci4ApiCore\Services\Audit\AuditWriter(
             static::auditRepository()
         );
     }
 
-    public static function auditPayloadSanitizer(bool $getShared = true): \App\Services\System\AuditPayloadSanitizer
+    public static function auditPayloadSanitizer(bool $getShared = true): \dcardenasl\Ci4ApiCore\Services\Audit\AuditPayloadSanitizer
     {
         if ($getShared) {
             return static::getSharedInstance('auditPayloadSanitizer');
         }
 
-        return new \App\Services\System\AuditPayloadSanitizer();
+        return new \dcardenasl\Ci4ApiCore\Services\Audit\AuditPayloadSanitizer();
     }
 
-    public static function requestAuditContextFactory(bool $getShared = true): \App\Support\RequestAuditContextFactory
+    public static function requestAuditContextFactory(bool $getShared = true): \dcardenasl\Ci4ApiCore\Support\RequestAuditContextFactory
     {
         if ($getShared) {
             return static::getSharedInstance('requestAuditContextFactory');
         }
 
-        return new \App\Support\RequestAuditContextFactory();
+        return new \dcardenasl\Ci4ApiCore\Support\RequestAuditContextFactory();
     }
 
     public static function securityAuditLogger(bool $getShared = true): \App\Services\System\SecurityAuditLogger
@@ -97,13 +97,13 @@ trait SystemMonitoringServices
         );
     }
 
-    public static function auditResponseMapper(bool $getShared = true): \App\Interfaces\Mappers\ResponseMapperInterface
+    public static function auditResponseMapper(bool $getShared = true): \dcardenasl\Ci4ApiCore\Mappers\ResponseMapperInterface
     {
         if ($getShared) {
             return static::getSharedInstance('auditResponseMapper');
         }
 
-        return new \App\Services\Core\Mappers\DtoResponseMapper(
+        return new \dcardenasl\Ci4ApiCore\Mappers\DtoResponseMapper(
             \App\DTO\Response\Audit\AuditResponseDTO::class
         );
     }

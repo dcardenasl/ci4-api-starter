@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Interfaces\Auth;
 
-use App\DTO\SecurityContext;
+use dcardenasl\Ci4ApiCore\Dto\SecurityContext;
 
 /**
  * Email Verification Service Interface
@@ -19,7 +19,7 @@ interface VerificationServiceInterface
     /**
      * Verify email with token
      */
-    public function verifyEmail(\App\Interfaces\DataTransferObjectInterface $request, ?SecurityContext $context = null): bool;
+    public function verifyEmail(\dcardenasl\Ci4ApiCore\Dto\DataTransferObjectInterface $request, ?SecurityContext $context = null): bool;
 
     /**
      * Resend verification email

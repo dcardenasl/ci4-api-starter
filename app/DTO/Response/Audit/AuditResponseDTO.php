@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\DTO\Response\Audit;
 
-use App\Interfaces\DataTransferObjectInterface;
+use dcardenasl\Ci4ApiCore\Dto\DataTransferObjectInterface;
 use OpenApi\Attributes as OA;
 
 /**
@@ -37,6 +37,8 @@ readonly class AuditResponseDTO implements DataTransferObjectInterface
         public ?int $user_id,
         #[OA\Property(property: 'user_email', description: 'Email of user who performed the action', example: 'admin@example.com', nullable: true)]
         public ?string $user_email,
+        #[OA\Property(property: 'user_full_name', description: 'Full name of user who performed the action', example: 'Jane Doe', nullable: true)]
+        public ?string $user_full_name,
         #[OA\Property(property: 'ip_address', description: 'IP address of the requester', example: '127.0.0.1', nullable: true)]
         public ?string $ip_address,
         #[OA\Property(property: 'user_agent', description: 'User-Agent of the requester', example: 'Mozilla/5.0...', nullable: true)]
@@ -70,6 +72,7 @@ readonly class AuditResponseDTO implements DataTransferObjectInterface
             new_values: is_string($data['new_values'] ?? null) ? json_decode($data['new_values'], true) : ($data['new_values'] ?? []),
             user_id: isset($data['user_id']) ? (int) $data['user_id'] : null,
             user_email: $data['user_email'] ?? null,
+            user_full_name: $data['user_full_name'] ?? null,
             ip_address: $data['ip_address'] ?? null,
             user_agent: $data['user_agent'] ?? null,
             result: (string) ($data['result'] ?? 'success'),
@@ -91,6 +94,7 @@ readonly class AuditResponseDTO implements DataTransferObjectInterface
             'new_values' => $this->new_values,
             'user_id' => $this->user_id,
             'user_email' => $this->user_email,
+            'user_full_name' => $this->user_full_name,
             'ip_address' => $this->ip_address,
             'user_agent' => $this->user_agent,
             'result' => $this->result,

@@ -106,21 +106,48 @@ use OpenApi\Attributes as OA;
 #[OA\Get(
     path: '/api/v1/auth/me',
     tags: ['Authentication'],
-    summary: 'Get current user profile',
+    summary: 'Get the authenticated user (with effective permissions)',
+    description: 'Returns the canonical "me" shape: profile fields plus the effective permission codes used for UI gating. Permissions are resolved fresh from the IAM tables on each call.',
     security: [['bearerAuth' => []]],
     responses: [
         new OA\Response(
             response: 200,
-            description: 'Current user profile',
+            description: 'Authenticated user profile + permissions',
             content: new OA\JsonContent(
                 properties: [
                     new OA\Property(property: 'status', type: 'string', example: 'success'),
-                    new OA\Property(property: 'data', ref: '#/components/schemas/UserResponse'),
+                    new OA\Property(property: 'data', ref: '#/components/schemas/MeResponse'),
                 ],
                 type: 'object'
             )
         ),
         new OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse'),
+    ]
+)]
+#[OA\Patch(
+    path: '/api/v1/auth/me',
+    tags: ['Authentication'],
+    summary: 'Update the authenticated user\'s own profile',
+    description: 'Allowlist: first_name, last_name, avatar_url. Email, password and role assignments are not modifiable through self-update. Returns the canonical "me" shape with refreshed permissions.',
+    security: [['bearerAuth' => []]],
+    requestBody: new OA\RequestBody(
+        required: true,
+        content: new OA\JsonContent(ref: '#/components/schemas/UpdateMeRequest')
+    ),
+    responses: [
+        new OA\Response(
+            response: 200,
+            description: 'Updated authenticated user profile + permissions',
+            content: new OA\JsonContent(
+                properties: [
+                    new OA\Property(property: 'status', type: 'string', example: 'success'),
+                    new OA\Property(property: 'data', ref: '#/components/schemas/MeResponse'),
+                ],
+                type: 'object'
+            )
+        ),
+        new OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse'),
+        new OA\Response(response: 422, ref: '#/components/responses/ValidationErrorResponse'),
     ]
 )]
 class AuthEndpoints

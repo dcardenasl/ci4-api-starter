@@ -7,18 +7,21 @@ namespace App\Services\Auth;
 use App\DTO\Request\Auth\GoogleLoginRequestDTO;
 use App\DTO\Request\Auth\LoginRequestDTO;
 use App\DTO\Request\Auth\RegisterRequestDTO;
+use App\DTO\Response\Auth\MeResponseDTO;
 use App\DTO\Response\Auth\RegisterResponseDTO;
-use App\DTO\SecurityContext;
-use App\Exceptions\AuthenticationException;
-use App\Interfaces\DataTransferObjectInterface;
-use App\Interfaces\System\AuditServiceInterface;
 use App\Interfaces\Users\UserRepositoryInterface;
 use App\Services\Auth\Actions\GoogleLoginAction;
 use App\Services\Auth\Actions\RegisterUserAction;
-use App\Services\Auth\Support\AuthUserMapper;
 use App\Services\Auth\Support\SessionManager;
+use App\Services\Iam\EffectivePermissionsResolver;
+use App\Services\Users\Actions\UpdateSelfProfileAction;
 use App\Services\Users\UserAccountGuard;
-use App\Support\OperationResult;
+use dcardenasl\Ci4ApiCore\Dto\DataTransferObjectInterface;
+use dcardenasl\Ci4ApiCore\Dto\SecurityContext;
+use dcardenasl\Ci4ApiCore\Exceptions\AuthenticationException;
+use dcardenasl\Ci4ApiCore\Security\Token;
+use dcardenasl\Ci4ApiCore\Services\AuditServiceInterface;
+use dcardenasl\Ci4ApiCore\Support\OperationResult;
 
 /**
  * AuthService (Refactored)
@@ -27,19 +30,22 @@ use App\Support\OperationResult;
  */
 class AuthService implements \App\Interfaces\Auth\AuthServiceInterface
 {
-    use \App\Traits\HandlesTransactions;
+    use \dcardenasl\Ci4ApiCore\Services\HandlesTransactions;
 
     protected RegisterUserAction $registerUserAction;
     protected GoogleLoginAction $googleLoginAction;
+
+    private const APPLICATION_ID = 1;
 
     public function __construct(
         protected UserRepositoryInterface $userRepository,
         RegisterUserAction $registerUserAction,
         GoogleLoginAction $googleLoginAction,
         protected AuditServiceInterface $auditService,
-        protected AuthUserMapper $userMapper,
         protected SessionManager $sessionManager,
+        protected EffectivePermissionsResolver $permissionsResolver,
         protected UserAccountGuard $userAccessPolicy,
+        protected UpdateSelfProfileAction $updateSelfProfileAction,
         protected bool $allowTestPasswordBypass = false
     ) {
         $this->registerUserAction = $registerUserAction;
@@ -65,7 +71,7 @@ class AuthService implements \App\Interfaces\Auth\AuthServiceInterface
             if (ENVIRONMENT === 'testing') {
                 // High-entropy test secret to prevent accidental use
                 $testSecret = 'SKIP_VERIFY_99_ae_7b_21_42_8c';
-                $passwordValid = constant_time_compare($testSecret, $request->password);
+                $passwordValid = Token::constantTimeCompare($testSecret, $request->password);
             } else {
                 log_message('critical', '[AuthService] TEST PASSWORD BYPASS ATTEMPTED OUTSIDE TESTING ENVIRONMENT. IP: ' . (string)($_SERVER['REMOTE_ADDR'] ?? 'unknown'));
             }
@@ -81,12 +87,12 @@ class AuthService implements \App\Interfaces\Auth\AuthServiceInterface
         }
 
         // Elevate context for successful login audit
-        $userContext = new SecurityContext((int) $user->id, (string) $user->role, $context !== null ? $context->metadata : []);
+        $userContext = new SecurityContext((int) $user->id, $context !== null ? $context->metadata : []);
         $this->auditService->log('login_success', 'users', (int) $user->id, [], ['email' => (string) $user->email], $userContext);
 
         $this->userAccessPolicy->assertCanAuthenticate($user);
 
-        $session = $this->sessionManager->generateSessionResponse($this->userMapper->mapAuthenticated($user));
+        $session = $this->sessionManager->generateSessionResponse($user);
         return \App\DTO\Response\Auth\LoginResponseDTO::fromArray($session);
     }
 
@@ -112,7 +118,11 @@ class AuthService implements \App\Interfaces\Auth\AuthServiceInterface
         if (!$user) {
             throw new AuthenticationException(lang('Users.auth.notAuthenticated'));
         }
-        return \App\DTO\Response\Users\UserResponseDTO::fromArray($user->toArray());
+
+        return MeResponseDTO::fromUserData(
+            $user->toArray(),
+            $this->permissionsResolver->resolve($user_id, self::APPLICATION_ID)
+        );
     }
 
     /**
@@ -127,4 +137,29 @@ class AuthService implements \App\Interfaces\Auth\AuthServiceInterface
         });
     }
 
+    /**
+     * Update the authenticated user's own profile.
+     *
+     * Authorization is implicit: the subject id is taken from the security
+     * context — the caller cannot target another user. Allowlist is enforced
+     * by `UpdateMeRequestDTO` (only first_name, last_name, avatar_url).
+     */
+    public function updateMe(DataTransferObjectInterface $request, ?SecurityContext $context = null): DataTransferObjectInterface
+    {
+        /** @var \App\DTO\Request\Auth\UpdateMeRequestDTO $request */
+        if ($context === null || $context->user_id === null) {
+            throw new AuthenticationException(lang('Auth.unauthorized'));
+        }
+
+        $userId = $context->user_id;
+
+        return $this->wrapInTransaction(function () use ($userId, $request) {
+            $updatedUser = $this->updateSelfProfileAction->execute($userId, $request);
+
+            return MeResponseDTO::fromUserData(
+                $updatedUser->toArray(),
+                $this->permissionsResolver->resolve($userId, self::APPLICATION_ID)
+            );
+        });
+    }
 }

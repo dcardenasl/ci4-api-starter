@@ -14,11 +14,23 @@ interface JwtServiceInterface
     /**
      * Generate a JWT token with JTI (unique identifier)
      *
-     * @param int $userId
-     * @param string $role
-     * @return string
+     * @param list<string> $permissions Effective permission codes; encoded as the `scope` claim.
      */
-    public function encode(int $userId, string $role): string;
+    public function encode(int $userId, array $permissions = []): string;
+
+    /**
+     * Generate a service (machine-to-machine) JWT.
+     *
+     * The token has no associated user (`uid` is omitted) and uses `sub` to
+     * identify the calling application — e.g. `service:<app_code>`. The
+     * caller controls the TTL via the `$ttl` argument so a single
+     * JwtService instance can mint tokens with different lifetimes.
+     *
+     * @param string       $sub         Subject identifier, e.g. "service:mydomain"
+     * @param list<string> $permissions Effective permission codes for the application
+     * @param int          $ttl         Token lifetime in seconds
+     */
+    public function encodeServiceToken(string $sub, array $permissions, int $ttl): string;
 
     /**
      * Decode and validate a JWT token
@@ -45,10 +57,9 @@ interface JwtServiceInterface
     public function getUserId(string $token): ?int;
 
     /**
-     * Extract role from token
+     * Extract effective permissions (scope claim) from a token.
      *
-     * @param string $token
-     * @return string|null
+     * @return list<string>
      */
-    public function getRole(string $token): ?string;
+    public function getPermissions(string $token): array;
 }

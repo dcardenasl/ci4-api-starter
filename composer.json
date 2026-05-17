@@ -3,20 +3,47 @@
     "description": "CodeIgniter 4 API Starter Kit with Layered Architecture",
     "type": "project",
     "license": "MIT",
+    "keywords": [
+        "codeigniter4",
+        "codeigniter",
+        "ci4",
+        "starter-kit",
+        "starter",
+        "template",
+        "rest-api",
+        "api-starter",
+        "jwt",
+        "rbac",
+        "iam",
+        "dto",
+        "scaffolding",
+        "boilerplate"
+    ],
+    "homepage": "https://github.com/dcardenasl/ci4-api-starter",
+    "support": {
+        "issues": "https://github.com/dcardenasl/ci4-api-starter/issues",
+        "source": "https://github.com/dcardenasl/ci4-api-starter"
+    },
     "require": {
         "php": "^8.2",
         "aws/aws-sdk-php": "^3.369",
         "codeigniter4/framework": "^4.5",
+        "dcardenasl/ci4-api-core": "^0.4.1",
         "firebase/php-jwt": "^7.0",
         "google/apiclient": "^2.17",
         "league/flysystem": "^3.31",
         "league/flysystem-aws-s3-v3": "^3.31",
         "monolog/monolog": "^3.5",
         "sentry/sentry": "^4.6",
-        "symfony/mailer": "^6.4",
+        "symfony/mailer": "^7.0",
         "zircote/swagger-php": "^6.0"
     },
+    "repositories": [
+        { "type": "path", "url": "../ci4-api-core", "options": { "symlink": true }, "canonical": false },
+        { "type": "path", "url": "../ci4-api-scaffolding", "options": { "symlink": true }, "canonical": false }
+    ],
     "require-dev": {
+        "dcardenasl/ci4-api-scaffolding": "^0.3.0",
         "fakerphp/faker": "^1.9",
         "friendsofphp/php-cs-fixer": "^3.48",
         "mikey179/vfsstream": "^1.6",
@@ -65,6 +92,11 @@
             "@test:prepare-db",
             "phpunit --configuration=phpunit.xml --no-coverage --testdox"
         ],
+        "test:coverage": [
+            "@test:prepare-db",
+            "phpunit --configuration=phpunit.xml --testdox"
+        ],
+        "coverage:check": "php scripts/check-coverage.php 70 tests/coverage/clover.xml",
         "phpstan": "phpstan analyse --memory-limit=512M",
         "cs-fix": "php-cs-fixer fix",
         "cs-check": "php-cs-fixer fix --dry-run --diff --sequential",

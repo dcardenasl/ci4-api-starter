@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use CodeIgniter\Model;
+use dcardenasl\Ci4ApiCore\Security\Hasher;
 
 class PasswordResetModel extends Model
 {
@@ -46,7 +47,7 @@ class PasswordResetModel extends Model
     {
         $timestamp = strtotime("-{$expiryMinutes} minutes");
         $expiredTime = date('Y-m-d H:i:s', $timestamp !== false ? $timestamp : time());
-        $tokenHash = \hash_token($token);
+        $tokenHash = Hasher::token($token);
 
         return $this->where('email', $email)
             ->where('created_at >', $expiredTime)

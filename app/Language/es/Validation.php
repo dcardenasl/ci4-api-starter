@@ -26,4 +26,10 @@ return [
     'valid_token'        => 'El campo {field} debe ser un token válido.',
     'valid_token_format' => 'El campo {field} debe contener solo caracteres hexadecimales.',
     'valid_token_length' => 'El campo {field} debe tener exactamente {0} caracteres.',
+
+    // Mensaje de regla de lista secuencial
+    'is_list' => 'El campo {field} debe ser una lista secuencial de valores.',
+
+    // Mensaje de regla booleana flexible
+    'boolean_like' => 'El campo {field} debe ser un valor booleano (true/false, 1/0, yes/no, on/off).',
 ];

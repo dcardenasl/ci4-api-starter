@@ -23,6 +23,13 @@ use OpenApi\Attributes as OA;
     bearerFormat: 'JWT',
     description: 'Enter your JWT token in the format: Bearer {token}'
 )]
+#[OA\SecurityScheme(
+    securityScheme: 'appKeyAuth',
+    type: 'apiKey',
+    name: 'X-App-Key',
+    in: 'header',
+    description: 'Per-application API key issued by this server, used to authenticate the calling app (no user JWT required).'
+)]
 #[OA\Tag(
     name: 'Authentication',
     description: 'User authentication endpoints'

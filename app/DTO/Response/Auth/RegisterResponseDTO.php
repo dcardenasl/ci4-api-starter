@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\DTO\Response\Auth;
 
-use App\Interfaces\DataTransferObjectInterface;
+use dcardenasl\Ci4ApiCore\Dto\DataTransferObjectInterface;
 use OpenApi\Attributes as OA;
 
 /**
@@ -16,7 +16,7 @@ use OpenApi\Attributes as OA;
     schema: 'RegisterResponse',
     title: 'Register Response',
     description: 'User data returned after registration',
-    required: ['id', 'email', 'first_name', 'last_name', 'role', 'status']
+    required: ['id', 'email', 'first_name', 'last_name', 'status']
 )]
 readonly class RegisterResponseDTO implements DataTransferObjectInterface
 {
@@ -29,8 +29,6 @@ readonly class RegisterResponseDTO implements DataTransferObjectInterface
         public string $first_name,
         #[OA\Property(property: 'last_name', description: 'User last name', example: 'Doe')]
         public string $last_name,
-        #[OA\Property(description: 'User role', example: 'user', enum: ['user', 'admin', 'superadmin'])]
-        public string $role,
         #[OA\Property(description: 'Account status', example: 'pending_approval', enum: ['pending_approval', 'active', 'invited'])]
         public string $status,
         #[OA\Property(property: 'created_at', description: 'Creation timestamp', example: '2026-02-26 12:00:00', nullable: true)]
@@ -40,7 +38,7 @@ readonly class RegisterResponseDTO implements DataTransferObjectInterface
 
     public static function fromArray(array $data): self
     {
-        $created_at = $data['created_at'] ?? $data['created_at'] ?? null;
+        $created_at = $data['created_at'] ?? null;
 
         // Normalize date to string if it's an object (CI4 Time or DateTime)
         if ($created_at instanceof \DateTimeInterface) {
@@ -50,9 +48,8 @@ readonly class RegisterResponseDTO implements DataTransferObjectInterface
         return new self(
             id: (int) ($data['id'] ?? 0),
             email: (string) ($data['email'] ?? ''),
-            first_name: (string) ($data['first_name'] ?? ($data['first_name'] ?? '')),
-            last_name: (string) ($data['last_name'] ?? ($data['last_name'] ?? '')),
-            role: (string) ($data['role'] ?? 'user'),
+            first_name: (string) ($data['first_name'] ?? ''),
+            last_name: (string) ($data['last_name'] ?? ''),
             status: (string) ($data['status'] ?? 'pending_approval'),
             created_at: $created_at ? (string) $created_at : null
         );
@@ -65,7 +62,6 @@ readonly class RegisterResponseDTO implements DataTransferObjectInterface
             'email' => $this->email,
             'first_name' => $this->first_name,
             'last_name' => $this->last_name,
-            'role' => $this->role,
             'status' => $this->status,
             'created_at' => $this->created_at,
         ];

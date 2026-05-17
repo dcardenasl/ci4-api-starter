@@ -19,20 +19,19 @@ trait AuthIdentityServices
             static::registerUserAction($userRepository),
             static::googleLoginAction($userRepository),
             static::auditService(),
-            static::authUserMapper(),
             static::sessionManager(),
+            static::effectivePermissionsResolver(),
             static::userAccountGuard(),
+            static::updateSelfProfileAction($userRepository),
             ENVIRONMENT === 'testing'
         );
     }
 
-    public static function authUserMapper(bool $getShared = true): \App\Services\Auth\Support\AuthUserMapper
+    public static function updateSelfProfileAction(\App\Interfaces\Users\UserRepositoryInterface $userRepository): \App\Services\Users\Actions\UpdateSelfProfileAction
     {
-        if ($getShared) {
-            return static::getSharedInstance('authUserMapper');
-        }
-
-        return new \App\Services\Auth\Support\AuthUserMapper();
+        return new \App\Services\Users\Actions\UpdateSelfProfileAction(
+            $userRepository
+        );
     }
 
     public static function sessionManager(bool $getShared = true): \App\Services\Auth\Support\SessionManager
@@ -46,6 +45,7 @@ trait AuthIdentityServices
         return new \App\Services\Auth\Support\SessionManager(
             static::jwtService(),
             static::refreshTokenService(),
+            static::effectivePermissionsResolver(),
             $accessTokenTtl
         );
     }
@@ -54,7 +54,8 @@ trait AuthIdentityServices
     {
         return new \App\Services\Auth\Support\GoogleAuthHandler(
             $userRepository,
-            static::refreshTokenService()
+            static::refreshTokenService(),
+            static::userRoleAssignmentService()
         );
     }
 
@@ -63,7 +64,8 @@ trait AuthIdentityServices
         return new \App\Services\Auth\Actions\RegisterUserAction(
             $userRepository,
             static::verificationService(),
-            static::emailService()
+            static::emailService(),
+            static::userRoleAssignmentService()
         );
     }
 
@@ -74,7 +76,6 @@ trait AuthIdentityServices
             static::googleIdentityService(),
             static::googleAuthHandler($userRepository),
             static::sessionManager(),
-            static::authUserMapper(),
             static::userAccountGuard(),
             static::auditService(),
             static::emailService()
@@ -92,21 +93,10 @@ trait AuthIdentityServices
         return new \App\Services\Users\UserService(
             $userRepository,
             static::userResponseMapper(),
-            static::userRoleGuard(),
             static::approveUserAction($userRepository),
             static::createUserAction($userRepository),
-            static::updateUserAction($userRepository)
-        );
-    }
-
-    public static function userRoleGuard(bool $getShared = true): \App\Libraries\Security\UserRoleGuard
-    {
-        if ($getShared) {
-            return static::getSharedInstance('userRoleGuard');
-        }
-
-        return new \App\Libraries\Security\UserRoleGuard(
-            static::securityAuditLogger()
+            static::updateUserAction($userRepository),
+            static::iamAuthorizationService()
         );
     }
 
@@ -122,13 +112,13 @@ trait AuthIdentityServices
         );
     }
 
-    public static function userResponseMapper(bool $getShared = true): \App\Interfaces\Mappers\ResponseMapperInterface
+    public static function userResponseMapper(bool $getShared = true): \dcardenasl\Ci4ApiCore\Mappers\ResponseMapperInterface
     {
         if ($getShared) {
             return static::getSharedInstance('userResponseMapper');
         }
 
-        return new \App\Services\Core\Mappers\DtoResponseMapper(
+        return new \dcardenasl\Ci4ApiCore\Mappers\DtoResponseMapper(
             \App\DTO\Response\Users\UserResponseDTO::class
         );
     }
@@ -137,7 +127,7 @@ trait AuthIdentityServices
     {
         return new \App\Services\Users\Actions\CreateUserAction(
             $userRepository,
-            static::userInvitationService()
+            static::userRoleAssignmentService()
         );
     }
 
@@ -145,7 +135,6 @@ trait AuthIdentityServices
     {
         return new \App\Services\Users\Actions\ApproveUserAction(
             $userRepository,
-            static::auditService(),
             static::emailService()
         );
     }
@@ -154,7 +143,8 @@ trait AuthIdentityServices
     {
         return new \App\Services\Users\Actions\UpdateUserAction(
             $userRepository,
-            static::userRoleGuard()
+            static::userRoleAssignmentService(),
+            static::iamAuthorizationService()
         );
     }
 

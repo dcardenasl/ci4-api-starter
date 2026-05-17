@@ -4,14 +4,15 @@ declare(strict_types=1);
 
 namespace App\Services\Auth;
 
-use App\DTO\SecurityContext;
-use App\Exceptions\NotFoundException;
-use App\Interfaces\DataTransferObjectInterface;
-use App\Interfaces\System\AuditServiceInterface;
 use App\Interfaces\System\EmailServiceInterface;
 use App\Interfaces\Tokens\RefreshTokenServiceInterface;
 use App\Models\PasswordResetModel;
-use App\Traits\ResolvesWebAppLinks;
+use dcardenasl\Ci4ApiCore\Dto\DataTransferObjectInterface;
+use dcardenasl\Ci4ApiCore\Dto\SecurityContext;
+use dcardenasl\Ci4ApiCore\Exceptions\NotFoundException;
+use dcardenasl\Ci4ApiCore\Security\Hasher;
+use dcardenasl\Ci4ApiCore\Services\AuditServiceInterface;
+use dcardenasl\Ci4ApiCore\Support\ResolvesWebAppLinks;
 
 /**
  * Modernized Password Reset Service
@@ -19,7 +20,7 @@ use App\Traits\ResolvesWebAppLinks;
 class PasswordResetService implements \App\Interfaces\Auth\PasswordResetServiceInterface
 {
     use ResolvesWebAppLinks;
-    use \App\Traits\HandlesTransactions;
+    use \dcardenasl\Ci4ApiCore\Services\HandlesTransactions;
 
     public function __construct(
         protected \App\Interfaces\Users\UserRepositoryInterface $userRepository,
@@ -43,7 +44,7 @@ class PasswordResetService implements \App\Interfaces\Auth\PasswordResetServiceI
             $this->auditService->log('password_reset_request', 'users', (int) $user->id, [], ['email' => $email], $context);
 
             $token = bin2hex(random_bytes(32));
-            $tokenHash = \hash_token($token);
+            $tokenHash = Hasher::token($token);
             $this->passwordResetModel->where('email', $email)->delete();
             $this->passwordResetModel->insert(['email' => $email, 'token' => $tokenHash, 'created_at' => date('Y-m-d H:i:s')]);
 
@@ -119,7 +120,7 @@ class PasswordResetService implements \App\Interfaces\Auth\PasswordResetServiceI
             throw new NotFoundException(lang('PasswordReset.userNotFound'));
         }
 
-        $this->wrapInTransaction(function () use ($user, $request, $context) {
+        $this->wrapInTransaction(function () use ($user, $request) {
             $updateData = ['password' => password_hash($request->password, PASSWORD_BCRYPT)];
 
             $wasInvited = ($user->status ?? null) === 'invited' || ($user->invited_at ?? null) !== null;
@@ -130,13 +131,9 @@ class PasswordResetService implements \App\Interfaces\Auth\PasswordResetServiceI
                 $updateData['status'] = 'active';
             }
 
-            $this->userRepository->update($user->id, $updateData);
+            $this->userRepository->withAuditAction('password_reset_success')->update($user->id, $updateData);
 
-            // Elevate context on success
-            $userContext = new SecurityContext((int) $user->id, (string) $user->role, $context !== null ? $context->metadata : []);
-            $this->auditService->log('password_reset_success', 'users', (int) $user->id, [], ['email' => $user->email], $userContext);
-
-            $tokenHash = \hash_token($request->token);
+            $tokenHash = Hasher::token($request->token);
             $this->passwordResetModel->where('email', $request->email)->where('token', $tokenHash)->delete();
         });
 
@@ -146,7 +143,7 @@ class PasswordResetService implements \App\Interfaces\Auth\PasswordResetServiceI
     private function reactivateDeletedUserForApproval(\App\Entities\UserEntity $user, string $email, ?SecurityContext $context = null): void
     {
         $this->wrapInTransaction(function () use ($user, $email, $context) {
-            $requiresVerification = is_email_verification_required();
+            $requiresVerification = Hasher::isEmailVerificationRequired();
             $status = $requiresVerification ? 'pending_approval' : 'active';
             $now = date('Y-m-d H:i:s');
 

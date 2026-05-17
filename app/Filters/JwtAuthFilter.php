@@ -4,167 +4,78 @@ declare(strict_types=1);
 
 namespace App\Filters;
 
-use App\HTTP\ApiRequest;
-use App\Libraries\ApiResponse;
-use App\Libraries\ContextHolder;
 use App\Services\Users\UserAccountGuard;
-use CodeIgniter\Filters\FilterInterface;
 use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
 use Config\Services;
+use dcardenasl\Ci4ApiCore\Contracts\SecurityAuditLoggerInterface;
+use dcardenasl\Ci4ApiCore\Exceptions\AuthorizationException;
+use dcardenasl\Ci4ApiCore\Http\Filters\AbstractJwtAuthFilter;
 
-class JwtAuthFilter implements FilterInterface
+/**
+ * Starter-specific JWT auth filter — wires the abstract base into the
+ * starter's `JwtService`, token revocation, user model, and the
+ * `UserAccountGuard` access policy.
+ */
+class JwtAuthFilter extends AbstractJwtAuthFilter
 {
-    public function before(RequestInterface $request, $arguments = null)
+    protected function decodeToken(string $token): ?object
     {
-        $context = ContextHolder::get();
-        if ($context !== null && $context->user_id !== null) {
-            if ($request instanceof ApiRequest) {
-                $request->setAuthContext((int) $context->user_id, (string) $context->user_role);
-            }
-            return $request;
-        }
+        $bearer  = Services::bearerTokenService();
+        $service = Services::jwtService();
 
-        // Use service container instead of direct instantiation
-        $jwtService = Services::jwtService();
-        $bearerTokenService = Services::bearerTokenService();
-        $userAccessPolicy = Services::userAccessPolicyService();
-        $securityAuditLogger = Services::securityAuditLogger();
-        $auditContextFactory = Services::requestAuditContextFactory();
+        // The base class already pulled the token from the header; we still
+        // delegate to bearerTokenService::extractFromHeader for the format
+        // check inside `extractBearerToken()`. Decoding is direct.
+        $decoded = $service->decode($token);
 
-        $authHeader = $request->getHeaderLine('Authorization');
-
-        if (empty($authHeader)) {
-            return $this->unauthorized(lang('Auth.headerMissing'));
-        }
-
-        $token = $bearerTokenService->extractFromHeader($authHeader);
-        if ($token === null) {
-            return $this->unauthorized(lang('Auth.invalidFormat'));
-        }
-
-        // Decode token once (optimization - prevents double decoding)
-        $decoded = $jwtService->decode($token);
-
-        if ($decoded === null) {
-            return $this->unauthorized(lang('Auth.invalidToken'));
-        }
-
-        // Check if token is revoked (if revocation check is enabled)
-        if (config('Api')->jwtRevocationCheck) {
-            $jti = $decoded->jti ?? null;
-
-            if ($jti) {
-                $tokenRevocationService = Services::tokenRevocationService();
-
-                if ($tokenRevocationService->isRevoked($jti)) {
-                    $securityAuditLogger->logRevokedTokenReuse(
-                        $request,
-                        (int) ($decoded->uid ?? 0) ?: null,
-                        isset($decoded->role) ? (string) $decoded->role : null,
-                        (string) $jti
-                    );
-                    return $this->unauthorized(lang('Auth.tokenRevoked'));
-                }
-            }
-        }
-
-        // Enforce email verification for non-OAuth users
-        $userId = (int) ($decoded->uid ?? 0);
-        if ($userId > 0) {
-            $userModel = Services::userModel(false);
-            $user = $userModel->find($userId);
-
-            if (! is_object($user)) {
-                return $this->unauthorized(lang('Auth.invalidToken'));
-            }
-
-            if (! $this->shouldBypassAccessPolicy($request)) {
-                $policyViolation = $this->checkAccessPolicyViolation($userAccessPolicy, $user);
-                if ($policyViolation !== null) {
-                    return $policyViolation;
-                }
-            }
-        }
-
-        if ($request instanceof ApiRequest) {
-            $request->setAuthContext((int) $decoded->uid, (string) $decoded->role);
-        }
-
-        // Also set global context for DTO enrichment
-        ContextHolder::set($auditContextFactory->createContext(
-            $request,
-            (int) $decoded->uid,
-            (string) $decoded->role
-        ));
-
-        return $request;
+        return is_object($decoded) ? $decoded : null;
     }
 
-    /**
-     * Helper method to return unauthorized response
-     *
-     * @param string $message Error message
-     * @return ResponseInterface
-     */
-    private function unauthorized(string $message): ResponseInterface
+    protected function extractBearerToken(string $authHeader): ?string
     {
-        return Services::response()
-            ->setJSON(ApiResponse::unauthorized($message))
-            ->setStatusCode(401);
+        return Services::bearerTokenService()->extractFromHeader($authHeader);
     }
 
-    /**
-     * Helper method to return forbidden response
-     *
-     * @param string $message Error message
-     * @return ResponseInterface
-     */
-    private function forbidden(string $message): ResponseInterface
+    protected function shouldCheckRevocation(): bool
     {
-        return Services::response()
-            ->setJSON(ApiResponse::forbidden($message))
-            ->setStatusCode(403);
+        return (bool) config('Api')->jwtRevocationCheck;
     }
 
-    private function checkAccessPolicyViolation(UserAccountGuard $policy, object $user): ?ResponseInterface
+    protected function isTokenRevoked(string $jti): bool
     {
+        return Services::tokenRevocationService()->isRevoked($jti);
+    }
+
+    protected function loadActor(int $userId): ?object
+    {
+        $userModel = Services::userModel(false);
+        $user      = $userModel->find($userId);
+
+        return is_object($user) ? $user : null;
+    }
+
+    protected function requireActorOnUserToken(): bool
+    {
+        return true;
+    }
+
+    protected function assertAccessPolicy(object $actor, RequestInterface $request): ?ResponseInterface
+    {
+        /** @var UserAccountGuard $policy */
+        $policy = Services::userAccessPolicyService();
+
         try {
-            $policy->assertCanAuthenticate($user);
-            return null;
-        } catch (\App\Exceptions\AuthorizationException $e) {
-            return $this->forbidden($this->resolveExceptionMessage($e));
-        } catch (\App\Exceptions\AuthenticationException $e) {
-            return $this->unauthorized($this->resolveExceptionMessage($e));
+            $policy->assertCanAuthenticate($actor);
+        } catch (AuthorizationException $e) {
+            throw $e;
         }
+
+        return null;
     }
 
-    private function resolveExceptionMessage(\App\Exceptions\ApiException $e): string
+    protected function getSecurityAuditLogger(): ?SecurityAuditLoggerInterface
     {
-        $errors = $e->getErrors();
-        $firstError = reset($errors);
-
-        return is_string($firstError) && $firstError !== ''
-            ? $firstError
-            : $e->getMessage();
-    }
-
-    public function after(RequestInterface $request, ResponseInterface $response, $arguments = null)
-    {
-        return $response;
-    }
-
-    private function shouldBypassAccessPolicy(RequestInterface $request): bool
-    {
-        $path = $request->getUri()->getPath();
-        $normalizedPath = ltrim($path, '/');
-
-        return in_array(
-            $normalizedPath,
-            [
-                'api/v1/auth/resend-verification',
-            ],
-            true
-        );
+        return Services::securityAuditLogger();
     }
 }

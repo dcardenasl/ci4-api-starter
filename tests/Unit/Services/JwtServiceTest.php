@@ -36,7 +36,7 @@ class JwtServiceTest extends CIUnitTestCase
 
     public function testEncodeReturnsValidJwtString(): void
     {
-        $token = $this->service->encode(1, 'user');
+        $token = $this->service->encode(1);
 
         $this->assertIsString($token);
         $this->assertNotEmpty($token);
@@ -48,7 +48,7 @@ class JwtServiceTest extends CIUnitTestCase
 
     public function testEncodeIncludesUserIdInPayload(): void
     {
-        $token = $this->service->encode(42, 'admin');
+        $token = $this->service->encode(42);
 
         $decoded = $this->service->decode($token);
 
@@ -56,19 +56,19 @@ class JwtServiceTest extends CIUnitTestCase
         $this->assertEquals(42, $decoded->uid);
     }
 
-    public function testEncodeIncludesRoleInPayload(): void
+    public function testEncodeIncludesScopeInPayload(): void
     {
-        $token = $this->service->encode(1, 'admin');
+        $token = $this->service->encode(1, ['users.read', 'users.write']);
 
         $decoded = $this->service->decode($token);
 
         $this->assertNotNull($decoded);
-        $this->assertEquals('admin', $decoded->role);
+        $this->assertEqualsCanonicalizing(['users.read', 'users.write'], $decoded->scope);
     }
 
     public function testEncodeIncludesJtiForRevocation(): void
     {
-        $token = $this->service->encode(1, 'user');
+        $token = $this->service->encode(1);
 
         $decoded = $this->service->decode($token);
 
@@ -79,8 +79,8 @@ class JwtServiceTest extends CIUnitTestCase
 
     public function testEncodeGeneratesUniqueJtiPerToken(): void
     {
-        $token1 = $this->service->encode(1, 'user');
-        $token2 = $this->service->encode(1, 'user');
+        $token1 = $this->service->encode(1);
+        $token2 = $this->service->encode(1);
 
         $decoded1 = $this->service->decode($token1);
         $decoded2 = $this->service->decode($token2);
@@ -90,7 +90,7 @@ class JwtServiceTest extends CIUnitTestCase
 
     public function testEncodeIncludesExpirationClaim(): void
     {
-        $token = $this->service->encode(1, 'user');
+        $token = $this->service->encode(1);
 
         $decoded = $this->service->decode($token);
 
@@ -103,7 +103,7 @@ class JwtServiceTest extends CIUnitTestCase
 
     public function testDecodeValidTokenReturnsPayload(): void
     {
-        $token = $this->service->encode(1, 'user');
+        $token = $this->service->encode(1);
 
         $decoded = $this->service->decode($token);
 
@@ -127,7 +127,7 @@ class JwtServiceTest extends CIUnitTestCase
 
     public function testDecodeTamperedTokenReturnsNull(): void
     {
-        $token = $this->service->encode(1, 'user');
+        $token = $this->service->encode(1);
 
         // Tamper with the payload (middle part)
         $parts = explode('.', $token);
@@ -143,7 +143,7 @@ class JwtServiceTest extends CIUnitTestCase
 
     public function testValidateReturnsTrueForValidToken(): void
     {
-        $token = $this->service->encode(1, 'user');
+        $token = $this->service->encode(1);
 
         $this->assertTrue($this->service->validate($token));
     }
@@ -157,7 +157,7 @@ class JwtServiceTest extends CIUnitTestCase
 
     public function testGetUserIdReturnsCorrectId(): void
     {
-        $token = $this->service->encode(123, 'user');
+        $token = $this->service->encode(123);
 
         $userId = $this->service->getUserId($token);
 
@@ -171,19 +171,19 @@ class JwtServiceTest extends CIUnitTestCase
         $this->assertNull($userId);
     }
 
-    public function testGetRoleReturnsCorrectRole(): void
+    public function testGetPermissionsReturnsScopeArray(): void
     {
-        $token = $this->service->encode(1, 'admin');
+        $token = $this->service->encode(1, ['files.read']);
 
-        $role = $this->service->getRole($token);
+        $permissions = $this->service->getPermissions($token);
 
-        $this->assertEquals('admin', $role);
+        $this->assertSame(['files.read'], $permissions);
     }
 
-    public function testGetRoleReturnsNullForInvalidToken(): void
+    public function testGetPermissionsReturnsEmptyForInvalidToken(): void
     {
-        $role = $this->service->getRole('invalid.token');
+        $permissions = $this->service->getPermissions('invalid.token');
 
-        $this->assertNull($role);
+        $this->assertSame([], $permissions);
     }
 }

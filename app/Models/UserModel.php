@@ -5,8 +5,9 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Entities\UserEntity;
-use App\Traits\Filterable;
-use App\Traits\Searchable;
+use dcardenasl\Ci4ApiCore\Models\BaseAuditableModel;
+use dcardenasl\Ci4ApiCore\Models\Traits\Filterable;
+use dcardenasl\Ci4ApiCore\Models\Traits\Searchable;
 
 class UserModel extends BaseAuditableModel
 {
@@ -32,7 +33,6 @@ class UserModel extends BaseAuditableModel
         'first_name',
         'last_name',
         'password',
-        'role',
         'status',
         'approved_at',
         'approved_by',
@@ -76,9 +76,9 @@ class UserModel extends BaseAuditableModel
     /** @var array<int, string> */
     protected array $searchableFields = ['email', 'first_name', 'last_name'];
     /** @var array<int, string> */
-    protected array $filterableFields = ['role', 'status', 'email', 'created_at', 'id', 'first_name', 'last_name'];
+    protected array $filterableFields = ['status', 'email', 'created_at', 'id', 'first_name', 'last_name'];
     /** @var array<int, string> */
-    protected array $sortableFields = ['id', 'email', 'created_at', 'role', 'status', 'first_name', 'last_name'];
+    protected array $sortableFields = ['id', 'email', 'created_at', 'status', 'first_name', 'last_name'];
 
     protected $allowCallbacks = true;
     protected $beforeInsert   = [];

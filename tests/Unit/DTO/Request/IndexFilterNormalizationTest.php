@@ -44,19 +44,18 @@ final class IndexFilterNormalizationTest extends CIUnitTestCase
         $this->assertSame('req_abc123', $data['filter']['request_id']['eq']);
     }
 
-    public function testUserIndexReadsRoleAndStatusFromFilterArray(): void
+    public function testUserIndexReadsStatusFromFilterArray(): void
     {
         $dto = new UserIndexRequestDTO([
             'filter' => [
-                'role' => 'admin',
                 'status' => 'active',
             ],
         ], service('validation'));
 
         $data = $dto->toArray();
 
-        $this->assertSame('admin', $data['filter']['role']['eq']);
         $this->assertSame('active', $data['filter']['status']['eq']);
+        $this->assertArrayNotHasKey('role', $data['filter'] ?? []);
     }
 
     public function testApiKeyIndexReadsIsActiveAndNameFromFilterArray(): void

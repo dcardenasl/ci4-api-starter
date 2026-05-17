@@ -39,6 +39,7 @@ trait TokenSecurityServices
             static::jwtService(),
             static::userModel(),
             static::userAccountGuard(),
+            static::effectivePermissionsResolver(),
             $refreshTokenTtl,
             $accessTokenTtl
         );
@@ -86,13 +87,13 @@ trait TokenSecurityServices
         );
     }
 
-    public static function apiKeyResponseMapper(bool $getShared = true): \App\Interfaces\Mappers\ResponseMapperInterface
+    public static function apiKeyResponseMapper(bool $getShared = true): \dcardenasl\Ci4ApiCore\Mappers\ResponseMapperInterface
     {
         if ($getShared) {
             return static::getSharedInstance('apiKeyResponseMapper');
         }
 
-        return new \App\Services\Core\Mappers\DtoResponseMapper(
+        return new \dcardenasl\Ci4ApiCore\Mappers\DtoResponseMapper(
             \App\DTO\Response\ApiKeys\ApiKeyResponseDTO::class
         );
     }
@@ -139,6 +140,37 @@ trait TokenSecurityServices
             static::refreshTokenService(),
             static::tokenRevocationService(),
             static::requestDtoFactory()
+        );
+    }
+
+    public static function tokenIntrospectionService(bool $getShared = true): \App\Interfaces\Auth\TokenIntrospectionServiceInterface
+    {
+        if ($getShared) {
+            return static::getSharedInstance('tokenIntrospectionService');
+        }
+
+        return new \App\Services\Auth\TokenIntrospectionService(
+            static::jwtService(),
+            static::tokenRevocationService(),
+            static::effectivePermissionsResolver()
+        );
+    }
+
+    public static function serviceTokenService(bool $getShared = true): \App\Interfaces\Auth\ServiceTokenServiceInterface
+    {
+        if ($getShared) {
+            return static::getSharedInstance('serviceTokenService');
+        }
+
+        $apiConfig = config('Api');
+
+        return new \App\Services\Auth\ServiceTokenService(
+            static::apiKeyRepository(),
+            static::apiKeyMaterialService(),
+            model(\App\Models\ApplicationModel::class),
+            static::applicationPermissionsResolver(),
+            static::jwtService(),
+            (int) $apiConfig->jwtServiceTokenTtl
         );
     }
 }

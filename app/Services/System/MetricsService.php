@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace App\Services\System;
 
 use App\DTO\Response\Metrics\MetricsPayloadResponseDTO;
-use App\DTO\SecurityContext;
-use App\Interfaces\DataTransferObjectInterface;
 use App\Models\MetricModel;
 use App\Models\RequestLogModel;
-use App\Support\OperationResult;
+use dcardenasl\Ci4ApiCore\Dto\DataTransferObjectInterface;
+use dcardenasl\Ci4ApiCore\Dto\SecurityContext;
+use dcardenasl\Ci4ApiCore\Support\OperationResult;
 
 /**
  * Modernized Metrics Service
@@ -18,7 +18,7 @@ use App\Support\OperationResult;
  */
 readonly class MetricsService implements \App\Interfaces\System\MetricsServiceInterface
 {
-    use \App\Traits\HandlesTransactions;
+    use \dcardenasl\Ci4ApiCore\Services\HandlesTransactions;
 
     public function __construct(
         protected RequestLogModel $requestLogModel,

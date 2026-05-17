@@ -292,11 +292,11 @@
                                     },
                                     "is_active": {
                                         "type": "integer",
+                                        "example": 0,
                                         "enum": [
                                             0,
                                             1
-                                        ],
-                                        "example": 0
+                                        ]
                                     },
                                     "rate_limit_requests": {
                                         "type": "integer",
@@ -850,11 +850,12 @@
                 "tags": [
                     "Authentication"
                 ],
-                "summary": "Get current user profile",
+                "summary": "Get the authenticated user (with effective permissions)",
+                "description": "Returns the canonical \"me\" shape: profile fields plus the effective permission codes used for UI gating. Permissions are resolved fresh from the IAM tables on each call.",
                 "operationId": "30fd9073987ec366646e1b08842dfe42",
                 "responses": {
                     "200": {
-                        "description": "Current user profile",
+                        "description": "Authenticated user profile + permissions",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -864,7 +865,7 @@
                                             "example": "success"
                                         },
                                         "data": {
-                                            "$ref": "#/components/schemas/UserResponse"
+                                            "$ref": "#/components/schemas/MeResponse"
                                         }
                                     },
                                     "type": "object"
@@ -879,6 +880,114 @@
                 "security": [
                     {
                         "bearerAuth": []
+                    }
+                ]
+            },
+            "patch": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Update the authenticated user's own profile",
+                "description": "Allowlist: first_name, last_name, avatar_url. Email, password and role assignments are not modifiable through self-update. Returns the canonical \"me\" shape with refreshed permissions.",
+                "operationId": "48f6420b41bc5b5cdf1a97598edc8d89",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateMeRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Updated authenticated user profile + permissions",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/MeResponse"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationErrorResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/auth/introspect": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Introspect a JWT issued by this server",
+                "description": "Validates a JWT (signature, expiration, revocation) and returns its claims. Authenticated by X-App-Key — domain apps can verify user tokens without sharing the JWT secret. Always responds 200 with `valid: true|false` unless the calling app itself is unauthorized.",
+                "operationId": "5e0116c223b4e2208df9f9438069ba7c",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/IntrospectRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Introspection result (check `valid` for the verdict)",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/IntrospectResponse"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "403": {
+                        "description": "X-App-Key is invalid or inactive"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationErrorResponse"
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded"
+                    }
+                },
+                "security": [
+                    {
+                        "appKeyAuth": []
                     }
                 ]
             }
@@ -1073,12 +1182,61 @@
                 }
             }
         },
+        "/api/v1/auth/service-token": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Issue a service (machine-to-machine) JWT",
+                "description": "OAuth client_credentials-style endpoint. The calling domain application authenticates with `X-App-Key` and receives a short-lived JWT whose `sub` is `service:<app_code>` and whose `scope` is the application's permission set. No request body is required.",
+                "operationId": "c9b2e7c51cc4e03d7da2142b38a76f5e",
+                "responses": {
+                    "200": {
+                        "description": "Service token issued",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/ServiceTokenResponse"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "403": {
+                        "description": "X-App-Key invalid, inactive, or not bound to an application"
+                    },
+                    "404": {
+                        "description": "The application bound to the API key has been deleted"
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded"
+                    }
+                },
+                "security": [
+                    {
+                        "appKeyAuth": []
+                    }
+                ]
+            }
+        },
         "/api/v1/auth/refresh": {
             "post": {
                 "tags": [
                     "Authentication"
                 ],
                 "summary": "Refresh access token",
+                "description": "Issues a fresh access/refresh token pair and returns the canonical authenticated user (including effective permissions) so consumers can re-hydrate UI gating without an extra `/auth/me` call.",
                 "operationId": "063a05c344969a8428f2deffd730d406",
                 "requestBody": {
                     "required": true,
@@ -1702,6 +1860,393 @@
                 }
             }
         },
+        "/api/v1/permissions": {
+            "get": {
+                "tags": [
+                    "Iam"
+                ],
+                "summary": "List Permissions",
+                "operationId": "502622a255362c811db579d2b04e98fa",
+                "responses": {
+                    "200": {
+                        "description": "List retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/PermissionResponse"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Iam"
+                ],
+                "summary": "Create new Permission",
+                "operationId": "19afd648e3f6975944d51febe3549dc3",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PermissionCreateRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Created successfully"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                }
+            }
+        },
+        "/api/v1/permissions/{id}": {
+            "get": {
+                "tags": [
+                    "Iam"
+                ],
+                "summary": "Get Permission by ID",
+                "operationId": "45e62e9213f9164f7523f6d91a2c1e33",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PermissionResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not found"
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Iam"
+                ],
+                "summary": "Update existing Permission",
+                "operationId": "838f17e9d3353b6ca31b3ef8cf91252a",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PermissionUpdateRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PermissionResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Iam"
+                ],
+                "summary": "Delete Permission by ID",
+                "operationId": "ea7f660a2495fbb1e7876ab2aeff4a7c",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Deleted successfully"
+                    },
+                    "404": {
+                        "description": "Not found"
+                    }
+                }
+            }
+        },
+        "/api/v1/roles": {
+            "get": {
+                "tags": [
+                    "Iam"
+                ],
+                "summary": "List Roles",
+                "operationId": "e0b1cfefc67992e068b6422394ad9a9e",
+                "responses": {
+                    "200": {
+                        "description": "List retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/RoleResponse"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Iam"
+                ],
+                "summary": "Create new Role",
+                "operationId": "4ac8c070b4b2a6dfc0d715f53326f784",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RoleCreateRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Created successfully"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                }
+            }
+        },
+        "/api/v1/roles/{id}": {
+            "get": {
+                "tags": [
+                    "Iam"
+                ],
+                "summary": "Get Role by ID",
+                "operationId": "04e69ec78b74099ac4ccffb01e7e8e0d",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RoleResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not found"
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Iam"
+                ],
+                "summary": "Update existing Role",
+                "operationId": "0a0d27f20fec4718fd5280a90c73abb0",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RoleUpdateRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RoleResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Iam"
+                ],
+                "summary": "Delete Role by ID",
+                "operationId": "d48073893d81dd228cef7eac59aff4ea",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Deleted successfully"
+                    },
+                    "404": {
+                        "description": "Not found"
+                    }
+                }
+            }
+        },
+        "/api/v1/iam/users/{user_id}/permissions": {
+            "get": {
+                "tags": [
+                    "Iam"
+                ],
+                "summary": "List a user's effective permissions for a specific application (by code)",
+                "operationId": "5a3841f7f8f5d306c7265164d5d6c3b6",
+                "parameters": [
+                    {
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 42
+                        }
+                    },
+                    {
+                        "name": "app",
+                        "in": "query",
+                        "description": "Application code (e.g. self, blog, shop)",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "self"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Effective permissions retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/UserPermissionsResponse"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication required"
+                    },
+                    "403": {
+                        "description": "Caller lacks iam.superadmin-access"
+                    },
+                    "404": {
+                        "description": "User or application not found"
+                    },
+                    "422": {
+                        "description": "Missing or invalid app code"
+                    }
+                }
+            }
+        },
         "/api/v1/metrics": {
             "get": {
                 "tags": [
@@ -1716,13 +2261,13 @@
                         "required": false,
                         "schema": {
                             "type": "string",
+                            "example": "24h",
                             "enum": [
                                 "1h",
                                 "24h",
                                 "7d",
                                 "30d"
-                            ],
-                            "example": "24h"
+                            ]
                         }
                     }
                 ],
@@ -1774,13 +2319,13 @@
                         "required": false,
                         "schema": {
                             "type": "string",
+                            "example": "24h",
                             "enum": [
                                 "1h",
                                 "24h",
                                 "7d",
                                 "30d"
-                            ],
-                            "example": "24h"
+                            ]
                         }
                     }
                 ],
@@ -1898,13 +2443,13 @@
                         "required": false,
                         "schema": {
                             "type": "string",
+                            "example": "24h",
                             "enum": [
                                 "1h",
                                 "24h",
                                 "7d",
                                 "30d"
-                            ],
-                            "example": "24h"
+                            ]
                         }
                     },
                     {
@@ -2597,6 +3142,21 @@
                 },
                 "type": "object"
             },
+            "IntrospectRequest": {
+                "title": "Introspect Request",
+                "description": "JWT to validate via the introspection endpoint",
+                "required": [
+                    "token"
+                ],
+                "properties": {
+                    "token": {
+                        "description": "JWT access token to introspect",
+                        "type": "string",
+                        "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                    }
+                },
+                "type": "object"
+            },
             "LoginRequest": {
                 "title": "Login Request",
                 "description": "User credentials for authentication",
@@ -2653,6 +3213,211 @@
                 },
                 "type": "object"
             },
+            "UpdateMeRequest": {
+                "title": "Update Me Request",
+                "description": "Fields the authenticated user may modify on their own profile",
+                "properties": {
+                    "first_name": {
+                        "description": "Updated first name",
+                        "type": "string",
+                        "example": "John",
+                        "nullable": true
+                    },
+                    "last_name": {
+                        "description": "Updated last name",
+                        "type": "string",
+                        "example": "Doe",
+                        "nullable": true
+                    },
+                    "avatar_url": {
+                        "description": "URL to user avatar image",
+                        "type": "string",
+                        "example": "https://example.com/avatar.jpg",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "GalleryAttachRequest": {
+                "description": "Body for `POST /<resource>/<id>/images`. Attaches an existing file (already\nuploaded via the files endpoint) to a parent resource's gallery."
+            },
+            "GalleryReorderRequest": {
+                "description": "Body for `PUT /<resource>/<id>/images/reorder`.\n\nFormat: `{ \"items\": [{ \"id\": 12, \"sort_order\": 0 }, { \"id\": 13, \"sort_order\": 1 }, ...] }`.\nEach entry is a pivot row id paired with its new sort position. Entries\npointing at a different parent are silently ignored by the service."
+            },
+            "ApplicationIndexRequest": {},
+            "AttachPermissionsRequest": {
+                "required": [
+                    "permission_ids"
+                ],
+                "properties": {
+                    "permission_ids": {
+                        "description": "Permission ids to attach to the role",
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "AttachRolesRequest": {
+                "required": [
+                    "role_ids"
+                ],
+                "properties": {
+                    "role_ids": {
+                        "description": "Role ids to attach to the membership",
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "ListUserPermissionsRequest": {
+                "title": "List User Permissions Request",
+                "required": [
+                    "app"
+                ]
+            },
+            "PermissionCreateRequest": {
+                "properties": {
+                    "application_id": {
+                        "description": "application_id",
+                        "type": "integer"
+                    },
+                    "code": {
+                        "description": "code",
+                        "type": "string"
+                    },
+                    "resource": {
+                        "description": "resource",
+                        "type": "string"
+                    },
+                    "action": {
+                        "description": "action",
+                        "type": "string"
+                    },
+                    "description": {
+                        "description": "description",
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "PermissionIndexRequest": {},
+            "PermissionUpdateRequest": {
+                "properties": {
+                    "application_id": {
+                        "description": "application_id",
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "code": {
+                        "description": "code",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "resource": {
+                        "description": "resource",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "action": {
+                        "description": "action",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "description": {
+                        "description": "description",
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "RoleCreateRequest": {
+                "properties": {
+                    "application_id": {
+                        "description": "Application id; null for global roles",
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "code": {
+                        "description": "Role code (unique within application)",
+                        "type": "string"
+                    },
+                    "name": {
+                        "description": "Display name",
+                        "type": "string"
+                    },
+                    "description": {
+                        "description": "Free-form description",
+                        "type": "string"
+                    },
+                    "is_system": {
+                        "description": "System role (cannot be deleted)",
+                        "type": "boolean"
+                    },
+                    "permission_ids": {
+                        "description": "Optional list of permission ids to attach to the new role. Omit to create a role with no permissions.",
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "example": [
+                            1,
+                            2
+                        ],
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "RoleIndexRequest": {},
+            "RoleUpdateRequest": {
+                "properties": {
+                    "application_id": {
+                        "description": "Application id; null for global roles",
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "code": {
+                        "description": "Role code (unique within application)",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "name": {
+                        "description": "Display name",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "description": {
+                        "description": "Free-form description",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "is_system": {
+                        "description": "System role (cannot be deleted)",
+                        "type": "boolean",
+                        "nullable": true
+                    },
+                    "permission_ids": {
+                        "description": "Replace the role permission set with this list of permission ids. Omit to leave permissions unchanged. Empty list removes all permissions.",
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "example": [
+                            1,
+                            2
+                        ],
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
             "UserCreateRequest": {
                 "title": "User Create Request",
                 "description": "Data needed to create a new user",
@@ -2677,25 +3442,14 @@
                         "example": "Doe",
                         "nullable": true
                     },
-                    "role": {
-                        "description": "Account role",
-                        "type": "string",
-                        "enum": [
-                            "user",
-                            "admin",
-                            "superadmin"
-                        ],
-                        "example": "user",
-                        "nullable": true
-                    },
                     "oauth_provider": {
                         "description": "OAuth provider name",
                         "type": "string",
+                        "nullable": true,
                         "enum": [
                             "google",
                             "github"
-                        ],
-                        "nullable": true
+                        ]
                     },
                     "oauth_provider_id": {
                         "description": "OAuth unique identifier from provider",
@@ -2707,6 +3461,16 @@
                         "type": "string",
                         "example": "https://example.com/avatar.jpg",
                         "nullable": true
+                    },
+                    "role_ids": {
+                        "description": "Global role ids to assign to the new user (multi-rol). If empty, the default \"user\" role is assigned.",
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "example": [
+                            3
+                        ]
                     }
                 },
                 "type": "object"
@@ -2718,15 +3482,15 @@
                     "page": {
                         "description": "Current page number",
                         "type": "integer",
-                        "default": 1,
-                        "example": 1
+                        "example": 1,
+                        "default": 1
                     },
                     "per_page": {
                         "description": "Items per page",
                         "type": "integer",
+                        "example": 20,
                         "default": 20,
-                        "maximum": 100,
-                        "example": 20
+                        "maximum": 100
                     },
                     "search": {
                         "description": "Search term for email, first name or last name",
@@ -2734,33 +3498,23 @@
                         "example": "john",
                         "nullable": true
                     },
-                    "role": {
-                        "description": "Filter by account role",
-                        "type": "string",
-                        "enum": [
-                            "user",
-                            "admin",
-                            "superadmin"
-                        ],
-                        "nullable": true
-                    },
                     "status": {
                         "description": "Filter by account status",
                         "type": "string",
+                        "nullable": true,
                         "enum": [
                             "active",
                             "inactive",
                             "pending_approval",
                             "invited"
-                        ],
-                        "nullable": true
+                        ]
                     },
                     "sort": {
                         "description": "Sort field and direction",
                         "type": "string",
-                        "default": "",
                         "example": "created_at or -created_at",
-                        "nullable": true
+                        "nullable": true,
+                        "default": ""
                     }
                 },
                 "type": "object"
@@ -2793,20 +3547,21 @@
                         "example": "P@ssw0rd123!",
                         "nullable": true
                     },
-                    "role": {
-                        "description": "Updated account role",
-                        "type": "string",
-                        "enum": [
-                            "user",
-                            "admin",
-                            "superadmin"
-                        ],
-                        "nullable": true
-                    },
                     "avatar_url": {
                         "description": "URL to user avatar image",
                         "type": "string",
                         "example": "https://example.com/avatar.jpg",
+                        "nullable": true
+                    },
+                    "role_ids": {
+                        "description": "Replace the user role set with this list of global role ids. Omit to leave roles unchanged.",
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "example": [
+                            3
+                        ],
                         "nullable": true
                     }
                 },
@@ -2901,14 +3656,14 @@
                     "action": {
                         "description": "Action performed",
                         "type": "string",
+                        "example": "update",
                         "enum": [
                             "create",
                             "update",
                             "delete",
                             "login_success",
                             "login_failure"
-                        ],
-                        "example": "update"
+                        ]
                     },
                     "entity_type": {
                         "description": "Affected entity type",
@@ -2943,6 +3698,12 @@
                         "example": "admin@example.com",
                         "nullable": true
                     },
+                    "user_full_name": {
+                        "description": "Full name of user who performed the action",
+                        "type": "string",
+                        "example": "Jane Doe",
+                        "nullable": true
+                    },
                     "ip_address": {
                         "description": "IP address of the requester",
                         "type": "string",
@@ -2958,22 +3719,22 @@
                     "result": {
                         "description": "Execution result",
                         "type": "string",
+                        "example": "success",
                         "enum": [
                             "success",
                             "failure",
                             "denied"
-                        ],
-                        "example": "success"
+                        ]
                     },
                     "severity": {
                         "description": "Event severity",
                         "type": "string",
+                        "example": "info",
                         "enum": [
                             "info",
                             "warning",
                             "critical"
-                        ],
-                        "example": "info"
+                        ]
                     },
                     "request_id": {
                         "description": "Request correlation ID",
@@ -2990,6 +3751,48 @@
                         "description": "Log timestamp",
                         "type": "string",
                         "example": "2026-02-26 12:00:00"
+                    }
+                },
+                "type": "object"
+            },
+            "IntrospectResponse": {
+                "title": "Introspect Response",
+                "description": "Token introspection result",
+                "required": [
+                    "valid",
+                    "permissions"
+                ],
+                "properties": {
+                    "valid": {
+                        "description": "True if the token is valid, not expired and not revoked",
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "uid": {
+                        "description": "User ID from the token (null when invalid)",
+                        "type": "integer",
+                        "example": 1,
+                        "nullable": true
+                    },
+                    "permissions": {
+                        "description": "Effective permission codes carried by the token",
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "example": "users.read"
+                        }
+                    },
+                    "exp": {
+                        "description": "Token expiration timestamp (Unix seconds)",
+                        "type": "integer",
+                        "example": 1735689600,
+                        "nullable": true
+                    },
+                    "error": {
+                        "description": "Reason when valid=false: invalid_or_expired | revoked",
+                        "type": "string",
+                        "example": null,
+                        "nullable": true
                     }
                 },
                 "type": "object"
@@ -3020,7 +3823,122 @@
                         "example": 3600
                     },
                     "user": {
-                        "$ref": "#/components/schemas/UserResponse"
+                        "$ref": "#/components/schemas/MeResponse"
+                    }
+                },
+                "type": "object"
+            },
+            "MeResponse": {
+                "title": "Authenticated User Response",
+                "description": "Canonical shape for the authenticated subject. Extends UserResponse with the effective permission codes used for UI gating.",
+                "required": [
+                    "id",
+                    "email",
+                    "status",
+                    "permissions"
+                ],
+                "properties": {
+                    "id": {
+                        "description": "Unique user identifier",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "email": {
+                        "description": "User email address",
+                        "type": "string",
+                        "example": "user@example.com"
+                    },
+                    "first_name": {
+                        "description": "User first name",
+                        "type": "string",
+                        "example": "John"
+                    },
+                    "last_name": {
+                        "description": "User last name",
+                        "type": "string",
+                        "example": "Doe"
+                    },
+                    "status": {
+                        "description": "Account status",
+                        "type": "string",
+                        "example": "active",
+                        "enum": [
+                            "pending_approval",
+                            "active",
+                            "invited"
+                        ]
+                    },
+                    "avatar_url": {
+                        "description": "URL to user avatar",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "description": "Creation timestamp",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "updated_at": {
+                        "description": "Last update timestamp",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "roles": {
+                        "description": "Global roles assigned to this user.",
+                        "type": "array",
+                        "items": {
+                            "properties": {
+                                "id": {
+                                    "type": "integer"
+                                },
+                                "code": {
+                                    "type": "string"
+                                },
+                                "name": {
+                                    "type": "string"
+                                }
+                            },
+                            "type": "object"
+                        }
+                    },
+                    "permissions": {
+                        "description": "Effective permission codes for the current application. Drives UI gating on the frontend.",
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "example": [
+                            "users.read",
+                            "users.write",
+                            "iam.admin-access"
+                        ]
+                    }
+                },
+                "type": "object"
+            },
+            "PendingRegistrationResponse": {
+                "title": "Pending Registration Response",
+                "description": "Minimal user envelope for accounts awaiting admin approval (e.g. first-time Google sign-in).",
+                "required": [
+                    "id",
+                    "email",
+                    "status"
+                ],
+                "properties": {
+                    "id": {
+                        "description": "Unique user identifier",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "email": {
+                        "description": "User email address",
+                        "type": "string",
+                        "example": "user@example.com"
+                    },
+                    "status": {
+                        "description": "Account status",
+                        "type": "string",
+                        "example": "pending_approval"
                     }
                 },
                 "type": "object"
@@ -3033,7 +3951,6 @@
                     "email",
                     "first_name",
                     "last_name",
-                    "role",
                     "status"
                 ],
                 "properties": {
@@ -3057,25 +3974,15 @@
                         "type": "string",
                         "example": "Doe"
                     },
-                    "role": {
-                        "description": "User role",
-                        "type": "string",
-                        "enum": [
-                            "user",
-                            "admin",
-                            "superadmin"
-                        ],
-                        "example": "user"
-                    },
                     "status": {
                         "description": "Account status",
                         "type": "string",
+                        "example": "pending_approval",
                         "enum": [
                             "pending_approval",
                             "active",
                             "invited"
-                        ],
-                        "example": "pending_approval"
+                        ]
                     },
                     "created_at": {
                         "description": "Creation timestamp",
@@ -3086,49 +3993,78 @@
                 },
                 "type": "object"
             },
-            "PaginatedResponse": {
-                "title": "Paginated Response",
-                "description": "Generic pagination payload",
+            "ServiceTokenResponse": {
+                "title": "Service Token Response",
+                "description": "JWT issued to a domain application via X-App-Key",
                 "required": [
-                    "data",
-                    "total",
-                    "page",
-                    "per_page"
+                    "access_token",
+                    "token_type",
+                    "expires_in",
+                    "scope"
                 ],
                 "properties": {
-                    "data": {
-                        "description": "Result set",
+                    "access_token": {
+                        "description": "Signed JWT (HS256) carrying the application scope",
+                        "type": "string",
+                        "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                    },
+                    "token_type": {
+                        "description": "Always \"Bearer\"",
+                        "type": "string",
+                        "example": "Bearer"
+                    },
+                    "expires_in": {
+                        "description": "Token lifetime in seconds",
+                        "type": "integer",
+                        "example": 900
+                    },
+                    "scope": {
+                        "description": "Permission codes embedded in the token",
                         "type": "array",
                         "items": {
-                            "type": "object"
+                            "type": "string",
+                            "example": "mydomain.access"
                         }
-                    },
-                    "total": {
-                        "description": "Total number of records",
-                        "type": "integer",
-                        "example": 120
-                    },
-                    "page": {
-                        "description": "Current page",
-                        "type": "integer",
-                        "example": 1
-                    },
-                    "per_page": {
-                        "description": "Items per page",
-                        "type": "integer",
-                        "example": 20
                     }
                 },
                 "type": "object"
             },
-            "PayloadResponse": {
-                "title": "Payload Response",
-                "description": "Generic payload wrapper",
+            "GalleryImageResponse": {
+                "description": "Response payload for a single gallery item: the pivot record enriched with\nthe underlying file's metadata (original name, image flag, variants).",
                 "properties": {
-                    "payload": {
-                        "description": "Payload data",
+                    "id": {
+                        "type": "integer",
+                        "example": 42
+                    },
+                    "parent_id": {
+                        "type": "integer",
+                        "example": 7
+                    },
+                    "file_id": {
+                        "type": "string",
+                        "example": "5"
+                    },
+                    "sort_order": {
+                        "type": "integer",
+                        "example": 0
+                    },
+                    "is_active": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "original_name": {
+                        "type": "string",
+                        "example": "photo.jpg",
+                        "nullable": true
+                    },
+                    "is_image": {
+                        "type": "boolean",
+                        "example": true,
+                        "nullable": true
+                    },
+                    "variants": {
                         "type": "object",
-                        "additionalProperties": true
+                        "nullable": true
                     }
                 },
                 "type": "object"
@@ -3237,6 +4173,193 @@
                 },
                 "type": "object"
             },
+            "ApplicationResponse": {
+                "title": "Application Response",
+                "required": [
+                    "id",
+                    "name"
+                ],
+                "properties": {
+                    "id": {
+                        "description": "Unique identifier",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "name": {
+                        "description": "Application name",
+                        "type": "string"
+                    },
+                    "created_at": {
+                        "description": "Creation timestamp",
+                        "type": "string",
+                        "example": "2026-02-26 12:00:00",
+                        "nullable": true
+                    },
+                    "updated_at": {
+                        "description": "Last update timestamp",
+                        "type": "string",
+                        "example": "2026-02-26 12:00:00",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "PermissionResponse": {
+                "title": "Permission Response",
+                "required": [
+                    "id",
+                    "application_id",
+                    "code"
+                ],
+                "properties": {
+                    "id": {
+                        "description": "Unique identifier",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "application_id": {
+                        "description": "application_id",
+                        "type": "integer"
+                    },
+                    "code": {
+                        "description": "code",
+                        "type": "string"
+                    },
+                    "resource": {
+                        "description": "resource",
+                        "type": "string"
+                    },
+                    "action": {
+                        "description": "action",
+                        "type": "string"
+                    },
+                    "description": {
+                        "description": "description",
+                        "type": "string"
+                    },
+                    "application_name": {
+                        "description": "Display name of the related application",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "description": "Creation timestamp",
+                        "type": "string",
+                        "example": "2026-02-26 12:00:00",
+                        "nullable": true
+                    },
+                    "updated_at": {
+                        "description": "Last update timestamp",
+                        "type": "string",
+                        "example": "2026-02-26 12:00:00",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "RoleResponse": {
+                "title": "Role Response",
+                "required": [
+                    "id",
+                    "code",
+                    "name",
+                    "is_system"
+                ],
+                "properties": {
+                    "id": {
+                        "description": "Unique identifier",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "application_id": {
+                        "description": "Application id; null for global roles",
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "code": {
+                        "description": "Role code",
+                        "type": "string"
+                    },
+                    "name": {
+                        "description": "Display name",
+                        "type": "string"
+                    },
+                    "description": {
+                        "description": "Description",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "is_system": {
+                        "description": "System role flag",
+                        "type": "boolean"
+                    },
+                    "application_name": {
+                        "description": "Display name of the related application",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "description": "Creation timestamp",
+                        "type": "string",
+                        "example": "2026-02-26 12:00:00",
+                        "nullable": true
+                    },
+                    "updated_at": {
+                        "description": "Last update timestamp",
+                        "type": "string",
+                        "example": "2026-02-26 12:00:00",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "UserPermissionsResponse": {
+                "title": "User Permissions Response",
+                "required": [
+                    "user_id",
+                    "application",
+                    "permissions"
+                ],
+                "properties": {
+                    "user_id": {
+                        "description": "User identifier",
+                        "type": "integer",
+                        "example": 42
+                    },
+                    "application": {
+                        "description": "Summary of the application the permissions are scoped to",
+                        "required": [
+                            "id",
+                            "code",
+                            "name"
+                        ],
+                        "properties": {
+                            "id": {
+                                "type": "integer",
+                                "example": 1
+                            },
+                            "code": {
+                                "type": "string",
+                                "example": "self"
+                            },
+                            "name": {
+                                "type": "string",
+                                "example": "Self"
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "permissions": {
+                        "description": "Sorted, deduplicated effective permission codes for the user within the application",
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "example": "users.read"
+                        }
+                    }
+                },
+                "type": "object"
+            },
             "GoogleIdentityResponse": {
                 "title": "Google Identity Response",
                 "description": "Verified identity data returned by Google",
@@ -3310,11 +4433,12 @@
             },
             "TokenResponse": {
                 "title": "Token Response",
-                "description": "Token Response DTO",
+                "description": "Token Response DTO\n\nReturned by `POST /auth/refresh`. Carries a fresh access/refresh\ntoken pair plus the canonical authenticated user (`MeResponse`) so\nconsumers can re-hydrate UI gating without an extra `/auth/me` call.",
                 "required": [
                     "access_token",
                     "refresh_token",
-                    "expires_in"
+                    "expires_in",
+                    "user"
                 ],
                 "properties": {
                     "access_token": {
@@ -3331,13 +4455,7 @@
                         "example": 3600
                     },
                     "user": {
-                        "oneOf": [
-                            {
-                                "$ref": "#/components/schemas/UserResponse"
-                            }
-                        ],
-                        "nullable": true,
-                        "description": "Associated user data"
+                        "$ref": "#/components/schemas/MeResponse"
                     }
                 },
                 "type": "object"
@@ -3448,7 +4566,6 @@
                 "required": [
                     "id",
                     "email",
-                    "role",
                     "status"
                 ],
                 "properties": {
@@ -3474,25 +4591,15 @@
                         "example": "Doe",
                         "nullable": true
                     },
-                    "role": {
-                        "description": "User role",
-                        "type": "string",
-                        "enum": [
-                            "user",
-                            "admin",
-                            "superadmin"
-                        ],
-                        "example": "user"
-                    },
                     "status": {
                         "description": "Account status",
                         "type": "string",
+                        "example": "active",
                         "enum": [
                             "pending_approval",
                             "active",
                             "invited"
-                        ],
-                        "example": "active"
+                        ]
                     },
                     "avatar_url": {
                         "description": "URL to user avatar",
@@ -3511,6 +4618,71 @@
                         "type": "string",
                         "example": "2026-02-26 12:00:00",
                         "nullable": true
+                    },
+                    "roles": {
+                        "description": "Global roles assigned to this user.",
+                        "type": "array",
+                        "items": {
+                            "properties": {
+                                "id": {
+                                    "type": "integer"
+                                },
+                                "code": {
+                                    "type": "string"
+                                },
+                                "name": {
+                                    "type": "string"
+                                }
+                            },
+                            "type": "object"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "PayloadResponse": {
+                "title": "Payload Response",
+                "description": "Generic payload wrapper",
+                "properties": {
+                    "payload": {
+                        "description": "Payload data",
+                        "type": "object",
+                        "additionalProperties": true
+                    }
+                },
+                "type": "object"
+            },
+            "PaginatedResponse": {
+                "title": "Paginated Response",
+                "description": "Generic pagination payload",
+                "required": [
+                    "data",
+                    "total",
+                    "page",
+                    "per_page"
+                ],
+                "properties": {
+                    "data": {
+                        "description": "Result set",
+                        "type": "array",
+                        "items": {
+                            "type": "object"
+                        }
+                    },
+                    "total": {
+                        "description": "Total number of records",
+                        "type": "integer",
+                        "example": 120
+                    },
+                    "page": {
+                        "description": "Current page",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "per_page": {
+                        "description": "Items per page",
+                        "type": "integer",
+                        "example": 20
                     }
                 },
                 "type": "object"
@@ -3770,6 +4942,12 @@
                 "description": "Enter your JWT token in the format: Bearer {token}",
                 "bearerFormat": "JWT",
                 "scheme": "bearer"
+            },
+            "appKeyAuth": {
+                "type": "apiKey",
+                "description": "Per-application API key issued by this server, used to authenticate the calling app (no user JWT required).",
+                "name": "X-App-Key",
+                "in": "header"
             }
         }
     },
@@ -3801,6 +4979,10 @@
         {
             "name": "API Keys",
             "description": "API Keys"
+        },
+        {
+            "name": "Iam",
+            "description": "Iam"
         }
     ]
 }

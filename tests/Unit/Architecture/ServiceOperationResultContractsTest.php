@@ -35,8 +35,8 @@ class ServiceOperationResultContractsTest extends CIUnitTestCase
                 $returnType = $method->getReturnType();
                 $typeName = $returnType !== null ? $returnType->getName() : '';
 
-                if ($typeName !== \App\Support\OperationResult::class) {
-                    $violations[] = "{$class}::{$methodName} must return " . \App\Support\OperationResult::class;
+                if ($typeName !== \dcardenasl\Ci4ApiCore\Support\OperationResult::class) {
+                    $violations[] = "{$class}::{$methodName} must return " . \dcardenasl\Ci4ApiCore\Support\OperationResult::class;
                 }
             }
         }

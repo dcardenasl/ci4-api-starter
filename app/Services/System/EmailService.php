@@ -7,7 +7,7 @@ namespace App\Services\System;
 use App\Interfaces\System\EmailServiceInterface;
 use App\Libraries\Queue\Jobs\SendEmailJob;
 use App\Libraries\Queue\Jobs\SendTemplateEmailJob;
-use App\Libraries\Queue\QueueManager;
+use dcardenasl\Ci4ApiCore\Queue\QueueManager;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Address;
 use Symfony\Component\Mime\Email;

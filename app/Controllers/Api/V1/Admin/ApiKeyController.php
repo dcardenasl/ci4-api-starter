@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace App\Controllers\Api\V1\Admin;
 
-use App\Controllers\ApiController;
 use App\DTO\Request\ApiKeys\ApiKeyCreateRequestDTO;
 use App\DTO\Request\ApiKeys\ApiKeyIndexRequestDTO;
 use App\DTO\Request\ApiKeys\ApiKeyUpdateRequestDTO;
 use App\Interfaces\Tokens\ApiKeyServiceInterface;
 use CodeIgniter\HTTP\ResponseInterface;
 use Config\Services;
+use dcardenasl\Ci4ApiCore\Http\ApiController;
 
 /**
  * Modernized API Key Controller

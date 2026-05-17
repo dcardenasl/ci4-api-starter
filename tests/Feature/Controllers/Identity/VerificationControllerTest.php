@@ -33,7 +33,6 @@ class VerificationControllerTest extends ApiTestCase
             ->insert([
             'email' => $email,
             'password' => password_hash('Pass123!', PASSWORD_BCRYPT),
-            'role' => 'user',
             'status' => 'active',
             'email_verified_at' => null,
             'email_verification_token' => hash_token($token),

@@ -18,7 +18,6 @@ class UsersLoadTestSeeder extends Seeder
         $now = date('Y-m-d H:i:s');
         $passwordHash = password_hash($defaultPassword, PASSWORD_BCRYPT);
         $statuses = ['active', 'pending_approval'];
-        $roles = ['user', 'user', 'user', 'admin'];
 
         if ($resetBeforeSeed) {
             $this->db->table('users')
@@ -30,7 +29,6 @@ class UsersLoadTestSeeder extends Seeder
 
         for ($i = 1; $i <= $count; $i++) {
             $status = $statuses[$i % count($statuses)];
-            $role = $roles[$i % count($roles)];
             $isActive = $status === 'active';
 
             $rows[] = [
@@ -38,7 +36,6 @@ class UsersLoadTestSeeder extends Seeder
                 'first_name' => 'Load' . $i,
                 'last_name' => 'User' . $i,
                 'password' => $passwordHash,
-                'role' => $role,
                 'status' => $status,
                 'approved_at' => $isActive ? $now : null,
                 'approved_by' => null,

@@ -5,17 +5,17 @@ declare(strict_types=1);
 namespace App\Services\Auth\Actions;
 
 use App\DTO\Request\Auth\GoogleLoginRequestDTO;
-use App\DTO\SecurityContext;
+use App\DTO\Response\Auth\PendingRegistrationResponseDTO;
 use App\Entities\UserEntity;
 use App\Interfaces\Auth\GoogleIdentityServiceInterface;
-use App\Interfaces\System\AuditServiceInterface;
 use App\Interfaces\System\EmailServiceInterface;
 use App\Interfaces\Users\UserRepositoryInterface;
-use App\Services\Auth\Support\AuthUserMapper;
 use App\Services\Auth\Support\GoogleAuthHandler;
 use App\Services\Auth\Support\SessionManager;
 use App\Services\Users\UserAccountGuard;
-use App\Support\OperationResult;
+use dcardenasl\Ci4ApiCore\Dto\SecurityContext;
+use dcardenasl\Ci4ApiCore\Services\AuditServiceInterface;
+use dcardenasl\Ci4ApiCore\Support\OperationResult;
 
 class GoogleLoginAction
 {
@@ -24,7 +24,6 @@ class GoogleLoginAction
         protected GoogleIdentityServiceInterface $googleIdentityService,
         protected GoogleAuthHandler $googleHandler,
         protected SessionManager $sessionManager,
-        protected AuthUserMapper $userMapper,
         protected UserAccountGuard $userAccessPolicy,
         protected AuditServiceInterface $auditService,
         protected EmailServiceInterface $emailService
@@ -58,7 +57,7 @@ class GoogleLoginAction
             $pending = $this->googleHandler->createPendingUser($identity->toArray());
             $this->sendPendingApprovalEmail($pending);
 
-            $userContext = new SecurityContext((int) $pending->id, (string) $pending->role, $context->metadata);
+            $userContext = new SecurityContext((int) $pending->id, $context->metadata);
             $this->auditService->log(
                 'google_registration_pending',
                 'users',
@@ -69,7 +68,7 @@ class GoogleLoginAction
             );
 
             return OperationResult::accepted(
-                ['user' => $this->userMapper->mapPending($pending)],
+                ['user' => PendingRegistrationResponseDTO::fromUser($pending)->toArray()],
                 lang('Auth.googleRegistrationPendingApproval')
             );
         }
@@ -79,13 +78,14 @@ class GoogleLoginAction
             $this->sendPendingApprovalEmail($user);
 
             return OperationResult::accepted(
-                ['user' => $this->userMapper->mapPending($user)],
+                ['user' => PendingRegistrationResponseDTO::fromUser($user)->toArray()],
                 lang('Auth.googleRegistrationPendingApproval')
             );
         }
 
+        $updateData = [];
+
         if (($user->status ?? null) === 'active') {
-            $updateData = [];
 
             if (($user->oauth_provider ?? null) === null) {
                 $updateData['oauth_provider'] = 'google';
@@ -102,7 +102,7 @@ class GoogleLoginAction
             }
 
             if ($updateData !== []) {
-                $this->userRepository->update((int) $user->id, $updateData);
+                $this->userRepository->withAuditAction('google_login_success')->update((int) $user->id, $updateData);
                 /** @var UserEntity|null $refreshed */
                 $refreshed = $this->userRepository->find((int) $user->id);
                 if ($refreshed === null) {
@@ -121,18 +121,19 @@ class GoogleLoginAction
             throw new \RuntimeException(lang('Auth.googleUserMissing'));
         }
 
-        $userContext = new SecurityContext((int) $freshUser->id, (string) $freshUser->role, $context->metadata);
-        $this->auditService->log(
-            'google_login_success',
-            'users',
-            (int) $freshUser->id,
-            [],
-            ['email' => $email, 'provider' => 'google'],
-            $userContext
-        );
+        if ($updateData === []) {
+            $this->auditService->log(
+                'google_login_success',
+                'users',
+                (int) $freshUser->id,
+                [],
+                ['email' => $email, 'provider' => 'google'],
+                $context
+            );
+        }
 
         return OperationResult::success(
-            $this->sessionManager->generateSessionResponse($this->userMapper->mapAuthenticated($freshUser))
+            $this->sessionManager->generateSessionResponse($freshUser)
         );
     }
 

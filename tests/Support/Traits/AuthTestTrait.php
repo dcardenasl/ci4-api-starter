@@ -38,7 +38,12 @@ trait AuthTestTrait
         $token = $this->loginAndGetToken($email, $password);
 
         // Inject identity into static holder for direct service access in tests
-        \App\Libraries\ContextHolder::set(new \App\DTO\SecurityContext((int) $this->currentUserId, (string) $role));
+        $permissions = \App\Support\TestPermissionResolver::permissionsForRole($role);
+        \dcardenasl\Ci4ApiCore\Http\ContextHolder::set(new \dcardenasl\Ci4ApiCore\Dto\SecurityContext(
+            (int) $this->currentUserId,
+            [],
+            $permissions
+        ));
 
         $headers = [
             'Authorization' => "Bearer {$token}",
@@ -60,7 +65,7 @@ trait AuthTestTrait
      */
     protected function enableAudit(): void
     {
-        \App\Services\System\AuditService::$forceEnabledInTests = true;
+        \dcardenasl\Ci4ApiCore\Services\Audit\AuditService::$forceEnabledInTests = true;
     }
 
     /**
@@ -68,7 +73,7 @@ trait AuthTestTrait
      */
     protected function disableAudit(): void
     {
-        \App\Services\System\AuditService::$forceEnabledInTests = false;
+        \dcardenasl\Ci4ApiCore\Services\Audit\AuditService::$forceEnabledInTests = false;
     }    protected function createUser(
         string $email,
         string $password,
@@ -81,16 +86,50 @@ trait AuthTestTrait
         // Ensure we don't try to re-create the same user in a test run
         $existing = $userModel->where('email', $email)->first();
         if ($existing) {
-            return (int) $existing->id;
+            $userId = (int) $existing->id;
+            $this->ensureMembership($userId, $role);
+            return $userId;
         }
 
-        return (int) $userModel->insert([
+        $userId = (int) $userModel->insert([
             'email' => $email,
             'password' => password_hash($password, PASSWORD_BCRYPT),
             'role' => $role,
             'status' => $status,
             'email_verified_at' => $verified ? date('Y-m-d H:i:s') : null,
         ]);
+
+        $this->ensureMembership($userId, $role);
+
+        return $userId;
+    }
+
+    /**
+     * Assigns the given global role to the user via the user_roles table so
+     * that EffectivePermissionsResolver returns the expected permission set.
+     */
+    private function ensureMembership(int $userId, string $roleCode): void
+    {
+        $db = \Config\Database::connect();
+
+        $role = $db->table('roles')->where('code', $roleCode)->get()?->getRowArray();
+        if ($role === null) {
+            return;
+        }
+
+        $userRoleExists = $db->table('user_roles')
+            ->where('user_id', $userId)
+            ->where('role_id', (int) $role['id'])
+            ->countAllResults() > 0;
+
+        if (! $userRoleExists) {
+            $db->table('user_roles')->insert([
+                'user_id'             => $userId,
+                'role_id'             => (int) $role['id'],
+                'assigned_at'         => date('Y-m-d H:i:s'),
+                'assigned_by_user_id' => null,
+            ]);
+        }
     }
 
     protected function loginAndGetToken(string $email, string $password): string

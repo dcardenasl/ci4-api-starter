@@ -6,12 +6,12 @@ namespace Tests\Integration\Services;
 
 use App\DTO\Request\Users\UserCreateRequestDTO;
 use App\DTO\Request\Users\UserUpdateRequestDTO;
-use App\DTO\SecurityContext;
-use App\Exceptions\ConflictException;
 use App\Models\UserModel;
 use App\Services\Users\UserService;
 use CodeIgniter\Test\CIUnitTestCase;
 use CodeIgniter\Test\DatabaseTestTrait;
+use dcardenasl\Ci4ApiCore\Dto\SecurityContext;
+use dcardenasl\Ci4ApiCore\Exceptions\ConflictException;
 use Tests\Support\Traits\CustomAssertionsTrait;
 
 /**
@@ -22,8 +22,10 @@ class UserServiceTest extends CIUnitTestCase
     use DatabaseTestTrait;
     use CustomAssertionsTrait;
 
-    protected $migrate     = true;
-    protected $namespace   = 'App';
+    protected $migrate   = true;
+    protected $namespace = 'App';
+    protected $seed      = \App\Database\Seeds\RbacBootstrapSeeder::class;
+    protected $basePath  = APPPATH . 'Database';
 
     protected UserService $userService;
     protected UserModel $userModel;
@@ -42,10 +44,9 @@ class UserServiceTest extends CIUnitTestCase
             'email' => 'integration@example.com',
             'first_name' => 'Integration',
             'last_name' => 'User',
-            'role' => 'user',
         ], service('validation'));
 
-        $result = $this->userService->store($request, new SecurityContext(1, 'admin'));
+        $result = $this->userService->store($request, new SecurityContext(1));
         $data = $result->toArray();
 
         $user = $this->userModel->find($data['id']);
@@ -57,7 +58,6 @@ class UserServiceTest extends CIUnitTestCase
         $userId = $this->userModel->insert([
             'email' => 'show@example.com',
             'password' => password_hash('ValidPass123!', PASSWORD_BCRYPT),
-            'role' => 'user',
         ]);
 
         $result = $this->userService->show((int) $userId);
@@ -69,7 +69,6 @@ class UserServiceTest extends CIUnitTestCase
         $userId = $this->userModel->insert([
             'email' => 'old@example.com',
             'password' => password_hash('ValidPass123!', PASSWORD_BCRYPT),
-            'role' => 'user',
         ]);
 
         $request = new UserUpdateRequestDTO([
@@ -77,7 +76,9 @@ class UserServiceTest extends CIUnitTestCase
             'first_name' => 'New',
         ], service('validation'));
 
-        $result = $this->userService->update((int) $userId, $request, new SecurityContext(1, 'admin'));
+        // Email mutation is now restricted to superadmin actors. Pass a superadmin
+        // context so the integration test continues to exercise the field path.
+        $result = $this->userService->update((int) $userId, $request, new SecurityContext(999, [], ['iam.superadmin-access']));
 
         $user = $this->userModel->find($userId);
         $this->assertEquals('new@example.com', $user->email);
@@ -88,10 +89,9 @@ class UserServiceTest extends CIUnitTestCase
         $userId = $this->userModel->insert([
             'email' => 'delete@example.com',
             'password' => password_hash('ValidPass123!', PASSWORD_BCRYPT),
-            'role' => 'user',
         ]);
 
-        $result = $this->userService->destroy((int) $userId, new SecurityContext(1, 'admin'));
+        $result = $this->userService->destroy((int) $userId, new SecurityContext(999));
         $this->assertTrue($result);
 
         $this->assertNull($this->userModel->find($userId));
@@ -103,11 +103,10 @@ class UserServiceTest extends CIUnitTestCase
         $userId = $this->userModel->insert([
             'email' => 'pending-approve@example.com',
             'password' => password_hash('ValidPass123!', PASSWORD_BCRYPT),
-            'role' => 'user',
             'status' => 'pending_approval',
         ]);
 
-        $result = $this->userService->approve((int) $userId, new SecurityContext(1, 'admin'));
+        $result = $this->userService->approve((int) $userId, new SecurityContext(999));
 
         $user = $this->userModel->find($userId);
         $this->assertEquals('active', $user->status);
@@ -120,11 +119,10 @@ class UserServiceTest extends CIUnitTestCase
         $userId = $this->userModel->insert([
             'email' => 'already-active@example.com',
             'password' => password_hash('ValidPass123!', PASSWORD_BCRYPT),
-            'role' => 'user',
             'status' => 'active',
         ]);
 
         $this->expectException(ConflictException::class);
-        $this->userService->approve((int) $userId, new SecurityContext(1, 'admin'));
+        $this->userService->approve((int) $userId, new SecurityContext(999));
     }
 }

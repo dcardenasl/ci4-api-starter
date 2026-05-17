@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Interfaces\Users;
 
-use App\DTO\SecurityContext;
+use dcardenasl\Ci4ApiCore\Dto\SecurityContext;
 
 /**
  * User Service Interface
@@ -16,22 +16,22 @@ interface UserServiceInterface
     /**
      * Get all users with pagination and filtering
      */
-    public function index(\App\Interfaces\DataTransferObjectInterface $request, ?SecurityContext $context = null): \App\Interfaces\DataTransferObjectInterface;
+    public function index(\dcardenasl\Ci4ApiCore\Dto\DataTransferObjectInterface $request, ?SecurityContext $context = null): \dcardenasl\Ci4ApiCore\Dto\DataTransferObjectInterface;
 
     /**
      * Get a single user by ID
      */
-    public function show(int $id, ?SecurityContext $context = null): \App\Interfaces\DataTransferObjectInterface;
+    public function show(int $id, ?SecurityContext $context = null): \dcardenasl\Ci4ApiCore\Dto\DataTransferObjectInterface;
 
     /**
      * Create a new user (Admin only)
      */
-    public function store(\App\Interfaces\DataTransferObjectInterface $request, ?SecurityContext $context = null): \App\Interfaces\DataTransferObjectInterface;
+    public function store(\dcardenasl\Ci4ApiCore\Dto\DataTransferObjectInterface $request, ?SecurityContext $context = null): \dcardenasl\Ci4ApiCore\Dto\DataTransferObjectInterface;
 
     /**
      * Update an existing user
      */
-    public function update(int $id, \App\Interfaces\DataTransferObjectInterface $request, ?SecurityContext $context = null): \App\Interfaces\DataTransferObjectInterface;
+    public function update(int $id, \dcardenasl\Ci4ApiCore\Dto\DataTransferObjectInterface $request, ?SecurityContext $context = null): \dcardenasl\Ci4ApiCore\Dto\DataTransferObjectInterface;
 
     /**
      * Delete a user (Soft delete)
@@ -41,5 +41,5 @@ interface UserServiceInterface
     /**
      * Approve a pending user
      */
-    public function approve(int $id, ?SecurityContext $context = null, ?string $clientBaseUrl = null): \App\Interfaces\DataTransferObjectInterface;
+    public function approve(int $id, ?SecurityContext $context = null, ?string $clientBaseUrl = null): \dcardenasl\Ci4ApiCore\Dto\DataTransferObjectInterface;
 }

@@ -4,24 +4,24 @@ declare(strict_types=1);
 
 namespace App\Services\Files;
 
-use App\DTO\Response\Common\PaginatedResponseDTO;
 use App\DTO\Response\Files\FileDownloadResponseDTO;
 use App\DTO\Response\Files\FileResponseDTO;
-use App\DTO\SecurityContext;
-use App\Exceptions\AuthorizationException;
-use App\Exceptions\BadRequestException;
-use App\Exceptions\NotFoundException;
-use App\Exceptions\ValidationException;
 use App\Interfaces\Files\FileRepositoryInterface;
 use App\Interfaces\Files\FileServiceInterface;
 use App\Interfaces\Files\VirusScannerServiceInterface;
-use App\Interfaces\System\AuditServiceInterface;
 use App\Libraries\Files\Base64Processor;
 use App\Libraries\Files\FilenameGenerator;
 use App\Libraries\Files\MultipartProcessor;
 use App\Libraries\Storage\StorageManager;
 use App\Support\Files\ProcessedFile;
-use App\Traits\AppliesQueryOptions;
+use dcardenasl\Ci4ApiCore\Dto\PaginatedResponseDTO;
+use dcardenasl\Ci4ApiCore\Dto\SecurityContext;
+use dcardenasl\Ci4ApiCore\Exceptions\AuthorizationException;
+use dcardenasl\Ci4ApiCore\Exceptions\BadRequestException;
+use dcardenasl\Ci4ApiCore\Exceptions\NotFoundException;
+use dcardenasl\Ci4ApiCore\Exceptions\ValidationException;
+use dcardenasl\Ci4ApiCore\Models\Traits\AppliesQueryOptions;
+use dcardenasl\Ci4ApiCore\Services\AuditServiceInterface;
 
 /**
  * File Service (Refactored)
@@ -31,11 +31,11 @@ use App\Traits\AppliesQueryOptions;
 class FileService implements FileServiceInterface
 {
     use AppliesQueryOptions;
-    use \App\Traits\HandlesTransactions;
+    use \dcardenasl\Ci4ApiCore\Services\HandlesTransactions;
 
     public function __construct(
         protected FileRepositoryInterface $fileRepository,
-        protected \App\Interfaces\Mappers\ResponseMapperInterface $responseMapper,
+        protected \dcardenasl\Ci4ApiCore\Mappers\ResponseMapperInterface $responseMapper,
         protected StorageManager $storage,
         protected AuditServiceInterface $auditService,
         protected FilenameGenerator $filenameGenerator,
@@ -49,7 +49,7 @@ class FileService implements FileServiceInterface
     /**
      * Upload a file
      */
-    public function upload(\App\Interfaces\DataTransferObjectInterface $request, ?SecurityContext $context = null): \App\Interfaces\DataTransferObjectInterface
+    public function upload(\dcardenasl\Ci4ApiCore\Dto\DataTransferObjectInterface $request, ?SecurityContext $context = null): \dcardenasl\Ci4ApiCore\Dto\DataTransferObjectInterface
     {
         /** @var \App\DTO\Request\Files\FileUploadRequestDTO $request */
         $userId = $this->resolveUserId($request, $context);
@@ -123,6 +123,9 @@ class FileService implements FileServiceInterface
         }
 
         $savedFile = $this->fileRepository->find($fileId);
+        if ($savedFile === null) {
+            throw new \RuntimeException(sprintf('File row %d disappeared after insert.', (int) $fileId));
+        }
         /** @var FileResponseDTO $response */
         $response = $this->responseMapper->map($savedFile);
         return $response;
@@ -131,7 +134,7 @@ class FileService implements FileServiceInterface
     /**
      * List user's files
      */
-    public function index(\App\Interfaces\DataTransferObjectInterface $request, ?SecurityContext $context = null): \App\Interfaces\DataTransferObjectInterface
+    public function index(\dcardenasl\Ci4ApiCore\Dto\DataTransferObjectInterface $request, ?SecurityContext $context = null): \dcardenasl\Ci4ApiCore\Dto\DataTransferObjectInterface
     {
         /** @var \App\DTO\Request\Files\FileIndexRequestDTO $request */
         $userId = $this->resolveUserId($request, $context);
@@ -160,10 +163,11 @@ class FileService implements FileServiceInterface
      */
     public function findById(int $id, ?SecurityContext $context = null): FileResponseDTO
     {
-        $file = $this->fileRepository->find($id);
-        if (!$file) {
-            throw new NotFoundException(lang('Files.file_not_found'));
+        if ($context?->user_id === null) {
+            throw new AuthorizationException(lang('Api.unauthorized'));
         }
+
+        $file = $this->findFileAndAuthorize($id, $context->user_id, 'view', $context->hasPermission('files.read'), $context);
 
         /** @var FileResponseDTO $response */
         $response = $this->responseMapper->map($file);
@@ -173,7 +177,7 @@ class FileService implements FileServiceInterface
     /**
      * Download a file
      */
-    public function download(\App\Interfaces\DataTransferObjectInterface $request, ?SecurityContext $context = null): \App\Interfaces\DataTransferObjectInterface
+    public function download(\dcardenasl\Ci4ApiCore\Dto\DataTransferObjectInterface $request, ?SecurityContext $context = null): \dcardenasl\Ci4ApiCore\Dto\DataTransferObjectInterface
     {
         /** @var \App\DTO\Request\Files\FileGetRequestDTO $request */
         $userId = $this->resolveUserId($request, $context);
@@ -191,7 +195,7 @@ class FileService implements FileServiceInterface
             throw new AuthorizationException(lang('Api.unauthorized'));
         }
 
-        $file = $this->findFileAndAuthorize($id, $context->user_id, 'delete', $context->isAdmin(), $context);
+        $file = $this->findFileAndAuthorize($id, $context->user_id, 'delete', $context->hasPermission('files.read'), $context);
 
         return $this->wrapInTransaction(function () use ($file) {
             $this->storage->delete($file->path);
@@ -201,7 +205,7 @@ class FileService implements FileServiceInterface
 
     protected function resolveUserId(object|array $request, ?SecurityContext $context): int
     {
-        $data = $request instanceof \App\Interfaces\DataTransferObjectInterface ? $request->toArray() : (array)$request;
+        $data = $request instanceof \dcardenasl\Ci4ApiCore\Dto\DataTransferObjectInterface ? $request->toArray() : (array)$request;
         $context ??= SecurityContext::anonymous();
         $userId = $context->user_id ?? (int) ($data['user_id'] ?? 0);
 
@@ -224,10 +228,14 @@ class FileService implements FileServiceInterface
         }
 
         $effectiveBypass = $bypassOwnership
-            || ($action === 'download' && !$this->userScopedFiles);
+            || (in_array($action, ['download', 'view'], true) && !$this->userScopedFiles);
 
         if (!$effectiveBypass && (int) $file->user_id !== $userId) {
-            $deniedAction = $action === 'download' ? 'unauthorized_file_download' : 'unauthorized_file_delete';
+            $deniedAction = match ($action) {
+                'download' => 'unauthorized_file_download',
+                'delete'   => 'unauthorized_file_delete',
+                default    => 'unauthorized_file_access',
+            };
             $this->auditService->log(
                 $deniedAction,
                 'files',

@@ -71,7 +71,6 @@ class AuthControllerTest extends ApiTestCase
         $this->userModel->insert([
             'email' => $email,
             'password' => password_hash('ValidPass123!', PASSWORD_BCRYPT),
-            'role' => 'user',
         ]);
 
         $result = $this->withBodyFormat('json')
@@ -94,7 +93,6 @@ class AuthControllerTest extends ApiTestCase
         $this->userModel->insert([
             'email' => 'login@example.com',
             'password' => password_hash('ValidPass123!', PASSWORD_BCRYPT),
-            'role' => 'user',
             'status' => 'active',
             'email_verified_at' => date('Y-m-d H:i:s'),
         ]);
@@ -108,6 +106,16 @@ class AuthControllerTest extends ApiTestCase
         $result->assertStatus(200);
         $json = $this->getResponseJson($result);
         $this->assertArrayHasKey('access_token', $json['data']);
+
+        // Contract: the canonical "me" shape is embedded under `user` and
+        // MUST include `permissions` (effective permission codes used for
+        // UI gating on the consumer). Drop this field and frontends lose
+        // their authorization context.
+        $this->assertArrayHasKey('user', $json['data']);
+        $this->assertArrayHasKey('permissions', $json['data']['user']);
+        $this->assertIsArray($json['data']['user']['permissions']);
+        $this->assertArrayHasKey('roles', $json['data']['user']);
+        $this->assertArrayHasKey('status', $json['data']['user']);
     }
 
     public function testLoginWithEmptyCredentialsReturns422(): void

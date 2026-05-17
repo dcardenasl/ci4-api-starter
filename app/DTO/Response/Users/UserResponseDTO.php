@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\DTO\Response\Users;
 
-use App\Interfaces\DataTransferObjectInterface;
+use dcardenasl\Ci4ApiCore\Dto\DataTransferObjectInterface;
 use OpenApi\Attributes as OA;
 
 /**
@@ -16,7 +16,7 @@ use OpenApi\Attributes as OA;
     schema: 'UserResponse',
     title: 'User Response',
     description: 'User data returned by the API',
-    required: ['id', 'email', 'role', 'status']
+    required: ['id', 'email', 'status']
 )]
 readonly class UserResponseDTO implements DataTransferObjectInterface
 {
@@ -29,8 +29,6 @@ readonly class UserResponseDTO implements DataTransferObjectInterface
         public string $first_name,
         #[OA\Property(property: 'last_name', description: 'User last name', example: 'Doe', nullable: true)]
         public string $last_name,
-        #[OA\Property(description: 'User role', example: 'user', enum: ['user', 'admin', 'superadmin'])]
-        public string $role,
         #[OA\Property(description: 'Account status', example: 'active', enum: ['pending_approval', 'active', 'invited'])]
         public string $status,
         #[OA\Property(property: 'avatar_url', description: 'URL to user avatar', example: 'https://example.com/avatar.png', nullable: true)]
@@ -38,7 +36,21 @@ readonly class UserResponseDTO implements DataTransferObjectInterface
         #[OA\Property(property: 'created_at', description: 'Creation timestamp', example: '2026-02-26 12:00:00', nullable: true)]
         public ?string $created_at = null,
         #[OA\Property(property: 'updated_at', description: 'Last update timestamp', example: '2026-02-26 12:00:00', nullable: true)]
-        public ?string $updated_at = null
+        public ?string $updated_at = null,
+        /** @var list<array{id:int, code:string, name:string}> */
+        #[OA\Property(
+            description: 'Global roles assigned to this user.',
+            type: 'array',
+            items: new OA\Items(
+                type: 'object',
+                properties: [
+                    new OA\Property(property: 'id', type: 'integer'),
+                    new OA\Property(property: 'code', type: 'string'),
+                    new OA\Property(property: 'name', type: 'string'),
+                ]
+            )
+        )]
+        public array $roles = []
     ) {
     }
 
@@ -54,16 +66,18 @@ readonly class UserResponseDTO implements DataTransferObjectInterface
             $updated_at = $updated_at->format('Y-m-d H:i:s');
         }
 
+        $roles = self::resolveRoles((int) ($data['id'] ?? 0));
+
         return new self(
             id: (int) ($data['id'] ?? 0),
             email: (string) ($data['email'] ?? ''),
             first_name: (string) ($data['first_name'] ?? ''),
             last_name: (string) ($data['last_name'] ?? ''),
-            role: (string) ($data['role'] ?? 'user'),
             status: (string) ($data['status'] ?? 'pending'),
             avatar_url: isset($data['avatar_url']) ? (string) $data['avatar_url'] : null,
             created_at: $created_at ? (string) $created_at : null,
-            updated_at: $updated_at ? (string) $updated_at : null
+            updated_at: $updated_at ? (string) $updated_at : null,
+            roles: $roles,
         );
     }
 
@@ -74,11 +88,40 @@ readonly class UserResponseDTO implements DataTransferObjectInterface
             'email' => $this->email,
             'first_name' => $this->first_name,
             'last_name' => $this->last_name,
-            'role' => $this->role,
             'status' => $this->status,
             'avatar_url' => $this->avatar_url,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
+            'roles' => $this->roles,
         ];
+    }
+
+    /**
+     * @return list<array{id:int, code:string, name:string}>
+     */
+    private static function resolveRoles(int $userId): array
+    {
+        if ($userId <= 0) {
+            return [];
+        }
+
+        try {
+            $rows = \Config\Database::connect()
+                ->table('user_roles ur')
+                ->select('r.id, r.code, r.name')
+                ->join('roles r', 'r.id = ur.role_id')
+                ->where('ur.user_id', $userId)
+                ->orderBy('r.name', 'ASC')
+                ->get()
+                ?->getResultArray() ?? [];
+        } catch (\Throwable) {
+            return [];
+        }
+
+        return array_map(static fn (array $r) => [
+            'id'   => (int) $r['id'],
+            'code' => (string) $r['code'],
+            'name' => (string) $r['name'],
+        ], $rows);
     }
 }

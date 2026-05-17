@@ -25,6 +25,9 @@ jobs:
           extensions: mysqli, mbstring, intl, json
           coverage: none
 
+      - name: Strip local path repositories (CI resolves from Packagist)
+        run: php scripts/ci-strip-local-repos.php
+
       - name: Cache Composer packages
         uses: actions/cache@v3
         with:

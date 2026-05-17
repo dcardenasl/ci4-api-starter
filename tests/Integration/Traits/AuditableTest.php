@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Traits;
+namespace Tests\Integration\Traits;
 
 use App\Models\UserModel;
 use CodeIgniter\Test\CIUnitTestCase;

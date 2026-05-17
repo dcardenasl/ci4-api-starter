@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Services;
+namespace Tests\Integration\Services;
 
 use App\DTO\Request\ApiKeys\ApiKeyCreateRequestDTO;
 use App\DTO\Request\ApiKeys\ApiKeyUpdateRequestDTO;

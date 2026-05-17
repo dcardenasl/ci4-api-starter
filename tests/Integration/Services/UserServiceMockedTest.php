@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Services;
+namespace Tests\Integration\Services;
 
 use App\DTO\Response\Users\UserResponseDTO;
 use App\Entities\UserEntity;
@@ -17,11 +17,15 @@ use dcardenasl\Ci4ApiCore\Mappers\ResponseMapperInterface;
 use Tests\Support\Traits\CustomAssertionsTrait;
 
 /**
- * UserService Unit Tests
+ * UserService collaboration tests.
  *
- * Tests CRUD operations with mocked dependencies.
+ * Tests CRUD operations with mocked collaborators. Lives under the
+ * Integration suite because the service's `wrapInTransaction()` opens
+ * a real DB connection (transBegin) even when every other dependency
+ * is mocked. The full DB-backed end-to-end suite lives in
+ * UserServiceTest in this same directory.
  */
-class UserServiceTest extends CIUnitTestCase
+class UserServiceMockedTest extends CIUnitTestCase
 {
     use CustomAssertionsTrait;
 

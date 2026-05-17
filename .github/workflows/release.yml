@@ -60,14 +60,17 @@ jobs:
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Pipe the notes through env, not direct ${{ }} interpolation —
+          # CHANGELOG bodies contain backticks and other shell metacharacters
+          # that the runner would otherwise expand against the host shell.
+          NOTES: ${{ steps.notes.outputs.notes }}
         run: |
           # Soft-fail when the release already exists (re-tag scenarios).
           if gh release view "${GITHUB_REF_NAME}" >/dev/null 2>&1; then
             echo "Release ${GITHUB_REF_NAME} already exists; updating notes."
-            gh release edit "${GITHUB_REF_NAME}" \
-              --notes "${{ steps.notes.outputs.notes }}"
+            gh release edit "${GITHUB_REF_NAME}" --notes "${NOTES}"
           else
             gh release create "${GITHUB_REF_NAME}" \
               --title "${GITHUB_REF_NAME}" \
-              --notes "${{ steps.notes.outputs.notes }}"
+              --notes "${NOTES}"
           fi

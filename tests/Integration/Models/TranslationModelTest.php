@@ -53,7 +53,10 @@ final class TranslationModelTest extends CIUnitTestCase
 
         $result = $model->getForEntity('shows', 7);
 
-        $this->assertSame([
+        // assertEquals (not assertSame) because we are testing the grouping
+        // shape, not field order — MySQL does not guarantee row order
+        // without ORDER BY, so the inner-array key order is incidental.
+        $this->assertEquals([
             'en' => ['title' => 'Title EN', 'subtitle' => 'Sub EN'],
             'fr' => ['title' => 'Titre FR'],
         ], $result);

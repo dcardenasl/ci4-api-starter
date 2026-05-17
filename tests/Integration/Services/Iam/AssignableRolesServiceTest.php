@@ -33,10 +33,14 @@ final class AssignableRolesServiceTest extends ApiTestCase
         // Wipe any seeded roles/role_permissions so each test starts from
         // a controlled fixture set. Permissions/applications keep their
         // seeded shape — we add new ones as needed.
+        //
+        // emptyTable() (DELETE FROM) instead of truncate() because MySQL
+        // forbids TRUNCATE on tables referenced by FK constraints; the
+        // child tables are cleared first so the parent DELETE succeeds.
         $db = \Config\Database::connect();
-        $db->table('role_permissions')->truncate();
-        $db->table('user_roles')->truncate();
-        $db->table('roles')->truncate();
+        $db->table('role_permissions')->emptyTable();
+        $db->table('user_roles')->emptyTable();
+        $db->table('roles')->emptyTable();
 
         $this->service = new AssignableRolesService($db);
     }

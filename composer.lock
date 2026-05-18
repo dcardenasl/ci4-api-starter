@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "58f43d4c3dbc28f383530aacd4f69261",
+    "content-hash": "ad4d80829e6127166141c03473cbafd3",
     "packages": [
         {
             "name": "aws/aws-crt-php",
@@ -236,16 +236,16 @@
         },
         {
             "name": "dcardenasl/ci4-api-core",
-            "version": "v0.4.1",
+            "version": "v0.5.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/dcardenasl/ci4-api-core.git",
-                "reference": "5cae68d6263f848fe4a7b5b715b41c7ddecccc27"
+                "reference": "57a6f438331b1c3b3fc22408f479340512836688"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/dcardenasl/ci4-api-core/zipball/5cae68d6263f848fe4a7b5b715b41c7ddecccc27",
-                "reference": "5cae68d6263f848fe4a7b5b715b41c7ddecccc27",
+                "url": "https://api.github.com/repos/dcardenasl/ci4-api-core/zipball/57a6f438331b1c3b3fc22408f479340512836688",
+                "reference": "57a6f438331b1c3b3fc22408f479340512836688",
                 "shasum": ""
             },
             "require": {
@@ -264,6 +264,7 @@
             "suggest": {
                 "ext-redis": "Required to use RedisQueueManager as an alternative to the DB-backed QueueManager",
                 "monolog/monolog": "Required for JSON structured logging via JsonFormatter / MonologHandler (^3.5)",
+                "sentry/sentry": "Records outbound HTTP breadcrumbs in AbstractServiceClient (^4.0). No-op when absent.",
                 "zircote/swagger-php": "Required to auto-generate OpenAPI specs from DTO/Controller annotations (^4.10 || ^5.0 || ^6.0)"
             },
             "type": "library",
@@ -301,18 +302,26 @@
             "description": "DTO-first API runtime foundation for CodeIgniter 4: base classes, HTTP layer, services, repositories, filters, audit chain, and queue. Powers ci4-api-starter and ci4-domain-starter. Pair with dcardenasl/ci4-api-scaffolding for CRUD generation.",
             "homepage": "https://github.com/dcardenasl/ci4-api-core",
             "keywords": [
+                "Audit",
+                "CI4",
                 "api",
                 "base-classes",
+                "codeigniter",
                 "codeigniter4",
                 "dto",
+                "dto-first",
                 "foundation",
-                "rest"
+                "queue",
+                "repository-pattern",
+                "rest",
+                "rest-api",
+                "service-layer"
             ],
             "support": {
                 "issues": "https://github.com/dcardenasl/ci4-api-core/issues",
                 "source": "https://github.com/dcardenasl/ci4-api-core"
             },
-            "time": "2026-05-10T07:26:34+00:00"
+            "time": "2026-05-16T09:12:44+00:00"
         },
         {
             "name": "doctrine/lexer",
@@ -4306,21 +4315,21 @@
         },
         {
             "name": "dcardenasl/ci4-api-scaffolding",
-            "version": "v0.3.0",
+            "version": "v0.3.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/dcardenasl/ci4-api-scaffolding.git",
-                "reference": "d6e4c60988b168d4d3ba794ab86febd482368262"
+                "reference": "6a593d10f9567ceb1ba9ab1f363462a5406a1699"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/dcardenasl/ci4-api-scaffolding/zipball/d6e4c60988b168d4d3ba794ab86febd482368262",
-                "reference": "d6e4c60988b168d4d3ba794ab86febd482368262",
+                "url": "https://api.github.com/repos/dcardenasl/ci4-api-scaffolding/zipball/6a593d10f9567ceb1ba9ab1f363462a5406a1699",
+                "reference": "6a593d10f9567ceb1ba9ab1f363462a5406a1699",
                 "shasum": ""
             },
             "require": {
-                "codeigniter4/framework": "^4.6",
-                "dcardenasl/ci4-api-core": "^0.4.1",
+                "codeigniter4/framework": "^4.7",
+                "dcardenasl/ci4-api-core": "^0.5.0",
                 "nikic/php-parser": "^5.0",
                 "php": "^8.2"
             },
@@ -4371,17 +4380,25 @@
             "description": "CRUD scaffolding engine for CodeIgniter 4 APIs built on dcardenasl/ci4-api-core. Generates DTOs, services, controllers, migrations, routes, tests and OpenAPI docs via spark commands.",
             "homepage": "https://github.com/dcardenasl/ci4-api-scaffolding",
             "keywords": [
+                "CI4",
                 "code-generation",
+                "code-generator",
+                "codeigniter",
                 "codeigniter4",
                 "crud",
+                "dto",
+                "dto-first",
                 "generator",
-                "scaffolding"
+                "openapi",
+                "scaffolding",
+                "spark",
+                "swagger"
             ],
             "support": {
                 "issues": "https://github.com/dcardenasl/ci4-api-scaffolding/issues",
                 "source": "https://github.com/dcardenasl/ci4-api-scaffolding"
             },
-            "time": "2026-05-10T07:32:04+00:00"
+            "time": "2026-05-18T01:53:42+00:00"
         },
         {
             "name": "ergebnis/agent-detector",

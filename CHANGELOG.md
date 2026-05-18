@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **`codeigniter4/framework` constraint bumped from `^4.5` to `^4.7`** — locks to the current stable CI4 (v4.7.2). The effective floor was already 4.6 because `dcardenasl/ci4-api-core` requires it; the constraint now reflects what is actually exercised in CI and lockfile.
+- **`dcardenasl/ci4-api-core` bumped to `^0.5.0`** — picks up `AbstractServiceClient` and the outbound HTTP config knobs introduced in core v0.5.0. Purely additive on the hub side; no behaviour change.
+
+### Docs
+
+- **README:** `bin/make-crud.sh` references replaced with `vendor/bin/make-crud.sh`. The local `bin/` directory was removed when the scaffolding engine was extracted to `dcardenasl/ci4-api-scaffolding` in v2.0.0; the binary now ships from the dev dependency under `vendor/bin/`.
+
 ## [2.1.0] — 2026-05-17
 
 Adds a complete trash lifecycle to the files API (soft delete, restore, force delete, bulk variants) so the admin's existing trash UI is no longer hitting 404s. Documentation pass on validation, scaffolding package references, and the file-storage guide.

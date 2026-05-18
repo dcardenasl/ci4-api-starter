@@ -68,15 +68,15 @@ php spark users:bootstrap-superadmin --email superadmin@example.com --password '
 ## Development Workflow
 
 ### Generate a new Module
-To create a complete CRUD resource with validation and documentation, use the `bin/make-crud.sh` wrapper — it handles shell-safe argument passing (pipes in `--fields`), runs `composer cs-fix` automatically, and prints the exact follow-up commands:
+To create a complete CRUD resource with validation and documentation, use the `vendor/bin/make-crud.sh` wrapper (shipped by the `dcardenasl/ci4-api-scaffolding` dev dependency) — it handles shell-safe argument passing (pipes in `--fields`), runs `composer cs-fix` automatically, and prints the exact follow-up commands:
 
 ```bash
-bash bin/make-crud.sh Product Catalog \
+bash vendor/bin/make-crud.sh Product Catalog \
   'name:string:required|searchable,price:decimal:required|filterable,category_id:fk:categories:required' \
   yes
 ```
 
-Signature: `bash bin/make-crud.sh <Resource> <Domain> '<Fields>' [SoftDelete=yes] [Route]`
+Signature: `bash vendor/bin/make-crud.sh <Resource> <Domain> '<Fields>' [SoftDelete=yes] [Route]`
 
 > For interactive scaffolding (prompts per field), run `php spark make:crud Product --domain Catalog` directly. The wrapper is preferred for non-TTY environments (CI, Claude Code, scripts) because shell expansion can eat pipe characters in `--fields`.
 

@@ -5,7 +5,9 @@ All notable changes to ci4-api-starter will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [2.1.0] — 2026-05-17
+
+Adds a complete trash lifecycle to the files API (soft delete, restore, force delete, bulk variants) so the admin's existing trash UI is no longer hitting 404s. Documentation pass on validation, scaffolding package references, and the file-storage guide. This release also bumps the `codeigniter4/framework` constraint to `^4.7` to match the current stable environment.
 
 ### Changed
 
@@ -15,8 +17,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Docs
 
 - **README:** `bin/make-crud.sh` references replaced with `vendor/bin/make-crud.sh`. The local `bin/` directory was removed when the scaffolding engine was extracted to `dcardenasl/ci4-api-scaffolding` in v2.0.0; the binary now ships from the dev dependency under `vendor/bin/`.
-
-## [2.1.0] — 2026-05-17
 
 Adds a complete trash lifecycle to the files API (soft delete, restore, force delete, bulk variants) so the admin's existing trash UI is no longer hitting 404s. Documentation pass on validation, scaffolding package references, and the file-storage guide.
 

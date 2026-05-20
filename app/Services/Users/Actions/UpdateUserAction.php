@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Services\Users\Actions;
 
 use App\DTO\Request\Users\UserUpdateRequestDTO;
+use App\Interfaces\Files\FileReferenceRepositoryInterface;
+use App\Interfaces\Files\FileRepositoryInterface;
 use App\Interfaces\Users\UserRepositoryInterface;
 use App\Services\Iam\IamAuthorizationService;
 use App\Services\Iam\UserRoleAssignmentService;
@@ -18,7 +20,9 @@ class UpdateUserAction
     public function __construct(
         protected UserRepositoryInterface $userRepository,
         protected UserRoleAssignmentService $userRoleAssignmentService,
-        protected IamAuthorizationService $authz
+        protected IamAuthorizationService $authz,
+        protected FileRepositoryInterface $fileRepository,
+        protected FileReferenceRepositoryInterface $fileReferenceRepository,
     ) {
     }
 
@@ -67,7 +71,26 @@ class UpdateUserAction
             throw new NotFoundException(lang('Users.notFound'));
         }
 
+        if ($hasFieldUpdates && array_key_exists('avatar_url', $updateData)) {
+            $this->syncAvatarReference($userId, $updateData['avatar_url'], $updatedUser);
+        }
+
         return $updatedUser;
+    }
+
+    private function syncAvatarReference(int $userId, ?string $avatarUrl, \App\Entities\UserEntity $user): void
+    {
+        $this->fileReferenceRepository->unregisterByResource('User', $userId, 'avatar');
+
+        if ($avatarUrl === null || $avatarUrl === '') {
+            return;
+        }
+
+        $file = $this->fileRepository->findByUrl($avatarUrl);
+        if ($file !== null) {
+            $label = trim(($user->first_name ?? '') . ' ' . ($user->last_name ?? ''));
+            $this->fileReferenceRepository->register((int) $file->id, 'User', $userId, 'avatar', $label ?: null);
+        }
     }
 
     private function buildUpdateData(UserUpdateRequestDTO $request): array

@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Services\Users\Actions;
 
 use App\DTO\Request\Auth\UpdateMeRequestDTO;
+use App\Interfaces\Files\FileReferenceRepositoryInterface;
+use App\Interfaces\Files\FileRepositoryInterface;
 use App\Interfaces\Users\UserRepositoryInterface;
 use dcardenasl\Ci4ApiCore\Exceptions\NotFoundException;
 use dcardenasl\Ci4ApiCore\Exceptions\ValidationException;
@@ -21,6 +23,8 @@ class UpdateSelfProfileAction
 {
     public function __construct(
         protected UserRepositoryInterface $userRepository,
+        protected FileRepositoryInterface $fileRepository,
+        protected FileReferenceRepositoryInterface $fileReferenceRepository,
     ) {
     }
 
@@ -45,7 +49,26 @@ class UpdateSelfProfileAction
             throw new NotFoundException(lang('Users.notFound'));
         }
 
+        if (array_key_exists('avatar_url', $updateData)) {
+            $this->syncAvatarReference($userId, $updateData['avatar_url'], $updatedUser);
+        }
+
         return $updatedUser;
+    }
+
+    private function syncAvatarReference(int $userId, string $avatarUrl, \App\Entities\UserEntity $user): void
+    {
+        $this->fileReferenceRepository->unregisterByResource('User', $userId, 'avatar');
+
+        if ($avatarUrl === '') {
+            return;
+        }
+
+        $file = $this->fileRepository->findByUrl($avatarUrl);
+        if ($file !== null) {
+            $label = trim(($user->first_name ?? '') . ' ' . ($user->last_name ?? ''));
+            $this->fileReferenceRepository->register((int) $file->id, 'User', $userId, 'avatar', $label ?: null);
+        }
     }
 
     /**

@@ -1,5 +1,7 @@
 # Architecture Contract — pointer
 
+> **Pinned version:** `dcardenasl/ci4-api-scaffolding` — check `vendor/dcardenasl/ci4-api-scaffolding/docs/ARCHITECTURE_CONTRACT.md` for the version matching your `composer.lock`.
+>
 > **The authoritative document lives in the `ci4-api-scaffolding` repo, not here.**
 >
 > - GitHub: https://github.com/dcardenasl/ci4-api-scaffolding/blob/main/docs/ARCHITECTURE_CONTRACT.md

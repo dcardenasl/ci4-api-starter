@@ -34,6 +34,12 @@ class SessionManager
     /**
      * Build a session response (access + refresh tokens + canonical user).
      *
+     * Returns array by design — this is a helper-internal method consumed
+     * immediately by AuthService::login() and TokenController::refresh(), both
+     * of which wrap the result in a LoginResponseDTO / TokenResponseDTO. It is
+     * not part of the service's public surface and the "services return DTOs"
+     * rule does not apply here.
+     *
      * @param object $user The authenticated user entity.
      * @return array{access_token:string, refresh_token:string, expires_in:int, user:array<string,mixed>}
      */

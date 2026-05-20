@@ -5,14 +5,14 @@ All notable changes to ci4-api-starter will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.1.0] — 2026-05-17
+## [2.1.0] — 2026-05-19
 
-Adds a complete trash lifecycle to the files API (soft delete, restore, force delete, bulk variants) so the admin's existing trash UI is no longer hitting 404s. Documentation pass on validation, scaffolding package references, and the file-storage guide. This release also bumps the `codeigniter4/framework` constraint to `^4.7` to match the current stable environment.
+Adds a complete trash lifecycle to the files API (soft delete, restore, force delete, bulk variants) so the admin's existing trash UI is no longer hitting 404s. Adds image-variant generation on upload and avatar-as-file-reference tracking. Fixes the throttle fixed-window TTL reset bug. Documentation pass on validation, scaffolding package references, and the file-storage guide. This release also bumps the `codeigniter4/framework` constraint to `^4.7` to match the current stable environment.
 
 ### Changed
 
 - **`codeigniter4/framework` constraint bumped from `^4.5` to `^4.7`** — locks to the current stable CI4 (v4.7.2). The effective floor was already 4.6 because `dcardenasl/ci4-api-core` requires it; the constraint now reflects what is actually exercised in CI and lockfile.
-- **`dcardenasl/ci4-api-core` bumped to `^0.5.0`** — picks up `AbstractServiceClient` and the outbound HTTP config knobs introduced in core v0.5.0. Purely additive on the hub side; no behaviour change.
+- **`dcardenasl/ci4-api-core` bumped to `^0.6.0`** — picks up `AbstractServiceClient` and the outbound HTTP config knobs introduced in core v0.5.0; v0.6.0 widens the core's own CI4 requirement to `^4.7`, matching the constraint above. Purely additive on the hub side; no behaviour change.
 
 ### Docs
 
@@ -36,6 +36,16 @@ Adds a complete trash lifecycle to the files API (soft delete, restore, force de
   - `POST /api/v1/files/bulk-force-delete` — bulk permanent delete.
 - **OpenAPI documentation** for the 6 new paths (5 endpoints + new `trashed` query param on `GET /files`).
 - **Authorization audit codes** `unauthorized_file_restore` and `unauthorized_file_force_delete` for the new lifecycle paths.
+- **Image variant generation on upload** (`app/Libraries/Files/ImageVariantProcessor.php`).
+  - When an uploaded file is an image, `FileService` now calls `ImageVariantProcessor::process()` to generate resized variants (e.g. `thumb`, `medium`) and persists them as `FileReference` rows via the new `FileReferenceRepository`.
+  - Migration `2026-05-19-100000_CreateFileReferencesTable` adds `file_references(id, file_id, variant, path, storage_disk, width, height, size, created_at)`.
+  - `FileResponseDTO` exposes a `variants` array so consumers can link directly to derivative sizes without re-fetching.
+  - New interfaces: `FileReferenceRepositoryInterface`, extended `FileRepositoryInterface` and `FileServiceInterface`.
+- **Avatar stored as a `FileReference` on profile update.** `UpdateSelfProfileAction` and `UpdateUserAction` now register a `FileReference` row pointing at the uploaded avatar so it appears in the file-usage graph and is subject to the same storage lifecycle rules as any other file. No change to the `avatar_url` field or the response contract.
+
+### Fixed
+
+- **`ThrottleFilter` / `ApiKeyThrottleHelpers` fixed-window TTL reset.** The previous implementation called `Cache::set()` on the counter key each request, which reset the TTL window on every hit. A bad actor spacing requests to stay just under the limit could sustain the rate indefinitely. Replaced with `Cache::increment()` so the window TTL is set once when the key is first created and preserved for all subsequent increments within the window.
 
 ### Changed
 
@@ -52,7 +62,9 @@ Adds a complete trash lifecycle to the files API (soft delete, restore, force de
 
 - **`FileServiceTest`**: `testDestroyOwnFileReturnsSuccess` replaced by `testDestroyOwnFileSoftDeletesAndPreservesStorage`; 4 new tests cover `forceDestroy()` (purge and refusal paths) and `restore()` (clear and refusal paths). Suite now 26 tests / 56 assertions in this file alone.
 - **`FileControllerTest`** gains 9 feature tests covering the full lifecycle and the `?trashed=only` listing.
-- **Full suite**: 617 tests / 1625 assertions / 0 failures. PHPStan level 8 clean. `composer quality` passes end-to-end.
+- **`AuthThrottleFilterTest` / `ThrottleFilterTest`** updated for the `Cache::increment()` semantics; 4 new assertions verify TTL preservation across multiple requests.
+- **`php-cs-fixer` bumped to `^3.95`** in dev dependencies.
+- **Full suite**: PHPStan level 8 clean. `composer quality` passes end-to-end.
 
 ## [2.0.0] — 2026-05-15
 
@@ -219,7 +231,8 @@ This release replaces the legacy single-role authorization model with a granular
 ### Fixed
 - **(PR #3)** Repository cleanup: removed dead code and stale files
 
-[unreleased]: https://github.com/dcardenasl/ci4-api-starter/compare/v2.0.0...HEAD
+[unreleased]: https://github.com/dcardenasl/ci4-api-starter/compare/v2.1.0...HEAD
+[2.1.0]: https://github.com/dcardenasl/ci4-api-starter/compare/v2.0.0...v2.1.0
 [2.0.0]: https://github.com/dcardenasl/ci4-api-starter/compare/v1.4.0...v2.0.0
 [1.4.0]: https://github.com/dcardenasl/ci4-api-starter/compare/v1.3.4...v1.4.0
 [1.3.4]: https://github.com/dcardenasl/ci4-api-starter/compare/v1.3.3...v1.3.4

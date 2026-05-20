@@ -4434,6 +4434,24 @@
                         "type": "string",
                         "example": "2026-02-26 12:00:00",
                         "nullable": true
+                    },
+                    "variants": {
+                        "description": "Generated image variants (thumb, sm, md)",
+                        "type": "object",
+                        "nullable": true,
+                        "additionalProperties": {
+                            "type": "mixed"
+                        }
+                    },
+                    "width": {
+                        "description": "Original image width in pixels",
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "height": {
+                        "description": "Original image height in pixels",
+                        "type": "integer",
+                        "nullable": true
                     }
                 },
                 "type": "object"

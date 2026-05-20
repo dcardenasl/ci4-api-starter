@@ -98,7 +98,9 @@ trait ApiKeyThrottleHelpers
             return false;
         }
 
-        $cache->save($key, $requests + 1, $window);
+        // Use increment() to preserve the original TTL (fixed window, not sliding).
+        // save() would reset the TTL on every request, making the window never expire.
+        $cache->increment($key);
 
         return $limit - ($requests + 1);
     }

@@ -46,4 +46,11 @@ return [
     // Variant generation
     'not_an_image'       => 'Variant generation is only available for image files.',
     'regenerate_success' => 'Variants regenerated successfully.',
+
+    // Metadata update
+    'metadata_no_fields'    => 'At least one metadata field must be provided.',
+    'metadata_update_success' => 'File metadata updated successfully.',
+
+    // Replace
+    'replace_success' => 'File replaced successfully.',
 ];

@@ -67,6 +67,18 @@ interface FileServiceInterface
     public function regenerateVariants(int $id, ?SecurityContext $context = null): array;
 
     /**
+     * Replace a file's binary content. Preserves the record ID, user ownership,
+     * and all existing references. Deletes the old storage object.
+     */
+    public function replace(int $id, \dcardenasl\Ci4ApiCore\Dto\DataTransferObjectInterface $request, ?SecurityContext $context = null): \App\DTO\Response\Files\FileResponseDTO;
+
+    /**
+     * Update editable metadata fields (original_name, alt_text, caption, credit, category).
+     * At least one field must be provided.
+     */
+    public function updateMetadata(int $id, \App\DTO\Request\Files\UpdateFileMetadataRequestDTO $dto, ?SecurityContext $context = null): \App\DTO\Response\Files\FileResponseDTO;
+
+    /**
      * Bulk variants. Return per-item outcomes so the admin can show a partial
      * success summary: each entry is `{id: int, ok: bool, error?: string}`.
      *

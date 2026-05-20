@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Files;
 
+use App\DTO\Request\Files\UpdateFileMetadataRequestDTO;
 use App\DTO\Response\Files\FileDownloadResponseDTO;
 use App\DTO\Response\Files\FileResponseDTO;
 use App\Interfaces\Files\FileReferenceRepositoryInterface;
@@ -349,6 +350,97 @@ class FileService implements FileServiceInterface
         ]);
 
         return $variantResult['variants'];
+    }
+
+    /**
+     * Replace a file's binary content. Stores the new file, then deletes the
+     * old storage object. The DB record ID and all references are preserved.
+     */
+    public function replace(int $id, \dcardenasl\Ci4ApiCore\Dto\DataTransferObjectInterface $request, ?SecurityContext $context = null): FileResponseDTO
+    {
+        if ($context?->user_id === null) {
+            throw new AuthorizationException(lang('Api.unauthorized'));
+        }
+
+        /** @var \App\DTO\Request\Files\FileUploadRequestDTO $request */
+        $file = $this->findFileAndAuthorize($id, $context->user_id, 'replace', $context->hasPermission('files.read'), $context);
+
+        if ($file->isTrashed()) {
+            throw new BadRequestException(lang('Files.already_trashed'));
+        }
+
+        $processedFile = $request->isBase64()
+            ? $this->base64Processor->process($request->file, $request->toArray())
+            : $this->multipartProcessor->process($request->file);
+
+        $datePath   = date('Y/m/d');
+        $storedName = $this->filenameGenerator->generate($processedFile->originalName, $processedFile->extension, $datePath);
+        $newPath    = $datePath . '/' . $storedName;
+
+        if (!$this->storage->put($newPath, $processedFile->contents)) {
+            throw new \RuntimeException(lang('Files.storage_error'));
+        }
+
+        $variants           = [];
+        $originalDimensions = ['width' => null, 'height' => null];
+
+        if (in_array($processedFile->mimeType, ImageVariantProcessor::PROCESSABLE, true)) {
+            $variantResult      = $this->imageVariantProcessor->generate($newPath, $processedFile->extension, $this->storage);
+            $variants           = $variantResult['variants'];
+            $originalDimensions = $variantResult['dimensions'];
+        }
+
+        return $this->wrapInTransaction(function () use ($file, $processedFile, $newPath, $storedName, $variants, $originalDimensions) {
+            $oldPath = (string) $file->path;
+
+            $this->fileRepository->update((int) $file->id, [
+                'original_name'  => sanitize_filename($processedFile->originalName, false),
+                'stored_name'    => $storedName,
+                'mime_type'      => $processedFile->mimeType,
+                'size'           => $processedFile->size,
+                'storage_driver' => $this->storage->getDriverName(),
+                'path'           => $newPath,
+                'url'            => $this->storage->url($newPath),
+                'metadata'       => json_encode(['extension' => $processedFile->extension]),
+                'variants'       => $variants !== [] ? json_encode($variants) : null,
+                'width'          => $originalDimensions['width'],
+                'height'         => $originalDimensions['height'],
+            ]);
+
+            $this->storage->delete($oldPath);
+
+            $updated = $this->fileRepository->find((int) $file->id);
+            if ($updated === null) {
+                throw new \RuntimeException(sprintf('File row %d disappeared after replace.', (int) $file->id));
+            }
+
+            /** @var FileResponseDTO $response */
+            $response = $this->responseMapper->map($updated);
+            return $response;
+        });
+    }
+
+    /**
+     * Update editable metadata fields without touching the stored binary.
+     */
+    public function updateMetadata(int $id, UpdateFileMetadataRequestDTO $dto, ?SecurityContext $context = null): FileResponseDTO
+    {
+        if ($context?->user_id === null) {
+            throw new AuthorizationException(lang('Api.unauthorized'));
+        }
+
+        $file = $this->findFileAndAuthorize($id, $context->user_id, 'view', $context->hasPermission('files.read'), $context);
+
+        $this->fileRepository->update((int) $file->id, $dto->toArray());
+
+        $updated = $this->fileRepository->find((int) $file->id);
+        if ($updated === null) {
+            throw new \RuntimeException(sprintf('File row %d disappeared after metadata update.', (int) $file->id));
+        }
+
+        /** @var FileResponseDTO $response */
+        $response = $this->responseMapper->map($updated);
+        return $response;
     }
 
     public function bulkDestroy(array $ids, ?SecurityContext $context = null): array

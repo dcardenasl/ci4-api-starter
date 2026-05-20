@@ -8,6 +8,7 @@ use App\DTO\Request\Files\FileBulkActionRequestDTO;
 use App\DTO\Request\Files\FileGetRequestDTO;
 use App\DTO\Request\Files\FileIndexRequestDTO;
 use App\DTO\Request\Files\FileUploadRequestDTO;
+use App\DTO\Request\Files\UpdateFileMetadataRequestDTO;
 use App\DTO\Response\Files\FileDownloadResponseDTO;
 use App\Interfaces\Files\FileServiceInterface;
 use CodeIgniter\HTTP\ResponseInterface;
@@ -110,6 +111,28 @@ class FileController extends ApiController
     {
         return $this->handleRequest(
             fn ($dto, $context) => $this->fileService->regenerateVariants($id, $context)
+        );
+    }
+
+    /**
+     * Replace a file's binary content while preserving its ID and references.
+     */
+    public function replace(int $id): ResponseInterface
+    {
+        return $this->handleRequest(
+            fn ($dto, $context) => $this->fileService->replace($id, $dto, $context),
+            FileUploadRequestDTO::class
+        );
+    }
+
+    /**
+     * Update editable metadata fields (original_name, alt_text, caption, credit, category).
+     */
+    public function metadata(int $id): ResponseInterface
+    {
+        return $this->handleRequest(
+            fn ($dto, $context) => $this->fileService->updateMetadata($id, $dto, $context),
+            UpdateFileMetadataRequestDTO::class
         );
     }
 

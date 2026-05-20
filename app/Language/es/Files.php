@@ -46,4 +46,11 @@ return [
     // Generación de variantes
     'not_an_image'       => 'La generación de variantes solo está disponible para archivos de imagen.',
     'regenerate_success' => 'Variantes regeneradas exitosamente.',
+
+    // Actualización de metadatos
+    'metadata_no_fields'    => 'Se debe proporcionar al menos un campo de metadatos.',
+    'metadata_update_success' => 'Metadatos del archivo actualizados exitosamente.',
+
+    // Reemplazo
+    'replace_success' => 'Archivo reemplazado exitosamente.',
 ];

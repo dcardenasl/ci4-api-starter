@@ -173,6 +173,86 @@ use OpenApi\Attributes as OA;
     ]
 )]
 #[OA\Post(
+    path: '/api/v1/files/{id}/replace',
+    tags: ['Files'],
+    summary: 'Replace a file\'s binary content',
+    description: 'Uploads a new file to replace the existing one. Preserves the record ID and all references. Deletes the old storage object.',
+    security: [['bearerAuth' => []]],
+    parameters: [
+        new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
+    ],
+    requestBody: new OA\RequestBody(
+        required: true,
+        content: new OA\MediaType(
+            mediaType: 'multipart/form-data',
+            schema: new OA\Schema(
+                required: ['file'],
+                properties: [
+                    new OA\Property(property: 'file', type: 'string', format: 'binary'),
+                ],
+                type: 'object'
+            )
+        )
+    ),
+    responses: [
+        new OA\Response(
+            response: 200,
+            description: 'File replaced',
+            content: new OA\JsonContent(
+                properties: [
+                    new OA\Property(property: 'status', type: 'string', example: 'success'),
+                    new OA\Property(property: 'data', ref: '#/components/schemas/FileResponse'),
+                ],
+                type: 'object'
+            )
+        ),
+        new OA\Response(response: 400, description: 'File is trashed'),
+        new OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse'),
+        new OA\Response(response: 404, description: 'File not found'),
+        new OA\Response(response: 422, ref: '#/components/responses/ValidationErrorResponse'),
+    ]
+)]
+#[OA\Patch(
+    path: '/api/v1/files/{id}',
+    tags: ['Files'],
+    summary: 'Update file metadata',
+    description: 'Update editable metadata fields. At least one field must be provided. Does not affect the stored binary or variants.',
+    security: [['bearerAuth' => []]],
+    parameters: [
+        new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
+    ],
+    requestBody: new OA\RequestBody(
+        required: true,
+        content: new OA\JsonContent(
+            properties: [
+                new OA\Property(property: 'original_name', type: 'string', maxLength: 255, nullable: true),
+                new OA\Property(property: 'alt_text', type: 'string', maxLength: 255, nullable: true),
+                new OA\Property(property: 'caption', type: 'string', nullable: true),
+                new OA\Property(property: 'credit', type: 'string', maxLength: 255, nullable: true),
+                new OA\Property(property: 'category', type: 'string', enum: ['document', 'image', 'video', 'audio'], nullable: true),
+            ],
+            type: 'object'
+        )
+    ),
+    responses: [
+        new OA\Response(
+            response: 200,
+            description: 'File metadata updated',
+            content: new OA\JsonContent(
+                properties: [
+                    new OA\Property(property: 'status', type: 'string', example: 'success'),
+                    new OA\Property(property: 'data', ref: '#/components/schemas/FileResponse'),
+                ],
+                type: 'object'
+            )
+        ),
+        new OA\Response(response: 400, description: 'No metadata fields provided'),
+        new OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse'),
+        new OA\Response(response: 404, description: 'File not found'),
+        new OA\Response(response: 422, ref: '#/components/responses/ValidationErrorResponse'),
+    ]
+)]
+#[OA\Post(
     path: '/api/v1/files/{id}/restore',
     tags: ['Files'],
     summary: 'Restore a trashed file',

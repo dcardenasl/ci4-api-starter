@@ -31,4 +31,10 @@ interface FileRepositoryInterface extends RepositoryInterface
      * Hard-delete a file row (bypassing soft-delete) by id.
      */
     public function purge(int $id): bool;
+
+    /**
+     * Find a file by its public URL, including trashed rows.
+     * Returns null only when no matching URL exists at all.
+     */
+    public function findByUrl(string $url): ?object;
 }

@@ -47,6 +47,10 @@ class FileServiceTest extends CIUnitTestCase
             \App\DTO\Response\Files\FileResponseDTO::class
         );
 
+        $mockVariantProcessor = $this->createMock(\App\Libraries\Files\ImageVariantProcessor::class);
+        $mockVariantProcessor->method('generate')
+            ->willReturn(['variants' => [], 'dimensions' => ['width' => null, 'height' => null]]);
+
         $this->service = new FileService(
             $this->mockFileRepository,
             $responseMapper,
@@ -54,7 +58,9 @@ class FileServiceTest extends CIUnitTestCase
             $this->mockAuditService,
             new \App\Libraries\Files\FilenameGenerator($this->mockStorage),
             new \App\Libraries\Files\MultipartProcessor(),
-            new \App\Libraries\Files\Base64Processor()
+            new \App\Libraries\Files\Base64Processor(),
+            $mockVariantProcessor,
+            $this->createMock(\App\Interfaces\Files\FileReferenceRepositoryInterface::class),
         );
     }
 

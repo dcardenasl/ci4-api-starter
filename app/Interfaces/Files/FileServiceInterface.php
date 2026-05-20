@@ -53,6 +53,20 @@ interface FileServiceInterface
     public function forceDestroy(int $id, ?SecurityContext $context = null): bool;
 
     /**
+     * Return all resources that reference the given file.
+     *
+     * @return array<array{resource: string, resource_id: int, label: string|null, role: string}>
+     */
+    public function getUsages(int $id, ?SecurityContext $context = null): array;
+
+    /**
+     * Delete existing image variants and regenerate them from the stored original.
+     *
+     * @return array<string, array{path: string, url: string, width: int, height: int}>
+     */
+    public function regenerateVariants(int $id, ?SecurityContext $context = null): array;
+
+    /**
      * Bulk variants. Return per-item outcomes so the admin can show a partial
      * success summary: each entry is `{id: int, ok: bool, error?: string}`.
      *

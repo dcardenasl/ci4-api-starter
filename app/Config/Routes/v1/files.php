@@ -9,6 +9,8 @@ $routes->group('files', ['filter' => ['jwtauth', 'throttle']], function ($routes
     $routes->post('bulk-restore', '\App\Controllers\Api\V1\Files\FileController::bulkRestore');
     $routes->post('bulk-force-delete', '\App\Controllers\Api\V1\Files\FileController::bulkForceDelete');
     $routes->get('(:num)/info', '\App\Controllers\Api\V1\Files\FileController::info/$1');
+    $routes->get('(:num)/usages', '\App\Controllers\Api\V1\Files\FileController::usages/$1');
+    $routes->post('(:num)/regenerate-variants', '\App\Controllers\Api\V1\Files\FileController::regenerateVariants/$1');
     $routes->get('(:num)', '\App\Controllers\Api\V1\Files\FileController::show/$1');
     $routes->post('(:num)/restore', '\App\Controllers\Api\V1\Files\FileController::restore/$1');
     $routes->delete('(:num)/force', '\App\Controllers\Api\V1\Files\FileController::forceDelete/$1');

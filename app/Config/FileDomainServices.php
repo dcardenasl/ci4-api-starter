@@ -23,6 +23,8 @@ trait FileDomainServices
             new \App\Libraries\Files\FilenameGenerator($storage),
             new \App\Libraries\Files\MultipartProcessor(),
             new \App\Libraries\Files\Base64Processor(),
+            new \App\Libraries\Files\ImageVariantProcessor(),
+            static::fileReferenceRepository(),
             static::virusScannerService(),
             $apiConfig->filesUserScoped
         );

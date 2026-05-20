@@ -39,4 +39,11 @@ return [
     'not_trashed'      => 'El archivo no está en la papelera',
     'bulk_ids_required' => 'Se requiere una lista no vacía de IDs de archivos',
     'bulk_item_failed' => 'La operación falló para este archivo',
+
+    // Referencias de archivos
+    'in_use' => 'No es posible eliminar permanentemente: este archivo es referenciado por {0} recurso(s). Desvincularlo primero.',
+
+    // Generación de variantes
+    'not_an_image'       => 'La generación de variantes solo está disponible para archivos de imagen.',
+    'regenerate_success' => 'Variantes regeneradas exitosamente.',
 ];

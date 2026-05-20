@@ -94,6 +94,26 @@ class FileController extends ApiController
     }
 
     /**
+     * Return the list of resources that reference this file.
+     */
+    public function usages(int $id): ResponseInterface
+    {
+        return $this->handleRequest(
+            fn ($dto, $context) => $this->fileService->getUsages($id, $context)
+        );
+    }
+
+    /**
+     * Delete existing image variants and regenerate them from the stored original.
+     */
+    public function regenerateVariants(int $id): ResponseInterface
+    {
+        return $this->handleRequest(
+            fn ($dto, $context) => $this->fileService->regenerateVariants($id, $context)
+        );
+    }
+
+    /**
      * Soft-delete a file (moves it to the trash).
      */
     public function delete(int $id): ResponseInterface

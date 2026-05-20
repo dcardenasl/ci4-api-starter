@@ -14,10 +14,13 @@ class FileEntity extends Entity
     protected $dates = ['uploaded_at', 'deleted_at'];
 
     protected $casts = [
-        'id' => 'integer',
-        'user_id' => 'integer',
-        'size' => 'integer',
-        'metadata' => 'json-array',
+        'id'                 => 'integer',
+        'user_id'            => 'integer',
+        'size'               => 'integer',
+        'metadata'           => 'json-array',
+        'variants'           => 'json-array',
+        'width'              => '?integer',
+        'height'             => '?integer',
         'deleted_by_user_id' => '?integer',
     ];
 

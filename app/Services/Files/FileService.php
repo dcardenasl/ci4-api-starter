@@ -6,11 +6,13 @@ namespace App\Services\Files;
 
 use App\DTO\Response\Files\FileDownloadResponseDTO;
 use App\DTO\Response\Files\FileResponseDTO;
+use App\Interfaces\Files\FileReferenceRepositoryInterface;
 use App\Interfaces\Files\FileRepositoryInterface;
 use App\Interfaces\Files\FileServiceInterface;
 use App\Interfaces\Files\VirusScannerServiceInterface;
 use App\Libraries\Files\Base64Processor;
 use App\Libraries\Files\FilenameGenerator;
+use App\Libraries\Files\ImageVariantProcessor;
 use App\Libraries\Files\MultipartProcessor;
 use App\Libraries\Storage\StorageManager;
 use App\Support\Files\ProcessedFile;
@@ -18,6 +20,7 @@ use dcardenasl\Ci4ApiCore\Dto\PaginatedResponseDTO;
 use dcardenasl\Ci4ApiCore\Dto\SecurityContext;
 use dcardenasl\Ci4ApiCore\Exceptions\AuthorizationException;
 use dcardenasl\Ci4ApiCore\Exceptions\BadRequestException;
+use dcardenasl\Ci4ApiCore\Exceptions\ConflictException;
 use dcardenasl\Ci4ApiCore\Exceptions\NotFoundException;
 use dcardenasl\Ci4ApiCore\Exceptions\ValidationException;
 use dcardenasl\Ci4ApiCore\Models\Traits\AppliesQueryOptions;
@@ -41,6 +44,8 @@ class FileService implements FileServiceInterface
         protected FilenameGenerator $filenameGenerator,
         protected MultipartProcessor $multipartProcessor,
         protected Base64Processor $base64Processor,
+        protected ImageVariantProcessor $imageVariantProcessor,
+        protected FileReferenceRepositoryInterface $fileReferenceRepository,
         protected ?VirusScannerServiceInterface $virusScanner = null,
         private bool $userScopedFiles = true
     ) {
@@ -103,6 +108,15 @@ class FileService implements FileServiceInterface
             throw new \RuntimeException(lang('Files.storage_error'));
         }
 
+        $variants           = [];
+        $originalDimensions = ['width' => null, 'height' => null];
+
+        if (in_array($file->mimeType, ImageVariantProcessor::PROCESSABLE, true)) {
+            $variantResult      = $this->imageVariantProcessor->generate($path, $file->extension, $this->storage);
+            $variants           = $variantResult['variants'];
+            $originalDimensions = $variantResult['dimensions'];
+        }
+
         // Save metadata
         $fileId = $this->fileRepository->insert([
             'user_id' => $userId,
@@ -115,6 +129,9 @@ class FileService implements FileServiceInterface
             'url' => $this->storage->url($path),
             'metadata' => json_encode(['extension' => $file->extension, 'uploaded_by' => $userId]),
             'uploaded_at' => date('Y-m-d H:i:s'),
+            'variants' => $variants !== [] ? json_encode($variants) : null,
+            'width'    => $originalDimensions['width'],
+            'height'   => $originalDimensions['height'],
         ]);
 
         if ($fileId === false || $fileId === true) {
@@ -259,10 +276,79 @@ class FileService implements FileServiceInterface
             throw new BadRequestException(lang('Files.not_trashed'));
         }
 
+        $usages = $this->fileReferenceRepository->getByFileId((int) $file->id);
+        if ($usages !== []) {
+            throw new ConflictException(lang('Files.in_use', [count($usages)]));
+        }
+
         return $this->wrapInTransaction(function () use ($file) {
             $this->storage->delete($file->path);
             return $this->fileRepository->purge((int) $file->id);
         });
+    }
+
+    /**
+     * Return a list of resources that reference a given file.
+     *
+     * @return array<array{resource: string, resource_id: int, label: string|null, role: string}>
+     */
+    public function getUsages(int $id, ?SecurityContext $context = null): array
+    {
+        if ($context?->user_id === null) {
+            throw new AuthorizationException(lang('Api.unauthorized'));
+        }
+
+        $file = $this->findFileAndAuthorize(
+            $id,
+            $context->user_id,
+            'view',
+            $context->hasPermission('files.read'),
+            $context
+        );
+
+        return $this->fileReferenceRepository->getByFileId((int) $file->id);
+    }
+
+    /**
+     * Delete existing variants, re-generate them from the stored original, and
+     * persist the updated metadata. Only valid for processable image MIME types.
+     *
+     * @return array<string, array{path: string, url: string, width: int, height: int}>
+     */
+    public function regenerateVariants(int $id, ?SecurityContext $context = null): array
+    {
+        if ($context?->user_id === null) {
+            throw new AuthorizationException(lang('Api.unauthorized'));
+        }
+
+        $file = $this->findFileAndAuthorize(
+            $id,
+            $context->user_id,
+            'view',
+            $context->hasPermission('files.read'),
+            $context
+        );
+
+        if (! in_array($file->mime_type, ImageVariantProcessor::PROCESSABLE, true)) {
+            throw new BadRequestException(lang('Files.not_an_image'));
+        }
+
+        $existingVariants = is_array($file->variants)
+            ? $file->variants
+            : (json_decode((string) ($file->variants ?? ''), true) ?? []);
+
+        $this->imageVariantProcessor->deleteVariants((array) $existingVariants, $this->storage);
+
+        $extension   = strtolower(pathinfo((string) $file->stored_name, PATHINFO_EXTENSION));
+        $variantResult = $this->imageVariantProcessor->generate((string) $file->path, $extension, $this->storage);
+
+        $this->fileRepository->update((int) $file->id, [
+            'variants' => $variantResult['variants'] !== [] ? json_encode($variantResult['variants']) : null,
+            'width'    => $variantResult['dimensions']['width'],
+            'height'   => $variantResult['dimensions']['height'],
+        ]);
+
+        return $variantResult['variants'];
     }
 
     public function bulkDestroy(array $ids, ?SecurityContext $context = null): array

@@ -41,4 +41,12 @@ class FileRepository extends BaseRepository implements FileRepositoryInterface
 
         return parent::restore($id, $data);
     }
+
+    public function findByUrl(string $url): ?object
+    {
+        /** @var object|null $result */
+        $result = $this->model->withDeleted()->where('url', $url)->first();
+
+        return $result;
+    }
 }

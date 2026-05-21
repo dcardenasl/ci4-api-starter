@@ -257,6 +257,10 @@ ci4_configure_env() {
     exit 1
   fi
   cp .env.example .env
+  # Generate encryption key inline: CI4's key:generate uses a regex that
+  # doesn't match quoted empty values (encryption.key = ""), so it silently
+  # skips the write. bootstrap_env.php handles any existing value format.
+  local _enc_key="hex2bin:$(php -r 'echo bin2hex(random_bytes(32));')"
   php scripts/bootstrap_env.php \
     --file .env \
     --set "database.default.hostname=${DB_HOST}" \
@@ -269,8 +273,8 @@ ci4_configure_env() {
     --set "database.tests.username=${DB_USER}" \
     --set "database.tests.password=${DB_PASS}" \
     --set "database.tests.port=${DB_PORT}" \
+    --set "encryption.key=${_enc_key}" \
     --generate-jwt
-  php spark key:generate --force >/dev/null
   print_ok ".env configured and keys generated"
 }
 

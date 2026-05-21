@@ -5,6 +5,14 @@ All notable changes to ci4-api-starter will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.1] — 2026-05-21
+
+Fixes the encryption key not being written during `setup.sh` initialization when `.env.example` contains a quoted empty value for `encryption.key`.
+
+### Fixed
+
+- **`setup.sh` encryption key generation** — `php spark key:generate --force` was silently skipping the write when `encryption.key` had a quoted empty placeholder (`encryption.key = ""`), because CI4's key command uses a regex that requires an unquoted value. The fix generates the key inline (`hex2bin:$(php -r '…')`) and injects it through `bootstrap_env.php`, which handles any existing value format.
+
 ## [2.1.0] — 2026-05-19
 
 Adds a complete trash lifecycle to the files API (soft delete, restore, force delete, bulk variants) so the admin's existing trash UI is no longer hitting 404s. Adds image-variant generation on upload and avatar-as-file-reference tracking. Fixes the throttle fixed-window TTL reset bug. Documentation pass on validation, scaffolding package references, and the file-storage guide. This release also bumps the `codeigniter4/framework` constraint to `^4.7` to match the current stable environment.

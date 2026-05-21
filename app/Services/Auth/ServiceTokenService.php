@@ -80,4 +80,44 @@ class ServiceTokenService implements ServiceTokenServiceInterface
             scope: $permissions,
         );
     }
+
+    public function issueByKeyId(int $appKeyId): ServiceTokenResponseDTO
+    {
+        /** @var ApiKeyEntity|null $apiKey */
+        $apiKey = $this->apiKeyRepository->find($appKeyId);
+        if (! $apiKey instanceof ApiKeyEntity || ! $apiKey->isActive()) {
+            throw new AuthorizationException(lang('Auth.appKeyInvalid'));
+        }
+
+        $applicationId = $apiKey->application_id;
+        if (! is_int($applicationId) || $applicationId <= 0) {
+            throw new AuthorizationException(lang('Iam.apiKeyHasNoApplication'));
+        }
+
+        /** @var ApplicationEntity|null $application */
+        $application = $this->applicationModel->find($applicationId);
+        if ($application === null) {
+            throw new NotFoundException(lang('Iam.applicationNotFound'));
+        }
+
+        $code = isset($application->code) ? (string) $application->code : '';
+        if ($code === '') {
+            throw new NotFoundException(lang('Iam.applicationNotFound'));
+        }
+
+        $permissions = $this->applicationPermissionsResolver->resolve($applicationId);
+
+        $accessToken = $this->jwtService->encodeServiceToken(
+            "service:{$code}",
+            $permissions,
+            $this->serviceTokenTtl,
+        );
+
+        return new ServiceTokenResponseDTO(
+            access_token: $accessToken,
+            token_type: 'Bearer',
+            expires_in: $this->serviceTokenTtl,
+            scope: $permissions,
+        );
+    }
 }

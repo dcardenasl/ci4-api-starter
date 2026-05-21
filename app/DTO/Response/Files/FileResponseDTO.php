@@ -20,6 +20,9 @@ use OpenApi\Attributes as OA;
 )]
 readonly class FileResponseDTO implements DataTransferObjectInterface
 {
+    /**
+     * @param array<string, mixed>|null $variants
+     */
     public function __construct(
         #[OA\Property(description: 'Unique file identifier', example: 1)]
         public int $id,
@@ -40,10 +43,19 @@ readonly class FileResponseDTO implements DataTransferObjectInterface
         #[OA\Property(description: 'Public or temporary access URL', example: 'https://example.com/storage/file.pdf')]
         public string $url,
         #[OA\Property(property: 'uploaded_at', description: 'Upload timestamp', example: '2026-02-26 12:00:00', nullable: true)]
-        public ?string $created_at = null
+        public ?string $created_at = null,
+        #[OA\Property(property: 'variants', description: 'Generated image variants (thumb, sm, md)', nullable: true)]
+        public ?array $variants = null,
+        #[OA\Property(property: 'width', description: 'Original image width in pixels', nullable: true)]
+        public ?int $width = null,
+        #[OA\Property(property: 'height', description: 'Original image height in pixels', nullable: true)]
+        public ?int $height = null,
     ) {
     }
 
+    /**
+     * @param array<string, mixed> $data
+     */
     public static function fromArray(array $data): self
     {
         $created_at = $data['created_at'] ?? $data['uploaded_at'] ?? null;
@@ -56,6 +68,11 @@ readonly class FileResponseDTO implements DataTransferObjectInterface
         $mime = (string) ($data['mime_type'] ?? '');
         $is_image = str_starts_with($mime, 'image/');
 
+        $variants = $data['variants'] ?? null;
+        if (is_string($variants)) {
+            $variants = json_decode($variants, true);
+        }
+
         return new self(
             id: (int) ($data['id'] ?? 0),
             original_name: (string) ($data['original_name'] ?? ''),
@@ -66,7 +83,10 @@ readonly class FileResponseDTO implements DataTransferObjectInterface
             human_size: (string) ($data['human_size'] ?? self::calculateHumanSize($size)),
             is_image: (bool) ($data['is_image'] ?? $is_image),
             url: (string) ($data['url'] ?? ''),
-            created_at: $created_at ? (string) $created_at : null
+            created_at: $created_at ? (string) $created_at : null,
+            variants: is_array($variants) ? $variants : null,
+            width: isset($data['width']) ? (int) $data['width'] : null,
+            height: isset($data['height']) ? (int) $data['height'] : null,
         );
     }
 
@@ -92,6 +112,9 @@ readonly class FileResponseDTO implements DataTransferObjectInterface
             'is_image'      => $this->is_image,
             'url'           => $this->url,
             'uploaded_at'   => $this->created_at,
+            'variants'      => $this->variants,
+            'width'         => $this->width,
+            'height'        => $this->height,
         ];
     }
 

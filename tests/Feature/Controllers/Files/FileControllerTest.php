@@ -66,6 +66,148 @@ class FileControllerTest extends ApiTestCase
         $result->assertStatus(200);
     }
 
+    public function testDeleteSoftDeletesAndPreservesRow(): void
+    {
+        \dcardenasl\Ci4ApiCore\Http\ContextHolder::set(new \dcardenasl\Ci4ApiCore\Dto\SecurityContext($this->currentUserId, [], \App\Support\TestPermissionResolver::permissionsForRole((string) $this->currentUserRole)));
+        $fileId = $this->createFile($this->currentUserId);
+
+        $this->withHeaders(['Authorization' => "Bearer {$this->token}"])
+            ->delete("/api/v1/files/{$fileId}")
+            ->assertStatus(200);
+
+        $this->assertNull($this->fileModel->find($fileId), 'Default find should hide trashed file');
+
+        $trashed = $this->fileModel->withDeleted()->find($fileId);
+        $this->assertNotNull($trashed, 'Row is still present (just soft-deleted)');
+        $this->assertNotNull($trashed->deleted_at);
+        $this->assertSame($this->currentUserId, (int) $trashed->deleted_by_user_id);
+    }
+
+    public function testSecondDeleteOnTrashedFileReturns404(): void
+    {
+        // Once trashed, the file is invisible to default queries, so a second
+        // soft-delete attempt sees "not found" before reaching the trash check.
+        // This is the intended REST semantics — the resource has been deleted
+        // from the caller's perspective.
+        \dcardenasl\Ci4ApiCore\Http\ContextHolder::set(new \dcardenasl\Ci4ApiCore\Dto\SecurityContext($this->currentUserId, [], \App\Support\TestPermissionResolver::permissionsForRole((string) $this->currentUserRole)));
+        $fileId = $this->createFile($this->currentUserId);
+
+        $this->withHeaders(['Authorization' => "Bearer {$this->token}"])
+            ->delete("/api/v1/files/{$fileId}")
+            ->assertStatus(200);
+
+        $this->withHeaders(['Authorization' => "Bearer {$this->token}"])
+            ->delete("/api/v1/files/{$fileId}")
+            ->assertStatus(404);
+    }
+
+    public function testRestoreBringsFileBack(): void
+    {
+        \dcardenasl\Ci4ApiCore\Http\ContextHolder::set(new \dcardenasl\Ci4ApiCore\Dto\SecurityContext($this->currentUserId, [], \App\Support\TestPermissionResolver::permissionsForRole((string) $this->currentUserRole)));
+        $fileId = $this->createFile($this->currentUserId);
+
+        $this->withHeaders(['Authorization' => "Bearer {$this->token}"])
+            ->delete("/api/v1/files/{$fileId}")
+            ->assertStatus(200);
+
+        $this->withHeaders(['Authorization' => "Bearer {$this->token}"])
+            ->post("/api/v1/files/{$fileId}/restore")
+            ->assertStatus(200);
+
+        $row = $this->fileModel->find($fileId);
+        $this->assertNotNull($row, 'Restored row visible in default queries');
+        $this->assertNull($row->deleted_at);
+        $this->assertNull($row->deleted_by_user_id);
+    }
+
+    public function testRestoreFailsWhenNotTrashed(): void
+    {
+        \dcardenasl\Ci4ApiCore\Http\ContextHolder::set(new \dcardenasl\Ci4ApiCore\Dto\SecurityContext($this->currentUserId, [], \App\Support\TestPermissionResolver::permissionsForRole((string) $this->currentUserRole)));
+        $fileId = $this->createFile($this->currentUserId);
+
+        $this->withHeaders(['Authorization' => "Bearer {$this->token}"])
+            ->post("/api/v1/files/{$fileId}/restore")
+            ->assertStatus(400);
+    }
+
+    public function testForceDeletePurgesTrashedFile(): void
+    {
+        \dcardenasl\Ci4ApiCore\Http\ContextHolder::set(new \dcardenasl\Ci4ApiCore\Dto\SecurityContext($this->currentUserId, [], \App\Support\TestPermissionResolver::permissionsForRole((string) $this->currentUserRole)));
+        $fileId = $this->createFile($this->currentUserId);
+
+        $this->withHeaders(['Authorization' => "Bearer {$this->token}"])
+            ->delete("/api/v1/files/{$fileId}")
+            ->assertStatus(200);
+
+        $this->withHeaders(['Authorization' => "Bearer {$this->token}"])
+            ->delete("/api/v1/files/{$fileId}/force")
+            ->assertStatus(200);
+
+        $this->assertNull(
+            $this->fileModel->withDeleted()->find($fileId),
+            'Force-delete must wipe the row entirely (not even withDeleted finds it)'
+        );
+    }
+
+    public function testForceDeleteFailsForNonTrashedFile(): void
+    {
+        \dcardenasl\Ci4ApiCore\Http\ContextHolder::set(new \dcardenasl\Ci4ApiCore\Dto\SecurityContext($this->currentUserId, [], \App\Support\TestPermissionResolver::permissionsForRole((string) $this->currentUserRole)));
+        $fileId = $this->createFile($this->currentUserId);
+
+        $this->withHeaders(['Authorization' => "Bearer {$this->token}"])
+            ->delete("/api/v1/files/{$fileId}/force")
+            ->assertStatus(400);
+    }
+
+    public function testListWithTrashedOnlyShowsOnlyTrashed(): void
+    {
+        \dcardenasl\Ci4ApiCore\Http\ContextHolder::set(new \dcardenasl\Ci4ApiCore\Dto\SecurityContext($this->currentUserId, [], \App\Support\TestPermissionResolver::permissionsForRole((string) $this->currentUserRole)));
+        $liveId    = $this->createFile($this->currentUserId);
+        $trashedId = $this->createFile($this->currentUserId);
+
+        $this->withHeaders(['Authorization' => "Bearer {$this->token}"])
+            ->delete("/api/v1/files/{$trashedId}")
+            ->assertStatus(200);
+
+        $resp = $this->withHeaders(['Authorization' => "Bearer {$this->token}"])
+            ->get('/api/v1/files?trashed=only');
+        $resp->assertStatus(200);
+        $body = json_decode((string) $resp->getJSON(), true);
+        $ids  = array_column($body['data'] ?? [], 'id');
+        $this->assertContains($trashedId, $ids);
+        $this->assertNotContains($liveId, $ids);
+    }
+
+    public function testBulkDeleteReturnsPerItemOutcomes(): void
+    {
+        \dcardenasl\Ci4ApiCore\Http\ContextHolder::set(new \dcardenasl\Ci4ApiCore\Dto\SecurityContext($this->currentUserId, [], \App\Support\TestPermissionResolver::permissionsForRole((string) $this->currentUserRole)));
+        $a = $this->createFile($this->currentUserId);
+        $b = $this->createFile($this->currentUserId);
+        $missing = 999_999;
+
+        // Ids are sent as strings on purpose: CI4's `InvalidChars` global
+        // filter throws `TypeError` from `mb_check_encoding()` when it
+        // recurses into a JSON body containing raw integers (framework
+        // limitation). DTO casts back to int internally.
+        $resp = $this->withHeaders(['Authorization' => "Bearer {$this->token}"])
+            ->post('/api/v1/files/bulk-delete', [
+                'ids' => array_map('strval', [$a, $b, $missing]),
+            ]);
+        $resp->assertStatus(200);
+
+        $body  = json_decode((string) $resp->getJSON(), true);
+        $items = $body['data'] ?? [];
+        $byId  = [];
+        foreach ($items as $item) {
+            $byId[(int) $item['id']] = $item;
+        }
+
+        $this->assertTrue($byId[$a]['ok'] ?? false);
+        $this->assertTrue($byId[$b]['ok'] ?? false);
+        $this->assertFalse($byId[$missing]['ok'] ?? true);
+        $this->assertArrayHasKey('error', $byId[$missing]);
+    }
+
     private function createFile(int $userId): int
     {
         return (int) $this->fileModel->insert([

@@ -33,6 +33,15 @@ trait RepositoryModelServices
         return new \App\Repositories\Files\FileRepository(model(\App\Models\FileModel::class));
     }
 
+    public static function fileReferenceRepository(bool $getShared = true): \App\Interfaces\Files\FileReferenceRepositoryInterface
+    {
+        if ($getShared) {
+            return static::getSharedInstance('fileReferenceRepository');
+        }
+
+        return new \App\Repositories\Files\FileReferenceRepository(model(\App\Models\Files\FileReferenceModel::class));
+    }
+
     public static function userModel(bool $getShared = true): \App\Models\UserModel
     {
         if ($getShared) {

@@ -1474,6 +1474,7 @@
                     "Files"
                 ],
                 "summary": "List files for current user",
+                "description": "By default only non-trashed files are returned. Use `trashed=only` to list the trash bin, or `trashed=with` to include both.",
                 "operationId": "32d01599dc632a4988116bc96b542436",
                 "parameters": [
                     {
@@ -1492,6 +1493,20 @@
                         "schema": {
                             "type": "integer",
                             "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "trashed",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": "without",
+                            "enum": [
+                                "without",
+                                "only",
+                                "with"
+                            ]
                         }
                     }
                 ],
@@ -1678,7 +1693,8 @@
                 "tags": [
                     "Files"
                 ],
-                "summary": "Delete file",
+                "summary": "Move file to trash (soft-delete)",
+                "description": "Sets `deleted_at` so the file disappears from default listings. Storage bytes are preserved so the file can be restored. To purge permanently, call `DELETE /files/{id}/force` after.",
                 "operationId": "e2d213f1a143d4656d600707b3e97580",
                 "parameters": [
                     {
@@ -1692,7 +1708,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "File deleted",
+                        "description": "File moved to trash",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -1710,11 +1726,434 @@
                             }
                         }
                     },
+                    "400": {
+                        "description": "File already trashed"
+                    },
                     "401": {
                         "$ref": "#/components/responses/UnauthorizedResponse"
                     },
                     "404": {
                         "description": "File not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "patch": {
+                "tags": [
+                    "Files"
+                ],
+                "summary": "Update file metadata",
+                "description": "Update editable metadata fields. At least one field must be provided. Does not affect the stored binary or variants.",
+                "operationId": "5481aeece41cbdb2ea2c6dc5834e3661",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "original_name": {
+                                        "type": "string",
+                                        "nullable": true,
+                                        "maxLength": 255
+                                    },
+                                    "alt_text": {
+                                        "type": "string",
+                                        "nullable": true,
+                                        "maxLength": 255
+                                    },
+                                    "caption": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "credit": {
+                                        "type": "string",
+                                        "nullable": true,
+                                        "maxLength": 255
+                                    },
+                                    "category": {
+                                        "type": "string",
+                                        "nullable": true,
+                                        "enum": [
+                                            "document",
+                                            "image",
+                                            "video",
+                                            "audio"
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "File metadata updated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/FileResponse"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "No metadata fields provided"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "404": {
+                        "description": "File not found"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationErrorResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/files/{id}/replace": {
+            "post": {
+                "tags": [
+                    "Files"
+                ],
+                "summary": "Replace a file's binary content",
+                "description": "Uploads a new file to replace the existing one. Preserves the record ID and all references. Deletes the old storage object.",
+                "operationId": "1f791dc24cbbc88bc24b4711143521c5",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "file"
+                                ],
+                                "properties": {
+                                    "file": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "File replaced",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/FileResponse"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "File is trashed"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "404": {
+                        "description": "File not found"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationErrorResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/files/{id}/restore": {
+            "post": {
+                "tags": [
+                    "Files"
+                ],
+                "summary": "Restore a trashed file",
+                "operationId": "386a0e4ae8e96d5e1340ae613dd45b98",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "File restored"
+                    },
+                    "400": {
+                        "description": "File is not in the trash"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "404": {
+                        "description": "File not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/files/{id}/force": {
+            "delete": {
+                "tags": [
+                    "Files"
+                ],
+                "summary": "Permanently delete a trashed file",
+                "description": "Removes storage bytes AND the DB row. Only valid for files already in the trash — call `DELETE /files/{id}` first.",
+                "operationId": "b79a0af5fcbb6fbfd852c6c659e9fe08",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "File permanently deleted"
+                    },
+                    "400": {
+                        "description": "File is not in the trash"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "404": {
+                        "description": "File not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/files/bulk-delete": {
+            "post": {
+                "tags": [
+                    "Files"
+                ],
+                "summary": "Bulk move files to trash",
+                "operationId": "ccc8d200baf5727c072e5147061e2b58",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "ids"
+                                ],
+                                "properties": {
+                                    "ids": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "integer"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Per-item bulk outcome",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "ok": {
+                                                        "type": "boolean"
+                                                    },
+                                                    "error": {
+                                                        "type": "string",
+                                                        "nullable": true
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationErrorResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/files/bulk-restore": {
+            "post": {
+                "tags": [
+                    "Files"
+                ],
+                "summary": "Bulk restore trashed files",
+                "operationId": "8ea6ae543fe290ad11f1e7d02d697fc1",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "ids"
+                                ],
+                                "properties": {
+                                    "ids": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "integer"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Per-item bulk outcome"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationErrorResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/files/bulk-force-delete": {
+            "post": {
+                "tags": [
+                    "Files"
+                ],
+                "summary": "Bulk permanently delete trashed files",
+                "operationId": "81a1a2c0be5f7789b979173461290d74",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "ids"
+                                ],
+                                "properties": {
+                                    "ids": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "integer"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Per-item bulk outcome"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationErrorResponse"
                     }
                 },
                 "security": [
@@ -4168,6 +4607,24 @@
                         "description": "Upload timestamp",
                         "type": "string",
                         "example": "2026-02-26 12:00:00",
+                        "nullable": true
+                    },
+                    "variants": {
+                        "description": "Generated image variants (thumb, sm, md)",
+                        "type": "object",
+                        "nullable": true,
+                        "additionalProperties": {
+                            "type": "mixed"
+                        }
+                    },
+                    "width": {
+                        "description": "Original image width in pixels",
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "height": {
+                        "description": "Original image height in pixels",
+                        "type": "integer",
                         "nullable": true
                     }
                 },

@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Controllers\Api\V1\Files;
 
+use App\DTO\Request\Files\FileBulkActionRequestDTO;
 use App\DTO\Request\Files\FileGetRequestDTO;
 use App\DTO\Request\Files\FileIndexRequestDTO;
 use App\DTO\Request\Files\FileUploadRequestDTO;
+use App\DTO\Request\Files\UpdateFileMetadataRequestDTO;
 use App\DTO\Response\Files\FileDownloadResponseDTO;
 use App\Interfaces\Files\FileServiceInterface;
 use CodeIgniter\HTTP\ResponseInterface;
@@ -93,11 +95,92 @@ class FileController extends ApiController
     }
 
     /**
-     * Delete a file
+     * Return the list of resources that reference this file.
+     */
+    public function usages(int $id): ResponseInterface
+    {
+        return $this->handleRequest(
+            fn ($dto, $context) => $this->fileService->getUsages($id, $context)
+        );
+    }
+
+    /**
+     * Delete existing image variants and regenerate them from the stored original.
+     */
+    public function regenerateVariants(int $id): ResponseInterface
+    {
+        return $this->handleRequest(
+            fn ($dto, $context) => $this->fileService->regenerateVariants($id, $context)
+        );
+    }
+
+    /**
+     * Replace a file's binary content while preserving its ID and references.
+     */
+    public function replace(int $id): ResponseInterface
+    {
+        return $this->handleRequest(
+            fn ($dto, $context) => $this->fileService->replace($id, $dto, $context),
+            FileUploadRequestDTO::class
+        );
+    }
+
+    /**
+     * Update editable metadata fields (original_name, alt_text, caption, credit, category).
+     */
+    public function metadata(int $id): ResponseInterface
+    {
+        return $this->handleRequest(
+            fn ($dto, $context) => $this->fileService->updateMetadata($id, $dto, $context),
+            UpdateFileMetadataRequestDTO::class
+        );
+    }
+
+    /**
+     * Soft-delete a file (moves it to the trash).
      */
     public function delete(int $id): ResponseInterface
     {
         return $this->handleRequest(fn ($dto, $context) => $this->fileService->destroy($id, $context));
     }
 
+    /**
+     * Restore a trashed file.
+     */
+    public function restore(int $id): ResponseInterface
+    {
+        return $this->handleRequest(fn ($dto, $context) => $this->fileService->restore($id, $context));
+    }
+
+    /**
+     * Permanently delete a trashed file (storage + DB).
+     */
+    public function forceDelete(int $id): ResponseInterface
+    {
+        return $this->handleRequest(fn ($dto, $context) => $this->fileService->forceDestroy($id, $context));
+    }
+
+    public function bulkDelete(): ResponseInterface
+    {
+        return $this->handleRequest(
+            fn ($dto, $context) => $this->fileService->bulkDestroy($dto->ids, $context),
+            FileBulkActionRequestDTO::class
+        );
+    }
+
+    public function bulkRestore(): ResponseInterface
+    {
+        return $this->handleRequest(
+            fn ($dto, $context) => $this->fileService->bulkRestore($dto->ids, $context),
+            FileBulkActionRequestDTO::class
+        );
+    }
+
+    public function bulkForceDelete(): ResponseInterface
+    {
+        return $this->handleRequest(
+            fn ($dto, $context) => $this->fileService->bulkForceDestroy($dto->ids, $context),
+            FileBulkActionRequestDTO::class
+        );
+    }
 }

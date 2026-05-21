@@ -191,19 +191,19 @@ class ThrottleFilterTest extends CIUnitTestCase
     {
         $request = $this->createMockRequest('192.168.1.1');
 
-        // Simulate 5th request
+        // Simulate 5th request (counter already exists in cache)
         $this->mockCache->expects($this->once())
             ->method('get')
             ->willReturn(4);
 
+        // save() must NOT be called — that would reset the window TTL (fixed-window bug)
+        $this->mockCache->expects($this->never())->method('save');
+
+        // increment() preserves the original TTL
         $this->mockCache->expects($this->once())
-            ->method('save')
-            ->with(
-                $this->anything(),
-                5, // Should increment to 5
-                $this->anything()
-            )
-            ->willReturn(true);
+            ->method('increment')
+            ->with($this->stringContains('rate_limit_ip_'))
+            ->willReturn(5);
 
         $request->expects($this->once())
             ->method('setRateLimitInfo')
@@ -214,6 +214,31 @@ class ThrottleFilterTest extends CIUnitTestCase
         $this->filter->before($request);
 
         $this->assertTrue(true);
+    }
+
+    public function testSubsequentRequestsUseIncrementNotSave(): void
+    {
+        $request = $this->createMockRequest('192.168.1.1');
+
+        // Simulate a mid-window request (counter already exists)
+        $this->mockCache->expects($this->once())
+            ->method('get')
+            ->willReturn(10);
+
+        // save() must NEVER be called on subsequent requests — it would reset the window TTL
+        $this->mockCache->expects($this->never())->method('save');
+
+        // increment() is called to advance the counter without touching the TTL
+        $this->mockCache->expects($this->once())
+            ->method('increment')
+            ->willReturn(11);
+
+        $request->expects($this->once())
+            ->method('setRateLimitInfo')
+            ->with($this->callback(fn ($info) => $info['remaining'] === 49)); // 60 - 11
+
+        $result = $this->filter->before($request);
+        $this->assertInstanceOf(ApiRequest::class, $result);
     }
 
     public function testAfterSetsRateLimitHeaders(): void

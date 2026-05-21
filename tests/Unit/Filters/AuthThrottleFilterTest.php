@@ -169,19 +169,19 @@ class AuthThrottleFilterTest extends CIUnitTestCase
     {
         $request = $this->createMockRequest('192.168.1.1');
 
-        // Simulate 3rd attempt
+        // Simulate 3rd attempt (counter already exists in cache)
         $this->mockCache->expects($this->once())
             ->method('get')
             ->willReturn(2);
 
+        // save() must NOT be called — that would reset the window TTL (fixed-window bug)
+        $this->mockCache->expects($this->never())->method('save');
+
+        // increment() preserves the original TTL
         $this->mockCache->expects($this->once())
-            ->method('save')
-            ->with(
-                $this->anything(),
-                3, // Should increment to 3
-                $this->anything()
-            )
-            ->willReturn(true);
+            ->method('increment')
+            ->with($this->stringContains('auth_rate_limit_'))
+            ->willReturn(3);
 
         $request->expects($this->once())
             ->method('setAuthRateLimitInfo');

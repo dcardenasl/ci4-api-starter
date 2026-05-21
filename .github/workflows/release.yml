@@ -14,6 +14,9 @@ on:
 permissions:
   contents: write
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   release:
     runs-on: ubuntu-latest
@@ -60,17 +63,16 @@ jobs:
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # Pipe the notes through env, not direct ${{ }} interpolation —
-          # CHANGELOG bodies contain backticks and other shell metacharacters
-          # that the runner would otherwise expand against the host shell.
-          NOTES: ${{ steps.notes.outputs.notes }}
+          RELEASE_NOTES: ${{ steps.notes.outputs.notes }}
         run: |
+          # Write notes to a file to avoid shell injection from CHANGELOG content.
+          printf '%s' "${RELEASE_NOTES}" > /tmp/release_notes.md
           # Soft-fail when the release already exists (re-tag scenarios).
           if gh release view "${GITHUB_REF_NAME}" >/dev/null 2>&1; then
             echo "Release ${GITHUB_REF_NAME} already exists; updating notes."
-            gh release edit "${GITHUB_REF_NAME}" --notes "${NOTES}"
+            gh release edit "${GITHUB_REF_NAME}" --notes-file /tmp/release_notes.md
           else
             gh release create "${GITHUB_REF_NAME}" \
               --title "${GITHUB_REF_NAME}" \
-              --notes "${NOTES}"
+              --notes-file /tmp/release_notes.md
           fi

@@ -7,6 +7,8 @@ return [
     // Success messages
     'upload_success'      => 'File uploaded successfully',
     'delete_success'      => 'File deleted successfully',
+    'restore_success'     => 'File restored successfully',
+    'force_delete_success' => 'File permanently deleted',
 
     // Error messages
     'file_required'       => 'File is required',
@@ -31,4 +33,24 @@ return [
     'upload' => [
         'noFile' => 'No file was uploaded or file is invalid',
     ],
+
+    // Trash / soft-delete
+    'already_trashed'  => 'File is already in the trash',
+    'not_trashed'      => 'File is not in the trash',
+    'bulk_ids_required' => 'A non-empty list of file ids is required',
+    'bulk_item_failed' => 'Operation failed for this file',
+
+    // File references
+    'in_use' => 'Cannot permanently delete: this file is referenced by {0} resource(s). Unlink it first.',
+
+    // Variant generation
+    'not_an_image'       => 'Variant generation is only available for image files.',
+    'regenerate_success' => 'Variants regenerated successfully.',
+
+    // Metadata update
+    'metadata_no_fields'    => 'At least one metadata field must be provided.',
+    'metadata_update_success' => 'File metadata updated successfully.',
+
+    // Replace
+    'replace_success' => 'File replaced successfully.',
 ];

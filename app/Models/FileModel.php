@@ -22,7 +22,7 @@ class FileModel extends BaseAuditableModel
     protected $primaryKey = 'id';
     protected $useAutoIncrement = true;
     protected $returnType = FileEntity::class;
-    protected $useSoftDeletes = false;
+    protected $useSoftDeletes = true;
     protected $protectFields = true;
 
     protected $allowedFields = [
@@ -45,6 +45,7 @@ class FileModel extends BaseAuditableModel
         'metadata',
         'variants',
         'uploaded_at',
+        'deleted_by_user_id',
     ];
 
     // Timestamps
@@ -85,8 +86,8 @@ class FileModel extends BaseAuditableModel
     /** @var array<int, string> */
     protected array $searchableFields = ['original_name', 'mime_type', 'alt_text', 'caption', 'credit'];
     /** @var array<int, string> */
-    protected array $filterableFields = ['user_id', 'mime_type', 'category', 'size', 'uploaded_at', 'storage_driver'];
+    protected array $filterableFields = ['user_id', 'mime_type', 'category', 'size', 'uploaded_at', 'storage_driver', 'deleted_at'];
     /** @var array<int, string> */
-    protected array $sortableFields = ['id', 'user_id', 'original_name', 'size', 'uploaded_at', 'mime_type', 'category'];
+    protected array $sortableFields = ['id', 'user_id', 'original_name', 'size', 'uploaded_at', 'mime_type', 'category', 'deleted_at'];
 
 }

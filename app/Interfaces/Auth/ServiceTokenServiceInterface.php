@@ -18,4 +18,11 @@ interface ServiceTokenServiceInterface
      * application has been deleted.
      */
     public function issue(string $rawAppKey): ServiceTokenResponseDTO;
+
+    /**
+     * Same as `issue()` but resolves the key by its primary-key id. Preferred
+     * when the caller already holds the appKeyId stamped by AppKeyRequiredFilter,
+     * since it avoids an extra hash computation.
+     */
+    public function issueByKeyId(int $appKeyId): ServiceTokenResponseDTO;
 }

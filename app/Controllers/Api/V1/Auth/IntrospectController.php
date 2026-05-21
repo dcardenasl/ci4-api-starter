@@ -9,6 +9,7 @@ use App\Interfaces\Auth\TokenIntrospectionServiceInterface;
 use CodeIgniter\HTTP\ResponseInterface;
 use Config\Services;
 use dcardenasl\Ci4ApiCore\Http\ApiController;
+use dcardenasl\Ci4ApiCore\Http\ApiRequest;
 
 /**
  * Token Introspection Controller
@@ -49,25 +50,33 @@ class IntrospectController extends ApiController
     }
 
     /**
-     * Resolve the caller's application id from the X-App-Key header. Returns
-     * null when the API key is not bound to an application — callers in that
-     * state get the JWT-baked scope verbatim.
+     * Resolve the caller's application id. Uses the appKeyId already stamped
+     * by AppKeyRequiredFilter (PK lookup) when available; falls back to the
+     * raw header + hash for non-ApiRequest contexts such as unit tests.
      */
     private function callerApplicationId(): ?int
     {
-        $rawKey = (string) $this->request->getHeaderLine('X-App-Key');
-        if ($rawKey === '') {
-            return null;
+        $appKeyId = $this->request instanceof ApiRequest
+            ? $this->request->getAppKeyId()
+            : null;
+
+        if ($appKeyId !== null) {
+            $apiKey = Services::apiKeyRepository()->find($appKeyId);
+        } else {
+            $rawKey = (string) $this->request->getHeaderLine('X-App-Key');
+            if ($rawKey === '') {
+                return null;
+            }
+            $apiKey = Services::apiKeyRepository()->findByHash(
+                Services::apiKeyMaterialService()->hash($rawKey)
+            );
         }
 
-        $hash   = Services::apiKeyMaterialService()->hash($rawKey);
-        $apiKey = Services::apiKeyRepository()->findByHash($hash);
         if ($apiKey === null) {
             return null;
         }
 
         $applicationId = $apiKey->application_id ?? null;
-
         return $applicationId !== null ? (int) $applicationId : null;
     }
 }

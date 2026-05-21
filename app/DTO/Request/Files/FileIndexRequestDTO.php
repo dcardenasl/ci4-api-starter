@@ -14,12 +14,17 @@ use dcardenasl\Ci4ApiCore\Exceptions\AuthenticationException;
  */
 readonly class FileIndexRequestDTO extends BaseRequestDTO
 {
+    public const TRASHED_WITHOUT = 'without';
+    public const TRASHED_ONLY    = 'only';
+    public const TRASHED_WITH    = 'with';
+
     public int $page;
     public int $per_page;
     public int $user_id;
     public ?string $search;
     public string $sort;
     public array $filter;
+    public string $trashed;
 
     public function rules(): array
     {
@@ -28,6 +33,7 @@ readonly class FileIndexRequestDTO extends BaseRequestDTO
             'per_page' => 'permit_empty|is_natural_no_zero|less_than[101]',
             'search'  => 'permit_empty|string|max_length[100]',
             'sort'    => 'permit_empty|max_length[100]',
+            'trashed' => 'permit_empty|in_list[without,only,with]',
         ];
     }
 
@@ -43,6 +49,10 @@ readonly class FileIndexRequestDTO extends BaseRequestDTO
         $this->search = $data['search'] ?? null;
         $this->sort = (string) ($data['sort'] ?? '');
         $this->filter = isset($data['filter']) && is_array($data['filter']) ? $data['filter'] : [];
+        $trashed = (string) ($data['trashed'] ?? self::TRASHED_WITHOUT);
+        $this->trashed = in_array($trashed, [self::TRASHED_WITHOUT, self::TRASHED_ONLY, self::TRASHED_WITH], true)
+            ? $trashed
+            : self::TRASHED_WITHOUT;
     }
 
     public function toArray(): array
@@ -54,6 +64,7 @@ readonly class FileIndexRequestDTO extends BaseRequestDTO
             'search'  => $this->search,
             'sort'    => $this->sort,
             'filter'  => $this->filter,
+            'trashed' => $this->trashed,
         ];
     }
 }

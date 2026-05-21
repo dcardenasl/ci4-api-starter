@@ -30,7 +30,9 @@ trait AuthIdentityServices
     public static function updateSelfProfileAction(\App\Interfaces\Users\UserRepositoryInterface $userRepository): \App\Services\Users\Actions\UpdateSelfProfileAction
     {
         return new \App\Services\Users\Actions\UpdateSelfProfileAction(
-            $userRepository
+            $userRepository,
+            static::fileRepository(),
+            static::fileReferenceRepository(),
         );
     }
 
@@ -144,7 +146,9 @@ trait AuthIdentityServices
         return new \App\Services\Users\Actions\UpdateUserAction(
             $userRepository,
             static::userRoleAssignmentService(),
-            static::iamAuthorizationService()
+            static::iamAuthorizationService(),
+            static::fileRepository(),
+            static::fileReferenceRepository(),
         );
     }
 

@@ -57,10 +57,12 @@ final class GalleryServiceTest extends CIUnitTestCase
         $this->fileModel = new FileModel();
 
         // Per-test isolation: clear pivot rows AND seed fresh files.
-        // file_references must be cleared first — it holds a FK to files.
+        // Use emptyTable() (DELETE FROM) instead of truncate() for tables that
+        // participate in a FK chain — MySQL blocks TRUNCATE on a referenced table
+        // even when the referencing table is empty.
         Database::connect()->table('gallery_test_pivots')->truncate();
-        Database::connect()->table('file_references')->truncate();
-        Database::connect()->table('files')->truncate();
+        Database::connect()->table('file_references')->emptyTable();
+        Database::connect()->table('files')->emptyTable();
         $this->ensureOwnerExists();
         $this->seededFileIds = $this->seedFiles(3);
     }

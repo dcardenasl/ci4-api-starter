@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "6c27bed76b4ff9e442f513838fd8e833",
+    "content-hash": "8dae1bcc84bea6f2063dd84eba48df0a",
     "packages": [
         {
             "name": "aws/aws-crt-php",
@@ -236,16 +236,16 @@
         },
         {
             "name": "dcardenasl/ci4-api-core",
-            "version": "v0.6.0",
+            "version": "v0.7.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/dcardenasl/ci4-api-core.git",
-                "reference": "8d1f450670963dda4f94f331be62030866c3fabf"
+                "reference": "e1e1c279731607460bf8eb21d621bfcd20ffd6cd"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/dcardenasl/ci4-api-core/zipball/8d1f450670963dda4f94f331be62030866c3fabf",
-                "reference": "8d1f450670963dda4f94f331be62030866c3fabf",
+                "url": "https://api.github.com/repos/dcardenasl/ci4-api-core/zipball/e1e1c279731607460bf8eb21d621bfcd20ffd6cd",
+                "reference": "e1e1c279731607460bf8eb21d621bfcd20ffd6cd",
                 "shasum": ""
             },
             "require": {
@@ -270,7 +270,7 @@
             "type": "library",
             "extra": {
                 "branch-alias": {
-                    "dev-main": "0.4.x-dev"
+                    "dev-main": "0.7.x-dev"
                 },
                 "codeigniter4": {
                     "commands": [
@@ -321,7 +321,7 @@
                 "issues": "https://github.com/dcardenasl/ci4-api-core/issues",
                 "source": "https://github.com/dcardenasl/ci4-api-core"
             },
-            "time": "2026-05-18T03:00:29+00:00"
+            "time": "2026-05-22T21:58:38+00:00"
         },
         {
             "name": "doctrine/lexer",
@@ -4091,21 +4091,21 @@
         },
         {
             "name": "dcardenasl/ci4-api-scaffolding",
-            "version": "0.4.0",
+            "version": "v0.5.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/dcardenasl/ci4-api-scaffolding.git",
-                "reference": "5ede83e625b1795cdbb07792713a7e9c60ec86e5"
+                "reference": "059a635b47d326b72566cd4751f7780baba91f41"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/dcardenasl/ci4-api-scaffolding/zipball/5ede83e625b1795cdbb07792713a7e9c60ec86e5",
-                "reference": "5ede83e625b1795cdbb07792713a7e9c60ec86e5",
+                "url": "https://api.github.com/repos/dcardenasl/ci4-api-scaffolding/zipball/059a635b47d326b72566cd4751f7780baba91f41",
+                "reference": "059a635b47d326b72566cd4751f7780baba91f41",
                 "shasum": ""
             },
             "require": {
                 "codeigniter4/framework": "^4.7",
-                "dcardenasl/ci4-api-core": "^0.6.0",
+                "dcardenasl/ci4-api-core": "^0.7.0",
                 "nikic/php-parser": "^5.0",
                 "php": "^8.2"
             },
@@ -4126,7 +4126,7 @@
             "type": "library",
             "extra": {
                 "branch-alias": {
-                    "dev-main": "0.4.x-dev"
+                    "dev-main": "0.5.x-dev"
                 },
                 "codeigniter4": {
                     "commands": [
@@ -4174,7 +4174,7 @@
                 "issues": "https://github.com/dcardenasl/ci4-api-scaffolding/issues",
                 "source": "https://github.com/dcardenasl/ci4-api-scaffolding"
             },
-            "time": "2026-05-18T03:10:29+00:00"
+            "time": "2026-05-22T22:00:02+00:00"
         },
         {
             "name": "ergebnis/agent-detector",

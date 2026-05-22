@@ -5,6 +5,22 @@ All notable changes to ci4-api-starter will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.0] — 2026-05-22
+
+### Fixed
+
+- Pre-commit hook now regenerates and auto-stages `public/swagger.json` before running CS-Fixer and PHPStan. Manual `php spark swagger:generate && git add public/swagger.json` steps before commits are no longer needed.
+- `composer arch-drift` now runs `@test:prepare-db` as its first step, preventing a "Tests database is empty" failure on first run after `git clone` or DB reset.
+
+### Improved
+
+- `ServiceModelDependencyConventionsTest` docblock documents the canonical cross-entity query pattern: inject a second repository via the constructor and use `findBy()` instead of `model(\App\Models\...::class)` inline FQCNs.
+
+### Dependencies
+
+- Updated `dcardenasl/ci4-api-core` to `^0.7.0` (adds `RepositoryInterface::findBy()`).
+- Updated `dcardenasl/ci4-api-scaffolding` to `^0.5.0`.
+
 ## [2.1.1] — 2026-05-21
 
 Fixes the encryption key not being written during `setup.sh` initialization when `.env.example` contains a quoted empty value for `encryption.key`.

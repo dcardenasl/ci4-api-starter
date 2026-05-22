@@ -8,6 +8,23 @@ use CodeIgniter\Test\CIUnitTestCase;
 
 /**
  * Guardrail to avoid growing direct Model coupling in service layer.
+ *
+ * Services must not import Models directly (`use App\Models\...`).
+ * The six whitelisted files below are justified exceptions (auth internals,
+ * token lifecycle, system metrics) that pre-date the repository layer.
+ *
+ * For cross-entity queries in domain services, inject a second repository
+ * via the constructor and use `findBy()`:
+ *
+ *   public function __construct(
+ *       protected SubscriberRepository $repository,
+ *       protected ProjectRepository    $projectRepository,
+ *   ) {}
+ *
+ *   // Then: $this->projectRepository->findBy('project_key', $key)
+ *
+ * This keeps the service PHPStan-clean and satisfies this guardrail without
+ * resorting to inline FQCNs like `model(\App\Models\ProjectModel::class)`.
  */
 class ServiceModelDependencyConventionsTest extends CIUnitTestCase
 {

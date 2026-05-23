@@ -13,9 +13,9 @@ class Project extends BaseConfig
 {
     public const NAME = 'CodeIgniter 4 API Starter';
     public const DESCRIPTION = 'RESTful API built with CodeIgniter 4, featuring JWT authentication, standardized responses, and comprehensive documentation.';
-    public const VERSION = '2.2.1';
+    public const VERSION = '2.2.2';
 
     public string $name = 'CodeIgniter 4 API Starter';
     public string $description = 'RESTful API built with CodeIgniter 4, featuring JWT authentication, standardized responses, and comprehensive documentation.';
-    public string $version = '2.2.1';
+    public string $version = '2.2.2';
 }

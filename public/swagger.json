@@ -3,7 +3,7 @@
     "info": {
         "title": "CodeIgniter 4 API Starter",
         "description": "RESTful API built with CodeIgniter 4, featuring JWT authentication, standardized responses, and comprehensive documentation.",
-        "version": "2.2.1"
+        "version": "2.2.2"
     },
     "servers": [
         {

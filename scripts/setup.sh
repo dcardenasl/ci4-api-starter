@@ -267,11 +267,13 @@ ci4_install_deps() {
     print_warn "Path repository '../ci4-api-core' not found. Using Packagist version."
     php -r '
       $json = json_decode(file_get_contents("composer.json"), true);
-      $json["repositories"] = array_filter(
-        $json["repositories"],
-        fn($r) => !isset($r["url"]) || strpos($r["url"], "ci4-api") === false
-      );
-      if (empty($json["repositories"])) unset($json["repositories"]);
+      if (isset($json["repositories"]) && is_array($json["repositories"])) {
+        $json["repositories"] = array_values(array_filter(
+          $json["repositories"],
+          fn($r) => !isset($r["url"]) || strpos($r["url"], "ci4-api") === false
+        ));
+        if ($json["repositories"] === []) unset($json["repositories"]);
+      }
       file_put_contents("composer.json", json_encode($json, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT) . "\n");
     ' || print_warn "Could not update composer.json; proceeding anyway."
   fi

@@ -5,6 +5,22 @@ All notable changes to ci4-api-starter will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+## [2.2.2] — 2026-05-23
+
+### Fixed
+
+- `app/Config/Format.php` now defines `jsonEncodeDepth = 512` so API responses format correctly under CI 4.7.3+.
+- `app/Libraries/Files/Base64Processor.php` now validates payload size before decoding to avoid memory spikes on large base64 uploads; the `ApiKeyService` fake repository test was updated to match the current `RepositoryInterface`.
+
+## [2.2.1] — 2026-05-23
+
+### Fixed
+
+- `scripts/bootstrap_env.php` now accepts commented placeholders (`; key = value` / `# key = value`) when updating `.env` files.
+- `scripts/setup.sh` preserves the `repositories` array shape after stripping local `ci4-api-*` path repositories, preventing malformed `composer.json` output when the array becomes sparse.
+
 ## [2.2.0] — 2026-05-22
 
 ### Fixed
@@ -255,8 +271,10 @@ This release replaces the legacy single-role authorization model with a granular
 ### Fixed
 - **(PR #3)** Repository cleanup: removed dead code and stale files
 
-[unreleased]: https://github.com/dcardenasl/ci4-api-starter/compare/v2.1.0...HEAD
-[2.1.0]: https://github.com/dcardenasl/ci4-api-starter/compare/v2.0.0...v2.1.0
+[unreleased]: https://github.com/dcardenasl/ci4-api-starter/compare/v2.2.2...HEAD
+[2.2.2]: https://github.com/dcardenasl/ci4-api-starter/compare/v2.2.1...v2.2.2
+[2.2.1]: https://github.com/dcardenasl/ci4-api-starter/compare/v2.2.0...v2.2.1
+[2.2.0]: https://github.com/dcardenasl/ci4-api-starter/compare/v2.1.1...v2.2.0
 [2.0.0]: https://github.com/dcardenasl/ci4-api-starter/compare/v1.4.0...v2.0.0
 [1.4.0]: https://github.com/dcardenasl/ci4-api-starter/compare/v1.3.4...v1.4.0
 [1.3.4]: https://github.com/dcardenasl/ci4-api-starter/compare/v1.3.3...v1.3.4

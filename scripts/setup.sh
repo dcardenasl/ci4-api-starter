@@ -138,25 +138,58 @@ detect_mysql_mode() {
     return
   fi
 
-  printf "Running containers:\n"
-  local mysql_containers
-  mysql_containers=$(docker ps --format "{{.Names}}" 2>/dev/null | while read -r name; do
-    if docker inspect "$name" --format='{{.Config.Image}}' 2>/dev/null | grep -qi mysql; then
-      printf "  %s\n" "$name"
-    fi
-  done) || true
-
-  if [ -n "$mysql_containers" ]; then
-    printf "%s\n" "$mysql_containers"
-  else
-    printf "  (none found with 'mysql' in image name)\n"
+  # If CI4_DB_HOST is set to a non-localhost value,
+  # assume we're using a remote database (not Docker).
+  if [ -n "${CI4_DB_HOST:-}" ] && [ "${CI4_DB_HOST}" != "localhost" ] && [ "${CI4_DB_HOST}" != "127.0.0.1" ] && [ "${CI4_DB_HOST}" != "0.0.0.0" ]; then
+    MYSQL_MODE="local"  # Assume it's a remote DB connection, not Docker
+    print_ok "Using remote database (CI4_DB_HOST set)"
+    return
   fi
 
-  local default_container
-  default_container=$(printf "%s" "$mysql_containers" | head -1 | tr -d ' ') || true
-  if [ -n "$default_container" ]; then
-    DOCKER_CONTAINER="$(ask_with_default "Docker container name with MySQL" "$default_container")"
+  # When no explicit container is specified, try to use the first available Docker MySQL container
+  if [ -z "${CI4_DOCKER_CONTAINER:-}" ]; then
+    # Get list of running containers with MySQL in the image name
+    local containers_with_mysql
+    containers_with_mysql=$(docker ps 2>/dev/null | grep -i mysql | awk '{print $NF}' | head -1)
+
+    if [ -n "$containers_with_mysql" ]; then
+      DOCKER_CONTAINER="$containers_with_mysql"
+      MYSQL_MODE="docker"
+      print_ok "Auto-detected Docker container: $DOCKER_CONTAINER"
+      return
+    fi
+  fi
+
+  if [ -n "${CI4_DOCKER_CONTAINER:-}" ]; then
+    DOCKER_CONTAINER="${CI4_DOCKER_CONTAINER}"
+    MYSQL_MODE="docker"
+    if docker inspect "$DOCKER_CONTAINER" >/dev/null 2>&1; then
+      print_ok "Docker container found: $DOCKER_CONTAINER"
+      return
+    else
+      print_error "Container '$DOCKER_CONTAINER' not found or not running."
+      exit 1
+    fi
+  fi
+
+  # Interactive mode: ask for container name
+  printf "Running containers:\n"
+  local mysql_containers
+  mysql_containers=$(docker ps --format "{{.Names}}" 2>/dev/null | grep -i mysql || true)
+
+  if [ -n "$mysql_containers" ]; then
+    printf "%s\n" "$mysql_containers" | sed 's/^/  /'
+    local default_container
+    default_container=$(printf "%s" "$mysql_containers" | head -1 | tr -d ' ')
+    # In non-interactive mode (piped input), automatically use the first container
+    if [ ! -t 0 ]; then
+      DOCKER_CONTAINER="$default_container"
+      print_ok "Selected Docker container (non-interactive mode): $DOCKER_CONTAINER"
+    else
+      DOCKER_CONTAINER="$(ask_with_default "Docker container name with MySQL" "$default_container")"
+    fi
   else
+    printf "  (none found with 'mysql' in image name)\n"
     DOCKER_CONTAINER="$(ask_required "Docker container name with MySQL")"
   fi
 
@@ -227,6 +260,22 @@ run_mysql_sql() {
 ci4_install_deps() {
   print_header "Installing dependencies"
   printf "This may take a few minutes depending on your connection speed...\n"
+
+  # When cloned standalone, path repositories (ci4-api-core, ci4-api-scaffolding) may not exist.
+  # If so, remove them from composer.json and use Packagist versions instead.
+  if [ ! -d "../ci4-api-core" ]; then
+    print_warn "Path repository '../ci4-api-core' not found. Using Packagist version."
+    php -r '
+      $json = json_decode(file_get_contents("composer.json"), true);
+      $json["repositories"] = array_filter(
+        $json["repositories"],
+        fn($r) => !isset($r["url"]) || strpos($r["url"], "ci4-api") === false
+      );
+      if (empty($json["repositories"])) unset($json["repositories"]);
+      file_put_contents("composer.json", json_encode($json, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT) . "\n");
+    ' || print_warn "Could not update composer.json; proceeding anyway."
+  fi
+
   # 'timeout' is a Linux coreutils command; macOS ships without it.
   # Use gtimeout (brew install coreutils) when available, otherwise run without a timeout.
   if command -v timeout >/dev/null 2>&1; then

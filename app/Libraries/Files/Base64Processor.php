@@ -25,6 +25,9 @@ class Base64Processor implements FileProcessorInterface
             $mimeType = $options['mimeType'] ?? 'application/octet-stream';
         }
 
+        $estimatedSize = $this->estimateDecodedSize($base64Data);
+        $this->validateSize($estimatedSize, $options);
+
         $contents = base64_decode($base64Data, true);
         if ($contents === false) {
             throw new BadRequestException(lang('Files.invalid_file_object'));
@@ -36,7 +39,7 @@ class Base64Processor implements FileProcessorInterface
         }
 
         $size = strlen($contents);
-        $this->validate($size, $mimeType, $options);
+        $this->validateFileType($mimeType, $options);
 
         $extension = \Config\Mimes::guessExtensionFromType($mimeType) ?? 'bin';
         $originalName = $options['filename'] ?? ('file.' . $extension);
@@ -58,14 +61,40 @@ class Base64Processor implements FileProcessorInterface
         );
     }
 
-    private function validate(int $size, string $mimeType, array $options): void
+    private function estimateDecodedSize(string $base64Data): int
+    {
+        $length = strlen($base64Data);
+        $padding = 0;
+
+        if ($length > 0 && substr($base64Data, -1) === '=') {
+            $padding++;
+        }
+
+        if ($length > 1 && substr($base64Data, -2, 1) === '=') {
+            $padding++;
+        }
+
+        return max(0, intdiv($length * 3, 4) - $padding);
+    }
+
+    /**
+     * @param array<string, mixed> $options
+     */
+    private function validateSize(int $size, array $options): void
     {
         $apiConfig = config('Api');
         $maxSize = $options['maxSize'] ?? $apiConfig->fileMaxSize;
         if ($size > $maxSize) {
             throw new ValidationException(lang('Files.file_too_large'), ['file' => lang('Files.file_too_large')]);
         }
+    }
 
+    /**
+     * @param array<string, mixed> $options
+     */
+    private function validateFileType(string $mimeType, array $options): void
+    {
+        $apiConfig = config('Api');
         $extension = \Config\Mimes::guessExtensionFromType($mimeType) ?? 'bin';
         $allowedTypes = $options['allowedTypes'] ?? explode(',', $apiConfig->fileAllowedTypes);
         if (!in_array(strtolower($extension), $allowedTypes, true)) {

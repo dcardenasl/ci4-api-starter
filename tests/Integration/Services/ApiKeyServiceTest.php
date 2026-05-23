@@ -37,6 +37,11 @@ class FakeApiKeyRepository implements ApiKeyRepositoryInterface
         return $this->returnEntity;
     }
 
+    public function findBy(string $column, mixed $value): ?object
+    {
+        return $this->returnEntity;
+    }
+
     public function setEntityContext(int|string $id, object|array $entity): void
     {
     }

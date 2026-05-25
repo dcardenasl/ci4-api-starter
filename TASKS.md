@@ -52,3 +52,7 @@
 - **CRUD nuevo:** usar `bash vendor/bin/make-crud.sh` siempre. Nunca crear DTOs manualmente.
 - **OpenAPI:** correr `php spark swagger:generate` al terminar cualquier endpoint nuevo.
 - **Migraciones:** nunca modificar migraciones existentes. Nueva migración para cualquier cambio de schema.
+
+### 🚧 Technical Debt (IAM)
+- [ ] **Automatic App Inference**: Modify PermissionService::beforeStore to automatically fill application_id using the request's X-App-Key if not provided.
+- [ ] **Audit Trail Reliability**: Ensure high disk usage does not stop the Hub if audit logging is enabled (check health endpoint logic).

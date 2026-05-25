@@ -37,6 +37,11 @@ class PermissionService extends BaseCrudService implements PermissionServiceInte
     {
         $this->authz->assertSuperAdmin($context);
 
+        // Auto-assign application_id from context if not provided
+        if (empty($data['application_id']) && $context !== null && $context->app_id !== null) {
+            $data['application_id'] = $context->app_id;
+        }
+
         return parent::beforeStore($data, $context);
     }
 

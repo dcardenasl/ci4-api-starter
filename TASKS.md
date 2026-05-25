@@ -54,5 +54,5 @@
 - **Migraciones:** nunca modificar migraciones existentes. Nueva migración para cualquier cambio de schema.
 
 ### 🚧 Technical Debt (IAM)
-- [ ] **Automatic App Inference**: Modify PermissionService::beforeStore to automatically fill application_id using the request's X-App-Key if not provided.
+- [x] **Automatic App Inference**: Modify PermissionService::beforeStore to automatically fill application_id using the request's X-App-Key if not provided. ✅ 2026-05-25
 - [ ] **Audit Trail Reliability**: Ensure high disk usage does not stop the Hub if audit logging is enabled (check health endpoint logic).

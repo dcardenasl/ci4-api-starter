@@ -55,6 +55,7 @@ class TokenIntrospectionService implements TokenIntrospectionServiceInterface
             permissions: $permissions,
             exp: isset($decoded->exp) ? (int) $decoded->exp : null,
             error: null,
+            app_id: $applicationId,
         );
     }
 

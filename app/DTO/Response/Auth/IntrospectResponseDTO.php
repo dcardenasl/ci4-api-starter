@@ -37,6 +37,8 @@ readonly class IntrospectResponseDTO implements DataTransferObjectInterface
         public ?int $exp,
         #[OA\Property(property: 'error', description: 'Reason when valid=false: invalid_or_expired | revoked', example: null, nullable: true)]
         public ?string $error,
+        #[OA\Property(property: 'app_id', description: 'Application ID for which the permissions were resolved', example: 1, nullable: true)]
+        public ?int $app_id = null,
     ) {
     }
 
@@ -48,6 +50,7 @@ readonly class IntrospectResponseDTO implements DataTransferObjectInterface
             permissions: array_values(array_map('strval', (array) ($data['permissions'] ?? []))),
             exp: isset($data['exp']) ? (int) $data['exp'] : null,
             error: isset($data['error']) ? (string) $data['error'] : null,
+            app_id: isset($data['app_id']) ? (int) $data['app_id'] : null,
         );
     }
 
@@ -59,6 +62,7 @@ readonly class IntrospectResponseDTO implements DataTransferObjectInterface
             'permissions' => $this->permissions,
             'exp'         => $this->exp,
             'error'       => $this->error,
+            'app_id'      => $this->app_id,
         ];
     }
 }

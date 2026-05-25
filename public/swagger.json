@@ -4232,6 +4232,12 @@
                         "type": "string",
                         "example": null,
                         "nullable": true
+                    },
+                    "app_id": {
+                        "description": "Application ID for which the permissions were resolved",
+                        "type": "integer",
+                        "example": 1,
+                        "nullable": true
                     }
                 },
                 "type": "object"

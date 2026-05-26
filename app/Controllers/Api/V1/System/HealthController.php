@@ -4,6 +4,7 @@ namespace App\Controllers\Api\V1\System;
 
 use CodeIgniter\Controller;
 use CodeIgniter\HTTP\ResponseInterface;
+use Config\Audit as AuditConfig;
 use dcardenasl\Ci4ApiCore\Monitoring\HealthChecker;
 
 /**
@@ -25,10 +26,12 @@ use dcardenasl\Ci4ApiCore\Monitoring\HealthChecker;
 class HealthController extends Controller
 {
     protected HealthChecker $healthChecker;
+    protected AuditConfig $audit;
 
     public function __construct()
     {
-        $this->healthChecker = new HealthChecker();
+        $this->healthChecker = $this->createHealthChecker();
+        $this->audit = $this->createAuditConfig();
     }
 
     /**
@@ -46,7 +49,7 @@ class HealthController extends Controller
         $checks = $this->healthChecker->checkAll();
 
         // Determine overall status
-        $overallStatus = $this->healthChecker->getOverallStatus($checks);
+        $overallStatus = $this->determineOverallStatus($checks);
 
         // Determine HTTP status code
         $statusCode = match ($overallStatus) {
@@ -65,6 +68,60 @@ class HealthController extends Controller
         return $this->response
             ->setJSON($response)
             ->setStatusCode($statusCode);
+    }
+
+    protected function createHealthChecker(): HealthChecker
+    {
+        return new HealthChecker();
+    }
+
+    protected function createAuditConfig(): AuditConfig
+    {
+        return config('Audit');
+    }
+
+    /**
+     * Disk pressure should not take the Hub down when audit logging is enabled.
+     * In that case, we downgrade an isolated critical disk check to degraded
+     * so orchestrators do not restart the service while it is still operating.
+     *
+     * @param array<string, array<string, mixed>> $checks
+     */
+    protected function determineOverallStatus(array $checks): string
+    {
+        $overallStatus = $this->healthChecker->getOverallStatus($checks);
+
+        if ($overallStatus !== 'unhealthy') {
+            return $overallStatus;
+        }
+
+        if (! $this->audit->asyncEnabled) {
+            return $overallStatus;
+        }
+
+        if (($checks['disk']['status'] ?? null) !== 'critical') {
+            return $overallStatus;
+        }
+
+        return $this->hasOnlyDiskPressure($checks) ? 'degraded' : $overallStatus;
+    }
+
+    /**
+     * @param array<string, array<string, mixed>> $checks
+     */
+    private function hasOnlyDiskPressure(array $checks): bool
+    {
+        foreach ($checks as $name => $check) {
+            if ($name === 'disk') {
+                continue;
+            }
+
+            if (isset($check['status']) && in_array($check['status'], ['unhealthy', 'critical'], true)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**

@@ -12,7 +12,7 @@ class BootstrapSuperadmin extends BaseCommand
 {
     protected $group = 'Users';
     protected $name = 'users:bootstrap-superadmin';
-    protected $description = 'Create the first superadmin user (fails if one already exists).';
+    protected $description = 'Create the first superadmin user (idempotent: exits successfully if one already exists).';
     protected $usage = 'users:bootstrap-superadmin --email <email> --password <password> [--first-name <first>] [--last-name <last>]';
     protected $options = [
         '--email'      => 'Superadmin email (required)',
@@ -58,8 +58,8 @@ class BootstrapSuperadmin extends BaseCommand
             ->get()?->getRowArray();
 
         if ($existingSuperadmin !== null) {
-            CLI::error('A superadmin already exists. Bootstrap can only run once.');
-            return EXIT_ERROR;
+            CLI::write('A superadmin already exists. Bootstrap can only run once.', 'yellow');
+            return EXIT_SUCCESS;
         }
 
         /** @var \App\Models\UserModel $userModel */

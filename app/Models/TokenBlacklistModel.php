@@ -2,14 +2,12 @@
 
 namespace App\Models;
 
-use CodeIgniter\Model;
-
 /**
  * Token Blacklist Model
  *
  * Manages blacklisted JWT tokens (revoked access tokens)
  */
-class TokenBlacklistModel extends Model
+class TokenBlacklistModel extends \dcardenasl\Ci4ApiCore\Models\BaseAuditableModel
 {
     protected $table = 'token_blacklist';
     protected $primaryKey = 'id';

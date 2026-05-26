@@ -2,9 +2,7 @@
 
 namespace App\Models;
 
-use CodeIgniter\Model;
-
-class MetricModel extends Model
+class MetricModel extends \dcardenasl\Ci4ApiCore\Models\BaseAuditableModel
 {
     protected $table = 'metrics';
     protected $primaryKey = 'id';

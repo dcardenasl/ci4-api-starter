@@ -45,8 +45,14 @@
 - **OpenAPI:** correr `php spark swagger:generate` al terminar cualquier endpoint nuevo.
 - **Migraciones:** nunca modificar migraciones existentes. Nueva migración para cualquier cambio de schema.
 
-### 🚧 Technical Debt (IAM)
+### 🚧 Technical Debt (IAM & Models)
 - [x] **Automatic App Inference**: Modify PermissionService::beforeStore to automatically fill application_id using the request's X-App-Key if not provided. ✅ 2026-05-25
+- [x] **Audit Compliance**: Remediate `AuditLogModel` to inherit from `BaseAuditableModel` to ensure automated audit trail consistency. ✅ 2026-05-26
+- [x] **Model Audit Audit**: Perform a full audit of all models in `app/Models` to ensure they either extend `BaseAuditableModel` or are explicitly excluded from auditing. ✅ 2026-05-26
+
+### 🏗️ Technical Debt (Architecture & DTO-First)
+- [x] **Service Layer DTO Audit**: Investigate and refactor Service layer methods currently using raw arrays (`array`) for parameters and return types (e.g., `GalleryService`, `Iam/*Service`). Goal: Replace with typed `readonly` DTOs. ✅ 2026-05-26
+- [ ] **DTO-First Enforcement**: Add a static analysis rule (e.g., PHPStan custom rule) to flag usage of `array` as type-hint in `app/Services` to prevent future regressions.
 
 ### 🛠️ Refactorización (PHPStan)
 - [x] **Fase 1: Core hardening** — Tipar `RepositoryInterface` y `AuditServiceInterface` en `ci4-api-core`.

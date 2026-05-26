@@ -4,9 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use CodeIgniter\Model;
-
-class UserRoleModel extends Model
+class UserRoleModel extends \dcardenasl\Ci4ApiCore\Models\BaseAuditableModel
 {
     protected $table         = 'user_roles';
     protected $primaryKey    = 'user_id';

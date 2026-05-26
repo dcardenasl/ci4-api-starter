@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use CodeIgniter\Model;
 use dcardenasl\Ci4ApiCore\Security\Hasher;
 
 /**
@@ -10,7 +9,7 @@ use dcardenasl\Ci4ApiCore\Security\Hasher;
  *
  * Manages refresh tokens for JWT authentication
  */
-class RefreshTokenModel extends Model
+class RefreshTokenModel extends \dcardenasl\Ci4ApiCore\Models\BaseAuditableModel
 {
     protected $table = 'refresh_tokens';
     protected $primaryKey = 'id';

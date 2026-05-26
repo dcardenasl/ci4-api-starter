@@ -44,8 +44,10 @@ class PermissionService extends BaseCrudService implements PermissionServiceInte
     {
         $this->authz->assertSuperAdmin($context);
 
+        $dto = new \App\DTO\Request\Iam\PermissionCreateRequestDTO($data);
+
         // Auto-assign application_id from context if not provided
-        if (empty($data['application_id']) && $context !== null && $context->app_id !== null) {
+        if (empty($dto->application_id) && $context !== null && $context->app_id !== null) {
             $data['application_id'] = $context->app_id;
         }
 
@@ -55,6 +57,8 @@ class PermissionService extends BaseCrudService implements PermissionServiceInte
     protected function beforeUpdate(int $id, array $data, ?SecurityContext $context): array
     {
         $this->authz->assertSuperAdmin($context);
+
+        $dto = new \App\DTO\Request\Iam\PermissionUpdateRequestDTO($data);
 
         return parent::beforeUpdate($id, $data, $context);
     }

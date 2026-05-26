@@ -4,15 +4,13 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use CodeIgniter\Model;
-
 /**
  * Polymorphic translations table.
  *
  * One row per (entity type, entity id, locale, field, value). Used by services
  * that opt into the `App\Traits\HandlesTranslations` trait.
  */
-class TranslationModel extends Model
+class TranslationModel extends \dcardenasl\Ci4ApiCore\Models\BaseAuditableModel
 {
     protected $table      = 'translations';
     protected $primaryKey = 'id';

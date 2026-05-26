@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use CodeIgniter\Model;
+use dcardenasl\Ci4ApiCore\Models\BaseAuditableModel;
 use dcardenasl\Ci4ApiCore\Models\Traits\Filterable;
 use dcardenasl\Ci4ApiCore\Models\Traits\Searchable;
 
@@ -13,7 +13,7 @@ use dcardenasl\Ci4ApiCore\Models\Traits\Searchable;
  *
  * Stores audit trail of all data changes
  */
-class AuditLogModel extends Model
+class AuditLogModel extends BaseAuditableModel
 {
     use Filterable;
     use Searchable;

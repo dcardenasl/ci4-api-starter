@@ -28,20 +28,26 @@ readonly class LoginResponseDTO implements DataTransferObjectInterface
         #[OA\Property(property: 'expires_in', description: 'Token expiration time in seconds', example: 3600)]
         public int $expires_in,
         #[OA\Property(description: 'Authenticated user data with effective permissions', ref: '#/components/schemas/MeResponse')]
-        public array $user
+        public MeResponseDTO $user
     ) {
     }
 
     /**
-     * @param array $data Expected structure from AuthService::login
+     * @param array{access_token?:mixed, refresh_token?:mixed, expires_in?:mixed, user?:mixed} $data
      */
     public static function fromArray(array $data): self
     {
+        $user = $data['user'] ?? null;
+
+        if (! $user instanceof MeResponseDTO) {
+            $user = MeResponseDTO::fromArray(is_array($user) ? $user : []);
+        }
+
         return new self(
-            access_token: $data['access_token'],
-            refresh_token: $data['refresh_token'],
+            access_token: (string) ($data['access_token'] ?? ''),
+            refresh_token: (string) ($data['refresh_token'] ?? ''),
             expires_in: (int) ($data['expires_in'] ?? 3600),
-            user: $data['user']
+            user: $user
         );
     }
 
@@ -51,7 +57,7 @@ readonly class LoginResponseDTO implements DataTransferObjectInterface
             'access_token' => $this->access_token,
             'refresh_token' => $this->refresh_token,
             'expires_in' => $this->expires_in,
-            'user' => $this->user,
+            'user' => $this->user->toArray(),
         ];
     }
 }

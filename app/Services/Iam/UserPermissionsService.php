@@ -38,15 +38,11 @@ class UserPermissionsService
             throw new NotFoundException(lang('Api.resourceNotFound'));
         }
 
-        $permissions = $this->resolver->resolve($userId, $application['id']);
+        $permissions = $this->resolver->resolve($userId, $application->id);
 
         return new UserPermissionsResponseDTO(
             user_id: $userId,
-            application: new ApplicationSummary(
-                id: $application['id'],
-                code: $application['code'],
-                name: $application['name'],
-            ),
+            application: $application,
             permissions: $permissions,
         );
     }
@@ -66,10 +62,7 @@ class UserPermissionsService
         return $query->getRowArray() !== null;
     }
 
-    /**
-     * @return array{id: int, code: string, name: string}|null
-     */
-    private function findApplicationByCode(string $code): ?array
+    private function findApplicationByCode(string $code): ?ApplicationSummary
     {
         $query = $this->db->table('applications')
             ->select('id, code, name')
@@ -85,10 +78,10 @@ class UserPermissionsService
             return null;
         }
 
-        return [
-            'id'   => (int) $row['id'],
-            'code' => (string) $row['code'],
-            'name' => (string) $row['name'],
-        ];
+        return new ApplicationSummary(
+            id: (int) $row['id'],
+            code: (string) $row['code'],
+            name: (string) $row['name'],
+        );
     }
 }

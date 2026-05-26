@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Auth\Support;
 
+use App\DTO\Response\Auth\LoginResponseDTO;
 use App\DTO\Response\Auth\MeResponseDTO;
 use App\Interfaces\Tokens\JwtServiceInterface;
 use App\Interfaces\Tokens\RefreshTokenServiceInterface;
@@ -34,16 +35,10 @@ class SessionManager
     /**
      * Build a session response (access + refresh tokens + canonical user).
      *
-     * Returns array by design — this is a helper-internal method consumed
-     * immediately by AuthService::login() and TokenController::refresh(), both
-     * of which wrap the result in a LoginResponseDTO / TokenResponseDTO. It is
-     * not part of the service's public surface and the "services return DTOs"
-     * rule does not apply here.
-     *
-     * @param object $user The authenticated user entity.
-     * @return array{access_token:string, refresh_token:string, expires_in:int, user:array<string,mixed>}
+     * The returned DTO is consumed directly by AuthService::login() and by
+     * Google login flows wrapped in an OperationResult.
      */
-    public function generateSessionResponse(object $user): array
+    public function generateSessionResponse(object $user): LoginResponseDTO
     {
         $userId = (int) ($user->id ?? 0);
         $permissions = $userId > 0
@@ -56,14 +51,14 @@ class SessionManager
         $userPayload = MeResponseDTO::fromUserData(
             $this->normalizeUser($user),
             $permissions
-        )->toArray();
+        );
 
-        return [
-            'access_token'  => $accessToken,
-            'refresh_token' => $refreshToken,
-            'expires_in'    => $this->accessTokenTtl,
-            'user'          => $userPayload,
-        ];
+        return new LoginResponseDTO(
+            access_token: $accessToken,
+            refresh_token: $refreshToken,
+            expires_in: $this->accessTokenTtl,
+            user: $userPayload,
+        );
     }
 
     /**

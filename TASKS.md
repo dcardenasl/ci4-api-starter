@@ -58,7 +58,7 @@
 - [ ] **Audit Trail Reliability**: Ensure high disk usage does not stop the Hub if audit logging is enabled (check health endpoint logic).
 
 ### 🛠️ Refactorización (PHPStan)
-- [ ] **Fase 1: Core hardening** — Tipar `RepositoryInterface` y `AuditServiceInterface` en `ci4-api-core`.
-- [ ] **Fase 2: ApiController Boundary** — Tipar `ApiController` en `ci4-api-core` para eliminar `missingType.iterableValue` del baseline.
+- [x] **Fase 1: Core hardening** — Tipar `RepositoryInterface` y `AuditServiceInterface` en `ci4-api-core`.
+- [x] **Fase 2: ApiController Boundary** — Tipar `ApiController` en `ci4-api-core` para eliminar `missingType.iterableValue` del baseline.
 - [ ] **Fase 3: Implementación Estricta** — Corregir controladores y servicios en `ci4-api-starter` tras el tipado del core.
 - [ ] **Fase 4: Scaffolding Generator** — Actualizar plantillas de `ci4-api-scaffolding` para generar código con tipos explícitos.

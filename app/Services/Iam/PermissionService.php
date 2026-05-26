@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Iam;
 
+use App\Entities\PermissionEntity;
 use App\Interfaces\Iam\PermissionServiceInterface;
 use dcardenasl\Ci4ApiCore\Dto\SecurityContext;
 use dcardenasl\Ci4ApiCore\Mappers\ResponseMapperInterface;
@@ -11,8 +12,14 @@ use dcardenasl\Ci4ApiCore\Repositories\RepositoryInterface;
 use dcardenasl\Ci4ApiCore\Services\BaseCrudService;
 use dcardenasl\Ci4ApiCore\Support\RelationLabelLoader;
 
+/**
+ * @extends BaseCrudService<PermissionEntity>
+ */
 class PermissionService extends BaseCrudService implements PermissionServiceInterface
 {
+    /**
+     * @param RepositoryInterface<PermissionEntity> $permissionRepository
+     */
     public function __construct(
         RepositoryInterface $permissionRepository,
         ResponseMapperInterface $responseMapper,

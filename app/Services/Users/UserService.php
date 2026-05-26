@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Users;
 
+use App\Entities\UserEntity;
 use App\Interfaces\Users\UserRepositoryInterface;
 use App\Interfaces\Users\UserServiceInterface;
 use App\Services\Iam\IamAuthorizationService;
@@ -22,6 +23,8 @@ use dcardenasl\Ci4ApiCore\Services\BaseCrudService;
  * Handles CRUD operations for users. Authorization is enforced at the route
  * level via the `permission` filter (e.g. `permission:users.write`); the
  * service trusts that any reachable call has already passed those gates.
+ *
+ * @extends BaseCrudService<UserEntity>
  */
 class UserService extends BaseCrudService implements UserServiceInterface
 {

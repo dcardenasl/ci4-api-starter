@@ -4,12 +4,15 @@ declare(strict_types=1);
 
 namespace App\Interfaces\Users;
 
+use App\Entities\UserEntity;
 use dcardenasl\Ci4ApiCore\Repositories\RepositoryInterface;
 
 /**
  * User Repository Interface
  *
  * Defines user-specific data access methods.
+ *
+ * @extends RepositoryInterface<UserEntity>
  */
 interface UserRepositoryInterface extends RepositoryInterface
 {

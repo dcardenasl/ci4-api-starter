@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Tokens;
 
 use App\DTO\Response\ApiKeys\ApiKeyResponseDTO;
+use App\Entities\ApiKeyEntity;
 use App\Interfaces\Tokens\ApiKeyRepositoryInterface;
 use App\Interfaces\Tokens\ApiKeyServiceInterface;
 use App\Services\Tokens\Actions\CreateApiKeyAction;
@@ -13,6 +14,9 @@ use dcardenasl\Ci4ApiCore\Dto\SecurityContext;
 use dcardenasl\Ci4ApiCore\Mappers\ResponseMapperInterface;
 use dcardenasl\Ci4ApiCore\Services\BaseCrudService;
 
+/**
+ * @extends BaseCrudService<ApiKeyEntity>
+ */
 class ApiKeyService extends BaseCrudService implements ApiKeyServiceInterface
 {
     public function __construct(

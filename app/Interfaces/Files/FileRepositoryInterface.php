@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace App\Interfaces\Files;
 
+use App\Entities\FileEntity;
 use dcardenasl\Ci4ApiCore\Repositories\RepositoryInterface;
 
 /**
  * File Repository Interface
+ *
+ * @extends RepositoryInterface<FileEntity>
  */
 interface FileRepositoryInterface extends RepositoryInterface
 {

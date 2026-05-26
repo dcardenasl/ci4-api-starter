@@ -9,6 +9,11 @@ use App\Interfaces\Tokens\ApiKeyRepositoryInterface;
 use App\Models\ApiKeyModel;
 use dcardenasl\Ci4ApiCore\Repositories\BaseRepository;
 
+/**
+ * API key repository implementation.
+ *
+ * @extends BaseRepository<ApiKeyEntity>
+ */
 class ApiKeyRepository extends BaseRepository implements ApiKeyRepositoryInterface
 {
     public function __construct(ApiKeyModel $model)

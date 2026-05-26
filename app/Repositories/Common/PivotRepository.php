@@ -16,6 +16,8 @@ use dcardenasl\Ci4ApiCore\Repositories\PivotRepositoryInterface;
  * implementing `getParentKey()`. The model itself is supplied via the standard
  * `BaseRepository` constructor, so that wiring stays consistent with the rest
  * of the repository layer.
+ *
+ * @extends BaseRepository<object>
  */
 abstract class PivotRepository extends BaseRepository implements PivotRepositoryInterface
 {
@@ -32,11 +34,14 @@ abstract class PivotRepository extends BaseRepository implements PivotRepository
 
     public function findByParent(int $parentId): array
     {
-        return $this->model
+        /** @var list<object> $rows */
+        $rows = $this->model
             ->where($this->getParentKey(), $parentId)
             ->orderBy('sort_order', 'ASC')
             ->orderBy('id', 'ASC')
             ->findAll();
+
+        return $rows;
     }
 
     public function maxSortOrder(int $parentId): int

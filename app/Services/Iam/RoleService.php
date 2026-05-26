@@ -8,6 +8,7 @@ use App\DTO\Request\Iam\AttachPermissionsRequestDTO;
 use App\DTO\Request\Iam\RoleCreateRequestDTO;
 use App\DTO\Request\Iam\RoleUpdateRequestDTO;
 use App\DTO\Response\Iam\PermissionResponseDTO;
+use App\Entities\RoleEntity;
 use App\Interfaces\Iam\RoleServiceInterface;
 use Config\Database;
 use dcardenasl\Ci4ApiCore\Dto\DataTransferObjectInterface;
@@ -18,8 +19,14 @@ use dcardenasl\Ci4ApiCore\Repositories\RepositoryInterface;
 use dcardenasl\Ci4ApiCore\Services\BaseCrudService;
 use dcardenasl\Ci4ApiCore\Support\RelationLabelLoader;
 
+/**
+ * @extends BaseCrudService<RoleEntity>
+ */
 class RoleService extends BaseCrudService implements RoleServiceInterface
 {
+    /**
+     * @param RepositoryInterface<RoleEntity> $roleRepository
+     */
     public function __construct(
         RepositoryInterface $roleRepository,
         ResponseMapperInterface $responseMapper,

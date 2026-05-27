@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.3.0] — 2026-05-27
+
+### Added
+
+- **Automatic `app_id` resolution in `PermissionService`** — when creating a permission, `application_id` is now auto-populated from `SecurityContext::$app_id` if not supplied explicitly. Eliminates the need to pass `application_id` from call sites when the API key already encodes the application.
+
+### Changed
+
+- **Local `RateLimitResponseHelpers` removed** — `app/Filters/Concerns/RateLimitResponseHelpers.php` deleted; `AuthThrottleFilter` and `ThrottleFilter` now import `dcardenasl\Ci4ApiCore\Http\Filters\Concerns\RateLimitResponseHelpers` from `ci4-api-core`. No behavioural changes.
+- **Repository and service generics aligned with `ci4-api-core ^0.8.0`** — all starter repositories and services now declare the generic type parameters introduced in the core library (`BaseRepository<T>`, `BaseCrudService<T>`, etc.). PHPStan level-8 picks up the improvement automatically.
+- **Auth DTO contracts tightened** — `IntrospectResponseDTO` updated to carry `app_id`; `LoginResponseDTO` refined.
+- **IAM services and models adopt `BaseCrudService` + `BaseAuditableModel` generics**.
+- **PHPStan baseline reduced** — 132 obsolete baseline entries removed after the generic typing upgrade.
+- **`dcardenasl/ci4-api-core` bumped to `^0.8.0`**; `dcardenasl/ci4-api-scaffolding` bumped to `^0.6.0`.
+- **CodeIgniter 4 updated to v4.7.3**.
+
+### Fixed
+
+- **`users:bootstrap-superadmin` is now idempotent** — returns `EXIT_SUCCESS` (was `EXIT_ERROR`) when a superadmin already exists. `init.sh` and automated CI pipelines that call the command unconditionally no longer fail on a pre-seeded database.
+- **Health endpoint degrades on isolated disk pressure** — when async audit logging is enabled and the only critical check is disk I/O, the `GET /health` endpoint now returns `degraded` instead of `unhealthy`. Orchestrators no longer restart a hub that is still serving traffic.
+
 ## [2.2.2] — 2026-05-23
 
 ### Fixed

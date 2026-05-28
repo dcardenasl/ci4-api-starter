@@ -5,21 +5,13 @@ declare(strict_types=1);
 namespace Tests\Integration\Models;
 
 use App\Models\PasswordResetModel;
-use CodeIgniter\Test\CIUnitTestCase;
-use CodeIgniter\Test\DatabaseTestTrait;
+use Tests\Support\IntegrationTestCase;
 
 /**
  * PasswordResetModel Integration Tests
  */
-class PasswordResetModelTest extends CIUnitTestCase
+class PasswordResetModelTest extends IntegrationTestCase
 {
-    use DatabaseTestTrait;
-
-    protected $migrate     = true;
-    protected $migrateOnce = true;
-    protected $refresh     = true;
-    protected $namespace   = 'App';
-
     protected PasswordResetModel $model;
 
     protected function setUp(): void

@@ -6,21 +6,13 @@ namespace Tests\Integration\Models;
 
 use App\Models\RefreshTokenModel;
 use App\Models\UserModel;
-use CodeIgniter\Test\CIUnitTestCase;
-use CodeIgniter\Test\DatabaseTestTrait;
+use Tests\Support\IntegrationTestCase;
 
 /**
  * RefreshTokenModel Integration Tests
  */
-class RefreshTokenModelTest extends CIUnitTestCase
+class RefreshTokenModelTest extends IntegrationTestCase
 {
-    use DatabaseTestTrait;
-
-    protected $migrate     = true;
-    protected $migrateOnce = true;
-    protected $refresh     = true;
-    protected $namespace   = 'App';
-
     protected RefreshTokenModel $model;
     protected UserModel $userModel;
     protected int $testUserId;

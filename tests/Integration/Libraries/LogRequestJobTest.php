@@ -4,22 +4,14 @@ declare(strict_types=1);
 
 namespace Tests\Integration\Libraries;
 
-use CodeIgniter\Test\CIUnitTestCase;
-use CodeIgniter\Test\DatabaseTestTrait;
 use dcardenasl\Ci4ApiCore\Queue\Jobs\LogRequestJob;
+use Tests\Support\IntegrationTestCase;
 
 /**
  * LogRequestJob Tests
  */
-class LogRequestJobTest extends CIUnitTestCase
+class LogRequestJobTest extends IntegrationTestCase
 {
-    use DatabaseTestTrait;
-
-    protected $migrate     = true;
-    protected $migrateOnce = true;
-    protected $refresh     = true;
-    protected $namespace   = 'App';
-
     public function testHandleInsertsRequestLogWithAllData(): void
     {
         $job = new LogRequestJob([

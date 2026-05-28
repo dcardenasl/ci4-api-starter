@@ -10,24 +10,18 @@ use App\Models\FileModel;
 use App\Models\UserModel;
 use App\Repositories\Files\FileRepository;
 use App\Services\Core\GalleryService;
-use CodeIgniter\Test\CIUnitTestCase;
-use CodeIgniter\Test\DatabaseTestTrait;
 use Config\Database;
 use dcardenasl\Ci4ApiCore\Exceptions\NotFoundException;
 use Tests\Support\Fixtures\Gallery\GalleryFixtureModel;
 use Tests\Support\Fixtures\Gallery\GalleryFixtureRepository;
+use Tests\Support\IntegrationTestCase;
 
 /**
  * @internal
  */
-final class GalleryServiceTest extends CIUnitTestCase
+final class GalleryServiceTest extends IntegrationTestCase
 {
-    use DatabaseTestTrait;
-
-    protected $migrate     = true;
-    protected $migrateOnce = true;
     protected $refresh     = false;
-    protected $namespace   = 'App';
 
     private GalleryService $service;
     private FileModel $fileModel;

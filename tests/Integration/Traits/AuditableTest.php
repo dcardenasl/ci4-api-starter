@@ -5,23 +5,15 @@ declare(strict_types=1);
 namespace Tests\Integration\Traits;
 
 use App\Models\UserModel;
-use CodeIgniter\Test\CIUnitTestCase;
-use CodeIgniter\Test\DatabaseTestTrait;
+use Tests\Support\IntegrationTestCase;
 
 /**
  * Auditable Trait Tests
  *
  * Uses UserModel which implements the Auditable trait
  */
-class AuditableTest extends CIUnitTestCase
+class AuditableTest extends IntegrationTestCase
 {
-    use DatabaseTestTrait;
-
-    protected $migrate     = true;
-    protected $migrateOnce = true;
-    protected $refresh     = true;
-    protected $namespace   = 'App';
-
     protected UserModel $userModel;
 
     protected function setUp(): void

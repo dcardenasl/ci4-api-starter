@@ -5,21 +5,13 @@ declare(strict_types=1);
 namespace Tests\Integration\Models;
 
 use App\Models\TokenBlacklistModel;
-use CodeIgniter\Test\CIUnitTestCase;
-use CodeIgniter\Test\DatabaseTestTrait;
+use Tests\Support\IntegrationTestCase;
 
 /**
  * TokenBlacklistModel Integration Tests
  */
-class TokenBlacklistModelTest extends CIUnitTestCase
+class TokenBlacklistModelTest extends IntegrationTestCase
 {
-    use DatabaseTestTrait;
-
-    protected $migrate     = true;
-    protected $migrateOnce = true;
-    protected $refresh     = true;
-    protected $namespace   = 'App';
-
     protected TokenBlacklistModel $model;
 
     protected function setUp(): void

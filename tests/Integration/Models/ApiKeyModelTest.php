@@ -6,8 +6,7 @@ namespace Tests\Integration\Models;
 
 use App\Entities\ApiKeyEntity;
 use App\Models\ApiKeyModel;
-use CodeIgniter\Test\CIUnitTestCase;
-use CodeIgniter\Test\DatabaseTestTrait;
+use Tests\Support\IntegrationTestCase;
 
 /**
  * ApiKeyModel Integration Tests
@@ -15,15 +14,8 @@ use CodeIgniter\Test\DatabaseTestTrait;
  * Tests ApiKeyModel with real database operations.
  * Requires the test database configured in phpunit.xml.
  */
-class ApiKeyModelTest extends CIUnitTestCase
+class ApiKeyModelTest extends IntegrationTestCase
 {
-    use DatabaseTestTrait;
-
-    protected $migrate     = true;
-    protected $migrateOnce = true;
-    protected $refresh     = true;
-    protected $namespace   = 'App';  // Use app migrations
-
     protected ApiKeyModel $model;
 
     protected function setUp(): void

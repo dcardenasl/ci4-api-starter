@@ -5,21 +5,13 @@ declare(strict_types=1);
 namespace Tests\Integration\Models;
 
 use App\Models\TranslationModel;
-use CodeIgniter\Test\CIUnitTestCase;
-use CodeIgniter\Test\DatabaseTestTrait;
+use Tests\Support\IntegrationTestCase;
 
 /**
  * @internal
  */
-final class TranslationModelTest extends CIUnitTestCase
+final class TranslationModelTest extends IntegrationTestCase
 {
-    use DatabaseTestTrait;
-
-    protected $migrate     = true;
-    protected $migrateOnce = true;
-    protected $refresh     = true;
-    protected $namespace   = 'App';
-
     public function testModelReportsCorrectTable(): void
     {
         $model = new TranslationModel();

@@ -6,23 +6,16 @@ namespace Tests\Integration\Commands;
 
 use App\Database\Seeds\RbacBootstrapSeeder;
 use CodeIgniter\CLI\CLI;
-use CodeIgniter\Test\CIUnitTestCase;
-use CodeIgniter\Test\DatabaseTestTrait;
 use CodeIgniter\Test\Mock\MockInputOutput;
 use ReflectionClass;
+use Tests\Support\IntegrationTestCase;
 
 /**
  * @internal
  */
-final class BootstrapSuperadminTest extends CIUnitTestCase
+final class BootstrapSuperadminTest extends IntegrationTestCase
 {
-    use DatabaseTestTrait;
-
-    protected $migrate     = true;
-    protected $migrateOnce = true;
-    protected $refresh     = true;
     protected $seed        = RbacBootstrapSeeder::class;
-    protected $namespace   = 'App';
 
     /**
      * @param array<string, mixed> $params

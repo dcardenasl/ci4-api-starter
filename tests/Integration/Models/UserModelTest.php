@@ -5,8 +5,7 @@ declare(strict_types=1);
 namespace Tests\Integration\Models;
 
 use App\Models\UserModel;
-use CodeIgniter\Test\CIUnitTestCase;
-use CodeIgniter\Test\DatabaseTestTrait;
+use Tests\Support\IntegrationTestCase;
 
 /**
  * UserModel Integration Tests
@@ -14,15 +13,8 @@ use CodeIgniter\Test\DatabaseTestTrait;
  * Tests UserModel with real database operations.
  * Requires test database configured in phpunit.xml
  */
-class UserModelTest extends CIUnitTestCase
+class UserModelTest extends IntegrationTestCase
 {
-    use DatabaseTestTrait;
-
-    protected $migrate     = true;
-    protected $migrateOnce = true;
-    protected $refresh     = true;
-    protected $namespace   = 'App';  // Use app migrations
-
     protected UserModel $userModel;
 
     protected function setUp(): void

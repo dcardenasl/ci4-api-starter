@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace Tests\Integration\Traits;
 
 use App\Models\TranslationModel;
-use CodeIgniter\Test\CIUnitTestCase;
-use CodeIgniter\Test\DatabaseTestTrait;
 use Config\Database;
 use dcardenasl\Ci4ApiCore\Mappers\DtoResponseMapper;
 use dcardenasl\Ci4ApiCore\Repositories\GenericRepository;
@@ -14,19 +12,13 @@ use Tests\Support\Fixtures\Translations\TranslationFixtureModel;
 use Tests\Support\Fixtures\Translations\TranslationFixtureRequestDTO;
 use Tests\Support\Fixtures\Translations\TranslationFixtureResponseDTO;
 use Tests\Support\Fixtures\Translations\TranslationFixtureService;
+use Tests\Support\IntegrationTestCase;
 
 /**
  * @internal
  */
-final class HandlesTranslationsTest extends CIUnitTestCase
+final class HandlesTranslationsTest extends IntegrationTestCase
 {
-    use DatabaseTestTrait;
-
-    protected $migrate     = true;
-    protected $migrateOnce = true;
-    protected $refresh     = true;
-    protected $namespace   = 'App';
-
     private TranslationFixtureService $service;
     private TranslationFixtureModel $model;
     private TranslationModel $translations;

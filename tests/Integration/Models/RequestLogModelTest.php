@@ -5,18 +5,10 @@ declare(strict_types=1);
 namespace Tests\Integration\Models;
 
 use App\Models\RequestLogModel;
-use CodeIgniter\Test\CIUnitTestCase;
-use CodeIgniter\Test\DatabaseTestTrait;
+use Tests\Support\IntegrationTestCase;
 
-class RequestLogModelTest extends CIUnitTestCase
+class RequestLogModelTest extends IntegrationTestCase
 {
-    use DatabaseTestTrait;
-
-    protected $migrate     = true;
-    protected $migrateOnce = true;
-    protected $refresh     = true;
-    protected $namespace   = 'App';
-
     public function testGetStatsReturnsSloAndBreakdownMetrics(): void
     {
         $model = new RequestLogModel();

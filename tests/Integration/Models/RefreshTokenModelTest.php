@@ -23,9 +23,9 @@ class RefreshTokenModelTest extends IntegrationTestCase
         $this->model = new RefreshTokenModel();
         $this->userModel = new UserModel();
 
-        // Create test user
-        $this->testUserId = $this->userModel->insert([
-            'email' => 'test@example.com',
+        // Unique email per setUp: tables are not purged between methods, only at class boundary.
+        $this->testUserId = (int) $this->userModel->insert([
+            'email' => 'refreshtoken-' . uniqid() . '@example.com',
             'password' => password_hash('Pass123!', PASSWORD_BCRYPT),
         ]);
     }

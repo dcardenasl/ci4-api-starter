@@ -7,7 +7,6 @@ namespace Tests\Support;
 use CodeIgniter\Test\CIUnitTestCase;
 use CodeIgniter\Test\DatabaseTestTrait;
 use CodeIgniter\Test\FeatureTestTrait;
-use Config\Database;
 use Config\Services;
 
 /**
@@ -21,6 +20,8 @@ abstract class ApiTestCase extends CIUnitTestCase
     use DatabaseTestTrait;
     use FeatureTestTrait;
 
+    protected static string $lastPurgedClass = '';
+
     protected $migrate     = false;
     protected $migrateOnce = true;
     protected $refresh     = false;
@@ -28,25 +29,24 @@ abstract class ApiTestCase extends CIUnitTestCase
     protected $seed        = \App\Database\Seeds\RbacBootstrapSeeder::class;
     protected $basePath    = APPPATH . 'Database';
 
-    public static function setUpBeforeClass(): void
-    {
-        parent::setUpBeforeClass();
-
-        $db = Database::connect('tests');
-        $db->query('SET FOREIGN_KEY_CHECKS = 0');
-        foreach ($db->listTables() as $table) {
-            if ($table !== 'migrations') {
-                $db->table($table)->truncate();
-            }
-        }
-        $db->query('SET FOREIGN_KEY_CHECKS = 1');
-    }
-
     /**
      * Reset the request and other services before each test.
      */
     protected function setUp(): void
     {
+        // Truncate once per test class in instance context so $this->db is available.
+        if (self::$lastPurgedClass !== static::class) {
+            self::$lastPurgedClass = static::class;
+            $this->loadDependencies();
+            $this->db->query('SET FOREIGN_KEY_CHECKS = 0');
+            foreach ($this->db->listTables() as $table) {
+                if ($table !== 'migrations') {
+                    $this->db->table($table)->truncate();
+                }
+            }
+            $this->db->query('SET FOREIGN_KEY_CHECKS = 1');
+        }
+
         parent::setUp();
         \dcardenasl\Ci4ApiCore\Services\Audit\AuditService::$forceEnabledInTests = false;
         \dcardenasl\Ci4ApiCore\Http\ContextHolder::flush();

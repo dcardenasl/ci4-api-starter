@@ -6,7 +6,6 @@ namespace Tests\Support;
 
 use CodeIgniter\Test\CIUnitTestCase;
 use CodeIgniter\Test\DatabaseTestTrait;
-use Config\Database;
 
 /**
  * Shared base for all integration tests.
@@ -18,14 +17,18 @@ use Config\Database;
  * "MySQL server has gone away" errors in CI.
  *
  * Fix: $migrate=false tells CI4 to skip regress/migrate entirely (both
- * methods return early). We provide equivalent isolation by truncating all
- * non-migration tables in setUpBeforeClass() — a TRUNCATE is orders of
- * magnitude faster than DROP+CREATE for 25+ tables. Seeds still run per
- * test method via setUpSeed() because seedOnce defaults to false.
+ * methods return early). Inter-class isolation is handled by purging all
+ * non-migration tables once at the start of each test class, in setUp()
+ * (instance context) rather than setUpBeforeClass() (static context) so
+ * that $this->db is properly initialized by loadDependencies() before use.
+ * Seeds still run per test method via setUpSeed() (seedOnce defaults to
+ * false).
  */
 abstract class IntegrationTestCase extends CIUnitTestCase
 {
     use DatabaseTestTrait;
+
+    protected static string $lastPurgedClass = '';
 
     protected $migrate     = false;
     protected $migrateOnce = true;
@@ -33,21 +36,28 @@ abstract class IntegrationTestCase extends CIUnitTestCase
     protected $namespace   = 'App';
     protected $basePath    = APPPATH . 'Database';
 
-    public static function setUpBeforeClass(): void
+    protected function setUp(): void
     {
-        parent::setUpBeforeClass();
-        static::truncateAllTables();
+        // Truncate once per test class: when the calling class changes we know
+        // a new class is starting. self:: is used deliberately so all subclasses
+        // share the same IntegrationTestCase::$lastPurgedClass storage.
+        if (self::$lastPurgedClass !== static::class) {
+            self::$lastPurgedClass = static::class;
+            $this->loadDependencies();     // ensures $this->db is live
+            $this->purgeNonMigrationTables();
+        }
+
+        parent::setUp();  // runs setUpSeed() which re-seeds if $seed is set
     }
 
-    protected static function truncateAllTables(): void
+    private function purgeNonMigrationTables(): void
     {
-        $db = Database::connect('tests');
-        $db->query('SET FOREIGN_KEY_CHECKS = 0');
-        foreach ($db->listTables() as $table) {
+        $this->db->query('SET FOREIGN_KEY_CHECKS = 0');
+        foreach ($this->db->listTables() as $table) {
             if ($table !== 'migrations') {
-                $db->table($table)->truncate();
+                $this->db->table($table)->truncate();
             }
         }
-        $db->query('SET FOREIGN_KEY_CHECKS = 1');
+        $this->db->query('SET FOREIGN_KEY_CHECKS = 1');
     }
 }

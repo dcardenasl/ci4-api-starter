@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Services\Iam;
 
+use App\DTO\Request\Iam\PermissionCreateRequestDTO;
+use App\DTO\Request\Iam\PermissionUpdateRequestDTO;
 use App\Entities\PermissionEntity;
 use App\Interfaces\Iam\PermissionServiceInterface;
 use dcardenasl\Ci4ApiCore\Dto\SecurityContext;
@@ -49,7 +51,7 @@ class PermissionService extends BaseCrudService implements PermissionServiceInte
             $data['application_id'] = $context->app_id;
         }
 
-        \Config\Services::requestDtoFactory()->make(\App\DTO\Request\Iam\PermissionCreateRequestDTO::class, $data);
+        new PermissionCreateRequestDTO($data);
 
         return parent::beforeStore($data, $context);
     }
@@ -58,7 +60,7 @@ class PermissionService extends BaseCrudService implements PermissionServiceInte
     {
         $this->authz->assertSuperAdmin($context);
 
-        \Config\Services::requestDtoFactory()->make(\App\DTO\Request\Iam\PermissionUpdateRequestDTO::class, $data);
+        new PermissionUpdateRequestDTO($data);
 
         return parent::beforeUpdate($id, $data, $context);
     }

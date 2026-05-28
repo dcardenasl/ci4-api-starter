@@ -22,8 +22,9 @@ class UserServiceTest extends CIUnitTestCase
     use DatabaseTestTrait;
     use CustomAssertionsTrait;
 
-    protected $migrate   = true;
-    protected $namespace = 'App';
+    protected $migrate     = true;
+    protected $migrateOnce = true;
+    protected $namespace   = 'App';
     protected $seed      = \App\Database\Seeds\RbacBootstrapSeeder::class;
     protected $basePath  = APPPATH . 'Database';
 

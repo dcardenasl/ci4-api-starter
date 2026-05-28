@@ -16,7 +16,7 @@ class HealthCheckerTest extends CIUnitTestCase
     use DatabaseTestTrait;
 
     protected $migrate     = true;
-    protected $migrateOnce = false;
+    protected $migrateOnce = true;
     protected $refresh     = true;
     protected $namespace   = 'App';
 

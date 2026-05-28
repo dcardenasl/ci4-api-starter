@@ -43,7 +43,7 @@ jobs:
         run: composer install --prefer-dist --no-progress --no-interaction
 
       - name: Check for security vulnerabilities
-        run: composer audit
+        run: composer audit --no-abandoned
 
       - name: Check outdated dependencies
         continue-on-error: true

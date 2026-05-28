@@ -34,6 +34,10 @@ class QueueManagerTest extends IntegrationTestCase
         $_SERVER['QUEUE_MAX_ATTEMPTS'] = '2';
         $_SERVER['QUEUE_DATABASE_CONNECTION'] = 'tests';
 
+        $db = Database::connect();
+        $db->table('jobs')->truncate();
+        $db->table('failed_jobs')->truncate();
+
         TestQueueSuccessJob::$handled = 0;
         TestQueueAlwaysFailJob::$failedCalls = 0;
     }

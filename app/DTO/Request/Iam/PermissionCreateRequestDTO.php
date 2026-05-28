@@ -24,7 +24,7 @@ readonly class PermissionCreateRequestDTO extends BaseRequestDTO
     public function rules(): array
     {
         return [
-            'application_id' => 'required|integer',
+            'application_id' => 'permit_empty|integer',
             'code' => 'required|string|max_length[100]',
             'resource' => 'required|string|max_length[50]',
             'action' => 'required|string|max_length[50]',

@@ -7,6 +7,7 @@ namespace Tests\Support;
 use CodeIgniter\Test\CIUnitTestCase;
 use CodeIgniter\Test\DatabaseTestTrait;
 use CodeIgniter\Test\FeatureTestTrait;
+use Config\Database;
 use Config\Services;
 
 /**
@@ -20,16 +21,26 @@ abstract class ApiTestCase extends CIUnitTestCase
     use DatabaseTestTrait;
     use FeatureTestTrait;
 
-    /**
-     * Database migration settings
-     * migrateOnce ensures migrations run only once per suite
-     */
-    protected $migrate     = true;
+    protected $migrate     = false;
     protected $migrateOnce = true;
-    protected $refresh     = true;
+    protected $refresh     = false;
     protected $namespace   = 'App';
     protected $seed        = \App\Database\Seeds\RbacBootstrapSeeder::class;
     protected $basePath    = APPPATH . 'Database';
+
+    public static function setUpBeforeClass(): void
+    {
+        parent::setUpBeforeClass();
+
+        $db = Database::connect('tests');
+        $db->query('SET FOREIGN_KEY_CHECKS = 0');
+        foreach ($db->listTables() as $table) {
+            if ($table !== 'migrations') {
+                $db->table($table)->truncate();
+            }
+        }
+        $db->query('SET FOREIGN_KEY_CHECKS = 1');
+    }
 
     /**
      * Reset the request and other services before each test.

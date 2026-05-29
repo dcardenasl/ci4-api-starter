@@ -32,6 +32,7 @@ class RoleService extends BaseCrudService implements RoleServiceInterface
         ResponseMapperInterface $responseMapper,
         private readonly IamAuthorizationService $authz,
         private readonly RolePermissionAssignmentService $permissionAssignment,
+        private readonly \CodeIgniter\Validation\ValidationInterface $validation,
         private readonly RelationLabelLoader $labels = new RelationLabelLoader()
     ) {
         parent::__construct($roleRepository, $responseMapper);
@@ -49,7 +50,7 @@ class RoleService extends BaseCrudService implements RoleServiceInterface
             if ($request instanceof RoleCreateRequestDTO && $request->permission_ids !== null && $response instanceof \App\DTO\Response\Iam\RoleResponseDTO) {
                 $this->permissionAssignment->syncPermissions(
                     $response->id,
-                    new AttachPermissionsRequestDTO(['permission_ids' => $request->permission_ids]),
+                    new AttachPermissionsRequestDTO(['permission_ids' => $request->permission_ids], $this->validation),
                     $context
                 );
                 // Re-map so the caller sees a consistent post-sync entity.
@@ -91,7 +92,7 @@ class RoleService extends BaseCrudService implements RoleServiceInterface
             if ($hasPermissionUpdates) {
                 $this->permissionAssignment->syncPermissions(
                     $id,
-                    new AttachPermissionsRequestDTO(['permission_ids' => $request->permission_ids]),
+                    new AttachPermissionsRequestDTO(['permission_ids' => $request->permission_ids], $this->validation),
                     $context
                 );
             }

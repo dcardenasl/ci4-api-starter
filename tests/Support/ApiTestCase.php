@@ -38,13 +38,26 @@ abstract class ApiTestCase extends CIUnitTestCase
         if (self::$lastPurgedClass !== static::class) {
             self::$lastPurgedClass = static::class;
             $this->loadDependencies();
-            $this->db->query('SET FOREIGN_KEY_CHECKS = 0');
+            if ($this->db->DBDriver === 'SQLite3') {
+                $this->db->query('PRAGMA foreign_keys = OFF');
+            } else {
+                $this->db->query('SET FOREIGN_KEY_CHECKS = 0');
+            }
             foreach ($this->db->listTables() as $table) {
                 if ($table !== 'migrations') {
                     $this->db->table($table)->truncate();
                 }
             }
-            $this->db->query('SET FOREIGN_KEY_CHECKS = 1');
+            if ($this->db->DBDriver === 'SQLite3') {
+                try {
+                    $this->db->query('DELETE FROM sqlite_sequence');
+                } catch (\Throwable) {
+                    // Ignore if sequence table doesn't exist
+                }
+                $this->db->query('PRAGMA foreign_keys = ON');
+            } else {
+                $this->db->query('SET FOREIGN_KEY_CHECKS = 1');
+            }
         }
 
         parent::setUp();

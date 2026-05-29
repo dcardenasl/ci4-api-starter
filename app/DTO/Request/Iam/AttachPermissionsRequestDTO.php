@@ -17,8 +17,8 @@ readonly class AttachPermissionsRequestDTO extends BaseRequestDTO
     public function rules(): array
     {
         return [
-            'permission_ids'   => 'required',
-            'permission_ids.*' => 'required|integer|is_natural_no_zero',
+            'permission_ids'   => 'permit_empty',
+            'permission_ids.*' => 'permit_empty|integer|is_natural_no_zero',
         ];
     }
 

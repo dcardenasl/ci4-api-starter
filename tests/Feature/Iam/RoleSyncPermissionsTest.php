@@ -127,17 +127,25 @@ final class RoleSyncPermissionsTest extends ApiTestCase
         $this->assertSame([], $rows === false ? [] : $rows->getResultArray());
     }
 
+    private function getSelfApplicationId(): int
+    {
+        $db = \Config\Database::connect();
+        $row = $db->table('applications')->where('code', 'self')->get()->getRowArray();
+        return $row ? (int) $row['id'] : 1;
+    }
+
     /**
      * @return list<int>
      */
     private function createTestPermissions(int $count): array
     {
         $db  = \Config\Database::connect();
+        $appId = $this->getSelfApplicationId();
         $ids = [];
         for ($i = 0; $i < $count; $i++) {
             $code = 'qa.test.' . uniqid('', true);
             $db->table('permissions')->insert([
-                'application_id' => 1,
+                'application_id' => $appId,
                 'code'           => $code,
                 'resource'       => 'qa',
                 'action'         => 'test-' . $i,
@@ -197,9 +205,10 @@ final class RoleSyncPermissionsTest extends ApiTestCase
     private function permissionIdByCode(string $code): int
     {
         $db  = \Config\Database::connect();
+        $appId = $this->getSelfApplicationId();
         $row = $db->table('permissions')
             ->where('code', $code)
-            ->where('application_id', 1)
+            ->where('application_id', $appId)
             ->get()
             ?->getRowArray();
 

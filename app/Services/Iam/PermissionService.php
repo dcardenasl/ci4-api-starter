@@ -8,7 +8,7 @@ use App\DTO\Request\Iam\PermissionCreateRequestDTO;
 use App\DTO\Request\Iam\PermissionUpdateRequestDTO;
 use App\Entities\PermissionEntity;
 use App\Interfaces\Iam\PermissionServiceInterface;
-use App\Models\ApiKeyModel;
+use App\Interfaces\Tokens\ApiKeyRepositoryInterface;
 use CodeIgniter\Validation\ValidationInterface;
 use dcardenasl\Ci4ApiCore\Dto\SecurityContext;
 use dcardenasl\Ci4ApiCore\Http\ApiRequest;
@@ -31,7 +31,7 @@ class PermissionService extends BaseCrudService implements PermissionServiceInte
         private readonly IamAuthorizationService $authz,
         private readonly ValidationInterface $validation,
         private readonly ApiRequest $request,
-        private readonly ApiKeyModel $apiKeyModel,
+        private readonly ApiKeyRepositoryInterface $apiKeyRepository,
         private readonly RelationLabelLoader $labels = new RelationLabelLoader()
     ) {
         parent::__construct($permissionRepository, $responseMapper);
@@ -60,7 +60,7 @@ class PermissionService extends BaseCrudService implements PermissionServiceInte
                 $rawKey = $this->request->getHeaderLine('X-App-Key');
                 if ($rawKey !== '') {
                     $hash = hash('sha256', $rawKey);
-                    $appKey = $this->apiKeyModel->findByHash($hash);
+                    $appKey = $this->apiKeyRepository->findByHash($hash);
                     if ($appKey && $appKey->isActive()) {
                         $data['application_id'] = $appKey->application_id;
                     }

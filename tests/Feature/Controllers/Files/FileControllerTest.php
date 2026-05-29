@@ -131,7 +131,7 @@ class FileControllerTest extends ApiTestCase
         $result = $this->withHeaders(['Authorization' => "Bearer {$this->token}"])
             ->post("/api/v1/files/{$fileId}/replace", []);
 
-        $result->assertStatus(422); // Validation fails in DTO
+        $result->assertStatus(400); // BadRequestException: no file in payload
     }
 
     public function testDeleteFileReturnsSuccess(): void

@@ -62,16 +62,16 @@
         },
         {
             "name": "aws/aws-sdk-php",
-            "version": "3.382.0",
+            "version": "3.383.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/aws/aws-sdk-php.git",
-                "reference": "5b4c1958d7ff9e3284b755d257a1aa1926745f6a"
+                "reference": "56b7ff3ff9e086eb3945bf31e75c97cde5ab531a"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aws/aws-sdk-php/zipball/5b4c1958d7ff9e3284b755d257a1aa1926745f6a",
-                "reference": "5b4c1958d7ff9e3284b755d257a1aa1926745f6a",
+                "url": "https://api.github.com/repos/aws/aws-sdk-php/zipball/56b7ff3ff9e086eb3945bf31e75c97cde5ab531a",
+                "reference": "56b7ff3ff9e086eb3945bf31e75c97cde5ab531a",
                 "shasum": ""
             },
             "require": {
@@ -153,9 +153,9 @@
             "support": {
                 "forum": "https://github.com/aws/aws-sdk-php/discussions",
                 "issues": "https://github.com/aws/aws-sdk-php/issues",
-                "source": "https://github.com/aws/aws-sdk-php/tree/3.382.0"
+                "source": "https://github.com/aws/aws-sdk-php/tree/3.383.1"
             },
-            "time": "2026-05-22T18:09:49+00:00"
+            "time": "2026-05-29T18:13:12+00:00"
         },
         {
             "name": "codeigniter4/framework",
@@ -236,16 +236,16 @@
         },
         {
             "name": "dcardenasl/ci4-api-core",
-            "version": "v0.9.0",
+            "version": "v0.9.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/dcardenasl/ci4-api-core.git",
-                "reference": "e48d1a2c3d2b4badee834f1364f7859b2103895a"
+                "reference": "dcc4e1cfd81be7ff663cd2c81ea03834b00c3317"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/dcardenasl/ci4-api-core/zipball/e48d1a2c3d2b4badee834f1364f7859b2103895a",
-                "reference": "e48d1a2c3d2b4badee834f1364f7859b2103895a",
+                "url": "https://api.github.com/repos/dcardenasl/ci4-api-core/zipball/dcc4e1cfd81be7ff663cd2c81ea03834b00c3317",
+                "reference": "dcc4e1cfd81be7ff663cd2c81ea03834b00c3317",
                 "shasum": ""
             },
             "require": {
@@ -321,7 +321,7 @@
                 "issues": "https://github.com/dcardenasl/ci4-api-core/issues",
                 "source": "https://github.com/dcardenasl/ci4-api-core"
             },
-            "time": "2026-05-29T03:20:22+00:00"
+            "time": "2026-05-29T20:08:07+00:00"
         },
         {
             "name": "doctrine/lexer",

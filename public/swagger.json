@@ -5323,12 +5323,78 @@
                 },
                 "type": "object"
             },
+            "CollectionResponse": {
+                "title": "Collection Response",
+                "description": "Generic collection payload wrapper",
+                "required": [
+                    "data"
+                ],
+                "properties": {
+                    "data": {
+                        "description": "Result list",
+                        "type": "array",
+                        "items": {
+                            "type": "object"
+                        }
+                    },
+                    "meta": {
+                        "description": "Optional metadata",
+                        "type": "object",
+                        "additionalProperties": true
+                    }
+                },
+                "type": "object"
+            },
             "PayloadResponse": {
                 "title": "Payload Response",
                 "description": "Generic payload wrapper",
                 "properties": {
                     "payload": {
                         "description": "Payload data",
+                        "type": "object",
+                        "additionalProperties": true
+                    }
+                },
+                "type": "object"
+            },
+            "ErrorResponse": {
+                "title": "Error Response",
+                "description": "RFC 7807 compliant error payload",
+                "required": [
+                    "type",
+                    "title",
+                    "status"
+                ],
+                "properties": {
+                    "type": {
+                        "description": "URI identifying the problem type",
+                        "type": "string",
+                        "example": "about:blank"
+                    },
+                    "title": {
+                        "description": "Short, human-readable summary of the problem",
+                        "type": "string",
+                        "example": "Validation Failed"
+                    },
+                    "status": {
+                        "description": "HTTP status code",
+                        "type": "integer",
+                        "example": 422
+                    },
+                    "detail": {
+                        "description": "Detailed explanation specific to this occurrence",
+                        "type": "string",
+                        "example": "The email field is required.",
+                        "nullable": true
+                    },
+                    "instance": {
+                        "description": "URI identifying the specific occurrence",
+                        "type": "string",
+                        "example": "/api/v1/users",
+                        "nullable": true
+                    },
+                    "errors": {
+                        "description": "Map of field-specific validation errors",
                         "type": "object",
                         "additionalProperties": true
                     }

@@ -6,12 +6,12 @@ namespace App\Filters;
 
 use App\Entities\ApiKeyEntity;
 use App\Filters\Concerns\ApiKeyThrottleHelpers;
-use App\Filters\Concerns\RateLimitResponseHelpers;
 use CodeIgniter\Filters\FilterInterface;
 use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
 use Config\Services;
 use dcardenasl\Ci4ApiCore\Http\ApiRequest;
+use dcardenasl\Ci4ApiCore\Http\Filters\Concerns\RateLimitResponseHelpers;
 
 class ThrottleFilter implements FilterInterface
 {

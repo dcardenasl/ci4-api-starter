@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Iam;
 
+use App\DTO\Response\Iam\RoleResponseDTO;
 use CodeIgniter\Database\ConnectionInterface;
 
 /**
@@ -34,14 +35,7 @@ readonly class AssignableRolesService
 
     /**
      * @param list<string> $actorPermissions Effective permission codes the actor holds.
-     * @return list<array{
-     *     id: int,
-     *     code: string,
-     *     name: string,
-     *     description: ?string,
-     *     is_system: int,
-     *     is_self_assignable: int
-     * }>
+     * @return list<RoleResponseDTO>
      */
     public function listAssignable(array $actorPermissions): array
     {
@@ -60,14 +54,14 @@ readonly class AssignableRolesService
                 continue;
             }
 
-            $assignable[] = [
-                'id'                 => $roleId,
-                'code'               => (string) $role['code'],
-                'name'               => (string) $role['name'],
-                'description'        => $role['description'] !== null ? (string) $role['description'] : null,
-                'is_system'          => (int) $role['is_system'],
-                'is_self_assignable' => (int) $role['is_self_assignable'],
-            ];
+            $assignable[] = new RoleResponseDTO(
+                id: $roleId,
+                application_id: null, // Note: AssignableRolesService currently doesn't fetch app_id in loadRoles()
+                code: (string) $role['code'],
+                name: (string) $role['name'],
+                description: $role['description'] !== null ? (string) $role['description'] : null,
+                is_system: (bool) $role['is_system'],
+            );
         }
 
         return $assignable;

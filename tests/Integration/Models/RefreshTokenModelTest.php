@@ -6,21 +6,13 @@ namespace Tests\Integration\Models;
 
 use App\Models\RefreshTokenModel;
 use App\Models\UserModel;
-use CodeIgniter\Test\CIUnitTestCase;
-use CodeIgniter\Test\DatabaseTestTrait;
+use Tests\Support\IntegrationTestCase;
 
 /**
  * RefreshTokenModel Integration Tests
  */
-class RefreshTokenModelTest extends CIUnitTestCase
+class RefreshTokenModelTest extends IntegrationTestCase
 {
-    use DatabaseTestTrait;
-
-    protected $migrate     = true;
-    protected $migrateOnce = false;
-    protected $refresh     = true;
-    protected $namespace   = 'App';
-
     protected RefreshTokenModel $model;
     protected UserModel $userModel;
     protected int $testUserId;
@@ -31,9 +23,9 @@ class RefreshTokenModelTest extends CIUnitTestCase
         $this->model = new RefreshTokenModel();
         $this->userModel = new UserModel();
 
-        // Create test user
-        $this->testUserId = $this->userModel->insert([
-            'email' => 'test@example.com',
+        // Unique email per setUp: tables are not purged between methods, only at class boundary.
+        $this->testUserId = (int) $this->userModel->insert([
+            'email' => 'refreshtoken-' . uniqid() . '@example.com',
             'password' => password_hash('Pass123!', PASSWORD_BCRYPT),
         ]);
     }

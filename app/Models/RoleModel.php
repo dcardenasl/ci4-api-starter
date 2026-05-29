@@ -26,7 +26,7 @@ class RoleModel extends BaseAuditableModel
     protected array $searchableFields = ['code', 'name'];
 
     /** @var array<int, string> */
-    protected array $filterableFields = ['id', 'application_id', 'is_system'];
+    protected array $filterableFields = ['id', 'application_id', 'is_system', 'code'];
 
     /** @var array<int, string> */
     protected array $sortableFields = ['id', 'created_at', 'application_id', 'code', 'name', 'is_system'];

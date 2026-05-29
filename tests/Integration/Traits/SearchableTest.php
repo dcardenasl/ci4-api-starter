@@ -5,21 +5,13 @@ declare(strict_types=1);
 namespace Tests\Integration\Traits;
 
 use App\Models\UserModel;
-use CodeIgniter\Test\CIUnitTestCase;
-use CodeIgniter\Test\DatabaseTestTrait;
+use Tests\Support\IntegrationTestCase;
 
 /**
  * Searchable Trait Tests
  */
-class SearchableTest extends CIUnitTestCase
+class SearchableTest extends IntegrationTestCase
 {
-    use DatabaseTestTrait;
-
-    protected $migrate     = true;
-    protected $migrateOnce = false;
-    protected $refresh     = true;
-    protected $namespace   = 'App';
-
     private UserModel $model;
 
     protected function setUp(): void

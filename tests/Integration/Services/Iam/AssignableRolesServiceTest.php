@@ -57,10 +57,10 @@ final class AssignableRolesServiceTest extends ApiTestCase
         $assignable = $this->service->listAssignable([]);
 
         $this->assertCount(1, $assignable);
-        $this->assertSame($roleId, $assignable[0]['id']);
-        $this->assertSame('viewer', $assignable[0]['code']);
-        $this->assertSame('Viewer', $assignable[0]['name']);
-        $this->assertSame('Read-only role', $assignable[0]['description']);
+        $this->assertSame($roleId, $assignable[0]->id);
+        $this->assertSame('viewer', $assignable[0]->code);
+        $this->assertSame('Viewer', $assignable[0]->name);
+        $this->assertSame('Read-only role', $assignable[0]->description);
     }
 
     public function testActorWithFullPermissionSetCanAssignAllRoles(): void
@@ -78,7 +78,7 @@ final class AssignableRolesServiceTest extends ApiTestCase
 
         $assignable = $this->service->listAssignable(['users.read', 'users.write']);
 
-        $codes = array_column($assignable, 'code');
+        $codes = array_map(fn ($role) => $role->code, $assignable);
         sort($codes);
         $this->assertSame(['editor', 'viewer'], $codes);
     }
@@ -99,7 +99,7 @@ final class AssignableRolesServiceTest extends ApiTestCase
         // Actor only has read — must NOT see editor (escalation).
         $assignable = $this->service->listAssignable(['users.read']);
 
-        $codes = array_column($assignable, 'code');
+        $codes = array_map(fn ($role) => $role->code, $assignable);
         $this->assertSame(['viewer'], $codes, 'Editor must be filtered: assigning it would grant users.write to target.');
         $this->assertNotContains('editor', $codes);
     }
@@ -116,8 +116,8 @@ final class AssignableRolesServiceTest extends ApiTestCase
         $assignable = $this->service->listAssignable([]);
 
         $this->assertCount(1, $assignable);
-        $this->assertSame($emptyRoleId, $assignable[0]['id']);
-        $this->assertSame('empty', $assignable[0]['code']);
+        $this->assertSame($emptyRoleId, $assignable[0]->id);
+        $this->assertSame('empty', $assignable[0]->code);
     }
 
     public function testResultsAreOrderedByNameAscending(): void
@@ -128,7 +128,7 @@ final class AssignableRolesServiceTest extends ApiTestCase
 
         $assignable = $this->service->listAssignable([]);
 
-        $names = array_column($assignable, 'name');
+        $names = array_map(fn ($role) => $role->name, $assignable);
         $this->assertSame(['Alpha', 'Mu', 'Zeta'], $names);
     }
 
@@ -139,16 +139,12 @@ final class AssignableRolesServiceTest extends ApiTestCase
         $assignable = $this->service->listAssignable([]);
 
         $this->assertCount(1, $assignable);
-        $shape = $assignable[0];
-        $this->assertSame(
-            ['id', 'code', 'name', 'description', 'is_system', 'is_self_assignable'],
-            array_keys($shape)
-        );
-        $this->assertIsInt($shape['id']);
-        $this->assertSame('admin', $shape['code']);
-        $this->assertSame('System admin', $shape['description']);
-        $this->assertSame(1, $shape['is_system']);
-        $this->assertSame(0, $shape['is_self_assignable']);
+        $role = $assignable[0];
+
+        $this->assertIsInt($role->id);
+        $this->assertSame('admin', $role->code);
+        $this->assertSame('System admin', $role->description);
+        $this->assertTrue($role->is_system);
     }
 
     // ===================== fixtures =====================

@@ -4,9 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models\Files;
 
-use CodeIgniter\Model;
-
-class FileReferenceModel extends Model
+class FileReferenceModel extends \dcardenasl\Ci4ApiCore\Models\BaseAuditableModel
 {
     protected $table      = 'file_references';
     protected $primaryKey = 'id';

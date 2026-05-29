@@ -4,9 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use CodeIgniter\Model;
-
-class RolePermissionModel extends Model
+class RolePermissionModel extends \dcardenasl\Ci4ApiCore\Models\BaseAuditableModel
 {
     /** @var string */
     protected $table            = 'role_permissions';

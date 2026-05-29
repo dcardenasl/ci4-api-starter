@@ -5,10 +5,9 @@ declare(strict_types=1);
 namespace Tests\Integration\Commands;
 
 use CodeIgniter\CLI\CLI;
-use CodeIgniter\Test\CIUnitTestCase;
-use CodeIgniter\Test\DatabaseTestTrait;
 use CodeIgniter\Test\Mock\MockInputOutput;
 use ReflectionClass;
+use Tests\Support\IntegrationTestCase;
 
 /**
  * Integration tests for `apps:bootstrap`, focused on the `--create-api-key`
@@ -22,15 +21,8 @@ use ReflectionClass;
  *
  * @internal
  */
-final class BootstrapApplicationTest extends CIUnitTestCase
+final class BootstrapApplicationTest extends IntegrationTestCase
 {
-    use DatabaseTestTrait;
-
-    protected $migrate     = true;
-    protected $migrateOnce = true;
-    protected $refresh     = true;
-    protected $namespace   = 'App';
-
     /**
      * @param array<int|string, mixed> $params  positional args use int keys; flag names use string keys with `true` (value-less) or string (value)
      */

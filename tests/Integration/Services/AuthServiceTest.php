@@ -5,6 +5,10 @@ declare(strict_types=1);
 namespace Tests\Integration\Services;
 
 use App\DTO\Request\Auth\LoginRequestDTO;
+use App\DTO\Request\Auth\RegisterRequestDTO;
+use App\DTO\Response\Auth\LoginResponseDTO;
+use App\DTO\Response\Auth\MeResponseDTO;
+use App\DTO\Response\Auth\RegisterResponseDTO;
 use App\Entities\UserEntity;
 use App\Interfaces\Auth\GoogleIdentityServiceInterface;
 use App\Interfaces\Auth\VerificationServiceInterface;
@@ -119,7 +123,8 @@ class AuthServiceTest extends CIUnitTestCase
             'password' => 'ValidPass123!',
         ], service('validation')));
 
-        $this->assertInstanceOf(\dcardenasl\Ci4ApiCore\Dto\DataTransferObjectInterface::class, $result);
+        $this->assertInstanceOf(LoginResponseDTO::class, $result);
+        $this->assertInstanceOf(MeResponseDTO::class, $result->user);
         $data = $result->toArray();
         $this->assertEquals('jwt.access.token', $data['access_token']);
         $this->assertEquals(1, $data['user']['id']);
@@ -158,7 +163,7 @@ class AuthServiceTest extends CIUnitTestCase
         $mockUserRepository->method('find')->willReturn($user);
 
         $registerUserAction = $this->createMock(RegisterUserAction::class);
-        $request = new \App\DTO\Request\Auth\RegisterRequestDTO([
+        $request = new RegisterRequestDTO([
             'email' => 'new-unique+' . uniqid('', true) . '@example.com',
             'first_name' => 'New',
             'last_name' => 'User',
@@ -193,7 +198,7 @@ class AuthServiceTest extends CIUnitTestCase
 
         $result = $service->register($request);
 
-        $this->assertInstanceOf(\dcardenasl\Ci4ApiCore\Dto\DataTransferObjectInterface::class, $result);
+        $this->assertInstanceOf(RegisterResponseDTO::class, $result);
     }
 
     public function testMeReturnsUserProfile(): void
@@ -206,7 +211,7 @@ class AuthServiceTest extends CIUnitTestCase
         $service = $this->createServiceWithUserQuery($user);
 
         $result = $service->me(1);
-        $this->assertInstanceOf(\dcardenasl\Ci4ApiCore\Dto\DataTransferObjectInterface::class, $result);
+        $this->assertInstanceOf(MeResponseDTO::class, $result);
         $this->assertEquals('test@example.com', $result->toArray()['email']);
     }
 }

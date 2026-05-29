@@ -1,9 +1,16 @@
 # TASKS_ARCHIVE — ci4-api-starter
 
 > Historial de tareas completadas. Movido desde TASKS.md para mantener el tracker activo liviano.
-> Última actualización: 2026-05-15
+> Última actualización: 2026-05-26
 
 ---
+
+## ✅ Refactorización y hardening (2026-05-26)
+
+| ID | Descripción | Estado |
+|---|---|---|
+| API-017 | Auth/IAM DTO typing. `AuthService` y `AuthServiceInterface` ahora exponen `LoginRequestDTO`, `RegisterRequestDTO`, `UpdateMeRequestDTO` y retornan `LoginResponseDTO`, `RegisterResponseDTO`, `MeResponseDTO` concretos. `SessionManager::generateSessionResponse()` devuelve `LoginResponseDTO` con `MeResponseDTO` anidado. `UserPermissionsService` deja de ensamblar `ApplicationSummary` como array y retorna el DTO directamente. `AuthServiceTest` y un test unitario nuevo para `LoginResponseDTO` cubren el contrato. Verificado con `composer quality`. | ✅ |
+| AUDIT-001 | Audit Trail Reliability. `GET /health` degrada a `degraded` cuando el único problema es presión crítica de disco y la auditoría asíncrona está activa; se mantiene `unhealthy` para otros fallos. Añadido test unitario para la política de degradación. Verificado con `composer quality`. | ✅ |
 
 ## ✅ CORE v1.0 milestone — paquete consumido desde Packagist (2026-05-09)
 

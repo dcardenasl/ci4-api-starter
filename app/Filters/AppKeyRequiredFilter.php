@@ -43,6 +43,7 @@ class AppKeyRequiredFilter implements FilterInterface
 
         if ($request instanceof ApiRequest) {
             $request->setAppKeyId($appKey->id);
+            $request->setAppId($appKey->application_id);
         }
 
         return $request;

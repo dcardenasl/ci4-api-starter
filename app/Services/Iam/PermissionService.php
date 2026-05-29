@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Services\Iam;
 
+use App\DTO\Request\Iam\PermissionCreateRequestDTO;
+use App\DTO\Request\Iam\PermissionUpdateRequestDTO;
+use App\Entities\PermissionEntity;
 use App\Interfaces\Iam\PermissionServiceInterface;
 use dcardenasl\Ci4ApiCore\Dto\SecurityContext;
 use dcardenasl\Ci4ApiCore\Mappers\ResponseMapperInterface;
@@ -11,8 +14,14 @@ use dcardenasl\Ci4ApiCore\Repositories\RepositoryInterface;
 use dcardenasl\Ci4ApiCore\Services\BaseCrudService;
 use dcardenasl\Ci4ApiCore\Support\RelationLabelLoader;
 
+/**
+ * @extends BaseCrudService<PermissionEntity>
+ */
 class PermissionService extends BaseCrudService implements PermissionServiceInterface
 {
+    /**
+     * @param RepositoryInterface<PermissionEntity> $permissionRepository
+     */
     public function __construct(
         RepositoryInterface $permissionRepository,
         ResponseMapperInterface $responseMapper,
@@ -37,12 +46,21 @@ class PermissionService extends BaseCrudService implements PermissionServiceInte
     {
         $this->authz->assertSuperAdmin($context);
 
+        // Auto-assign application_id from context if not provided
+        if (empty($data['application_id']) && $context !== null && $context->app_id !== null) {
+            $data['application_id'] = $context->app_id;
+        }
+
+        new PermissionCreateRequestDTO($data);
+
         return parent::beforeStore($data, $context);
     }
 
     protected function beforeUpdate(int $id, array $data, ?SecurityContext $context): array
     {
         $this->authz->assertSuperAdmin($context);
+
+        new PermissionUpdateRequestDTO($data);
 
         return parent::beforeUpdate($id, $data, $context);
     }

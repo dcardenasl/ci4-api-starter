@@ -2,10 +2,9 @@
 
 namespace App\Models;
 
-use CodeIgniter\Model;
 use dcardenasl\Ci4ApiCore\Security\Hasher;
 
-class PasswordResetModel extends Model
+class PasswordResetModel extends \dcardenasl\Ci4ApiCore\Models\BaseAuditableModel
 {
     protected $table = 'password_resets';
     protected $primaryKey = 'id';

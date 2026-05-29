@@ -20,13 +20,11 @@ abstract class ApiTestCase extends CIUnitTestCase
     use DatabaseTestTrait;
     use FeatureTestTrait;
 
-    /**
-     * Database migration settings
-     * migrateOnce ensures migrations run only once per suite
-     */
-    protected $migrate     = true;
+    protected static string $lastPurgedClass = '';
+
+    protected $migrate     = false;
     protected $migrateOnce = true;
-    protected $refresh     = true;
+    protected $refresh     = false;
     protected $namespace   = 'App';
     protected $seed        = \App\Database\Seeds\RbacBootstrapSeeder::class;
     protected $basePath    = APPPATH . 'Database';
@@ -36,6 +34,32 @@ abstract class ApiTestCase extends CIUnitTestCase
      */
     protected function setUp(): void
     {
+        // Truncate once per test class in instance context so $this->db is available.
+        if (self::$lastPurgedClass !== static::class) {
+            self::$lastPurgedClass = static::class;
+            $this->loadDependencies();
+            if ($this->db->DBDriver === 'SQLite3') {
+                $this->db->query('PRAGMA foreign_keys = OFF');
+            } else {
+                $this->db->query('SET FOREIGN_KEY_CHECKS = 0');
+            }
+            foreach ($this->db->listTables() as $table) {
+                if ($table !== 'migrations') {
+                    $this->db->table($table)->truncate();
+                }
+            }
+            if ($this->db->DBDriver === 'SQLite3') {
+                try {
+                    $this->db->query('DELETE FROM sqlite_sequence');
+                } catch (\Throwable) {
+                    // Ignore if sequence table doesn't exist
+                }
+                $this->db->query('PRAGMA foreign_keys = ON');
+            } else {
+                $this->db->query('SET FOREIGN_KEY_CHECKS = 1');
+            }
+        }
+
         parent::setUp();
         \dcardenasl\Ci4ApiCore\Services\Audit\AuditService::$forceEnabledInTests = false;
         \dcardenasl\Ci4ApiCore\Http\ContextHolder::flush();

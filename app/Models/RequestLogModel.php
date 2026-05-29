@@ -2,9 +2,7 @@
 
 namespace App\Models;
 
-use CodeIgniter\Model;
-
-class RequestLogModel extends Model
+class RequestLogModel extends \dcardenasl\Ci4ApiCore\Models\BaseAuditableModel
 {
     protected $table = 'request_logs';
     protected $primaryKey = 'id';

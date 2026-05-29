@@ -3,7 +3,7 @@
 > Fuente de verdad para trabajo en este repo.
 > Historial de completadas: ver `TASKS_ARCHIVE.md`.
 > Cross-repo: ver `../TASKS.md`.
-> Última actualización: 2026-05-17 (API-015 ✅ trash/soft-delete + bulk on files)
+> Última actualización: 2026-05-26 (tracker activo limpio; ver TASKS_ARCHIVE.md)
 
 ---
 
@@ -16,14 +16,6 @@
 ## 🟡 Próximo
 
 *(vacío — backlog abajo)*
-
----
-
-## ✅ Completados recientemente (mover a TASKS_ARCHIVE.md en el próximo corte)
-
-- [API-015] ✅ 2026-05-17 — Files trash / soft-delete + bulk. Migración `files.deleted_at` + `deleted_by_user_id`. `FileModel::$useSoftDeletes=true`. `FileIndexRequestDTO` acepta `trashed=without|only|with`. `FileService` ahora soft-delete en `destroy()` (preserva storage); `restore()` y `forceDestroy()` nuevos (force purga storage + DB); bulk-* devuelven outcomes por item `{id, ok, error?}`. 5 rutas nuevas en `Routes/v1/files.php`. OpenAPI cubre las 6 paths nuevas. 9 feature tests nuevos (FileControllerTest 12/12 verde). Admin `FileApiService::bulk*` ahora stringifica ids para esquivar `InvalidChars`. Hallazgos colaterales: `PATCH/replace/regenerate/usages` siguen sin implementar (otras tareas) y la limitación de `InvalidChars` con ints en JSON (señal nueva abajo).
-- [API-010] ✅ 2026-05-15 — `GET /iam/users/{id}/permissions?app=<code>` implementado. `UserPermissionsController`, `ListUserPermissionsRequestDTO`, `UserPermissionsResponseDTO`, `ApplicationSummary`, `UserPermissionsService`, OpenAPI annotations + feature + unit tests.
-- [API-013] ✅ 2026-05-15 — CI matrix extendida a PHP 8.4 + CI4 4.6/4.7 en `.github/workflows/ci.yml`.
 
 ---
 
@@ -52,3 +44,18 @@
 - **CRUD nuevo:** usar `bash vendor/bin/make-crud.sh` siempre. Nunca crear DTOs manualmente.
 - **OpenAPI:** correr `php spark swagger:generate` al terminar cualquier endpoint nuevo.
 - **Migraciones:** nunca modificar migraciones existentes. Nueva migración para cualquier cambio de schema.
+
+### 🚧 Technical Debt (IAM & Models)
+- [x] **Automatic App Inference**: Modify PermissionService::beforeStore to automatically fill application_id using the request's X-App-Key if not provided. ✅ 2026-05-25
+- [x] **Audit Compliance**: Remediate `AuditLogModel` to inherit from `BaseAuditableModel` to ensure automated audit trail consistency. ✅ 2026-05-26
+- [x] **Model Audit Audit**: Perform a full audit of all models in `app/Models` to ensure they either extend `BaseAuditableModel` or are explicitly excluded from auditing. ✅ 2026-05-26
+
+### 🏗️ Technical Debt (Architecture & DTO-First)
+- [x] **Service Layer DTO Audit**: Investigate and refactor Service layer methods currently using raw arrays (`array`) for parameters and return types (e.g., `GalleryService`, `Iam/*Service`). Goal: Replace with typed `readonly` DTOs. ✅ 2026-05-26
+- [x] **DTO-First Enforcement**: Add a static analysis rule (e.g., PHPStan custom rule) to flag usage of `array` as type-hint in `app/Services` to prevent future regressions. ✅ 2026-05-28
+
+### 🛠️ Refactorización (PHPStan)
+- [x] **Fase 1: Core hardening** — Tipar `RepositoryInterface` y `AuditServiceInterface` en `ci4-api-core`.
+- [x] **Fase 2: ApiController Boundary** — Tipar `ApiController` en `ci4-api-core` para eliminar `missingType.iterableValue` del baseline.
+- [x] **Fase 3: Implementación Estricta** — Corregir controladores y servicios en `ci4-api-starter` tras el tipado del core. ✅ 2026-05-26
+- [x] **Fase 4: Scaffolding Generator** — Actualizar plantillas de `ci4-api-scaffolding` para generar código con tipos explícitos. ✅ 2026-05-26

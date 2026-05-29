@@ -8,24 +8,19 @@ use App\DTO\Request\Users\UserCreateRequestDTO;
 use App\DTO\Request\Users\UserUpdateRequestDTO;
 use App\Models\UserModel;
 use App\Services\Users\UserService;
-use CodeIgniter\Test\CIUnitTestCase;
-use CodeIgniter\Test\DatabaseTestTrait;
 use dcardenasl\Ci4ApiCore\Dto\SecurityContext;
 use dcardenasl\Ci4ApiCore\Exceptions\ConflictException;
+use Tests\Support\IntegrationTestCase;
 use Tests\Support\Traits\CustomAssertionsTrait;
 
 /**
  * UserService Integration Tests
  */
-class UserServiceTest extends CIUnitTestCase
+class UserServiceTest extends IntegrationTestCase
 {
-    use DatabaseTestTrait;
     use CustomAssertionsTrait;
 
-    protected $migrate   = true;
-    protected $namespace = 'App';
     protected $seed      = \App\Database\Seeds\RbacBootstrapSeeder::class;
-    protected $basePath  = APPPATH . 'Database';
 
     protected UserService $userService;
     protected UserModel $userModel;

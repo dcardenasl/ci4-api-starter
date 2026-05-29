@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Iam;
 
+use App\DTO\Request\Iam\AttachPermissionsRequestDTO;
 use CodeIgniter\Database\ConnectionInterface;
 use dcardenasl\Ci4ApiCore\Dto\SecurityContext;
 use dcardenasl\Ci4ApiCore\Exceptions\NotFoundException;
@@ -32,12 +33,10 @@ class RolePermissionAssignmentService
 
     /**
      * Replace the role's full permission set.
-     *
-     * @param list<int> $permissionIds
      */
-    public function syncPermissions(int $roleId, array $permissionIds, ?SecurityContext $context = null): void
+    public function syncPermissions(int $roleId, AttachPermissionsRequestDTO $request, ?SecurityContext $context = null): void
     {
-        $permissionIds = array_values(array_unique(array_map('intval', $permissionIds)));
+        $permissionIds = array_values($request->permission_ids);
 
         $this->ensureRoleExists($roleId);
 

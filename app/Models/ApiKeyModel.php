@@ -24,6 +24,7 @@ class ApiKeyModel extends BaseAuditableModel
 
     protected $protectFields    = true;
     protected $allowedFields    = [
+        'application_id',
         'name',
         'key_prefix',
         'key_hash',

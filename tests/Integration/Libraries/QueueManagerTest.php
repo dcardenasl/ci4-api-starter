@@ -4,21 +4,13 @@ declare(strict_types=1);
 
 namespace Tests\Integration\Libraries;
 
-use CodeIgniter\Test\CIUnitTestCase;
-use CodeIgniter\Test\DatabaseTestTrait;
 use Config\Database;
 use dcardenasl\Ci4ApiCore\Queue\Job;
 use dcardenasl\Ci4ApiCore\Queue\QueueManager;
+use Tests\Support\IntegrationTestCase;
 
-class QueueManagerTest extends CIUnitTestCase
+class QueueManagerTest extends IntegrationTestCase
 {
-    use DatabaseTestTrait;
-
-    protected $migrate     = true;
-    protected $migrateOnce = false;
-    protected $refresh     = true;
-    protected $namespace   = 'App';
-
     private ?string $previousRetryAfter = null;
     private ?string $previousMaxAttempts = null;
 
@@ -41,6 +33,10 @@ class QueueManagerTest extends CIUnitTestCase
         $_SERVER['QUEUE_RETRY_AFTER'] = '0';
         $_SERVER['QUEUE_MAX_ATTEMPTS'] = '2';
         $_SERVER['QUEUE_DATABASE_CONNECTION'] = 'tests';
+
+        $db = Database::connect();
+        $db->table('jobs')->truncate();
+        $db->table('failed_jobs')->truncate();
 
         TestQueueSuccessJob::$handled = 0;
         TestQueueAlwaysFailJob::$failedCalls = 0;

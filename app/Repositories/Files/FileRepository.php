@@ -4,27 +4,33 @@ declare(strict_types=1);
 
 namespace App\Repositories\Files;
 
+use App\Entities\FileEntity;
 use App\Interfaces\Files\FileRepositoryInterface;
 use dcardenasl\Ci4ApiCore\Repositories\BaseRepository;
 
 /**
  * File Repository (Implementation)
+ *
+ * @extends BaseRepository<FileEntity>
  */
 class FileRepository extends BaseRepository implements FileRepositoryInterface
 {
     public function findByStoredName(string $storedName): ?object
     {
-        return $this->model->where('stored_name', $storedName)->first();
+        /** @var FileEntity|null $file */
+        $file = $this->model->where('stored_name', $storedName)->first();
+
+        return $file;
     }
 
     public function countByUser(int $userId): int
     {
-        return $this->model->where('user_id', $userId)->countAllResults();
+        return (int) $this->model->where('user_id', $userId)->countAllResults();
     }
 
     public function findIncludingTrashed(int $id): ?object
     {
-        /** @var object|null $result */
+        /** @var FileEntity|null $result */
         $result = $this->model->withDeleted()->find($id);
 
         return $result;
@@ -44,7 +50,7 @@ class FileRepository extends BaseRepository implements FileRepositoryInterface
 
     public function findByUrl(string $url): ?object
     {
-        /** @var object|null $result */
+        /** @var FileEntity|null $result */
         $result = $this->model->withDeleted()->where('url', $url)->first();
 
         return $result;

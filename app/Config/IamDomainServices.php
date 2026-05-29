@@ -27,7 +27,8 @@ trait IamDomainServices
             new \dcardenasl\Ci4ApiCore\Repositories\GenericRepository(model(\App\Models\RoleModel::class)),
             static::roleResponseMapper(),
             static::iamAuthorizationService(),
-            static::rolePermissionAssignmentService()
+            static::rolePermissionAssignmentService(),
+            static::validation()
         );
     }
 

@@ -7,6 +7,8 @@ namespace App\Services\Auth;
 use App\DTO\Request\Auth\GoogleLoginRequestDTO;
 use App\DTO\Request\Auth\LoginRequestDTO;
 use App\DTO\Request\Auth\RegisterRequestDTO;
+use App\DTO\Request\Auth\UpdateMeRequestDTO;
+use App\DTO\Response\Auth\LoginResponseDTO;
 use App\DTO\Response\Auth\MeResponseDTO;
 use App\DTO\Response\Auth\RegisterResponseDTO;
 use App\Interfaces\Users\UserRepositoryInterface;
@@ -16,7 +18,6 @@ use App\Services\Auth\Support\SessionManager;
 use App\Services\Iam\EffectivePermissionsResolver;
 use App\Services\Users\Actions\UpdateSelfProfileAction;
 use App\Services\Users\UserAccountGuard;
-use dcardenasl\Ci4ApiCore\Dto\DataTransferObjectInterface;
 use dcardenasl\Ci4ApiCore\Dto\SecurityContext;
 use dcardenasl\Ci4ApiCore\Exceptions\AuthenticationException;
 use dcardenasl\Ci4ApiCore\Security\Token;
@@ -55,9 +56,8 @@ class AuthService implements \App\Interfaces\Auth\AuthServiceInterface
     /**
      * Authenticate user with credentials
      */
-    public function login(DataTransferObjectInterface $request, ?SecurityContext $context = null): DataTransferObjectInterface
+    public function login(LoginRequestDTO $request, ?SecurityContext $context = null): LoginResponseDTO
     {
-        /** @var LoginRequestDTO $request */
         /** @var \App\Entities\UserEntity|null $user */
         $user = $this->userRepository->findByEmail($request->email);
 
@@ -92,23 +92,21 @@ class AuthService implements \App\Interfaces\Auth\AuthServiceInterface
 
         $this->userAccessPolicy->assertCanAuthenticate($user);
 
-        $session = $this->sessionManager->generateSessionResponse($user);
-        return \App\DTO\Response\Auth\LoginResponseDTO::fromArray($session);
+        return $this->sessionManager->generateSessionResponse($user);
     }
 
     /**
      * Authenticate user with Google ID token
      */
-    public function loginWithGoogleToken(DataTransferObjectInterface $request, ?SecurityContext $context = null): OperationResult
+    public function loginWithGoogleToken(GoogleLoginRequestDTO $request, ?SecurityContext $context = null): OperationResult
     {
-        /** @var GoogleLoginRequestDTO $request */
         return $this->googleLoginAction->execute($request, $context);
     }
 
     /**
      * Get current authenticated user profile
      */
-    public function me(int $user_id, ?SecurityContext $context = null): DataTransferObjectInterface
+    public function me(int $user_id, ?SecurityContext $context = null): MeResponseDTO
     {
         if ($user_id <= 0) {
             throw new AuthenticationException(lang('Auth.unauthorized'));
@@ -128,9 +126,8 @@ class AuthService implements \App\Interfaces\Auth\AuthServiceInterface
     /**
      * Register a new user with password
      */
-    public function register(DataTransferObjectInterface $request, ?SecurityContext $context = null): DataTransferObjectInterface
+    public function register(RegisterRequestDTO $request, ?SecurityContext $context = null): RegisterResponseDTO
     {
-        /** @var RegisterRequestDTO $request */
         return $this->wrapInTransaction(function () use ($request, $context) {
             $user = $this->registerUserAction->execute($request, $context);
             return RegisterResponseDTO::fromArray($user->toArray());
@@ -144,9 +141,8 @@ class AuthService implements \App\Interfaces\Auth\AuthServiceInterface
      * context — the caller cannot target another user. Allowlist is enforced
      * by `UpdateMeRequestDTO` (only first_name, last_name, avatar_url).
      */
-    public function updateMe(DataTransferObjectInterface $request, ?SecurityContext $context = null): DataTransferObjectInterface
+    public function updateMe(UpdateMeRequestDTO $request, ?SecurityContext $context = null): MeResponseDTO
     {
-        /** @var \App\DTO\Request\Auth\UpdateMeRequestDTO $request */
         if ($context === null || $context->user_id === null) {
             throw new AuthenticationException(lang('Auth.unauthorized'));
         }

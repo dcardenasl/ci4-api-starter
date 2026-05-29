@@ -5,22 +5,14 @@ declare(strict_types=1);
 namespace Tests\Integration\Traits;
 
 use CodeIgniter\Model;
-use CodeIgniter\Test\CIUnitTestCase;
-use CodeIgniter\Test\DatabaseTestTrait;
 use dcardenasl\Ci4ApiCore\Models\Traits\Filterable;
+use Tests\Support\IntegrationTestCase;
 
 /**
  * Filterable Trait Tests
  */
-class FilterableTest extends CIUnitTestCase
+class FilterableTest extends IntegrationTestCase
 {
-    use DatabaseTestTrait;
-
-    protected $migrate     = true;
-    protected $migrateOnce = false;
-    protected $refresh     = true;
-    protected $namespace   = 'App';
-
     private object $model;
 
     protected function setUp(): void

@@ -4,22 +4,14 @@ declare(strict_types=1);
 
 namespace Tests\Integration\Libraries;
 
-use CodeIgniter\Test\CIUnitTestCase;
-use CodeIgniter\Test\DatabaseTestTrait;
 use dcardenasl\Ci4ApiCore\Monitoring\HealthChecker;
+use Tests\Support\IntegrationTestCase;
 
 /**
  * HealthChecker Tests
  */
-class HealthCheckerTest extends CIUnitTestCase
+class HealthCheckerTest extends IntegrationTestCase
 {
-    use DatabaseTestTrait;
-
-    protected $migrate     = true;
-    protected $migrateOnce = false;
-    protected $refresh     = true;
-    protected $namespace   = 'App';
-
     protected HealthChecker $healthChecker;
 
     protected function setUp(): void

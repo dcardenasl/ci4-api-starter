@@ -65,7 +65,10 @@ trait IamDomainServices
         return new \App\Services\Iam\PermissionService(
             new \dcardenasl\Ci4ApiCore\Repositories\GenericRepository(model(\App\Models\PermissionModel::class)),
             static::permissionResponseMapper(),
-            static::iamAuthorizationService()
+            static::iamAuthorizationService(),
+            static::validation(),
+            static::request(),
+            static::apiKeyModel()
         );
     }
 

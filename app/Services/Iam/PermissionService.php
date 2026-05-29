@@ -8,7 +8,10 @@ use App\DTO\Request\Iam\PermissionCreateRequestDTO;
 use App\DTO\Request\Iam\PermissionUpdateRequestDTO;
 use App\Entities\PermissionEntity;
 use App\Interfaces\Iam\PermissionServiceInterface;
+use App\Models\ApiKeyModel;
+use CodeIgniter\Validation\ValidationInterface;
 use dcardenasl\Ci4ApiCore\Dto\SecurityContext;
+use dcardenasl\Ci4ApiCore\Http\ApiRequest;
 use dcardenasl\Ci4ApiCore\Mappers\ResponseMapperInterface;
 use dcardenasl\Ci4ApiCore\Repositories\RepositoryInterface;
 use dcardenasl\Ci4ApiCore\Services\BaseCrudService;
@@ -26,6 +29,9 @@ class PermissionService extends BaseCrudService implements PermissionServiceInte
         RepositoryInterface $permissionRepository,
         ResponseMapperInterface $responseMapper,
         private readonly IamAuthorizationService $authz,
+        private readonly ValidationInterface $validation,
+        private readonly ApiRequest $request,
+        private readonly ApiKeyModel $apiKeyModel,
         private readonly RelationLabelLoader $labels = new RelationLabelLoader()
     ) {
         parent::__construct($permissionRepository, $responseMapper);
@@ -51,11 +57,10 @@ class PermissionService extends BaseCrudService implements PermissionServiceInte
             if ($context !== null && $context->app_id !== null) {
                 $data['application_id'] = $context->app_id;
             } else {
-                $request = \Config\Services::request();
-                $rawKey = $request->getHeaderLine('X-App-Key');
+                $rawKey = $this->request->getHeaderLine('X-App-Key');
                 if ($rawKey !== '') {
                     $hash = hash('sha256', $rawKey);
-                    $appKey = \Config\Services::apiKeyModel()->findByHash($hash);
+                    $appKey = $this->apiKeyModel->findByHash($hash);
                     if ($appKey && $appKey->isActive()) {
                         $data['application_id'] = $appKey->application_id;
                     }
@@ -63,7 +68,7 @@ class PermissionService extends BaseCrudService implements PermissionServiceInte
             }
         }
 
-        new PermissionCreateRequestDTO($data, \Config\Services::validation());
+        new PermissionCreateRequestDTO($data, $this->validation);
 
         return parent::beforeStore($data, $context);
     }
@@ -72,7 +77,7 @@ class PermissionService extends BaseCrudService implements PermissionServiceInte
     {
         $this->authz->assertSuperAdmin($context);
 
-        new PermissionUpdateRequestDTO($data, \Config\Services::validation());
+        new PermissionUpdateRequestDTO($data, $this->validation);
 
         return parent::beforeUpdate($id, $data, $context);
     }

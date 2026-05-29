@@ -7,48 +7,6 @@ parameters:
 			path: app/Entities/ApiKeyEntity.php
 
 		-
-			message: '#^Method App\\Filters\\CorsFilter\:\:after\(\) has parameter \$arguments with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Filters/CorsFilter.php
-
-		-
-			message: '#^Method App\\Filters\\CorsFilter\:\:before\(\) has parameter \$arguments with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Filters/CorsFilter.php
-
-		-
-			message: '#^Method App\\Filters\\LocaleFilter\:\:after\(\) has parameter \$arguments with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Filters/LocaleFilter.php
-
-		-
-			message: '#^Method App\\Filters\\LocaleFilter\:\:before\(\) has parameter \$arguments with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Filters/LocaleFilter.php
-
-		-
-			message: '#^Method App\\Filters\\LocaleFilter\:\:parseAcceptLanguage\(\) has parameter \$supportedLocales with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Filters/LocaleFilter.php
-
-		-
-			message: '#^Method App\\Filters\\RequestLoggingFilter\:\:after\(\) has parameter \$arguments with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Filters/RequestLoggingFilter.php
-
-		-
-			message: '#^Method App\\Filters\\RequestLoggingFilter\:\:before\(\) has parameter \$arguments with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Filters/RequestLoggingFilter.php
-
-		-
 			message: '#^Method App\\Filters\\ThrottleFilter\:\:after\(\) has parameter \$arguments with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
@@ -61,151 +19,7 @@ parameters:
 			path: app/Filters/ThrottleFilter.php
 
 		-
-			message: '#^Method App\\Interfaces\\Core\\RepositoryInterface\:\:delete\(\) has parameter \$id with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Interfaces/Core/RepositoryInterface.php
-
-		-
-			message: '#^Method App\\Interfaces\\Core\\RepositoryInterface\:\:errors\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Interfaces/Core/RepositoryInterface.php
-
-		-
-			message: '#^Method App\\Interfaces\\Core\\RepositoryInterface\:\:findAll\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Interfaces/Core/RepositoryInterface.php
-
-		-
-			message: '#^Method App\\Interfaces\\Core\\RepositoryInterface\:\:insert\(\) has parameter \$data with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Interfaces/Core/RepositoryInterface.php
-
-		-
-			message: '#^Method App\\Interfaces\\Core\\RepositoryInterface\:\:paginateCriteria\(\) has parameter \$criteria with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Interfaces/Core/RepositoryInterface.php
-
-		-
-			message: '#^Method App\\Interfaces\\Core\\RepositoryInterface\:\:paginateCriteria\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Interfaces/Core/RepositoryInterface.php
-
-		-
-			message: '#^Method App\\Interfaces\\Core\\RepositoryInterface\:\:restore\(\) has parameter \$data with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Interfaces/Core/RepositoryInterface.php
-
-		-
-			message: '#^Method App\\Interfaces\\Core\\RepositoryInterface\:\:setEntityContext\(\) has parameter \$entity with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Interfaces/Core/RepositoryInterface.php
-
-		-
-			message: '#^Method App\\Interfaces\\Core\\RepositoryInterface\:\:update\(\) has parameter \$data with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Interfaces/Core/RepositoryInterface.php
-
-		-
-			message: '#^Method App\\Interfaces\\Core\\RepositoryInterface\:\:update\(\) has parameter \$id with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Interfaces/Core/RepositoryInterface.php
-
-		-
-			message: '#^Method App\\Interfaces\\DataTransferObjectInterface\:\:toArray\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Interfaces/DataTransferObjectInterface.php
-
-		-
-			message: '#^Method App\\Interfaces\\System\\AuditRepositoryInterface\:\:getActionFacets\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Interfaces/System/AuditRepositoryInterface.php
-
-		-
-			message: '#^Method App\\Interfaces\\System\\AuditRepositoryInterface\:\:getByEntity\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Interfaces/System/AuditRepositoryInterface.php
-
-		-
-			message: '#^Method App\\Interfaces\\System\\AuditRepositoryInterface\:\:getByUser\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Interfaces/System/AuditRepositoryInterface.php
-
-		-
-			message: '#^Method App\\Interfaces\\System\\AuditRepositoryInterface\:\:getEntityTypeFacets\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Interfaces/System/AuditRepositoryInterface.php
-
-		-
-			message: '#^Method App\\Interfaces\\System\\AuditRepositoryInterface\:\:getRecent\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Interfaces/System/AuditRepositoryInterface.php
-
-		-
-			message: '#^Method App\\Interfaces\\System\\AuditServiceInterface\:\:log\(\) has parameter \$metadata with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Interfaces/System/AuditServiceInterface.php
-
-		-
-			message: '#^Method App\\Interfaces\\System\\AuditServiceInterface\:\:log\(\) has parameter \$newValues with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Interfaces/System/AuditServiceInterface.php
-
-		-
-			message: '#^Method App\\Interfaces\\System\\AuditServiceInterface\:\:log\(\) has parameter \$oldValues with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Interfaces/System/AuditServiceInterface.php
-
-		-
-			message: '#^Method App\\Interfaces\\System\\AuditServiceInterface\:\:logCreate\(\) has parameter \$data with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Interfaces/System/AuditServiceInterface.php
-
-		-
-			message: '#^Method App\\Interfaces\\System\\AuditServiceInterface\:\:logDelete\(\) has parameter \$data with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Interfaces/System/AuditServiceInterface.php
-
-		-
-			message: '#^Method App\\Interfaces\\System\\AuditServiceInterface\:\:logUpdate\(\) has parameter \$newValues with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Interfaces/System/AuditServiceInterface.php
-
-		-
-			message: '#^Method App\\Interfaces\\System\\AuditServiceInterface\:\:logUpdate\(\) has parameter \$oldValues with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Interfaces/System/AuditServiceInterface.php
-
-		-
 			message: '#^Method App\\Libraries\\Files\\Base64Processor\:\:process\(\) has parameter \$options with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Libraries/Files/Base64Processor.php
-
-		-
-			message: '#^Method App\\Libraries\\Files\\Base64Processor\:\:validate\(\) has parameter \$options with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
 			path: app/Libraries/Files/Base64Processor.php
@@ -227,108 +41,6 @@ parameters:
 			identifier: missingType.iterableValue
 			count: 1
 			path: app/Libraries/Files/MultipartProcessor.php
-
-		-
-			message: '#^Method App\\Libraries\\Query\\FilterParser\:\:detectOperator\(\) has parameter \$value with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Libraries/Query/FilterParser.php
-
-		-
-			message: '#^Method App\\Libraries\\Query\\FilterParser\:\:detectOperator\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Libraries/Query/FilterParser.php
-
-		-
-			message: '#^Method App\\Libraries\\Query\\FilterParser\:\:filterAllowedFields\(\) has parameter \$allowedFields with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Libraries/Query/FilterParser.php
-
-		-
-			message: '#^Method App\\Libraries\\Query\\FilterParser\:\:filterAllowedFields\(\) has parameter \$filters with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Libraries/Query/FilterParser.php
-
-		-
-			message: '#^Method App\\Libraries\\Query\\FilterParser\:\:filterAllowedFields\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Libraries/Query/FilterParser.php
-
-		-
-			message: '#^Method App\\Libraries\\Query\\FilterParser\:\:isValidField\(\) has parameter \$allowedFields with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Libraries/Query/FilterParser.php
-
-		-
-			message: '#^Method App\\Libraries\\Query\\FilterParser\:\:parse\(\) has parameter \$filters with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Libraries/Query/FilterParser.php
-
-		-
-			message: '#^Method App\\Libraries\\Query\\FilterParser\:\:parse\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Libraries/Query/FilterParser.php
-
-		-
-			message: '#^Method App\\Libraries\\Query\\FilterParser\:\:parseSort\(\) has parameter \$allowedFields with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Libraries/Query/FilterParser.php
-
-		-
-			message: '#^Method App\\Libraries\\Query\\FilterParser\:\:parseSort\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Libraries/Query/FilterParser.php
-
-		-
-			message: '#^Method App\\Libraries\\Query\\QueryBuilder\:\:filter\(\) has parameter \$filters with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Libraries/Query/QueryBuilder.php
-
-		-
-			message: '#^Method App\\Libraries\\Query\\QueryBuilder\:\:first\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Libraries/Query/QueryBuilder.php
-
-		-
-			message: '#^Method App\\Libraries\\Query\\QueryBuilder\:\:get\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Libraries/Query/QueryBuilder.php
-
-		-
-			message: '#^Method App\\Libraries\\Query\\QueryBuilder\:\:paginate\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Libraries/Query/QueryBuilder.php
-
-		-
-			message: '#^Method App\\Libraries\\Query\\SearchQueryApplier\:\:apply\(\) has parameter \$searchableFields with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Libraries/Query/SearchQueryApplier.php
-
-		-
-			message: '#^Method App\\Libraries\\Query\\SearchQueryApplier\:\:applyFulltext\(\) has parameter \$searchableFields with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Libraries/Query/SearchQueryApplier.php
-
-		-
-			message: '#^Method App\\Libraries\\Query\\SearchQueryApplier\:\:applyLike\(\) has parameter \$searchableFields with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Libraries/Query/SearchQueryApplier.php
 
 		-
 			message: '#^Method App\\Models\\AuditLogModel\:\:getByEntity\(\) return type has no value type specified in iterable type array\.$#'
@@ -355,18 +67,6 @@ parameters:
 			path: app/Models/AuditLogModel.php
 
 		-
-			message: '#^Method App\\Services\\Auth\\Support\\AuthUserMapper\:\:mapAuthenticated\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Services/Auth/Support/AuthUserMapper.php
-
-		-
-			message: '#^Method App\\Services\\Auth\\Support\\AuthUserMapper\:\:mapPending\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Services/Auth/Support/AuthUserMapper.php
-
-		-
 			message: '#^Method App\\Services\\Auth\\Support\\GoogleAuthHandler\:\:createPendingUser\(\) has parameter \$identity with no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
@@ -385,16 +85,22 @@ parameters:
 			path: app/Services/Auth/Support/GoogleAuthHandler.php
 
 		-
-			message: '#^Method App\\Services\\Auth\\Support\\SessionManager\:\:generateSessionResponse\(\) has parameter \$userData with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
+			message: '#^Method createPendingUser\(\) in DTO\-First Service has array type\-hint for \$identity\. Use a DTO or specific object class instead\.$#'
+			identifier: dtoFirst.arrayParameter
 			count: 1
-			path: app/Services/Auth/Support/SessionManager.php
+			path: app/Services/Auth/Support/GoogleAuthHandler.php
 
 		-
-			message: '#^Method App\\Services\\Auth\\Support\\SessionManager\:\:generateSessionResponse\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
+			message: '#^Method reactivateDeletedUser\(\) in DTO\-First Service has array type\-hint for \$identity\. Use a DTO or specific object class instead\.$#'
+			identifier: dtoFirst.arrayParameter
 			count: 1
-			path: app/Services/Auth/Support/SessionManager.php
+			path: app/Services/Auth/Support/GoogleAuthHandler.php
+
+		-
+			message: '#^Method syncProfileIfEmpty\(\) in DTO\-First Service has array type\-hint for \$identity\. Use a DTO or specific object class instead\.$#'
+			identifier: dtoFirst.arrayParameter
+			count: 1
+			path: app/Services/Auth/Support/GoogleAuthHandler.php
 
 		-
 			message: '#^Parameter \#1 \$datetime of function strtotime expects string, string\|false given\.$#'
@@ -409,64 +115,16 @@ parameters:
 			path: app/Services/Auth/VerificationService.php
 
 		-
-			message: '#^Method App\\Services\\Core\\BaseCrudService\:\:applyQueryOptions\(\) has parameter \$criteria with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
+			message: '#^Method listFor\(\) in DTO\-First Service has array return type\-hint\. Use a DTO or specific object class instead\.$#'
+			identifier: dtoFirst.arrayReturn
 			count: 1
-			path: app/Services/Core/BaseCrudService.php
+			path: app/Services/Core/GalleryService.php
 
 		-
-			message: '#^Method App\\Services\\Core\\BaseCrudService\:\:applyQueryOptions\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
+			message: '#^Method reorder\(\) in DTO\-First Service has array return type\-hint\. Use a DTO or specific object class instead\.$#'
+			identifier: dtoFirst.arrayReturn
 			count: 1
-			path: app/Services/Core/BaseCrudService.php
-
-		-
-			message: '#^Method App\\Services\\Core\\BaseCrudService\:\:beforeStore\(\) has parameter \$data with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Services/Core/BaseCrudService.php
-
-		-
-			message: '#^Method App\\Services\\Core\\BaseCrudService\:\:beforeStore\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Services/Core/BaseCrudService.php
-
-		-
-			message: '#^Method App\\Services\\Core\\BaseCrudService\:\:beforeUpdate\(\) has parameter \$data with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Services/Core/BaseCrudService.php
-
-		-
-			message: '#^Method App\\Services\\Core\\BaseCrudService\:\:beforeUpdate\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Services/Core/BaseCrudService.php
-
-		-
-			message: '#^Method App\\Services\\Core\\Mappers\\DtoResponseMapper\:\:autoMap\(\) has parameter \$data with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Services/Core/Mappers/DtoResponseMapper.php
-
-		-
-			message: '#^Method App\\Services\\Core\\Mappers\\DtoResponseMapper\:\:extractData\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Services/Core/Mappers/DtoResponseMapper.php
-
-		-
-			message: '#^Method App\\Services\\Core\\Support\\RelationLabelLoader\:\:attachLabel\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Services/Core/Support/RelationLabelLoader.php
-
-		-
-			message: '#^Method App\\Services\\Core\\Support\\RelationLabelLoader\:\:attachUserLabels\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Services/Core/Support/RelationLabelLoader.php
+			path: app/Services/Core/GalleryService.php
 
 		-
 			message: '#^Method App\\Services\\Files\\FileService\:\:resolveUserId\(\) has parameter \$request with no value type specified in iterable type array\.$#'
@@ -475,118 +133,118 @@ parameters:
 			path: app/Services/Files/FileService.php
 
 		-
-			message: '#^Method App\\Services\\Iam\\PermissionService\:\:beforeStore\(\) has parameter \$data with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
+			message: '#^Method bulkDestroy\(\) in DTO\-First Service has array return type\-hint\. Use a DTO or specific object class instead\.$#'
+			identifier: dtoFirst.arrayReturn
 			count: 1
-			path: app/Services/Iam/PermissionService.php
+			path: app/Services/Files/FileService.php
 
 		-
-			message: '#^Method App\\Services\\Iam\\PermissionService\:\:beforeStore\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
+			message: '#^Method bulkDestroy\(\) in DTO\-First Service has array type\-hint for \$ids\. Use a DTO or specific object class instead\.$#'
+			identifier: dtoFirst.arrayParameter
 			count: 1
-			path: app/Services/Iam/PermissionService.php
+			path: app/Services/Files/FileService.php
 
 		-
-			message: '#^Method App\\Services\\Iam\\PermissionService\:\:beforeUpdate\(\) has parameter \$data with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
+			message: '#^Method bulkForceDestroy\(\) in DTO\-First Service has array return type\-hint\. Use a DTO or specific object class instead\.$#'
+			identifier: dtoFirst.arrayReturn
 			count: 1
-			path: app/Services/Iam/PermissionService.php
+			path: app/Services/Files/FileService.php
 
 		-
-			message: '#^Method App\\Services\\Iam\\PermissionService\:\:beforeUpdate\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
+			message: '#^Method bulkForceDestroy\(\) in DTO\-First Service has array type\-hint for \$ids\. Use a DTO or specific object class instead\.$#'
+			identifier: dtoFirst.arrayParameter
 			count: 1
-			path: app/Services/Iam/PermissionService.php
+			path: app/Services/Files/FileService.php
 
 		-
-			message: '#^Method App\\Services\\Iam\\RoleService\:\:beforeUpdate\(\) has parameter \$data with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
+			message: '#^Method bulkRestore\(\) in DTO\-First Service has array return type\-hint\. Use a DTO or specific object class instead\.$#'
+			identifier: dtoFirst.arrayReturn
+			count: 1
+			path: app/Services/Files/FileService.php
+
+		-
+			message: '#^Method bulkRestore\(\) in DTO\-First Service has array type\-hint for \$ids\. Use a DTO or specific object class instead\.$#'
+			identifier: dtoFirst.arrayParameter
+			count: 1
+			path: app/Services/Files/FileService.php
+
+		-
+			message: '#^Method getUsages\(\) in DTO\-First Service has array return type\-hint\. Use a DTO or specific object class instead\.$#'
+			identifier: dtoFirst.arrayReturn
+			count: 1
+			path: app/Services/Files/FileService.php
+
+		-
+			message: '#^Method regenerateVariants\(\) in DTO\-First Service has array return type\-hint\. Use a DTO or specific object class instead\.$#'
+			identifier: dtoFirst.arrayReturn
+			count: 1
+			path: app/Services/Files/FileService.php
+
+		-
+			message: '#^Method resolve\(\) in DTO\-First Service has array return type\-hint\. Use a DTO or specific object class instead\.$#'
+			identifier: dtoFirst.arrayReturn
+			count: 1
+			path: app/Services/Iam/ApplicationPermissionsResolver.php
+
+		-
+			message: '#^Method listAssignable\(\) in DTO\-First Service has array return type\-hint\. Use a DTO or specific object class instead\.$#'
+			identifier: dtoFirst.arrayReturn
+			count: 1
+			path: app/Services/Iam/AssignableRolesService.php
+
+		-
+			message: '#^Method listAssignable\(\) in DTO\-First Service has array type\-hint for \$actorPermissions\. Use a DTO or specific object class instead\.$#'
+			identifier: dtoFirst.arrayParameter
+			count: 1
+			path: app/Services/Iam/AssignableRolesService.php
+
+		-
+			message: '#^Method resolve\(\) in DTO\-First Service has array return type\-hint\. Use a DTO or specific object class instead\.$#'
+			identifier: dtoFirst.arrayReturn
+			count: 1
+			path: app/Services/Iam/EffectivePermissionsResolver.php
+
+		-
+			message: '#^Method getPermissionIds\(\) in DTO\-First Service has array return type\-hint\. Use a DTO or specific object class instead\.$#'
+			identifier: dtoFirst.arrayReturn
+			count: 1
+			path: app/Services/Iam/RolePermissionAssignmentService.php
+
+		-
+			message: '#^Method attachPermissions\(\) in DTO\-First Service has array return type\-hint\. Use a DTO or specific object class instead\.$#'
+			identifier: dtoFirst.arrayReturn
 			count: 1
 			path: app/Services/Iam/RoleService.php
 
 		-
-			message: '#^Method App\\Services\\Iam\\RoleService\:\:beforeUpdate\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
+			message: '#^Method listPermissions\(\) in DTO\-First Service has array return type\-hint\. Use a DTO or specific object class instead\.$#'
+			identifier: dtoFirst.arrayReturn
 			count: 1
 			path: app/Services/Iam/RoleService.php
 
 		-
-			message: '#^Method App\\Services\\System\\AuditPayloadSanitizer\:\:sanitize\(\) has parameter \$values with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
+			message: '#^Method getUserRoles\(\) in DTO\-First Service has array return type\-hint\. Use a DTO or specific object class instead\.$#'
+			identifier: dtoFirst.arrayReturn
 			count: 1
-			path: app/Services/System/AuditPayloadSanitizer.php
+			path: app/Services/Iam/UserRoleAssignmentService.php
 
 		-
-			message: '#^Method App\\Services\\System\\AuditPayloadSanitizer\:\:sanitize\(\) return type has no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
+			message: '#^Method syncRoles\(\) in DTO\-First Service has array type\-hint for \$roleIds\. Use a DTO or specific object class instead\.$#'
+			identifier: dtoFirst.arrayParameter
 			count: 1
-			path: app/Services/System/AuditPayloadSanitizer.php
+			path: app/Services/Iam/UserRoleAssignmentService.php
 
 		-
-			message: '#^Method App\\Services\\System\\AuditService\:\:buildEvent\(\) has parameter \$metadata with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
+			message: '#^Method queueTemplate\(\) in DTO\-First Service has array type\-hint for \$data\. Use a DTO or specific object class instead\.$#'
+			identifier: dtoFirst.arrayParameter
 			count: 1
-			path: app/Services/System/AuditService.php
+			path: app/Services/System/EmailService.php
 
 		-
-			message: '#^Method App\\Services\\System\\AuditService\:\:buildEvent\(\) has parameter \$newValues with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
+			message: '#^Method sendTemplate\(\) in DTO\-First Service has array type\-hint for \$data\. Use a DTO or specific object class instead\.$#'
+			identifier: dtoFirst.arrayParameter
 			count: 1
-			path: app/Services/System/AuditService.php
-
-		-
-			message: '#^Method App\\Services\\System\\AuditService\:\:buildEvent\(\) has parameter \$oldValues with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Services/System/AuditService.php
-
-		-
-			message: '#^Method App\\Services\\System\\AuditService\:\:log\(\) has parameter \$metadata with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Services/System/AuditService.php
-
-		-
-			message: '#^Method App\\Services\\System\\AuditService\:\:log\(\) has parameter \$newValues with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Services/System/AuditService.php
-
-		-
-			message: '#^Method App\\Services\\System\\AuditService\:\:log\(\) has parameter \$oldValues with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Services/System/AuditService.php
-
-		-
-			message: '#^Method App\\Services\\System\\AuditService\:\:logCreate\(\) has parameter \$data with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Services/System/AuditService.php
-
-		-
-			message: '#^Method App\\Services\\System\\AuditService\:\:logDelete\(\) has parameter \$data with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Services/System/AuditService.php
-
-		-
-			message: '#^Method App\\Services\\System\\AuditService\:\:logUpdate\(\) has parameter \$newValues with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Services/System/AuditService.php
-
-		-
-			message: '#^Method App\\Services\\System\\AuditService\:\:logUpdate\(\) has parameter \$oldValues with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Services/System/AuditService.php
-
-		-
-			message: '#^Method App\\Services\\System\\SecurityAuditLogger\:\:logAuthorizationDeniedFromContext\(\) has parameter \$details with no value type specified in iterable type array\.$#'
-			identifier: missingType.iterableValue
-			count: 1
-			path: app/Services/System/SecurityAuditLogger.php
+			path: app/Services/System/EmailService.php
 
 		-
 			message: '#^Method App\\Services\\System\\SecurityAuditLogger\:\:safeLog\(\) has parameter \$newValues with no value type specified in iterable type array\.$#'
@@ -601,10 +259,40 @@ parameters:
 			path: app/Services/System/SecurityAuditLogger.php
 
 		-
+			message: '#^Method logAuthorizationDeniedFromContext\(\) in DTO\-First Service has array type\-hint for \$details\. Use a DTO or specific object class instead\.$#'
+			identifier: dtoFirst.arrayParameter
+			count: 1
+			path: app/Services/System/SecurityAuditLogger.php
+
+		-
 			message: '#^Method App\\Services\\Tokens\\Actions\\CreateApiKeyAction\:\:execute\(\) return type has no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
 			path: app/Services/Tokens/Actions/CreateApiKeyAction.php
+
+		-
+			message: '#^Method execute\(\) in DTO\-First Service has array return type\-hint\. Use a DTO or specific object class instead\.$#'
+			identifier: dtoFirst.arrayReturn
+			count: 1
+			path: app/Services/Tokens/Actions/CreateApiKeyAction.php
+
+		-
+			message: '#^Method encode\(\) in DTO\-First Service has array type\-hint for \$permissions\. Use a DTO or specific object class instead\.$#'
+			identifier: dtoFirst.arrayParameter
+			count: 1
+			path: app/Services/Tokens/JwtService.php
+
+		-
+			message: '#^Method encodeServiceToken\(\) in DTO\-First Service has array type\-hint for \$permissions\. Use a DTO or specific object class instead\.$#'
+			identifier: dtoFirst.arrayParameter
+			count: 1
+			path: app/Services/Tokens/JwtService.php
+
+		-
+			message: '#^Method getPermissions\(\) in DTO\-First Service has array return type\-hint\. Use a DTO or specific object class instead\.$#'
+			identifier: dtoFirst.arrayReturn
+			count: 1
+			path: app/Services/Tokens/JwtService.php
 
 		-
 			message: '#^Method App\\Services\\Users\\Actions\\UpdateUserAction\:\:buildUpdateData\(\) return type has no value type specified in iterable type array\.$#'

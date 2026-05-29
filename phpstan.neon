@@ -1,6 +1,9 @@
 includes:
     - phpstan-baseline.neon
 
+rules:
+    - App\PHPStan\Rules\ServiceDtoFirstRule
+
 parameters:
     level: 8
     paths:

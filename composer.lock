@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "c59fa57b725b9919873a4596114dc9ae",
+    "content-hash": "e6fe6f12d6a549fa352ac3d2cda1d77e",
     "packages": [
         {
             "name": "aws/aws-crt-php",
@@ -4091,16 +4091,16 @@
         },
         {
             "name": "dcardenasl/ci4-api-scaffolding",
-            "version": "v0.7.0",
+            "version": "v0.7.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/dcardenasl/ci4-api-scaffolding.git",
-                "reference": "024f45f48387de934150f111be6164c0806ed002"
+                "reference": "22af57c19f6552d6d9c5a6b50885f804a7a14572"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/dcardenasl/ci4-api-scaffolding/zipball/024f45f48387de934150f111be6164c0806ed002",
-                "reference": "024f45f48387de934150f111be6164c0806ed002",
+                "url": "https://api.github.com/repos/dcardenasl/ci4-api-scaffolding/zipball/22af57c19f6552d6d9c5a6b50885f804a7a14572",
+                "reference": "22af57c19f6552d6d9c5a6b50885f804a7a14572",
                 "shasum": ""
             },
             "require": {
@@ -4174,7 +4174,7 @@
                 "issues": "https://github.com/dcardenasl/ci4-api-scaffolding/issues",
                 "source": "https://github.com/dcardenasl/ci4-api-scaffolding"
             },
-            "time": "2026-05-29T03:29:02+00:00"
+            "time": "2026-05-29T08:37:05+00:00"
         },
         {
             "name": "ergebnis/agent-detector",

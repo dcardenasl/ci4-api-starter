@@ -1,12 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Database\Migrations;
 
 use CodeIgniter\Database\Migration;
 
 class CreateUsersTable extends Migration
 {
-    public function up()
+    public function up(): void
     {
         $this->forge->addField([
             'id' => [
@@ -117,7 +119,7 @@ class CreateUsersTable extends Migration
         }
     }
 
-    public function down()
+    public function down(): void
     {
         $this->forge->dropTable('users');
     }

@@ -20,7 +20,7 @@ class ApiSmokeTest extends BaseCommand
     protected $name        = 'api:smoke-test';
     protected $description = 'Hits API endpoints and displays JSON responses to verify contracts.';
 
-    public function run(array $params)
+    public function run(array $params): void
     {
         CLI::write('🚀 Starting API Smoke Test...', 'cyan');
 
@@ -76,7 +76,7 @@ class ApiSmokeTest extends BaseCommand
         return $jwtService->encode($userId, $permissions);
     }
 
-    private function inspectEndpoint(string $method, string $path, string $label, string $token)
+    private function inspectEndpoint(string $method, string $path, string $label, string $token): void
     {
         CLI::write("
 --- 🔍 Inspecting: $label [$method /$path] ---", 'yellow');
@@ -113,7 +113,7 @@ class ApiSmokeTest extends BaseCommand
         }
     }
 
-    private function printContractKeys(array $payload)
+    private function printContractKeys(array $payload): void
     {
         $data = $payload['data'] ?? $payload;
 

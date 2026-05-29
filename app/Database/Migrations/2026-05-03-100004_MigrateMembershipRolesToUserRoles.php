@@ -12,7 +12,7 @@ use CodeIgniter\Database\Migration;
  */
 class MigrateMembershipRolesToUserRoles extends Migration
 {
-    public function up()
+    public function up(): void
     {
         if (! $this->db->tableExists('membership_roles') || ! $this->db->tableExists('app_user_memberships')) {
             return;
@@ -73,7 +73,7 @@ class MigrateMembershipRolesToUserRoles extends Migration
         }
     }
 
-    public function down()
+    public function down(): void
     {
         // No-op: forward-only data migration. Roll back via the legacy data still in membership_roles.
     }

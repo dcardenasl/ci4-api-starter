@@ -120,7 +120,7 @@ class VerificationService implements \App\Interfaces\Auth\VerificationServiceInt
 
         $now = date('Y-m-d H:i:s');
 
-        $this->wrapInTransaction(function () use ($user, $now) {
+        $this->wrapInTransaction(function () use ($user, $now): void {
             $this->userRepository->withAuditAction('email_verified')->update($user->id, [
                 'email_verified_at' => $now,
                 'email_verification_token' => null,

@@ -21,4 +21,8 @@ class Api extends \dcardenasl\Ci4ApiCore\Config\Api
     public array $accessPolicyBypassRoutes = [
         'api/v1/auth/resend-verification',
     ];
+
+    // Stricter auth limits: 3 attempts per hour
+    public int $authRateLimitRequests = 3;
+    public int $authRateLimitWindow = 3600;
 }

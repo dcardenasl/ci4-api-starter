@@ -1,13 +1,15 @@
 <?php
 
+declare(strict_types=1);
+
 /** @var \CodeIgniter\Router\RouteCollection $routes */
 
-$routes->group('iam', ['namespace' => '\App\Controllers\Api\V1\Iam'], function ($routes) {
+$routes->group('iam', ['namespace' => '\App\Controllers\Api\V1\Iam'], function ($routes): void {
 
     // Roles, permissions and applications are managed exclusively by superadmins.
     // Admins consume the IAM graph indirectly: they assign roles to users via
     // the Users module form, gated by anti-escalation in UserRoleAssignmentService.
-    $routes->group('', ['filter' => ['jwtauth', 'permission:iam.superadmin-access', 'throttle']], function ($routes) {
+    $routes->group('', ['filter' => ['jwtauth', 'permission:iam.superadmin-access', 'throttle']], function ($routes): void {
         // Application Routes (read-only lookup; apps are created via `php spark apps:bootstrap`)
         $routes->get('applications', 'ApplicationController::index');
         $routes->get('applications/(:num)', 'ApplicationController::show/$1');

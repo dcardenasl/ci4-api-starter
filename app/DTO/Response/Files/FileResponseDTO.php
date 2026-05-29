@@ -50,6 +50,12 @@ readonly class FileResponseDTO implements DataTransferObjectInterface
         public ?int $width = null,
         #[OA\Property(property: 'height', description: 'Original image height in pixels', nullable: true)]
         public ?int $height = null,
+        #[OA\Property(property: 'alt_text', description: 'Accessibility alt text for images', nullable: true)]
+        public ?string $alt_text = null,
+        #[OA\Property(property: 'caption', description: 'Display caption', nullable: true)]
+        public ?string $caption = null,
+        #[OA\Property(property: 'credit', description: 'Attribution credit', nullable: true)]
+        public ?string $credit = null,
     ) {
     }
 
@@ -87,6 +93,9 @@ readonly class FileResponseDTO implements DataTransferObjectInterface
             variants: is_array($variants) ? $variants : null,
             width: isset($data['width']) ? (int) $data['width'] : null,
             height: isset($data['height']) ? (int) $data['height'] : null,
+            alt_text: isset($data['alt_text']) ? (string) $data['alt_text'] : null,
+            caption: isset($data['caption']) ? (string) $data['caption'] : null,
+            credit: isset($data['credit']) ? (string) $data['credit'] : null,
         );
     }
 
@@ -115,6 +124,9 @@ readonly class FileResponseDTO implements DataTransferObjectInterface
             'variants'      => $this->variants,
             'width'         => $this->width,
             'height'        => $this->height,
+            'alt_text'      => $this->alt_text,
+            'caption'       => $this->caption,
+            'credit'        => $this->credit,
         ];
     }
 

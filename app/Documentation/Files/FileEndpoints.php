@@ -283,6 +283,106 @@ use OpenApi\Attributes as OA;
         new OA\Response(response: 404, description: 'File not found'),
     ]
 )]
+#[OA\Get(
+    path: '/api/v1/files/{id}/info',
+    tags: ['Files'],
+    summary: 'Get file metadata (JSON)',
+    description: 'Returns the JSON metadata for a single file. Unlike the main GET /{id} endpoint, this never triggers a binary download.',
+    security: [['bearerAuth' => []]],
+    parameters: [
+        new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
+    ],
+    responses: [
+        new OA\Response(
+            response: 200,
+            description: 'File metadata',
+            content: new OA\JsonContent(
+                properties: [
+                    new OA\Property(property: 'status', type: 'string', example: 'success'),
+                    new OA\Property(property: 'data', ref: '#/components/schemas/FileResponse'),
+                ],
+                type: 'object'
+            )
+        ),
+        new OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse'),
+        new OA\Response(response: 404, description: 'File not found'),
+    ]
+)]
+#[OA\Get(
+    path: '/api/v1/files/{id}/usages',
+    tags: ['Files'],
+    summary: 'List resources referencing this file',
+    description: 'Returns a list of business resources (e.g. Products, Categories, Posts) that have a foreign key reference to this file.',
+    security: [['bearerAuth' => []]],
+    parameters: [
+        new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
+    ],
+    responses: [
+        new OA\Response(
+            response: 200,
+            description: 'Usage list',
+            content: new OA\JsonContent(
+                properties: [
+                    new OA\Property(property: 'status', type: 'string', example: 'success'),
+                    new OA\Property(
+                        property: 'data',
+                        type: 'array',
+                        items: new OA\Items(
+                            properties: [
+                                new OA\Property(property: 'resource', type: 'string', example: 'products'),
+                                new OA\Property(property: 'resource_id', type: 'integer', example: 45),
+                                new OA\Property(property: 'label', type: 'string', example: 'Logo Apple.png', nullable: true),
+                                new OA\Property(property: 'role', type: 'string', example: 'cover'),
+                            ],
+                            type: 'object'
+                        )
+                    ),
+                ],
+                type: 'object'
+            )
+        ),
+        new OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse'),
+        new OA\Response(response: 404, description: 'File not found'),
+    ]
+)]
+#[OA\Post(
+    path: '/api/v1/files/{id}/regenerate-variants',
+    tags: ['Files'],
+    summary: 'Regenerate image variants',
+    description: 'Deletes existing image variants and recreates them from the stored original file. Only valid for processable image MIME types.',
+    security: [['bearerAuth' => []]],
+    parameters: [
+        new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
+    ],
+    responses: [
+        new OA\Response(
+            response: 200,
+            description: 'Variants regenerated',
+            content: new OA\JsonContent(
+                properties: [
+                    new OA\Property(property: 'status', type: 'string', example: 'success'),
+                    new OA\Property(
+                        property: 'data',
+                        type: 'object',
+                        additionalProperties: new OA\AdditionalProperties(
+                            properties: [
+                                new OA\Property(property: 'path', type: 'string'),
+                                new OA\Property(property: 'url', type: 'string'),
+                                new OA\Property(property: 'width', type: 'integer'),
+                                new OA\Property(property: 'height', type: 'integer'),
+                            ],
+                            type: 'object'
+                        )
+                    ),
+                ],
+                type: 'object'
+            )
+        ),
+        new OA\Response(response: 400, description: 'File is not a processable image'),
+        new OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse'),
+        new OA\Response(response: 404, description: 'File not found'),
+    ]
+)]
 #[OA\Post(
     path: '/api/v1/files/bulk-delete',
     tags: ['Files'],

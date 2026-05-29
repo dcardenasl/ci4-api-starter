@@ -12,7 +12,7 @@ use CodeIgniter\Database\Migration;
  */
 class DropApplicationIdFromRoles extends Migration
 {
-    public function up()
+    public function up(): void
     {
         $duplicates = $this->db->table('roles')
             ->select('code, COUNT(*) AS c')
@@ -70,7 +70,7 @@ class DropApplicationIdFromRoles extends Migration
     }
 
 
-    public function down()
+    public function down(): void
     {
         $this->forge->dropKey('roles', 'uniq_roles_code');
 

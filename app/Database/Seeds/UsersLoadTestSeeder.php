@@ -1,12 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Database\Seeds;
 
 use CodeIgniter\Database\Seeder;
 
 class UsersLoadTestSeeder extends Seeder
 {
-    public function run()
+    public function run(): void
     {
         $count = max(1, (int) env('USERS_FAKE_COUNT', 1000));
         $batchSize = max(50, (int) env('USERS_FAKE_BATCH_SIZE', 250));

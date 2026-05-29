@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * API Key language strings (English)
  */

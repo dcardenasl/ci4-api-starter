@@ -70,7 +70,7 @@ class UserAccountGuardTest extends CIUnitTestCase
 
     public function testActiveVerifiedUserPasses(): void
     {
-        $this->withRequireEmailVerification(true, function () {
+        $this->withRequireEmailVerification(true, function (): void {
             $this->guard->assertCanAuthenticate($this->user());
             $this->addToAssertionCount(1); // no exception
         });
@@ -96,7 +96,7 @@ class UserAccountGuardTest extends CIUnitTestCase
 
     public function testUnverifiedEmailThrowsWhenVerificationRequired(): void
     {
-        $this->withRequireEmailVerification(true, function () {
+        $this->withRequireEmailVerification(true, function (): void {
             $this->expectException(AuthenticationException::class);
             $this->guard->assertCanAuthenticate($this->user(['email_verified_at' => null]));
         });
@@ -104,7 +104,7 @@ class UserAccountGuardTest extends CIUnitTestCase
 
     public function testUnverifiedEmailPassesWhenVerificationDisabled(): void
     {
-        $this->withRequireEmailVerification(false, function () {
+        $this->withRequireEmailVerification(false, function (): void {
             $this->guard->assertCanAuthenticate($this->user(['email_verified_at' => null]));
             $this->addToAssertionCount(1);
         });
@@ -112,7 +112,7 @@ class UserAccountGuardTest extends CIUnitTestCase
 
     public function testGoogleOAuthUserPassesEvenWhenUnverified(): void
     {
-        $this->withRequireEmailVerification(true, function () {
+        $this->withRequireEmailVerification(true, function (): void {
             $this->guard->assertCanAuthenticate($this->user([
                 'email_verified_at' => null,
                 'oauth_provider'    => 'google',
@@ -125,7 +125,7 @@ class UserAccountGuardTest extends CIUnitTestCase
     {
         // A pending user with unverified email gets the status error first,
         // not the email verification error. Ensures the order is stable.
-        $this->withRequireEmailVerification(true, function () {
+        $this->withRequireEmailVerification(true, function (): void {
             try {
                 $this->guard->assertCanAuthenticate($this->user([
                     'status'            => 'pending_approval',

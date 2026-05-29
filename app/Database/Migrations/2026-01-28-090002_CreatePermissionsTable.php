@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Database\Migrations;
 
 use CodeIgniter\Database\Migration;
@@ -7,7 +9,7 @@ use CodeIgniter\Database\RawSql;
 
 class CreatePermissionsTable extends Migration
 {
-    public function up()
+    public function up(): void
     {
         $this->forge->addField([
             'id' => [
@@ -58,7 +60,7 @@ class CreatePermissionsTable extends Migration
         $this->forge->createTable('permissions');
     }
 
-    public function down()
+    public function down(): void
     {
         $this->forge->dropTable('permissions');
     }

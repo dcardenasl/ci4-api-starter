@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * Cadenas de idioma para API Keys (Español)
  */

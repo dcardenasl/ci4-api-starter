@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Libraries\Storage;
 
 use App\Libraries\Storage\Drivers\LocalDriver;

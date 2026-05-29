@@ -8,7 +8,7 @@ use CodeIgniter\Database\Migration;
 
 class AddIsSelfAssignableToRoles extends Migration
 {
-    public function up()
+    public function up(): void
     {
         $this->forge->addColumn('roles', [
             'is_self_assignable' => [
@@ -24,7 +24,7 @@ class AddIsSelfAssignableToRoles extends Migration
         $this->db->table('roles')->where('code', 'user')->update(['is_self_assignable' => 1]);
     }
 
-    public function down()
+    public function down(): void
     {
         $this->forge->dropColumn('roles', 'is_self_assignable');
     }

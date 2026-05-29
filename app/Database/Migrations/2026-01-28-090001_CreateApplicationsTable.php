@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Database\Migrations;
 
 use CodeIgniter\Database\Migration;
@@ -7,7 +9,7 @@ use CodeIgniter\Database\RawSql;
 
 class CreateApplicationsTable extends Migration
 {
-    public function up()
+    public function up(): void
     {
         $this->forge->addField([
             'id' => [
@@ -36,7 +38,7 @@ class CreateApplicationsTable extends Migration
         $this->forge->createTable('applications');
     }
 
-    public function down()
+    public function down(): void
     {
         $this->forge->dropTable('applications');
     }

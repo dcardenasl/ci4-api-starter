@@ -1994,6 +1994,204 @@
                 ]
             }
         },
+        "/api/v1/files/{id}/info": {
+            "get": {
+                "tags": [
+                    "Files"
+                ],
+                "summary": "Get file metadata (JSON)",
+                "description": "Returns the JSON metadata for a single file. Unlike the main GET /{id} endpoint, this never triggers a binary download.",
+                "operationId": "45f7766d86d5ab2f316f623ae1d34296",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "File metadata",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/FileResponse"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "404": {
+                        "description": "File not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/files/{id}/usages": {
+            "get": {
+                "tags": [
+                    "Files"
+                ],
+                "summary": "List resources referencing this file",
+                "description": "Returns a list of business resources (e.g. Products, Categories, Posts) that have a foreign key reference to this file.",
+                "operationId": "324a2d2148a1472e2f5b24193a68060e",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Usage list",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "resource": {
+                                                        "type": "string",
+                                                        "example": "products"
+                                                    },
+                                                    "resource_id": {
+                                                        "type": "integer",
+                                                        "example": 45
+                                                    },
+                                                    "label": {
+                                                        "type": "string",
+                                                        "example": "Logo Apple.png",
+                                                        "nullable": true
+                                                    },
+                                                    "role": {
+                                                        "type": "string",
+                                                        "example": "cover"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "404": {
+                        "description": "File not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/files/{id}/regenerate-variants": {
+            "post": {
+                "tags": [
+                    "Files"
+                ],
+                "summary": "Regenerate image variants",
+                "description": "Deletes existing image variants and recreates them from the stored original file. Only valid for processable image MIME types.",
+                "operationId": "7191bfba770ecd9780dcebd6f32f8dba",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Variants regenerated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "data": {
+                                            "type": "object",
+                                            "additionalProperties": {
+                                                "properties": {
+                                                    "path": {
+                                                        "type": "string"
+                                                    },
+                                                    "url": {
+                                                        "type": "string"
+                                                    },
+                                                    "width": {
+                                                        "type": "integer"
+                                                    },
+                                                    "height": {
+                                                        "type": "integer"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "File is not a processable image"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "404": {
+                        "description": "File not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/v1/files/bulk-delete": {
             "post": {
                 "tags": [
@@ -3695,6 +3893,13 @@
                         "items": {
                             "type": "integer"
                         }
+                    },
+                    "permission_codes": {
+                        "description": "Permission codes to attach to the role",
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
                     }
                 },
                 "type": "object"
@@ -4631,6 +4836,21 @@
                     "height": {
                         "description": "Original image height in pixels",
                         "type": "integer",
+                        "nullable": true
+                    },
+                    "alt_text": {
+                        "description": "Accessibility alt text for images",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "caption": {
+                        "description": "Display caption",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "credit": {
+                        "description": "Attribution credit",
+                        "type": "string",
                         "nullable": true
                     }
                 },

@@ -63,7 +63,7 @@ class RbacBootstrapSeeder extends Seeder
         ],
     ];
 
-    public function run()
+    public function run(): void
     {
         $appId = $this->ensureApplication(self::APP_SELF);
         $permissionIds = $this->ensurePermissions($appId);

@@ -4837,6 +4837,21 @@
                         "description": "Original image height in pixels",
                         "type": "integer",
                         "nullable": true
+                    },
+                    "alt_text": {
+                        "description": "Accessibility alt text for images",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "caption": {
+                        "description": "Display caption",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "credit": {
+                        "description": "Attribution credit",
+                        "type": "string",
+                        "nullable": true
                     }
                 },
                 "type": "object"

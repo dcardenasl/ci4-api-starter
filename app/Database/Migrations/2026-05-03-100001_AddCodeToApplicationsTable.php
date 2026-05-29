@@ -8,7 +8,7 @@ use CodeIgniter\Database\Migration;
 
 class AddCodeToApplicationsTable extends Migration
 {
-    public function up()
+    public function up(): void
     {
         $this->forge->addColumn('applications', [
             'code' => [
@@ -32,7 +32,7 @@ class AddCodeToApplicationsTable extends Migration
         $this->forge->processIndexes('applications');
     }
 
-    public function down()
+    public function down(): void
     {
         $this->forge->dropKey('applications', 'uniq_applications_code');
         $this->forge->dropColumn('applications', 'code');

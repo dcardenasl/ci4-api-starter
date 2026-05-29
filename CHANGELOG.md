@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.4.0] — 2026-05-29
+
+### Added
+
+- **Dynamic Test Suites:** Implemented dynamic test discovery and execution patterns (`F9`) to ensure feature-test coverage scales with scaffolded domain modules.
+
+### Changed
+
+- **Platform Coherence:**
+  - `dcardenasl/ci4-api-core` bumped to `^0.9.0`.
+  - `dcardenasl/ci4-api-scaffolding` bumped to `^0.7.0`.
+  - Enforced strict CS-Fixer rules and implemented PHPStan bootstrap hardening (`F6`) to maintain Level 8 compliance.
+- **Dependencies:** Updated to align with current CI4 ecosystem requirements.
+
 ## [2.3.0] — 2026-05-27
 
 ### Added

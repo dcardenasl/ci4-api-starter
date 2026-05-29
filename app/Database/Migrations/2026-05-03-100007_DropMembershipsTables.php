@@ -12,7 +12,7 @@ use CodeIgniter\Database\Migration;
  */
 class DropMembershipsTables extends Migration
 {
-    public function up()
+    public function up(): void
     {
         if ($this->db->tableExists('membership_roles')) {
             $this->forge->dropTable('membership_roles', true);
@@ -23,7 +23,7 @@ class DropMembershipsTables extends Migration
         }
     }
 
-    public function down()
+    public function down(): void
     {
         // Forward-only. Use the original CreateAppUserMembershipsTable and
         // CreateMembershipRolesTable migrations to recreate the legacy schema.

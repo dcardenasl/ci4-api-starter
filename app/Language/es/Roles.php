@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 return [
     'create_success' => 'Role creado(a) exitosamente.',
     'update_success' => 'Role actualizado(a) exitosamente.',

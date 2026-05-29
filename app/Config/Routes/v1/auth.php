@@ -1,9 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 /** @var \CodeIgniter\Router\RouteCollection $routes */
 
 // Public routes
-$routes->group('', ['filter' => 'authThrottle'], function ($routes) {
+$routes->group('', ['filter' => 'authThrottle'], function ($routes): void {
     $routes->post('auth/login', '\App\Controllers\Api\V1\Auth\AuthController::login');
     $routes->post('auth/google-login', '\App\Controllers\Api\V1\Auth\AuthController::googleLogin');
     $routes->post('auth/register', '\App\Controllers\Api\V1\Auth\AuthController::register');
@@ -18,13 +20,13 @@ $routes->group('', ['filter' => 'authThrottle'], function ($routes) {
 });
 
 // App-authenticated routes (X-App-Key, no JWT required)
-$routes->group('', ['filter' => ['appKeyRequired', 'throttle']], function ($routes) {
+$routes->group('', ['filter' => ['appKeyRequired', 'throttle']], function ($routes): void {
     $routes->post('auth/introspect', '\App\Controllers\Api\V1\Auth\IntrospectController::introspect');
     $routes->post('auth/service-token', '\App\Controllers\Api\V1\Auth\ServiceTokenController::issue');
 });
 
 // Protected routes
-$routes->group('', ['filter' => ['jwtauth', 'throttle']], function ($routes) {
+$routes->group('', ['filter' => ['jwtauth', 'throttle']], function ($routes): void {
     $routes->get('auth/me', '\App\Controllers\Api\V1\Auth\AuthController::me');
     $routes->patch('auth/me', '\App\Controllers\Api\V1\Auth\AuthController::updateMe');
     $routes->post('auth/resend-verification', '\App\Controllers\Api\V1\Identity\VerificationController::resend');

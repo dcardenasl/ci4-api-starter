@@ -9,7 +9,7 @@ use CodeIgniter\Database\RawSql;
 
 class CreateUserRolesTable extends Migration
 {
-    public function up()
+    public function up(): void
     {
         $this->forge->addField([
             'user_id' => [
@@ -43,7 +43,7 @@ class CreateUserRolesTable extends Migration
         $this->forge->createTable('user_roles');
     }
 
-    public function down()
+    public function down(): void
     {
         $this->forge->dropTable('user_roles');
     }

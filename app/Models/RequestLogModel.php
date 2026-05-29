@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 class RequestLogModel extends \dcardenasl\Ci4ApiCore\Models\BaseAuditableModel

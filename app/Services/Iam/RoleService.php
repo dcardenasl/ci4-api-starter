@@ -159,17 +159,30 @@ class RoleService extends BaseCrudService implements RoleServiceInterface
     {
         return $this->wrapInTransaction(function () use ($roleId, $request, $context) {
             $this->ensureRoleExists($roleId);
-            $this->authz->assertCanModifyRole($context, $roleId);
-            $this->authz->assertCanGrantPermissions($context, $request->permission_ids);
 
             $db = Database::connect();
+
+            // Resolve permission codes to IDs if present
+            $permissionIds = $request->permission_ids;
+            if (!empty($request->permission_codes)) {
+                $resolvedQuery = $db->table('permissions')
+                    ->whereIn('code', $request->permission_codes)
+                    ->select('id')->get();
+                $resolvedRows = $resolvedQuery === false ? [] : $resolvedQuery->getResultArray();
+                $resolvedIds = array_map(static fn (array $r) => (int) $r['id'], $resolvedRows);
+                $permissionIds = array_values(array_unique(array_merge($permissionIds, $resolvedIds)));
+            }
+
+            $this->authz->assertCanModifyRole($context, $roleId);
+            $this->authz->assertCanGrantPermissions($context, $permissionIds);
+
             $existingQuery = $db->table('role_permissions')
                 ->where('role_id', $roleId)
                 ->select('permission_id')->get();
             $existing = $existingQuery === false ? [] : $existingQuery->getResultArray();
             $existingIds = array_map(static fn (array $r) => (int) $r['permission_id'], $existing);
 
-            $toInsert = array_diff($request->permission_ids, $existingIds);
+            $toInsert = array_diff($permissionIds, $existingIds);
 
             if ($toInsert !== []) {
                 $validQuery = $db->table('permissions')

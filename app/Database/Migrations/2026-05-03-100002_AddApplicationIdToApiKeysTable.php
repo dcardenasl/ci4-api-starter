@@ -8,7 +8,7 @@ use CodeIgniter\Database\Migration;
 
 class AddApplicationIdToApiKeysTable extends Migration
 {
-    public function up()
+    public function up(): void
     {
         $this->forge->addColumn('api_keys', [
             'application_id' => [
@@ -32,7 +32,7 @@ class AddApplicationIdToApiKeysTable extends Migration
         $this->forge->processIndexes('api_keys');
     }
 
-    public function down()
+    public function down(): void
     {
         $this->forge->dropForeignKey('api_keys', 'api_keys_application_id_foreign');
         $this->forge->dropColumn('api_keys', 'application_id');

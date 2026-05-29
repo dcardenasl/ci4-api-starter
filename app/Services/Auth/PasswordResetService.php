@@ -120,7 +120,7 @@ class PasswordResetService implements \App\Interfaces\Auth\PasswordResetServiceI
             throw new NotFoundException(lang('PasswordReset.userNotFound'));
         }
 
-        $this->wrapInTransaction(function () use ($user, $request) {
+        $this->wrapInTransaction(function () use ($user, $request): void {
             $updateData = ['password' => password_hash($request->password, PASSWORD_BCRYPT)];
 
             $wasInvited = ($user->status ?? null) === 'invited' || ($user->invited_at ?? null) !== null;
@@ -142,7 +142,7 @@ class PasswordResetService implements \App\Interfaces\Auth\PasswordResetServiceI
 
     private function reactivateDeletedUserForApproval(\App\Entities\UserEntity $user, string $email, ?SecurityContext $context = null): void
     {
-        $this->wrapInTransaction(function () use ($user, $email, $context) {
+        $this->wrapInTransaction(function () use ($user, $email, $context): void {
             $requiresVerification = Hasher::isEmailVerificationRequired();
             $status = $requiresVerification ? 'pending_approval' : 'active';
             $now = date('Y-m-d H:i:s');

@@ -1,12 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Database\Migrations;
 
 use CodeIgniter\Database\Migration;
 
 class CreateRolePermissionsTable extends Migration
 {
-    public function up()
+    public function up(): void
     {
         $this->forge->addField([
             'role_id' => [
@@ -29,7 +31,7 @@ class CreateRolePermissionsTable extends Migration
         $this->forge->createTable('role_permissions');
     }
 
-    public function down()
+    public function down(): void
     {
         $this->forge->dropTable('role_permissions');
     }

@@ -1,8 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 /** @var \CodeIgniter\Router\RouteCollection $routes */
 
-$routes->group('files', ['filter' => ['jwtauth', 'throttle']], function ($routes) {
+$routes->group('files', ['filter' => ['jwtauth', 'throttle']], function ($routes): void {
     $routes->get('', '\App\Controllers\Api\V1\Files\FileController::index');
     $routes->post('upload', '\App\Controllers\Api\V1\Files\FileController::upload');
     $routes->post('bulk-delete', '\App\Controllers\Api\V1\Files\FileController::bulkDelete');

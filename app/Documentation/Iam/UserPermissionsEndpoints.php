@@ -52,7 +52,7 @@ class UserPermissionsEndpoints
             new OA\Response(response: 422, description: 'Missing or invalid app code'),
         ]
     )]
-    public function index()
+    public function index(): void
     {
     }
 }

@@ -55,6 +55,85 @@ class FileControllerTest extends ApiTestCase
         $result->assertStatus(200);
     }
 
+    public function testGetFileInfoReturnsSuccess(): void
+    {
+        \dcardenasl\Ci4ApiCore\Http\ContextHolder::set(new \dcardenasl\Ci4ApiCore\Dto\SecurityContext($this->currentUserId, [], \App\Support\TestPermissionResolver::permissionsForRole((string) $this->currentUserRole)));
+        $fileId = $this->createFile($this->currentUserId);
+
+        $result = $this->withHeaders(['Authorization' => "Bearer {$this->token}"])
+            ->get("/api/v1/files/{$fileId}/info");
+
+        $result->assertStatus(200);
+        $json = $this->getResponseJson($result);
+        $this->assertEquals('success', $json['status']);
+        $this->assertEquals($fileId, $json['data']['id']);
+    }
+
+    public function testGetFileUsagesReturnsSuccess(): void
+    {
+        \dcardenasl\Ci4ApiCore\Http\ContextHolder::set(new \dcardenasl\Ci4ApiCore\Dto\SecurityContext($this->currentUserId, [], \App\Support\TestPermissionResolver::permissionsForRole((string) $this->currentUserRole)));
+        $fileId = $this->createFile($this->currentUserId);
+
+        $result = $this->withHeaders(['Authorization' => "Bearer {$this->token}"])
+            ->get("/api/v1/files/{$fileId}/usages");
+
+        $result->assertStatus(200);
+        $json = $this->getResponseJson($result);
+        $this->assertIsArray($json['data']);
+    }
+
+    public function testUpdateFileMetadataReturnsSuccess(): void
+    {
+        \dcardenasl\Ci4ApiCore\Http\ContextHolder::set(new \dcardenasl\Ci4ApiCore\Dto\SecurityContext($this->currentUserId, [], \App\Support\TestPermissionResolver::permissionsForRole((string) $this->currentUserRole)));
+        $fileId = $this->createFile($this->currentUserId);
+
+        $result = $this->withHeaders(['Authorization' => "Bearer {$this->token}"])
+            ->patch("/api/v1/files/{$fileId}", [
+                'alt_text' => 'Updated Alt Text',
+                'caption'  => 'Updated Caption',
+                'credit'   => 'Updated Credit',
+            ]);
+
+        $result->assertStatus(200);
+        $json = $this->getResponseJson($result);
+        $this->assertEquals('Updated Alt Text', $json['data']['alt_text']);
+        $this->assertEquals('Updated Caption', $json['data']['caption']);
+        $this->assertEquals('Updated Credit', $json['data']['credit']);
+    }
+
+    public function testUpdateFileMetadataFailsWithEmptyData(): void
+    {
+        \dcardenasl\Ci4ApiCore\Http\ContextHolder::set(new \dcardenasl\Ci4ApiCore\Dto\SecurityContext($this->currentUserId, [], \App\Support\TestPermissionResolver::permissionsForRole((string) $this->currentUserRole)));
+        $fileId = $this->createFile($this->currentUserId);
+
+        $result = $this->withHeaders(['Authorization' => "Bearer {$this->token}"])
+            ->patch("/api/v1/files/{$fileId}", []);
+
+        $result->assertStatus(400); // Handled by DTO map throwing BadRequestException
+    }
+
+    public function testRegenerateVariantsOnNonImageReturns400(): void
+    {
+        \dcardenasl\Ci4ApiCore\Http\ContextHolder::set(new \dcardenasl\Ci4ApiCore\Dto\SecurityContext($this->currentUserId, [], \App\Support\TestPermissionResolver::permissionsForRole((string) $this->currentUserRole)));
+        $fileId = $this->createFile($this->currentUserId, 'application/pdf');
+
+        $result = $this->withHeaders(['Authorization' => "Bearer {$this->token}"])
+            ->post("/api/v1/files/{$fileId}/regenerate-variants");
+
+        $result->assertStatus(400);
+    }
+
+    public function testReplaceFileRequiresBinary(): void
+    {
+        \dcardenasl\Ci4ApiCore\Http\ContextHolder::set(new \dcardenasl\Ci4ApiCore\Dto\SecurityContext($this->currentUserId, [], \App\Support\TestPermissionResolver::permissionsForRole((string) $this->currentUserRole)));
+        $fileId = $this->createFile($this->currentUserId);
+
+        $result = $this->withHeaders(['Authorization' => "Bearer {$this->token}"])
+            ->post("/api/v1/files/{$fileId}/replace", []);
+
+        $result->assertStatus(422); // Validation fails in DTO
+    }
+
     public function testDeleteFileReturnsSuccess(): void
     {
         \dcardenasl\Ci4ApiCore\Http\ContextHolder::set(new \dcardenasl\Ci4ApiCore\Dto\SecurityContext($this->currentUserId, [], \App\Support\TestPermissionResolver::permissionsForRole((string) $this->currentUserRole)));
@@ -208,13 +287,13 @@ class FileControllerTest extends ApiTestCase
         $this->assertArrayHasKey('error', $byId[$missing]);
     }
 
-    private function createFile(int $userId): int
+    private function createFile(int $userId, string $mimeType = 'image/jpeg'): int
     {
         return (int) $this->fileModel->insert([
             'user_id' => $userId,
             'original_name' => 'example.pdf',
             'stored_name' => 'example_123.pdf',
-            'mime_type' => 'application/pdf',
+            'mime_type' => $mimeType,
             'size' => 1234,
             'storage_driver' => 's3',
             'path' => '2024/01/01/example_123.pdf',

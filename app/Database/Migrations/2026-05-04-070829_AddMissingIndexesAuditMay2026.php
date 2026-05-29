@@ -39,7 +39,7 @@ class AddMissingIndexesAuditMay2026 extends Migration
         ['table' => 'password_resets', 'name' => 'idx_password_resets_expires_at',  'columns' => ['expires_at']],
     ];
 
-    public function up()
+    public function up(): void
     {
         foreach ($this->indexes as $idx) {
             if (! $this->db->tableExists($idx['table'])) {
@@ -62,7 +62,7 @@ class AddMissingIndexesAuditMay2026 extends Migration
         }
     }
 
-    public function down()
+    public function down(): void
     {
         foreach (array_reverse($this->indexes) as $idx) {
             if (! $this->db->tableExists($idx['table'])) {

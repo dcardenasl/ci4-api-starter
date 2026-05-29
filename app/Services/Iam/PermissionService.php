@@ -46,12 +46,24 @@ class PermissionService extends BaseCrudService implements PermissionServiceInte
     {
         $this->authz->assertSuperAdmin($context);
 
-        // Auto-assign application_id from context if not provided
-        if (empty($data['application_id']) && $context !== null && $context->app_id !== null) {
-            $data['application_id'] = $context->app_id;
+        // Auto-assign application_id from context if not provided, or fallback to resolving from X-App-Key header
+        if (empty($data['application_id'])) {
+            if ($context !== null && $context->app_id !== null) {
+                $data['application_id'] = $context->app_id;
+            } else {
+                $request = \Config\Services::request();
+                $rawKey = $request->getHeaderLine('X-App-Key');
+                if ($rawKey !== '') {
+                    $hash = hash('sha256', $rawKey);
+                    $appKey = \Config\Services::apiKeyModel()->findByHash($hash);
+                    if ($appKey && $appKey->isActive()) {
+                        $data['application_id'] = $appKey->application_id;
+                    }
+                }
+            }
         }
 
-        new PermissionCreateRequestDTO($data);
+        new PermissionCreateRequestDTO($data, \Config\Services::validation());
 
         return parent::beforeStore($data, $context);
     }
@@ -60,7 +72,7 @@ class PermissionService extends BaseCrudService implements PermissionServiceInte
     {
         $this->authz->assertSuperAdmin($context);
 
-        new PermissionUpdateRequestDTO($data);
+        new PermissionUpdateRequestDTO($data, \Config\Services::validation());
 
         return parent::beforeUpdate($id, $data, $context);
     }

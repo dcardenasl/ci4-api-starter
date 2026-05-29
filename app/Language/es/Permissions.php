@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 return [
     'create_success' => 'Permission creado(a) exitosamente.',
     'update_success' => 'Permission actualizado(a) exitosamente.',

@@ -309,7 +309,7 @@ case "$RESET_GIT" in
       exit 1
     fi
     git add .
-    if git commit -m "Initial commit from ci4-api-starter template" >/dev/null 2>&1; then
+    if git commit -m "chore: initial commit from ci4-api-starter template" >/dev/null 2>&1; then
       print_ok "Git repository reset with initial commit"
     else
       print_warn "Git initialized but commit failed — configure git user.name/email and commit manually."

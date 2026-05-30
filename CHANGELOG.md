@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.5.1] — 2026-05-29
+
+### Fixed
+
+- **`AppExceptionHandler`** — restored `extends BaseExceptionHandler` which was inadvertently removed; the class now correctly subclasses `\dcardenasl\Ci4ApiCore\Exceptions\BaseExceptionHandler`, enabling CI4's exception handler wiring to function as intended.
+
 ## [2.5.0] — 2026-05-29
 
 ### Added

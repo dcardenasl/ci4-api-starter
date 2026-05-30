@@ -39,8 +39,22 @@
         "zircote/swagger-php": "^6.0"
     },
     "repositories": [
-        { "type": "path", "url": "../ci4-api-core", "options": { "symlink": true }, "canonical": false },
-        { "type": "path", "url": "../ci4-api-scaffolding", "options": { "symlink": true }, "canonical": false }
+        {
+            "type": "path",
+            "url": "../ci4-api-core",
+            "options": {
+                "symlink": true
+            },
+            "canonical": false
+        },
+        {
+            "type": "path",
+            "url": "../ci4-api-scaffolding",
+            "options": {
+                "symlink": true
+            },
+            "canonical": false
+        }
     ],
     "require-dev": {
         "dcardenasl/ci4-api-scaffolding": "^0.7.1",

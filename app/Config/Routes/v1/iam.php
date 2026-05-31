@@ -6,6 +6,10 @@ declare(strict_types=1);
 
 $routes->group('iam', ['namespace' => '\App\Controllers\Api\V1\Iam'], function ($routes): void {
 
+    // Domain apps can register their own permissions using only an X-App-Key.
+    // Codes must be namespaced to the app's code (e.g. "catalog.*" for app "catalog").
+    $routes->post('self-permissions', 'SelfPermissionsController::sync', ['filter' => ['appKeyRequired', 'throttle']]);
+
     // Roles, permissions and applications are managed exclusively by superadmins.
     // Admins consume the IAM graph indirectly: they assign roles to users via
     // the Users module form, gated by anti-escalation in UserRoleAssignmentService.

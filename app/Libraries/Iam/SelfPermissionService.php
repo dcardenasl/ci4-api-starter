@@ -59,14 +59,20 @@ class SelfPermissionService
                 continue;
             }
 
-            $this->permissionModel->insert([
+            $inserted = $this->permissionModel->insert([
                 'application_id' => $appId,
                 'code'           => $code,
                 'resource'       => (string) ($perm['resource'] ?? ''),
                 'action'         => (string) ($perm['action'] ?? ''),
                 'description'    => (string) ($perm['description'] ?? ''),
             ]);
-            $created++;
+
+            if ($inserted === false || $inserted === 0) {
+                $rejected++;
+                $errors[] = "Failed to insert '{$code}': " . implode(', ', $this->permissionModel->errors());
+            } else {
+                $created++;
+            }
         }
 
         return new SelfPermissionResult($created, $existing, $rejected, $errors);

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.6.0] — 2026-05-31
+
 ### Added
 
 - **`POST /api/v1/iam/self-permissions`** — domain apps can register their own permissions using only an `X-App-Key`, without a superadmin JWT. Each code must be namespaced to the calling app's code (e.g. `catalog.*` for an app registered as `catalog`); out-of-namespace codes are rejected and counted separately. Idempotent: already-registered codes are reported as `existing` and skipped. Route is filtered by `appKeyRequired` + `throttle`. Implemented in `SelfPermissionsController` and `SelfPermissionService`.

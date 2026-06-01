@@ -232,7 +232,11 @@ SUPERADMIN_LAST_NAME="$(ask_with_default "Last name" "Admin")"
 # ---------------------------------------------------------------------------
 
 printf "Install log: %s\n" "$LOG_FILE"
-exec > >(tee -a "$LOG_FILE") 2>&1
+if [ "${CI4_FORCE_LOG_TO_FILE:-false}" = "true" ]; then
+  exec >"$LOG_FILE" 2>&1
+else
+  exec > >(tee -a "$LOG_FILE") 2>&1
+fi
 
 # ---------------------------------------------------------------------------
 # Clone

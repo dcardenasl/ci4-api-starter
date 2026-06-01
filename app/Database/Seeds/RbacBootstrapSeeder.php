@@ -68,6 +68,7 @@ class RbacBootstrapSeeder extends Seeder
         $appId = $this->ensureApplication(self::APP_SELF);
         $permissionIds = $this->ensurePermissions($appId);
         $this->ensureRoles($permissionIds);
+        $this->ensureDomainApplications();
     }
 
     private function ensureApplication(string $name): int
@@ -174,6 +175,43 @@ class RbacBootstrapSeeder extends Seeder
         }
 
         return $map;
+    }
+
+    /**
+     * Re-registers domain applications from DomainAppsRegistry when present.
+     * Idempotent — skips apps that already exist by code. Permissions are NOT
+     * re-seeded here; run `php spark domain:sync-permissions` on each domain
+     * app after a fresh seed to restore their permission rows.
+     */
+    private function ensureDomainApplications(): void
+    {
+        if (!class_exists(\Config\DomainAppsRegistry::class)) {
+            return;
+        }
+
+        $domains = \Config\DomainAppsRegistry::DOMAINS;
+        if (empty($domains)) {
+            return;
+        }
+
+        $now = date('Y-m-d H:i:s');
+        foreach ($domains as $domain) {
+            $code = $domain['code'] ?? '';
+            $name = $domain['name'] ?? $code;
+            if ($code === '') {
+                continue;
+            }
+
+            $existing = $this->db->table('applications')->where('code', $code)->get()->getRowArray();
+            if ($existing === null) {
+                $this->db->table('applications')->insert([
+                    'code'       => $code,
+                    'name'       => $name,
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ]);
+            }
+        }
     }
 
     /**

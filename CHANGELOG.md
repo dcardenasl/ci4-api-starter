@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.6.2] — 2026-06-04
+
+### Fixed
+
+- **`i18n-check.php`** — `require` calls for language files are now wrapped in `try-catch (\Throwable)` so PHP parse errors are reported cleanly as check failures instead of causing a fatal crash.
+
+### Changed
+
+- **`dcardenasl/ci4-api-core` constraint** — bumped from `^0.9.0` to `^1.0`; `dcardenasl/ci4-api-scaffolding` bumped from `^0.7.x` to `^0.7.7` following the stable v1.0.0 release of the core package.
+
 ## [2.6.1] — 2026-06-01
 
 ### Changed

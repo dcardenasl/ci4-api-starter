@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.6.3] — 2026-06-06
+
+### Changed
+
+- **`dcardenasl/ci4-api-scaffolding`** — updated lock from v0.7.7 to v0.7.8, which restores PascalCase test directory output (`tests/Unit`, `tests/Integration`, `tests/Feature`) for generated CRUD modules, so scaffolded test classes are discovered on case-sensitive filesystems.
+
 ## [2.6.2] — 2026-06-04
 
 ### Fixed

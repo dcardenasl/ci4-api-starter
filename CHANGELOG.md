@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.6.4] — 2026-06-10
+
+### Changed
+
+- **`dcardenasl/ci4-api-scaffolding`** — updated constraint from `^0.7.5` to `^1.0` following the stable v1.0.0 release of the scaffolding package.
+
 ## [2.6.3] — 2026-06-06
 
 ### Changed

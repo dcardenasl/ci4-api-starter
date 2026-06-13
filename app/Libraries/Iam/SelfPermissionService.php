@@ -6,6 +6,8 @@ namespace App\Libraries\Iam;
 
 use App\Models\ApplicationModel;
 use App\Models\PermissionModel;
+use Config\Database;
+use Config\Services;
 
 /**
  * Allows a domain app (authenticated via X-App-Key) to register its own
@@ -39,6 +41,7 @@ class SelfPermissionService
         $existing  = 0;
         $rejected  = 0;
         $errors    = [];
+        $permissionIds = [];
 
         foreach ($permissions as $perm) {
             $code = trim((string) ($perm['code'] ?? ''));
@@ -56,6 +59,8 @@ class SelfPermissionService
 
             if ($existingRow !== null) {
                 $existing++;
+                /** @var \App\Entities\PermissionEntity $existingRow */
+                $permissionIds[] = (int) $existingRow->id;
                 continue;
             }
 
@@ -72,9 +77,57 @@ class SelfPermissionService
                 $errors[] = "Failed to insert '{$code}': " . implode(', ', $this->permissionModel->errors());
             } else {
                 $created++;
+                $permissionIds[] = (int) $inserted;
             }
         }
 
+        $this->attachToSuperadmin($permissionIds);
+
         return new SelfPermissionResult($created, $existing, $rejected, $errors);
+    }
+
+    /**
+     * @param list<int> $permissionIds
+     */
+    private function attachToSuperadmin(array $permissionIds): void
+    {
+        $permissionIds = array_values(array_unique(array_filter($permissionIds)));
+        if ($permissionIds === []) {
+            return;
+        }
+
+        $db = Database::connect();
+        $roleResult = $db->table('roles')->where('code', 'superadmin')->get();
+        if (!($roleResult instanceof \CodeIgniter\Database\ResultInterface)) {
+            return;
+        }
+
+        $role = $roleResult->getRowArray();
+        if ($role === null) {
+            return;
+        }
+
+        $roleId = (int) $role['id'];
+        $existingResult = $db->table('role_permissions')
+            ->select('permission_id')
+            ->where('role_id', $roleId)
+            ->whereIn('permission_id', $permissionIds)
+            ->get();
+        if (!($existingResult instanceof \CodeIgniter\Database\ResultInterface)) {
+            return;
+        }
+
+        $existing = $existingResult->getResultArray();
+        $existingIds = array_map(static fn (array $row): int => (int) $row['permission_id'], $existing);
+
+        $rows = [];
+        foreach (array_diff($permissionIds, $existingIds) as $permissionId) {
+            $rows[] = ['role_id' => $roleId, 'permission_id' => (int) $permissionId];
+        }
+
+        if ($rows !== []) {
+            $db->table('role_permissions')->insertBatch($rows);
+            Services::effectivePermissionsResolver(false)->invalidateAll();
+        }
     }
 }

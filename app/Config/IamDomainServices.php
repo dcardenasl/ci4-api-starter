@@ -45,6 +45,17 @@ trait IamDomainServices
         );
     }
 
+    public static function rolePermissionMatrixService(bool $getShared = true): \App\Services\Iam\RolePermissionMatrixService
+    {
+        if ($getShared) {
+            return static::getSharedInstance('rolePermissionMatrixService');
+        }
+
+        return new \App\Services\Iam\RolePermissionMatrixService(
+            \Config\Database::connect()
+        );
+    }
+
     public static function permissionResponseMapper(bool $getShared = true): \dcardenasl\Ci4ApiCore\Mappers\ResponseMapperInterface
     {
         if ($getShared) {
@@ -68,7 +79,8 @@ trait IamDomainServices
             static::iamAuthorizationService(),
             static::validation(),
             static::request(),
-            static::apiKeyRepository()
+            static::apiKeyRepository(),
+            static::effectivePermissionsResolver()
         );
     }
 

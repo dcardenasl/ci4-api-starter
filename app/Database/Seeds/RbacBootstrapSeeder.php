@@ -66,8 +66,8 @@ class RbacBootstrapSeeder extends Seeder
     public function run(): void
     {
         $appId = $this->ensureApplication(self::APP_SELF);
-        $permissionIds = $this->ensurePermissions($appId);
-        $this->ensureRoles($permissionIds);
+        $this->ensurePermissions($appId);
+        $this->ensureRoles($this->allPermissionIdsByCode());
         $this->ensureDomainApplications();
     }
 
@@ -172,6 +172,21 @@ class RbacBootstrapSeeder extends Seeder
 
             $codes = $roleDef['permissions'] === '*' ? array_keys($permissionIds) : $roleDef['permissions'];
             $this->syncRolePermissions($roleId, array_map(static fn (string $c) => $permissionIds[$c], $codes));
+        }
+
+        return $map;
+    }
+
+    /**
+     * @return array<string, int> map of permission code → id across all applications
+     */
+    private function allPermissionIdsByCode(): array
+    {
+        $rows = $this->db->table('permissions')->select('id, code')->get()->getResultArray();
+        $map = [];
+
+        foreach ($rows as $row) {
+            $map[(string) $row['code']] = (int) $row['id'];
         }
 
         return $map;

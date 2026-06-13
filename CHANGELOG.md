@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`RolePermissionMatrixService` and `/api/v1/iam/role-permissions`** — exposes a comprehensive matrix of applications, roles, permissions, and their assignments. Enables admin UIs to render role-permission editors without multiple sequential API calls. Implements `RolePermissionMatrixController` (gated by `permission:iam.admin-access`), service, and response DTO.
+- **`SyncOwnPermissions` command** — artisan-style command for domain apps to self-synchronize permissions after scaffolding new modules. Complements the existing `POST /api/v1/iam/self-permissions` endpoint by providing a convenient CLI interface when running migrations or local seeding.
+
+### Changed
+
+- **Granular permission codes** — scaffolded modules now generate separate `create`, `update`, and `delete` permissions instead of a single `write` permission, enforced at the scaffolding level. Updated `RbacBootstrapSeeder` to reflect this change for the `self` application's canonical permission set.
+
 ## [2.6.4] — 2026-06-10
 
 ### Changed

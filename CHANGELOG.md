@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.7.0] — 2026-06-12
+
 ### Added
 
 - **`RolePermissionMatrixService` and `/api/v1/iam/role-permissions`** — exposes a comprehensive matrix of applications, roles, permissions, and their assignments. Enables admin UIs to render role-permission editors without multiple sequential API calls. Implements `RolePermissionMatrixController` (gated by `permission:iam.admin-access`), service, and response DTO.

@@ -4,17 +4,26 @@ declare(strict_types=1);
 
 namespace App\Controllers\Api\V1\Iam;
 
-use CodeIgniter\Controller;
+use App\Services\Iam\RolePermissionMatrixService;
 use CodeIgniter\HTTP\ResponseInterface;
 use Config\Services;
-use dcardenasl\Ci4ApiCore\Http\ApiResponse;
+use dcardenasl\Ci4ApiCore\Http\ApiController;
 
-class RolePermissionMatrixController extends Controller
+class RolePermissionMatrixController extends ApiController
 {
+    protected RolePermissionMatrixService $rolePermissionMatrixService;
+
+    protected function resolveDefaultService(): object
+    {
+        $this->rolePermissionMatrixService = Services::rolePermissionMatrixService();
+
+        return $this->rolePermissionMatrixService;
+    }
+
     public function index(): ResponseInterface
     {
-        return $this->response
-            ->setStatusCode(200)
-            ->setJSON(ApiResponse::success(Services::rolePermissionMatrixService()->matrix()));
+        return $this->handleRequest(
+            fn () => $this->rolePermissionMatrixService->matrix()
+        );
     }
 }

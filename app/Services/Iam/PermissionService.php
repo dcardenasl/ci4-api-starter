@@ -11,7 +11,6 @@ use App\Interfaces\Iam\PermissionServiceInterface;
 use App\Interfaces\Tokens\ApiKeyRepositoryInterface;
 use CodeIgniter\Validation\ValidationInterface;
 use Config\Database;
-use Config\Services;
 use dcardenasl\Ci4ApiCore\Dto\SecurityContext;
 use dcardenasl\Ci4ApiCore\Http\ApiRequest;
 use dcardenasl\Ci4ApiCore\Mappers\ResponseMapperInterface;
@@ -34,6 +33,7 @@ class PermissionService extends BaseCrudService implements PermissionServiceInte
         private readonly ValidationInterface $validation,
         private readonly ApiRequest $request,
         private readonly ApiKeyRepositoryInterface $apiKeyRepository,
+        private readonly EffectivePermissionsResolver $permissionsResolver,
         private readonly RelationLabelLoader $labels = new RelationLabelLoader()
     ) {
         parent::__construct($permissionRepository, $responseMapper);
@@ -112,7 +112,7 @@ class PermissionService extends BaseCrudService implements PermissionServiceInte
                 'role_id'       => (int) $role['id'],
                 'permission_id' => $permissionId,
             ]);
-            Services::effectivePermissionsResolver(false)->invalidateAll();
+            $this->permissionsResolver->invalidateAll();
         }
     }
 

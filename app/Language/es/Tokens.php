@@ -23,6 +23,10 @@ return [
     'tokenDecodeFailed'            => 'No se pudo decodificar el token',
     'missingRequiredClaims'        => 'El token no contiene los campos requeridos (jti, exp)',
 
+    // Errores de configuración
+    'issuerRequired'        => 'El emisor JWT es requerido. Asegúrese de que app.baseURL esté configurado en .env',
+    'missingBaseURL'        => 'Falta app.baseURL en .env. Se usa como el reclamo del emisor del token JWT.',
+
     // General
     'invalidRequest'        => 'Solicitud inválida',
     'notFound'              => 'No encontrado',

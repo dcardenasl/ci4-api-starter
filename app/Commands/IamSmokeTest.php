@@ -30,7 +30,12 @@ class IamSmokeTest extends BaseCommand
             return 1;
         }
 
-        $base      = rtrim((string) (env('app.baseURL') ?: 'http://localhost:8080'), '/');
+        $base = (string) env('app.baseURL');
+        if (! $base) {
+            CLI::error('Missing app.baseURL in .env. Set it to your API server URL (e.g. http://localhost:8080)');
+            return 1;
+        }
+        $base = rtrim($base, '/');
         $endpoints = [
             'applications' => '/api/v1/iam/applications',
             'permissions'  => '/api/v1/iam/permissions?per_page=3',

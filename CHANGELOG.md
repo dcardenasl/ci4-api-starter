@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`JwtService` issuer validation** — JWT issuer is now required and must be configured via `app.baseURL` in `.env`. Added i18n support for validation error messages with fallback defaults.
+
 ## [2.7.1] — 2026-06-13
 
 ### Changed

@@ -14,7 +14,7 @@ flowchart LR
     Model["Model + Repository"]
     DB[("MySQL<br/>users · roles ·<br/>permissions · audit_logs")]
     ResponseDTO["[ ResponseDTO ]"]
-    ApiResponse["ApiResponse envelope<br/>(or RFC 7807 problem+json)"]
+    ApiResponse["ApiResponse envelope<br/>(canonical error shape)<br/>+ opt-in RFC 7807 problem+json"]
 
     Client -->|"REST + JWT"| Filters --> Controller --> RequestDTO --> Service --> Model --> DB
     Service --> ResponseDTO --> ApiResponse --> Client

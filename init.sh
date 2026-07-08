@@ -135,6 +135,8 @@ if [ "$SKIP_DEPS" = false ]; then
   ci4_install_deps
 fi
 
+ci4_setup_uploads_symlink
+
 print_header "Environment configuration"
 if [ -f ".env" ]; then
   if [ -n "${CI4_OVERWRITE_ENV:-}" ]; then

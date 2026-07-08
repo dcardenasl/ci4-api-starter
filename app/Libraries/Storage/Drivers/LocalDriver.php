@@ -20,20 +20,53 @@ class LocalDriver implements StorageDriverInterface
 
     public function __construct()
     {
-        $this->basePath = config('Api')->fileUploadPath;
+        $uploadPath = config('Api')->fileUploadPath;
 
-        // Ensure path is absolute
-        if (!str_starts_with($this->basePath, '/')) {
-            $this->basePath = FCPATH . $this->basePath;
+        // Ensure path is absolute (relative to project root, not public).
+        // Resolving against FCPATH (the public/ web root) would place uploads
+        // inside the document root, making them directly fetchable by anyone
+        // who can guess the path — bypassing the app's own auth/visibility
+        // checks. Resolving against dirname(FCPATH) keeps the storage root
+        // outside public/; the only files served raw are the ones explicitly
+        // exposed via the public/uploads symlink (see url() below).
+        if (!str_starts_with($uploadPath, '/')) {
+            $projectRoot = dirname(FCPATH);
+            $this->basePath = rtrim($projectRoot, '/') . '/' . ltrim($uploadPath, '/');
+        } else {
+            $this->basePath = $uploadPath;
         }
 
         // Create directory if it doesn't exist
         if (!is_dir($this->basePath)) {
-            mkdir($this->basePath, 0775, true);
+            @mkdir($this->basePath, 0775, true);
+        }
+
+        // Ensure directory is writable
+        if (!is_writable($this->basePath)) {
+            @chmod($this->basePath, 0775);
         }
 
         $adapter = new LocalFilesystemAdapter($this->basePath);
         $this->filesystem = new Filesystem($adapter);
+    }
+
+    /**
+     * Resolve the absolute filesystem path for a storage-relative path.
+     *
+     * This is the single source of truth for "where does the local driver
+     * actually keep its files" — callers that need to touch the filesystem
+     * directly (e.g. FileController's direct-download fast path, or storage
+     * diagnostics) must go through this instead of re-deriving basePath from
+     * config('Api')->fileUploadPath themselves, which is what caused the
+     * write path (this class) and the read path (FileController) to drift
+     * apart before this fix.
+     *
+     * @param string $path Path relative to the storage root
+     * @return string Absolute filesystem path
+     */
+    public function getAbsolutePath(string $path): string
+    {
+        return rtrim($this->basePath, '/') . '/' . ltrim($path, '/');
     }
 
     /**
@@ -114,8 +147,11 @@ class LocalDriver implements StorageDriverInterface
      */
     public function url(string $path): string
     {
-        $relativePath = config('Api')->fileUploadPath;
-        return base_url($relativePath . $path);
+        // Now that the storage root lives outside public/ (see __construct),
+        // files are reachable through the public/uploads symlink rather than
+        // by reconstructing a filesystem path — see install/README for how
+        // that symlink is created.
+        return base_url('uploads/' . $path);
     }
 
     /**

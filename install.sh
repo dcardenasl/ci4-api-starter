@@ -281,6 +281,7 @@ php scripts/set_project_meta.php --name "$PROJECT_NAME_RAW" --description "$PROJ
 print_ok "Project metadata updated"
 
 ci4_install_deps
+ci4_setup_uploads_symlink
 ci4_configure_env
 ci4_prepare_databases
 ci4_verify_database

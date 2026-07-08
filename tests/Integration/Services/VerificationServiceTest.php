@@ -148,6 +148,34 @@ class VerificationServiceTest extends CIUnitTestCase
         $service->sendVerificationEmail(1, new \dcardenasl\Ci4ApiCore\Dto\SecurityContext(1));
     }
 
+    public function testSendVerificationEmailRendersSubjectInExplicitLocale(): void
+    {
+        $user = $this->createUserEntity([
+            'id' => 1,
+            'email' => 'test@example.com',
+            'first_name' => 'Test',
+            'last_name' => 'User',
+            'email_verified_at' => null,
+        ]);
+
+        $service = $this->createServiceWithUser($user);
+
+        $this->mockEmailService->expects($this->once())
+            ->method('queueTemplate')
+            ->with(
+                'verification',
+                'test@example.com',
+                $this->callback(function ($data) {
+                    return $data['subject'] === 'Verifica tu Correo Electrónico'
+                        && $data['locale'] === 'es';
+                })
+            );
+
+        $result = $service->sendVerificationEmail(1, null, 'es');
+
+        $this->assertTrue($result);
+    }
+
     public function testSendVerificationEmailThrowsForAlreadyVerified(): void
     {
         $user = $this->createUserEntity([

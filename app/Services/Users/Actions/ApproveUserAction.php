@@ -7,6 +7,7 @@ namespace App\Services\Users\Actions;
 use App\Entities\UserEntity;
 use App\Interfaces\System\EmailServiceInterface;
 use App\Interfaces\Users\UserRepositoryInterface;
+use App\Traits\LocalizedEmailSubjectResolver;
 use dcardenasl\Ci4ApiCore\Dto\SecurityContext;
 use dcardenasl\Ci4ApiCore\Exceptions\ConflictException;
 use dcardenasl\Ci4ApiCore\Exceptions\NotFoundException;
@@ -15,6 +16,7 @@ use dcardenasl\Ci4ApiCore\Support\ResolvesWebAppLinks;
 class ApproveUserAction
 {
     use ResolvesWebAppLinks;
+    use LocalizedEmailSubjectResolver;
 
     public function __construct(
         protected UserRepositoryInterface $userRepository,
@@ -22,7 +24,7 @@ class ApproveUserAction
     ) {
     }
 
-    public function execute(int $id, ?SecurityContext $context = null, ?string $clientBaseUrl = null): UserEntity
+    public function execute(int $id, ?SecurityContext $context = null, ?string $clientBaseUrl = null, ?string $locale = null): UserEntity
     {
         /** @var UserEntity|null $user */
         $user = $this->userRepository->find($id);
@@ -47,10 +49,13 @@ class ApproveUserAction
             'approved_by' => $context?->user_id,
         ]);
 
+        $emailLocale = $this->normalizeLocale($locale);
+
         $this->emailService->queueTemplate('account-approved', (string) $user->email, [
-            'subject' => lang('Email.accountApproved.subject'),
+            'subject' => $this->subjectForLocale('Email.accountApproved.subject', $emailLocale),
             'display_name' => $user->getDisplayName(),
             'login_link' => $this->buildLoginUrl($clientBaseUrl),
+            'locale' => $emailLocale,
         ]);
 
         /** @var UserEntity|null $approvedUser */

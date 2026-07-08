@@ -62,6 +62,16 @@ php spark migrate
 php spark users:bootstrap-superadmin --email superadmin@example.com --password 'StrongPass123!' --first-name Super --last-name Admin
 ```
 
+> **File storage:** uploaded files are stored under `writable/uploads/` (outside the
+> `public/` document root, by design — see `app/Libraries/Storage/Drivers/LocalDriver.php`).
+> A `public/uploads` symlink to `writable/uploads` is committed to the repo so a plain
+> `git clone` already has it; it's the one controlled way uploaded assets get an
+> unauthenticated public URL (e.g. for `<img>` tags), without exposing the rest of
+> `writable/` (logs, sessions, cache). If the symlink is ever missing — e.g. after a
+> deploy/packaging step that doesn't preserve symlinks — re-run
+> `bash -c 'source scripts/setup.sh && ci4_setup_uploads_symlink'` or recreate it
+> manually with `ln -s ../writable/uploads public/uploads`.
+
 > For Docker workflows: `docker compose up -d` is enough — the entrypoint generates secrets, runs migrations, and seeds RBAC on first start. Then `docker compose exec app php spark users:bootstrap-superadmin --email <e> --password <p>` to create the first user. See `GETTING_STARTED.md` for details.
 > `init.sh` is the supported setup entrypoint for a host-mode setup (no Docker).
 

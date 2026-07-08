@@ -299,6 +299,30 @@ ci4_install_deps() {
   print_ok "Composer dependencies installed"
 }
 
+# Ensure the public/uploads symlink exists, pointing at writable/uploads.
+# The storage root (LocalDriver, see app/Libraries/Storage/Drivers/LocalDriver.php)
+# lives outside the document root for security (writable/ is not directly
+# web-servable), but uploaded assets still need a public, unauthenticated URL
+# for things like <img> tags on the rendered site. This symlink is the one
+# controlled exception: it exposes only writable/uploads, not the rest of
+# writable/ (logs, sessions, cache stay unreachable).
+# This step is idempotent and normally a no-op — the symlink is committed to
+# git (see public/uploads in the repo tree), so a fresh clone already has it.
+# It exists mainly to self-heal setups where the symlink was lost (e.g. a
+# packaging/deploy step that doesn't preserve symlinks).
+ci4_setup_uploads_symlink() {
+  print_header "Checking public/uploads symlink"
+  mkdir -p writable/uploads
+  if [ -L "public/uploads" ]; then
+    print_ok "public/uploads symlink already present"
+  elif [ -e "public/uploads" ]; then
+    print_warn "public/uploads exists but is not a symlink — leaving it untouched. Uploaded files may not be served correctly; see LocalDriver.php."
+  else
+    ln -s ../writable/uploads public/uploads
+    print_ok "Created public/uploads -> writable/uploads symlink"
+  fi
+}
+
 # Write .env from .env.example and configure it via bootstrap_env.php.
 # Globals required: DB_HOST DB_PORT DB_USER DB_PASS DB_NAME TEST_DB_NAME
 ci4_configure_env() {

@@ -7,6 +7,7 @@ namespace App\Services\Auth;
 use App\Interfaces\System\EmailServiceInterface;
 use App\Interfaces\Tokens\RefreshTokenServiceInterface;
 use App\Models\PasswordResetModel;
+use App\Traits\LocalizedEmailSubjectResolver;
 use dcardenasl\Ci4ApiCore\Dto\DataTransferObjectInterface;
 use dcardenasl\Ci4ApiCore\Dto\SecurityContext;
 use dcardenasl\Ci4ApiCore\Exceptions\NotFoundException;
@@ -20,6 +21,7 @@ use dcardenasl\Ci4ApiCore\Support\ResolvesWebAppLinks;
 class PasswordResetService implements \App\Interfaces\Auth\PasswordResetServiceInterface
 {
     use ResolvesWebAppLinks;
+    use LocalizedEmailSubjectResolver;
     use \dcardenasl\Ci4ApiCore\Services\HandlesTransactions;
 
     public function __construct(
@@ -38,6 +40,7 @@ class PasswordResetService implements \App\Interfaces\Auth\PasswordResetServiceI
     {
         /** @var \App\DTO\Request\Identity\ForgotPasswordRequestDTO $request */
         $email = $request->email;
+        $locale = $this->normalizeLocale($request->locale ?? null);
         $user = $this->userRepository->findByEmail($email);
 
         if ($user instanceof \App\Entities\UserEntity) {
@@ -51,9 +54,10 @@ class PasswordResetService implements \App\Interfaces\Auth\PasswordResetServiceI
             $resetLink = $this->buildResetPasswordUrl($token, $email);
             try {
                 $this->emailService->queueTemplate('password-reset', $email, [
-                    'subject' => lang('Email.passwordReset.subject'),
+                    'subject' => $this->subjectForLocale('Email.passwordReset.subject', $locale),
                     'reset_link' => $resetLink,
                     'expires_in' => '60 minutes',
+                    'locale' => $locale,
                 ]);
             } catch (\Throwable $e) {
                 log_message('error', 'Failed to queue password reset email: ' . $e->getMessage());

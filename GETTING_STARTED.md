@@ -59,7 +59,8 @@ HTTP Response (JSON)
 ## Quick Setup (5 Minutes)
 
 ### Prerequisites
-- PHP 8.2+ with extensions: mysqli, mbstring, intl, json
+- PHP 8.2+ with extensions: mysqli, mbstring, intl, json, gd
+- GD built with WebP support (`function_exists('imagewebp')` must return `true`) — image uploads generate `thumb`/`sm`/`md` variants encoded as WebP; without WebP support in GD, variant generation will fail silently and only the original file will be served
 - MySQL 8.0+
 - Composer 2.x
 

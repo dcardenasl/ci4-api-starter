@@ -11,6 +11,8 @@ use App\DTO\Request\Files\FileUploadRequestDTO;
 use App\DTO\Request\Files\UpdateFileMetadataRequestDTO;
 use App\DTO\Response\Files\FileDownloadResponseDTO;
 use App\Interfaces\Files\FileServiceInterface;
+use App\Libraries\Storage\Drivers\LocalDriver;
+use App\Libraries\Storage\StorageManager;
 use CodeIgniter\HTTP\ResponseInterface;
 use Config\Services;
 use dcardenasl\Ci4ApiCore\Http\ApiController;
@@ -69,9 +71,15 @@ class FileController extends ApiController
 
             // For local storage, send file for direct download
             if ($result->storage_driver === 'local') {
-                $filePath = FCPATH . config('Api')->fileUploadPath . $result->path;
+                // Resolve the absolute path via LocalDriver's own basePath
+                // logic instead of reconstructing it from config here — this
+                // was previously a second, drifted copy of the resolution
+                // formula (FCPATH-based) that no longer matched where
+                // LocalDriver actually writes files (dirname(FCPATH)-based).
+                $driver   = (new StorageManager('local'))->getDriver();
+                $filePath = $driver instanceof LocalDriver ? $driver->getAbsolutePath($result->path) : null;
 
-                if (file_exists($filePath)) {
+                if ($filePath !== null && file_exists($filePath)) {
                     $download = $this->response->download($filePath, null);
                     if ($download !== null) {
                         return $download->setFileName($result->original_name);

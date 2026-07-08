@@ -7,6 +7,7 @@ namespace App\Services\Auth;
 use App\Entities\UserEntity;
 use App\Interfaces\System\EmailServiceInterface;
 use App\Models\PasswordResetModel;
+use App\Traits\LocalizedEmailSubjectResolver;
 use dcardenasl\Ci4ApiCore\Security\Token;
 use dcardenasl\Ci4ApiCore\Support\ResolvesWebAppLinks;
 
@@ -18,6 +19,7 @@ use dcardenasl\Ci4ApiCore\Support\ResolvesWebAppLinks;
 class UserInvitationService
 {
     use ResolvesWebAppLinks;
+    use LocalizedEmailSubjectResolver;
 
     public function __construct(
         protected PasswordResetModel $passwordResetModel,
@@ -28,7 +30,7 @@ class UserInvitationService
     /**
      * Send invitation email to a newly created user.
      */
-    public function sendInvitation(UserEntity $user, ?string $clientBaseUrl = null): void
+    public function sendInvitation(UserEntity $user, ?string $clientBaseUrl = null, ?string $locale = null): void
     {
         $email = (string) ($user->email ?? '');
         if ($email === '') {
@@ -36,6 +38,7 @@ class UserInvitationService
         }
 
         $token = Token::generate();
+        $emailLocale = $this->normalizeLocale($locale);
 
         // Standardize the password reset invitation flow
         $this->passwordResetModel->where('email', $email)->delete();
@@ -49,10 +52,11 @@ class UserInvitationService
         $displayName = (string) $user->getDisplayName();
 
         $this->emailService->queueTemplate('invitation', $email, [
-            'subject' => lang('Email.invitation.subject'),
+            'subject' => $this->subjectForLocale('Email.invitation.subject', $emailLocale),
             'display_name' => $displayName,
             'reset_link' => $resetLink,
             'expires_in' => '60 minutes',
+            'locale' => $emailLocale,
         ]);
     }
 }

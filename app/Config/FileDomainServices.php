@@ -13,21 +13,29 @@ trait FileDomainServices
         }
 
         $storage = static::storageManager();
-        $apiConfig = config('Api');
 
         return new \App\Services\Files\FileService(
             static::fileRepository(),
             static::fileResponseMapper(),
             $storage,
             static::auditService(),
-            new \App\Libraries\Files\FilenameGenerator($storage),
+            new \App\Libraries\Files\StorageKeyGenerator(),
             new \App\Libraries\Files\MultipartProcessor(),
             new \App\Libraries\Files\Base64Processor(),
             new \App\Libraries\Files\ImageVariantProcessor(),
             static::fileReferenceRepository(),
-            static::virusScannerService(),
-            $apiConfig->filesUserScoped
+            static::filePolicyService(),
+            static::virusScannerService()
         );
+    }
+
+    public static function filePolicyService(bool $getShared = true): \App\Interfaces\Files\FilePolicyServiceInterface
+    {
+        if ($getShared) {
+            return static::getSharedInstance('filePolicyService');
+        }
+
+        return new \App\Services\Files\FilePolicyService(config('FilePolicy'));
     }
 
     public static function fileResponseMapper(bool $getShared = true): \dcardenasl\Ci4ApiCore\Mappers\ResponseMapperInterface

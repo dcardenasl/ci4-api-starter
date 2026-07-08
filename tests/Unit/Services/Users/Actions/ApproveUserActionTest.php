@@ -121,4 +121,44 @@ class ApproveUserActionTest extends CIUnitTestCase
         $this->assertInstanceOf(UserEntity::class, $result);
         $this->assertEquals('active', $result->status);
     }
+
+    public function testExecuteRendersApprovalEmailSubjectInExplicitLocale(): void
+    {
+        $context = new SecurityContext(99);
+        $pendingUser = new UserEntity([
+            'id' => 8,
+            'email' => 'pending-es@example.com',
+            'first_name' => 'Pendiente',
+            'last_name' => 'Usuario',
+            'status' => 'pending_approval',
+        ]);
+        $approvedUser = new UserEntity([
+            'id' => 8,
+            'email' => 'pending-es@example.com',
+            'first_name' => 'Pendiente',
+            'last_name' => 'Usuario',
+            'status' => 'active',
+        ]);
+
+        $this->mockUserRepository->expects($this->exactly(2))
+            ->method('find')
+            ->with(8)
+            ->willReturnOnConsecutiveCalls($pendingUser, $approvedUser);
+
+        $this->emailService->expects($this->once())
+            ->method('queueTemplate')
+            ->with(
+                'account-approved',
+                'pending-es@example.com',
+                $this->callback(function (array $data): bool {
+                    return $data['subject'] === 'Tu cuenta fue aprobada'
+                        && $data['locale'] === 'es';
+                })
+            )
+            ->willReturn(1);
+
+        $result = $this->action->execute(8, $context, null, 'es');
+
+        $this->assertEquals('active', $result->status);
+    }
 }

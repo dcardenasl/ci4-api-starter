@@ -86,6 +86,41 @@ Key components:
 - `SessionManager::generateSessionResponse()` — embeds `permissions: string[]` in the `user` object of the login/refresh response, and the JWT carries a `scope` claim with the same codes.
 - `app/Database/Seeds/RbacBootstrapSeeder.php` — idempotent seeder for the `self` application, the canonical permission set (`users.read/write`, `files.read/write`, `audit.read`, `metrics.read`, `apikeys.read/write`, `iam.admin-access`, `iam.superadmin-access`), and the three system roles (`superadmin`, `admin`, `user`) with their default permission grants. Must run before `php spark users:bootstrap-superadmin`, which now attaches the `superadmin` role via a `user_roles` row.
 
+### `Config\DomainAppsRegistry` (generated, not present in this base checkout)
+
+`RbacBootstrapSeeder::ensureDomainApplications()` looks for an optional
+`Config\DomainAppsRegistry` class via `class_exists()`. It is **not** part of
+this template — `ci4-kickstart` generates it at `app/Config/DomainAppsRegistry.php`
+after a project's `DOMAIN_BOOTSTRAP_N` checkpoints finish, but only when that
+project's `config.json` declares one or more Domain apps. The generated file is a
+hardcoded `const DOMAINS` array keyed by domain code, e.g.:
+
+```php
+public const DOMAINS = [
+    'cms' => ['name' => 'my-project my-project-domain', 'code' => 'cms', 'app_id' => 3],
+];
+```
+
+Purpose: after `php spark migrate:fresh && php spark db:seed RbacBootstrapSeeder`,
+`ensureDomainApplications()` re-inserts each domain app's row into the
+`applications` table (matched by `code`) without needing the domain app itself to
+be running. `app_id` is carried along for human reference only — the seeder does
+not read it. Domain apps still need `php spark domain:sync-permissions` afterward
+to restore their permission rows; this registry only restores the `applications`
+row.
+
+**Do not hand-author this file here.** Kickstart's `install.sh` (`HUB_REGISTRY`
+checkpoint, `do_generate_hub_registry()`) writes it via unconditional heredoc
+overwrite (`cat > ... <<PHPEOF`), driven entirely by the target project's own
+domain list — it never reads or merges an existing copy. `ci4-api-starter` is
+copied wholesale (`cp -R`, git metadata stripped) into every generated project
+regardless of whether it declares domains, so a stub/example file committed to
+this repo would ship as permanent dead weight in domain-less projects and be
+silently clobbered in projects that do have them. `ensureDomainApplications()`
+already handles the file's absence correctly (`class_exists()` guard, plus an
+empty-`DOMAINS` early return), so a fresh `ci4-api-starter` checkout needs no
+placeholder to behave correctly.
+
 REST endpoints live under `/api/v1/iam/` (all gated by `permission:iam.admin-access`):
 - `roles` CRUD + `roles/{id}/permissions` (list/attach/detach)
 - `permissions` CRUD

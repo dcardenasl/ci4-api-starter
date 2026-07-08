@@ -79,8 +79,7 @@ trait IamDomainServices
             static::iamAuthorizationService(),
             static::validation(),
             static::request(),
-            static::apiKeyRepository(),
-            static::effectivePermissionsResolver()
+            static::apiKeyRepository()
         );
     }
 

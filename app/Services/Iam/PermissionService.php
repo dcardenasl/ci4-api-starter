@@ -9,8 +9,8 @@ use App\DTO\Request\Iam\PermissionUpdateRequestDTO;
 use App\Entities\PermissionEntity;
 use App\Interfaces\Iam\PermissionServiceInterface;
 use App\Interfaces\Tokens\ApiKeyRepositoryInterface;
+use App\Libraries\Iam\SuperadminPermissionAttacher;
 use CodeIgniter\Validation\ValidationInterface;
-use Config\Database;
 use dcardenasl\Ci4ApiCore\Dto\SecurityContext;
 use dcardenasl\Ci4ApiCore\Http\ApiRequest;
 use dcardenasl\Ci4ApiCore\Mappers\ResponseMapperInterface;
@@ -33,7 +33,6 @@ class PermissionService extends BaseCrudService implements PermissionServiceInte
         private readonly ValidationInterface $validation,
         private readonly ApiRequest $request,
         private readonly ApiKeyRepositoryInterface $apiKeyRepository,
-        private readonly EffectivePermissionsResolver $permissionsResolver,
         private readonly RelationLabelLoader $labels = new RelationLabelLoader()
     ) {
         parent::__construct($permissionRepository, $responseMapper);
@@ -86,34 +85,8 @@ class PermissionService extends BaseCrudService implements PermissionServiceInte
 
     protected function afterStore(object $entity, ?SecurityContext $context): void
     {
-        $permissionId = (int) ($entity->id ?? 0);
-        if ($permissionId <= 0) {
-            return;
-        }
-
-        $db = Database::connect();
-        $roleResult = $db->table('roles')->where('code', 'superadmin')->get();
-        if (!($roleResult instanceof \CodeIgniter\Database\ResultInterface)) {
-            return;
-        }
-
-        $role = $roleResult->getRowArray();
-        if ($role === null) {
-            return;
-        }
-
-        $exists = $db->table('role_permissions')
-            ->where('role_id', (int) $role['id'])
-            ->where('permission_id', $permissionId)
-            ->countAllResults() > 0;
-
-        if (! $exists) {
-            $db->table('role_permissions')->insert([
-                'role_id'       => (int) $role['id'],
-                'permission_id' => $permissionId,
-            ]);
-            $this->permissionsResolver->invalidateAll();
-        }
+        $permissionId = isset($entity->id) ? (int) $entity->id : 0;
+        (new SuperadminPermissionAttacher())->attach([$permissionId]);
     }
 
     protected function beforeDelete(int $id, ?SecurityContext $context): void

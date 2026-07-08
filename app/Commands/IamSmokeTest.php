@@ -32,7 +32,7 @@ class IamSmokeTest extends BaseCommand
 
         $base = (string) env('app.baseURL');
         if (! $base) {
-            CLI::error('Missing app.baseURL in .env. Set it to your API server URL (e.g. http://localhost:8080)');
+            CLI::error('Missing app.baseURL in .env. Set it to your API server URL (e.g. http://localhost:8180)');
             return 1;
         }
         $base = rtrim($base, '/');

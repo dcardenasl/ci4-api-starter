@@ -111,7 +111,7 @@ php spark db:seed UsersLoadTestSeeder
 php spark serve
 ```
 
-Your API is now running at `http://localhost:8080` 🎉
+Your API is now running at `http://localhost:8180` 🎉
 
 ---
 
@@ -120,7 +120,7 @@ Your API is now running at `http://localhost:8080` 🎉
 ### Test the Health Endpoint
 
 ```bash
-curl http://localhost:8080/health
+curl http://localhost:8180/health
 ```
 
 **Response (example):**
@@ -140,7 +140,7 @@ curl http://localhost:8080/health
 ### Register a User
 
 ```bash
-curl -X POST http://localhost:8080/api/v1/auth/register \
+curl -X POST http://localhost:8180/api/v1/auth/register \
   -H "Content-Type: application/json" \
   -d '{
     "email": "john@example.com",
@@ -170,7 +170,7 @@ curl -X POST http://localhost:8080/api/v1/auth/register \
 ### Login
 
 ```bash
-curl -X POST http://localhost:8080/api/v1/auth/login \
+curl -X POST http://localhost:8180/api/v1/auth/login \
   -H "Content-Type: application/json" \
   -d '{
     "email": "john@example.com",
@@ -183,7 +183,7 @@ After approval, log in to obtain `access_token` and `refresh_token` for protecte
 ### Refresh Access Token
 
 ```bash
-curl -X POST http://localhost:8080/api/v1/auth/refresh \
+curl -X POST http://localhost:8180/api/v1/auth/refresh \
   -H "Content-Type: application/json" \
   -d '{
     "refresh_token": "YOUR_REFRESH_TOKEN"
@@ -193,7 +193,7 @@ curl -X POST http://localhost:8080/api/v1/auth/refresh \
 ### Access Protected Endpoint
 
 ```bash
-curl -X GET http://localhost:8080/api/v1/users \
+curl -X GET http://localhost:8180/api/v1/users \
   -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
 ```
 
@@ -250,7 +250,7 @@ The migration was generated in Step 1. Review `app/Database/Migrations/*_CreateP
 ### Step 4: Restart the Dev Server
 
 ```bash
-pkill -f 'spark serve'; php spark serve --port 8080 &
+pkill -f 'spark serve'; php spark serve --port 8180 &
 ```
 
 **Required.** CodeIgniter 4 loads routes at boot, so newly generated files under `app/Config/Routes/v1/` are invisible until the server restarts.
@@ -339,8 +339,8 @@ vendor/bin/phpunit tests/Feature      # HTTP tests
 php spark swagger:generate
 ```
 
-View at: `http://localhost:8080/docs/`
-Raw spec: `http://localhost:8080/swagger.json`
+View at: `http://localhost:8180/docs/`
+Raw spec: `http://localhost:8180/swagger.json`
 
 ### Docker Setup
 
@@ -350,7 +350,7 @@ bootstrap on first start. Secrets persist in the `ci4-api-env` named volume
 across `docker compose down` (use `down -v` to reset).
 
 ```bash
-# Start API :8080 and MySQL :3307 (host port).
+# Start API :8180 and MySQL :3307 (host port).
 docker compose up -d
 
 # Create the first superadmin (only manual step; needs your email + password).
@@ -369,7 +369,7 @@ or a `.env` file in the project root — e.g. `MYSQL_ROOT_PASSWORD`,
 `MYSQL_PASSWORD`, `API_HOST_PORT`. `.env.docker.example` documents the full
 set of variables `docker-compose.yml` consumes.
 
-Your API is now running at `http://localhost:8080`.
+Your API is now running at `http://localhost:8180`.
 
 ### 🚀 Production Deployment
 

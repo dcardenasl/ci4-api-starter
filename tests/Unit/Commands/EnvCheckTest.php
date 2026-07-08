@@ -35,7 +35,7 @@ class EnvCheckTest extends CIUnitTestCase
     public function testValidateReturnsNoErrorsForFullyConfiguredDevelopmentEnv(): void
     {
         $resolver = $this->fakeEnv([
-            'app.baseURL'                   => 'http://localhost:8080/',
+            'app.baseURL'                   => 'http://localhost:8180/',
             'database.default.hostname'     => '127.0.0.1',
             'database.default.database'     => 'ci4_api',
             'database.default.username'     => 'root',
@@ -80,7 +80,7 @@ class EnvCheckTest extends CIUnitTestCase
     public function testValidateRejectsShortJwtSecret(): void
     {
         $resolver = $this->fakeEnv([
-            'app.baseURL'                   => 'http://localhost:8080/',
+            'app.baseURL'                   => 'http://localhost:8180/',
             'database.default.hostname'     => '127.0.0.1',
             'database.default.database'     => 'ci4_api',
             'database.default.username'     => 'root',
@@ -96,7 +96,7 @@ class EnvCheckTest extends CIUnitTestCase
     public function testValidateRejectsPlaceholderJwtSecret(): void
     {
         $resolver = $this->fakeEnv([
-            'app.baseURL'                   => 'http://localhost:8080/',
+            'app.baseURL'                   => 'http://localhost:8180/',
             'database.default.hostname'     => '127.0.0.1',
             'database.default.database'     => 'ci4_api',
             'database.default.username'     => 'root',
@@ -112,7 +112,7 @@ class EnvCheckTest extends CIUnitTestCase
     public function testValidateRejectsRepeatingCharSecret(): void
     {
         $resolver = $this->fakeEnv([
-            'app.baseURL'                   => 'http://localhost:8080/',
+            'app.baseURL'                   => 'http://localhost:8180/',
             'database.default.hostname'     => '127.0.0.1',
             'database.default.database'     => 'ci4_api',
             'database.default.username'     => 'root',
@@ -129,7 +129,7 @@ class EnvCheckTest extends CIUnitTestCase
     {
         // CI4's default encryption.key is 32 bytes (AES-256). Should pass.
         $resolver = $this->fakeEnv([
-            'app.baseURL'                   => 'http://localhost:8080/',
+            'app.baseURL'                   => 'http://localhost:8180/',
             'database.default.hostname'     => '127.0.0.1',
             'database.default.database'     => 'ci4_api',
             'database.default.username'     => 'root',
@@ -146,7 +146,7 @@ class EnvCheckTest extends CIUnitTestCase
     {
         // 16 bytes is below the 32-byte AES-256 minimum.
         $resolver = $this->fakeEnv([
-            'app.baseURL'                   => 'http://localhost:8080/',
+            'app.baseURL'                   => 'http://localhost:8180/',
             'database.default.hostname'     => '127.0.0.1',
             'database.default.database'     => 'ci4_api',
             'database.default.username'     => 'root',

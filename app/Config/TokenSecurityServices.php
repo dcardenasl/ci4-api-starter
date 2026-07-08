@@ -19,7 +19,7 @@ trait TokenSecurityServices
         if (! $issuer) {
             $message = lang('Tokens.missingBaseURL');
             if (! $message) {
-                $message = 'Missing app.baseURL in .env. This is used as the JWT token issuer claim. Example: app.baseURL=http://localhost:8080';
+                $message = 'Missing app.baseURL in .env. This is used as the JWT token issuer claim. Example: app.baseURL=http://localhost:8180';
             }
             throw new \LogicException($message);
         }

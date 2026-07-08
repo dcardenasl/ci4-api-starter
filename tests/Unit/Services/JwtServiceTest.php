@@ -23,7 +23,7 @@ class JwtServiceTest extends CIUnitTestCase
         $this->service = new JwtService(
             'test-secret-key-for-unit-tests-minimum-32-chars',
             3600,
-            'http://localhost:8080'
+            'http://localhost:8180'
         );
     }
 

@@ -150,6 +150,62 @@ class PasswordResetServiceTest extends CIUnitTestCase
         $this->assertTrue($result);
     }
 
+    public function testSendResetLinkRendersSubjectInExplicitLocale(): void
+    {
+        $user = $this->createUserEntity([
+            'id' => 1,
+            'email' => 'test@example.com',
+            'status' => 'active',
+        ]);
+
+        $service = $this->createServiceWithUser($user);
+
+        $this->mockEmailService->expects($this->once())
+            ->method('queueTemplate')
+            ->with(
+                'password-reset',
+                'test@example.com',
+                $this->callback(function ($data) {
+                    return $data['subject'] === 'Restablecer tu Contraseña'
+                        && $data['locale'] === 'es';
+                })
+            );
+
+        $result = $service->sendResetLink(new \App\DTO\Request\Identity\ForgotPasswordRequestDTO([
+            'email' => 'test@example.com',
+            'locale' => 'es',
+        ], service('validation')));
+
+        $this->assertTrue($result);
+    }
+
+    public function testSendResetLinkFallsBackToDefaultLocaleForUnsupportedLocale(): void
+    {
+        $user = $this->createUserEntity([
+            'id' => 1,
+            'email' => 'test@example.com',
+            'status' => 'active',
+        ]);
+
+        $service = $this->createServiceWithUser($user);
+        $default = (string) config('App')->defaultLocale;
+
+        $this->mockEmailService->expects($this->once())
+            ->method('queueTemplate')
+            ->with(
+                'password-reset',
+                'test@example.com',
+                $this->callback(function ($data) use ($default) {
+                    return $data['locale'] === $default;
+                })
+            );
+
+        $service->sendResetLink(new \App\DTO\Request\Identity\ForgotPasswordRequestDTO([
+            'email' => 'test@example.com',
+            'locale' => 'fr',
+        ], service('validation')));
+    }
+
     public function testSendResetLinkPreventsEmailEnumeration(): void
     {
         // Test with non-existent user

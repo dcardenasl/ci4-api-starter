@@ -101,7 +101,12 @@ class RefreshTokenModel extends \dcardenasl\Ci4ApiCore\Models\BaseAuditableModel
     }
 
     /**
-     * Get active refresh token with row-level lock (FOR UPDATE)
+     * Get active refresh token with row-level lock (FOR UPDATE).
+     *
+     * SQLite3 (used by the `tests` DB group) does not support the `FOR UPDATE`
+     * syntax, so the clause is only appended for drivers that support it (e.g.
+     * MySQLi in production). Row-level locking is a no-op on SQLite3 regardless,
+     * since it doesn't support concurrent writers the way MySQL/Postgres do.
      */
     public function findActiveForUpdate(string $token): ?object
     {
@@ -110,7 +115,11 @@ class RefreshTokenModel extends \dcardenasl\Ci4ApiCore\Models\BaseAuditableModel
             ->where('expires_at >', date('Y-m-d H:i:s'))
             ->where('revoked_at', null)
             ->builder()
-            ->getCompiledSelect() . ' FOR UPDATE';
+            ->getCompiledSelect();
+
+        if ($this->db->DBDriver !== 'SQLite3') {
+            $sql .= ' FOR UPDATE';
+        }
 
         $result = $this->db->query($sql);
 

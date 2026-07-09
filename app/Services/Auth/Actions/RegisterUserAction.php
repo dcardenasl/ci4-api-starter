@@ -9,6 +9,7 @@ use App\Interfaces\Auth\VerificationServiceInterface;
 use App\Interfaces\System\EmailServiceInterface;
 use App\Interfaces\Users\UserRepositoryInterface;
 use App\Services\Iam\UserRoleAssignmentService;
+use App\Traits\LocalizedEmailSubjectResolver;
 use dcardenasl\Ci4ApiCore\Dto\SecurityContext;
 use dcardenasl\Ci4ApiCore\Exceptions\ValidationException;
 use dcardenasl\Ci4ApiCore\Security\Hasher;
@@ -17,6 +18,7 @@ use dcardenasl\Ci4ApiCore\Support\ResolvesWebAppLinks;
 class RegisterUserAction
 {
     use ResolvesWebAppLinks;
+    use LocalizedEmailSubjectResolver;
 
     public function __construct(
         protected UserRepositoryInterface $userRepository,
@@ -31,6 +33,8 @@ class RegisterUserAction
         $requiresVerification = Hasher::isEmailVerificationRequired();
         $status = $requiresVerification ? 'pending_approval' : 'active';
         $now = date('Y-m-d H:i:s');
+        $locale = $request->locale;
+        $emailLocale = $this->normalizeLocale($locale);
 
         $userId = $this->userRepository->insert([
             'email'      => $request->email,
@@ -56,16 +60,17 @@ class RegisterUserAction
 
         if ($requiresVerification) {
             try {
-                $this->verificationService->sendVerificationEmail((int) $userId, $context);
+                $this->verificationService->sendVerificationEmail((int) $userId, $context, $locale);
             } catch (\Throwable $exception) {
                 log_message('error', 'Failed to send verification email: ' . $exception->getMessage());
             }
         } else {
             try {
                 $this->emailService->queueTemplate('account-approved', (string) $user->email, [
-                    'subject' => lang('Email.accountApproved.subject'),
+                    'subject' => $this->subjectForLocale('Email.accountApproved.subject', $emailLocale),
                     'display_name' => $user->getDisplayName(),
                     'login_link' => $this->buildLoginUrl(),
+                    'locale' => $emailLocale,
                 ]);
             } catch (\Throwable $exception) {
                 log_message('error', 'Failed to queue approval email: ' . $exception->getMessage());

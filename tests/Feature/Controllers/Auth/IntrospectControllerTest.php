@@ -52,7 +52,7 @@ class IntrospectControllerTest extends ApiTestCase
         $expiredJwt   = new JwtService(
             $apiConfig->jwtSecretKey,
             -10,
-            (string) env('app.baseURL', 'http://localhost:8080')
+            (string) env('app.baseURL', 'http://localhost:8180')
         );
         $expiredToken = $expiredJwt->encode($userId, ['users.read']);
 

@@ -135,6 +135,8 @@ if [ "$SKIP_DEPS" = false ]; then
   ci4_install_deps
 fi
 
+ci4_setup_uploads_symlink
+
 print_header "Environment configuration"
 if [ -f ".env" ]; then
   if [ -n "${CI4_OVERWRITE_ENV:-}" ]; then
@@ -232,7 +234,7 @@ if [ "$SKIP_SERVER" = false ]; then
   case "$START_SERVER" in
     [Yy])
       print_header "Starting development server"
-      printf "Server at http://localhost:8080 — press Ctrl+C to stop.\n\n"
+      printf "Server at http://localhost:8180 — press Ctrl+C to stop.\n\n"
       php spark serve
       ;;
     *)

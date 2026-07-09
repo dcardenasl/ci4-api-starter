@@ -22,8 +22,15 @@ readonly class JwtService implements \App\Interfaces\Tokens\JwtServiceInterface
     public function __construct(
         private string $secretKey,
         private int $expirationTime = 3600,
-        private string $issuer = 'http://localhost:8080'
+        private string $issuer = ''
     ) {
+        if (! $issuer) {
+            $message = lang('Tokens.issuerRequired');
+            if (! $message) {
+                $message = 'JWT issuer is required. Pass it via constructor or ensure app.baseURL is set in .env';
+            }
+            throw new RuntimeException($message);
+        }
         if (strlen($this->secretKey) < 32) {
             throw new RuntimeException(lang('Api.jwtSecretTooShort'));
         }

@@ -6,6 +6,7 @@ namespace App\Services\Auth;
 
 use App\Interfaces\System\EmailServiceInterface;
 use App\Interfaces\Users\UserRepositoryInterface;
+use App\Traits\LocalizedEmailSubjectResolver;
 use CodeIgniter\I18n\Time;
 use dcardenasl\Ci4ApiCore\Dto\DataTransferObjectInterface;
 use dcardenasl\Ci4ApiCore\Dto\SecurityContext;
@@ -22,6 +23,7 @@ use dcardenasl\Ci4ApiCore\Support\ResolvesWebAppLinks;
 class VerificationService implements \App\Interfaces\Auth\VerificationServiceInterface
 {
     use ResolvesWebAppLinks;
+    use LocalizedEmailSubjectResolver;
     use \dcardenasl\Ci4ApiCore\Services\HandlesTransactions;
 
     public function __construct(
@@ -34,7 +36,7 @@ class VerificationService implements \App\Interfaces\Auth\VerificationServiceInt
     /**
      * Send verification email to user
      */
-    public function sendVerificationEmail(int $userId, ?SecurityContext $context = null): bool
+    public function sendVerificationEmail(int $userId, ?SecurityContext $context = null, ?string $locale = null): bool
     {
         $user = $this->userRepository->find($userId);
 
@@ -59,13 +61,15 @@ class VerificationService implements \App\Interfaces\Auth\VerificationServiceInt
             'verification_token_expires' => $expiresAt,
         ]);
 
+        $emailLocale = $this->normalizeLocale($locale);
         $verificationLink = $this->buildVerificationUrl($token);
 
         $this->emailService->queueTemplate('verification', (string) $user->email, [
-            'subject' => lang('Email.verification.subject'),
+            'subject' => $this->subjectForLocale('Email.verification.subject', $emailLocale),
             'display_name' => (string) $user->getDisplayName(),
             'verification_link' => $verificationLink,
             'expires_at' => date('F j, Y g:i A', strtotime($expiresAt)),
+            'locale' => $emailLocale,
         ]);
 
         return true;
@@ -134,8 +138,8 @@ class VerificationService implements \App\Interfaces\Auth\VerificationServiceInt
     /**
      * Resend verification email
      */
-    public function resendVerification(int $userId, ?SecurityContext $context = null): bool
+    public function resendVerification(int $userId, ?SecurityContext $context = null, ?string $locale = null): bool
     {
-        return $this->sendVerificationEmail($userId, $context);
+        return $this->sendVerificationEmail($userId, $context, $locale);
     }
 }

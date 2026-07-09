@@ -15,7 +15,7 @@ composer install
 cp .env.example .env
 # Edit .env: set DB credentials, JWT_SECRET_KEY, encryption.key
 php spark migrate
-php spark serve   # http://localhost:8080
+php spark serve   # http://localhost:8180
 ```
 
 ## Branching Strategy

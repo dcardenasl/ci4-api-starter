@@ -7,7 +7,7 @@
     },
     "servers": [
         {
-            "url": "http://localhost:8080",
+            "url": "http://localhost:8180",
             "description": "Local development server"
         }
     ],
@@ -2884,6 +2884,133 @@
                 }
             }
         },
+        "/api/v1/internal/email/queue": {
+            "post": {
+                "tags": [
+                    "Internal"
+                ],
+                "summary": "Queue an email on behalf of a trusted Domain app",
+                "description": "Lets a trusted Domain app queue an email through the Hub's existing EmailService, so the Hub remains the single email sender and Domain apps need no mailer configuration of their own.",
+                "operationId": "4a722f084e929c3b551ea94e0431189f",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/InternalEmailQueueRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Email accepted and queued",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "job_id": {
+                                                    "type": "integer",
+                                                    "example": 128
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "403": {
+                        "description": "X-App-Key is invalid or inactive"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationErrorResponse"
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded"
+                    }
+                },
+                "security": [
+                    {
+                        "appKeyAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/internal/files/batch-meta": {
+            "get": {
+                "tags": [
+                    "Internal"
+                ],
+                "summary": "Batch-resolve public file metadata",
+                "description": "Resolves up to 200 file IDs to their public URL and variant map in one call, without requiring a user JWT. Unknown or soft-deleted IDs are silently omitted from the response; IDs beyond the first 200 are dropped rather than erroring.",
+                "operationId": "93e377d7e5a8f1f7ac9695eafc0967f1",
+                "parameters": [
+                    {
+                        "name": "ids",
+                        "in": "query",
+                        "description": "File IDs to resolve. Repeat as ids[]=1&ids[]=2 or send a comma-separated string.",
+                        "required": true,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "integer"
+                            },
+                            "maxItems": 200
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Metadata keyed by file ID (as a string key in the JSON object)",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "data": {
+                                            "type": "object",
+                                            "additionalProperties": {
+                                                "$ref": "#/components/schemas/InternalFileMeta"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "403": {
+                        "description": "X-App-Key is invalid or inactive"
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded"
+                    }
+                },
+                "security": [
+                    {
+                        "appKeyAuth": []
+                    }
+                ]
+            }
+        },
         "/api/v1/metrics": {
             "get": {
                 "tags": [
@@ -3647,6 +3774,33 @@
                 },
                 "type": "object"
             },
+            "InternalFileMeta": {
+                "title": "Internal File Meta",
+                "description": "Public metadata for a single file, as resolved by the internal batch-meta endpoint",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 42
+                    },
+                    "url": {
+                        "type": "string",
+                        "example": "https://cdn.example.com/files/42/original.jpg",
+                        "nullable": true
+                    },
+                    "variants": {
+                        "type": "object",
+                        "example": {
+                            "thumb": {
+                                "url": "https://cdn.example.com/files/42/thumb.jpg",
+                                "width": 150,
+                                "height": 150
+                            }
+                        },
+                        "additionalProperties": true
+                    }
+                },
+                "type": "object"
+            },
             "MetricsRequestStats": {
                 "title": "Metrics Request Stats",
                 "description": "Aggregated request statistics for a time period",
@@ -3846,6 +4000,12 @@
                         "type": "string",
                         "format": "password",
                         "example": "P@ssw0rd123!"
+                    },
+                    "locale": {
+                        "description": "Preferred locale for localized emails and messages",
+                        "type": "string",
+                        "example": "es",
+                        "nullable": true
                     }
                 },
                 "type": "object"
@@ -4062,6 +4222,39 @@
                 },
                 "type": "object"
             },
+            "InternalEmailQueueRequest": {
+                "title": "Internal Email Queue Request",
+                "description": "Email payload to be queued by the Hub on behalf of a trusted Domain app",
+                "required": [
+                    "to",
+                    "subject",
+                    "message"
+                ],
+                "properties": {
+                    "to": {
+                        "description": "Recipient email address",
+                        "type": "string",
+                        "example": "user@example.com"
+                    },
+                    "subject": {
+                        "description": "Email subject line",
+                        "type": "string",
+                        "example": "Your order has shipped"
+                    },
+                    "message": {
+                        "description": "Email body (HTML)",
+                        "type": "string",
+                        "example": "<p>Your order is on its way.</p>"
+                    },
+                    "text_message": {
+                        "description": "Plain-text fallback body",
+                        "type": "string",
+                        "example": "Your order is on its way.",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
             "UserCreateRequest": {
                 "title": "User Create Request",
                 "description": "Data needed to create a new user",
@@ -4104,6 +4297,12 @@
                         "description": "URL to user avatar image",
                         "type": "string",
                         "example": "https://example.com/avatar.jpg",
+                        "nullable": true
+                    },
+                    "locale": {
+                        "description": "Preferred locale for localized notifications",
+                        "type": "string",
+                        "example": "es",
                         "nullable": true
                     },
                     "role_ids": {
@@ -5732,6 +5931,10 @@
         {
             "name": "Iam",
             "description": "Iam"
+        },
+        {
+            "name": "Internal",
+            "description": "Internal"
         }
     ]
 }

@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.8.0] — 2026-07-09
+
+### Added
+
+- **`JwtService` issuer validation** — JWT issuer is now required and must be configured via `app.baseURL` in `.env`. Added i18n support for validation error messages with fallback defaults.
+- **Internal APIs for storage and permission diagnostics** — new `/api/v1/internal/storage` and `/api/v1/internal/permissions` endpoints for backend health monitoring and auditing. Gated by `permission:iam.superadmin-access`.
+- **Superadmin permission attacher utility** — extracted `SuperadminPermissionAttacher` service to encapsulate the logic for attaching superadmin permissions during user bootstrapping and role assignment workflows.
+- **File policy management and diagnostic commands** — new command `php spark files:validate-policies` to audit file upload restrictions and validate MIME type enforcement against the configuration. Added `FilePolicy` service for role-based file access control.
+- **Enhanced auth flows** — improved verification, registration, and token refresh flows with better error handling and i18n support for validation messages.
+
+### Fixed
+
+- **File MIME type spoofing prevention** — added real fileinfo-based MIME type validation cross-check against filename extension to prevent MIME type spoofing attacks.
+- **Audit facet queries** — added null-safety check for `strtotime()` in audit timestamp faceting to prevent errors when processing edge-case date ranges.
+
+### Changed
+
+- **Auth throttle filter** — refactored cache key generation to be path-aware, preventing false positives when the same IP makes requests to multiple auth endpoints in rapid succession.
+- **Superadmin permission logic** — extracted permission attaching logic from `users:bootstrap-superadmin` command into a dedicated utility service for reuse across workflows.
+- **Default API port** — updated documentation and configuration defaults to use port 8180 consistently across all references.
+
+### Tests
+
+- **Auth, Files, and IAM coverage** — expanded test suites with comprehensive coverage for new auth flows, file policy management, and IAM features.
+- **FileService and AuthThrottleFilter** — added path-aware throttle filter tests and FileService integration tests covering MIME validation and policy checks.
+
 ## [2.7.1] — 2026-06-13
 
 ### Changed
@@ -249,7 +275,7 @@ This release replaces the legacy single-role authorization model with a granular
 #### API governance — ADRs and policy
 - **API versioning policy** (ADR-008): `Config\Api::$apiVersions` map (`v1`, `v2`, …) with `status` / `deprecated_at` / `sunset_at` / `successor` per entry. `DeprecationHeadersFilter` emits `Deprecation`, `Sunset`, and `Link: rel="successor-version"` headers (alias `deprecationheaders`, `globals.after`). `GET /api/versions` returns `{current, versions:[…]}` — public, unauthenticated, no version prefix.
 - **`Idempotency-Key` opt-in support** (ADR-009, RFC-style retry safety): migration `2026-05-06-100000_CreateIdempotencyKeysTable`, `IdempotencyFilter` alias `idempotency` (per-route, not global). 400 on malformed key, replay with `Idempotent-Replay: true` on cache hit + matching body hash, `409 Conflict` with `Idempotency-Mismatch: true` on hit + body mismatch, persist only on 2xx, race-safe insert.
-- **RFC 7807 Problem Details** (ADR-010): additive helpers on `ApiResponse` — `problemDetails(...)`, `negotiateError(...)`, `clientPrefersProblemJson(...)`. Default error envelope preserved untouched; controllers opt in via content negotiation when the client sends `Accept: application/problem+json`.
+- **RFC 7807 Problem Details** (ADR-010): additive helpers on `ApiResponse` — `problemDetails(...)`, `negotiateError(...)`, `clientPrefersProblemJson(...)`. The canonical default envelope stays the same; controllers only opt into RFC 7807 when the client explicitly sends `Accept: application/problem+json`.
 - **ADR-011 — Multi-tenancy out-of-scope for v1.x/v2.x** (EN+ES). The kit is single-tenant; tenancy requires a fork and a documented surface change.
 - **ADR-012 — Config values resolve at boot, not runtime** (EN+ES). The `Config\Api` constructor pattern is contract; env values are read once at boot and treated as immutable for the request lifetime.
 

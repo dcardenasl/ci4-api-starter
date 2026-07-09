@@ -119,7 +119,8 @@ class AuditLogModel extends Model
      */
     public function getActionFacets(int $windowDays = 90, int $limit = 100): array
     {
-        $since = date('Y-m-d H:i:s', strtotime('-' . max(1, $windowDays) . ' days'));
+        $ts    = strtotime('-' . max(1, $windowDays) . ' days');
+        $since = date('Y-m-d H:i:s', $ts !== false ? $ts : time());
         $query = $this->builder()
             ->select('action AS value, COUNT(*) AS count')
             ->where('created_at >=', $since)
@@ -144,7 +145,8 @@ class AuditLogModel extends Model
      */
     public function getEntityTypeFacets(int $windowDays = 90, int $limit = 100): array
     {
-        $since = date('Y-m-d H:i:s', strtotime('-' . max(1, $windowDays) . ' days'));
+        $ts    = strtotime('-' . max(1, $windowDays) . ' days');
+        $since = date('Y-m-d H:i:s', $ts !== false ? $ts : time());
         $query = $this->builder()
             ->select('entity_type AS value, COUNT(*) AS count')
             ->where('created_at >=', $since)

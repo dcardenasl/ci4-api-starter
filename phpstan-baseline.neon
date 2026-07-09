@@ -181,12 +181,6 @@ parameters:
 			path: app/Services/Files/FileService.php
 
 		-
-			message: '#^Method resolve\(\) in DTO\-First Service has array return type\-hint\. Use a DTO or specific object class instead\.$#'
-			identifier: dtoFirst.arrayReturn
-			count: 1
-			path: app/Services/Iam/ApplicationPermissionsResolver.php
-
-		-
 			message: '#^Method listAssignable\(\) in DTO\-First Service has array return type\-hint\. Use a DTO or specific object class instead\.$#'
 			identifier: dtoFirst.arrayReturn
 			count: 1

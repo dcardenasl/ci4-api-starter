@@ -160,7 +160,7 @@ GET /live      Sonda de liveness para Kubernetes
 
 **Registrar:**
 ```bash
-curl -X POST http://localhost:8080/api/v1/auth/register \
+curl -X POST http://localhost:8180/api/v1/auth/register \
   -H "Content-Type: application/json" \
   -d '{"email":"juan@ejemplo.com","first_name":"Juan","last_name":"Perez","password":"ContrasenaSegura123!"}'
 ```
@@ -169,7 +169,7 @@ Nota de respuesta: el auto-registro crea una cuenta `pending_approval`. El login
 
 **Admin crea usuario (flujo de invitación):**
 ```bash
-curl -X POST http://localhost:8080/api/v1/users \
+curl -X POST http://localhost:8180/api/v1/users \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer ADMIN_ACCESS_TOKEN" \
   -d '{"email":"invitado@ejemplo.com","first_name":"Invitado","last_name":"Usuario","role":"user"}'
@@ -178,27 +178,27 @@ El admin no envía contraseña. El sistema la genera internamente y envía un co
 
 **Iniciar sesion:**
 ```bash
-curl -X POST http://localhost:8080/api/v1/auth/login \
+curl -X POST http://localhost:8180/api/v1/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"juan@ejemplo.com","password":"ContrasenaSegura123!"}'
 ```
 
 **Refrescar token:**
 ```bash
-curl -X POST http://localhost:8080/api/v1/auth/refresh \
+curl -X POST http://localhost:8180/api/v1/auth/refresh \
   -H "Content-Type: application/json" \
   -d '{"refresh_token":"TU_REFRESH_TOKEN"}'
 ```
 
 **Usar endpoint protegido:**
 ```bash
-curl -X GET http://localhost:8080/api/v1/users \
+curl -X GET http://localhost:8180/api/v1/users \
   -H "Authorization: Bearer TU_TOKEN_DE_ACCESO"
 ```
 
 **Consulta con filtros:**
 ```bash
-curl -X GET "http://localhost:8080/api/v1/users?filter[role][eq]=admin&search=juan&page=1&limit=10" \
+curl -X GET "http://localhost:8180/api/v1/users?filter[role][eq]=admin&search=juan&page=1&limit=10" \
   -H "Authorization: Bearer TU_TOKEN_DE_ACCESO"
 ```
 
@@ -210,17 +210,17 @@ curl -X GET "http://localhost:8080/api/v1/users?filter[role][eq]=admin&search=ju
 php spark swagger:generate
 
 # Levantar Swagger UI con Docker
-docker run --rm -p 8081:8080 \
+docker run --rm -p 8081:8180 \
   -e SWAGGER_JSON=/swagger.json \
   -v "$(pwd)/public/swagger.json:/swagger.json" \
   swaggerapi/swagger-ui
 ```
 Abrir `http://localhost:8081`.
-Archivo generado: `public/swagger.json` (servido en `http://localhost:8080/swagger.json`)
+Archivo generado: `public/swagger.json` (servido en `http://localhost:8180/swagger.json`)
 
 **Swagger UI embebido (sin Docker):**
 - Archivo: `public/docs/index.html`
-- Abrir `http://localhost:8080/docs/`
+- Abrir `http://localhost:8180/docs/`
 
 **Postman:**
 - Importa `public/swagger.json` en Postman y genera una colección para tu proyecto.
@@ -353,7 +353,7 @@ SLO_API_P95_TARGET_MS=500
 ```bash
 docker-compose up -d
 
-# API: http://localhost:8080
+# API: http://localhost:8180
 # MySQL: localhost:3306
 # Adminer: http://localhost:8081
 ```

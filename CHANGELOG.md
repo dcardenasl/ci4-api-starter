@@ -7,9 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.8.0] — 2026-07-09
+
 ### Added
 
 - **`JwtService` issuer validation** — JWT issuer is now required and must be configured via `app.baseURL` in `.env`. Added i18n support for validation error messages with fallback defaults.
+- **Internal APIs for storage and permission diagnostics** — new `/api/v1/internal/storage` and `/api/v1/internal/permissions` endpoints for backend health monitoring and auditing. Gated by `permission:iam.superadmin-access`.
+- **Superadmin permission attacher utility** — extracted `SuperadminPermissionAttacher` service to encapsulate the logic for attaching superadmin permissions during user bootstrapping and role assignment workflows.
+- **File policy management and diagnostic commands** — new command `php spark files:validate-policies` to audit file upload restrictions and validate MIME type enforcement against the configuration. Added `FilePolicy` service for role-based file access control.
+- **Enhanced auth flows** — improved verification, registration, and token refresh flows with better error handling and i18n support for validation messages.
+
+### Fixed
+
+- **File MIME type spoofing prevention** — added real fileinfo-based MIME type validation cross-check against filename extension to prevent MIME type spoofing attacks.
+- **Audit facet queries** — added null-safety check for `strtotime()` in audit timestamp faceting to prevent errors when processing edge-case date ranges.
+
+### Changed
+
+- **Auth throttle filter** — refactored cache key generation to be path-aware, preventing false positives when the same IP makes requests to multiple auth endpoints in rapid succession.
+- **Superadmin permission logic** — extracted permission attaching logic from `users:bootstrap-superadmin` command into a dedicated utility service for reuse across workflows.
+- **Default API port** — updated documentation and configuration defaults to use port 8180 consistently across all references.
+
+### Tests
+
+- **Auth, Files, and IAM coverage** — expanded test suites with comprehensive coverage for new auth flows, file policy management, and IAM features.
+- **FileService and AuthThrottleFilter** — added path-aware throttle filter tests and FileService integration tests covering MIME validation and policy checks.
 
 ## [2.7.1] — 2026-06-13
 

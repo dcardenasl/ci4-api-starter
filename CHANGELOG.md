@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **`AuthThrottleFilter`** — removed the `auth/login` route-specific override (5 requests/hour); the general `authRateLimitRequests` config is already the stricter value, so the override could only ever loosen the effective limit on the endpoint that matters most.
+- **`pagecache` filter** — removed from `app/Config/Filters.php`; CodeIgniter's page cache was serving stale JSON responses after the underlying data had already changed.
+
 ## [2.8.0] — 2026-07-09
 
 ### Added

@@ -17,7 +17,6 @@ use CodeIgniter\Filters\DebugToolbar;
 use CodeIgniter\Filters\ForceHTTPS;
 use CodeIgniter\Filters\Honeypot;
 use CodeIgniter\Filters\InvalidChars;
-use CodeIgniter\Filters\PageCache;
 use CodeIgniter\Filters\PerformanceMetrics;
 use dcardenasl\Ci4ApiCore\Http\Filters\CorsFilter;
 use dcardenasl\Ci4ApiCore\Http\Filters\LocaleFilter;
@@ -58,7 +57,6 @@ class Filters extends BaseFilters
         'secureheaders' => SecurityHeadersFilter::class,
         'cors'          => CorsFilter::class,
         'forcehttps'    => ForceHTTPS::class,
-        'pagecache'     => PageCache::class,
         'performance'   => PerformanceMetrics::class,
         'jwtauth'       => JwtAuthFilter::class,
         'testauth'      => \App\Filters\TestAuthFilter::class,
@@ -91,10 +89,8 @@ class Filters extends BaseFilters
     public array $required = [
         'before' => [
             // 'forcehttps', // Force Global Secure Requests - Enabled conditionally in constructor
-            'pagecache',  // Web Page Caching
         ],
         'after' => [
-            'pagecache',   // Web Page Caching
             'performance', // Performance Metrics
             'toolbar',     // Debug Toolbar
         ],

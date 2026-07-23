@@ -32,7 +32,6 @@ class AuthThrottleFilter implements FilterInterface
         $maxAttempts = $apiConfig->authRateLimitRequests;
         $window = $apiConfig->authRateLimitWindow;
         $path = $this->resolvePath($request);
-        [$maxAttempts, $window] = $this->applyRouteOverrides($path, $maxAttempts, $window);
         $ip = $request->getIPAddress();
         $user_id = $request instanceof ApiRequest ? $request->getAuthUserId() : null;
 
@@ -125,17 +124,5 @@ class AuthThrottleFilter implements FilterInterface
         $path = $request->getUri()->getPath();
 
         return $path === '' ? '/' : $path;
-    }
-
-    /**
-     * @return array{int,int}
-     */
-    private function applyRouteOverrides(string $path, int $maxAttempts, int $window): array
-    {
-        if (ltrim($path, '/') === 'auth/login') {
-            return [5, $window];
-        }
-
-        return [$maxAttempts, $window];
     }
 }

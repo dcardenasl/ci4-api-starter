@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.8.1] — 2026-07-24
+
 ### Fixed
 
 - **`AuthThrottleFilter`** — removed the `auth/login` route-specific override (5 requests/hour); the general `authRateLimitRequests` config is already the stricter value, so the override could only ever loosen the effective limit on the endpoint that matters most.

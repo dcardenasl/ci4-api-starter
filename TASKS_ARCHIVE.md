@@ -1,7 +1,19 @@
 # TASKS_ARCHIVE — ci4-api-starter
 
 > Historial de tareas completadas. Movido desde TASKS.md para mantener el tracker activo liviano.
-> Última actualización: 2026-05-26
+> Última actualización: 2026-07-24
+
+---
+
+## ✅ Ítems de tracker desactualizados, confirmados resueltos (2026-07-24)
+
+**Contexto:** verificación directa de código durante limpieza cross-repo de `TASKS.md` — el tracker de
+este repo no se había tocado desde 2026-05-26 y quedó desactualizado respecto a trabajo real hecho después.
+
+| ID | Descripción original | Por qué se cierra |
+|---|---|---|
+| API-012 | Docker out-of-the-box — pendiente: orquestación cross-repo en `ci4-kickstart` (coordinada con kickstart v1.1.0+). | **✅ Ya resuelto.** `ci4-kickstart/install.sh` tiene orquestación Docker completa: `docker network create ci4-platform`, passthrough de `--docker-container` a `init.sh`, detección automática de contenedor MySQL para backups (`docker exec ... mysqldump`). Verificado 2026-07-24. |
+| BACKLOG (Files) | Endpoints sueltos que el admin llama pero el API aún no expone (post-API-015): `PATCH /files/{id}`, `POST /files/{id}/replace`, `POST /files/{id}/regenerate-variants`, `GET /files/{id}/usages`. | **✅ Ya resuelto.** Los 4 endpoints existen en `app/Config/Routes/v1/files.php`: `patch('(:num)', ...::metadata)`, `post('(:num)/replace', ...::replace)`, `post('(:num)/regenerate-variants', ...::regenerateVariants)`, `get('(:num)/usages', ...::usages)`. Confirmado también en `ci4-admin-starter/CLAUDE.md`: "added to the hub in May 2026 (audit AUDIT-2026-05-20 finding M5)". Verificado 2026-07-24. |
 
 ---
 

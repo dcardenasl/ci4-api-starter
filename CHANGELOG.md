@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.8.2] — 2026-07-24
+
+### Security
+
+- **`guzzlehttp/guzzle`** bumped 7.10.4 → 7.15.1, **`guzzlehttp/psr7`** 2.10.2 → 2.13.0, **`mtdowling/jmespath.php`** 2.8.0 → 2.9.2 (transitive via `aws/aws-sdk-php`) — resolves 10 advisories including CVE-2026-59883 (Guzzle cookie disclosure/injection via IP-address domains), CVE-2026-59882 (psr7 host confusion via weak URI host validation), and CVE-2026-54133 (jmespath.php code injection via unescaped function names). No code changes required; existing constraints already permitted the patched versions.
+
 ## [2.8.1] — 2026-07-24
 
 ### Fixed

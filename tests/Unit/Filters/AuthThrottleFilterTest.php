@@ -199,17 +199,21 @@ class AuthThrottleFilterTest extends CIUnitTestCase
         $this->assertTrue(true);
     }
 
-    public function testBeforeUsesStricterLimitsThanGeneralThrottle(): void
+    public function testBeforeUsesTheSharedAuthLimitOnLogin(): void
     {
         $request = $this->createMockRequest('192.168.1.1', 'auth/login');
 
         $this->mockCache->method('get')->willReturn(null);
 
+        $expectedLimit = config('Api')->authRateLimitRequests;
+
         $request->expects($this->once())
             ->method('setAuthRateLimitInfo')
-            ->with($this->callback(function ($info) {
-                // Login gets a slightly friendlier cap than the shared auth default.
-                return $info['limit'] === 5;
+            ->with($this->callback(function ($info) use ($expectedLimit) {
+                // Login must never be looser than the general auth limit — a
+                // per-route override here could only ever weaken brute-force
+                // protection, never strengthen it, so login shares the default.
+                return $info['limit'] === $expectedLimit;
             }));
 
         $this->filter->before($request);

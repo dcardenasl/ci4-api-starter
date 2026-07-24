@@ -7,7 +7,7 @@ namespace App\Services\System;
 use App\Interfaces\System\EmailServiceInterface;
 use App\Libraries\Queue\Jobs\SendEmailJob;
 use App\Libraries\Queue\Jobs\SendTemplateEmailJob;
-use dcardenasl\Ci4ApiCore\Queue\QueueManager;
+use dcardenasl\Ci4ApiCore\Queue\QueueManagerInterface;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Address;
 use Symfony\Component\Mime\Email;
@@ -21,7 +21,7 @@ readonly class EmailService implements EmailServiceInterface
 {
     public function __construct(
         protected ?MailerInterface $mailer = null,
-        protected ?QueueManager $queueManager = null,
+        protected ?QueueManagerInterface $queueManager = null,
         protected string $fromAddress = 'no-reply@example.com',
         protected string $fromName = \Config\Project::NAME,
         protected string $defaultLocale = 'en'
